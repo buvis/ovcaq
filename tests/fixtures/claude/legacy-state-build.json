@@ -1,0 +1,27 @@
+{
+  "prd": "00000-example.md",
+  "phase": "build",
+  "next_phase": "build",
+  "cycle": 1,
+  "rework_cap": 3,
+  "phases_completed": [],
+  "tasks": [
+    {
+      "id": "example-task-1",
+      "name": "Completed example task",
+      "status": "completed"
+    },
+    {
+      "id": "example-task-2",
+      "name": "Pending example task",
+      "status": "pending"
+    }
+  ],
+  "tasks_total": 2,
+  "tasks_completed": 1,
+  "batch": {
+    "id": "example-batch-1",
+    "mode": "autopilot",
+    "completed_prds": []
+  }
+}
