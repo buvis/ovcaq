@@ -1,0 +1,5 @@
+{"type":"thread.started","thread_id":"example-thread-1"}
+{"type":"turn.started"}
+{"type":"item.started","item":{"id":"example-item-1","type":"command_execution","command":"python -m pytest","aggregated_output":"","exit_code":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"example-item-2","type":"agent_message","text":"The example check passed."}}
+{"type":"turn.completed","usage":{"input_tokens":100,"cached_input_tokens":20,"output_tokens":30}}

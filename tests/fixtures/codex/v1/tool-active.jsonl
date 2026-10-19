@@ -1,0 +1,24 @@
+{"type":"thread.started","thread_id":"example-tools"}
+{"type":"turn.started"}
+{"type":"item.started","item":{"id":"item_0","type":"command_execution","command":"printf example","aggregated_output":"","exit_code":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_1","type":"command_execution","command":"printf example","aggregated_output":"example","exit_code":0,"status":"completed"}}
+{"type":"item.completed","item":{"id":"item_2","type":"command_execution","command":"printf example","aggregated_output":"example","exit_code":1,"status":"failed"}}
+{"type":"item.completed","item":{"id":"item_3","type":"command_execution","command":"printf example","aggregated_output":"example","exit_code":null,"status":"declined"}}
+{"type":"item.completed","item":{"id":"item_4","type":"file_change","changes":[{"path":"example/new.txt","kind":"add"},{"path":"example/old.txt","kind":"delete"},{"path":"example/readme.txt","kind":"update"}],"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_5","type":"file_change","changes":[{"path":"example/new.txt","kind":"add"},{"path":"example/old.txt","kind":"delete"},{"path":"example/readme.txt","kind":"update"}],"status":"completed"}}
+{"type":"item.completed","item":{"id":"item_6","type":"file_change","changes":[{"path":"example/new.txt","kind":"add"},{"path":"example/old.txt","kind":"delete"},{"path":"example/readme.txt","kind":"update"}],"status":"failed"}}
+{"type":"item.started","item":{"id":"item_7","type":"mcp_tool_call","server":"example","tool":"lookup","arguments":{"query":"example","token":"[REDACTED]"},"result":null,"error":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_8","type":"mcp_tool_call","server":"example","tool":"lookup","arguments":{"query":"example","token":"[REDACTED]"},"result":{"content":[{"type":"text","text":"example"}],"_meta":{"example":true},"structured_content":{"answer":"example"}},"error":null,"status":"completed"}}
+{"type":"item.completed","item":{"id":"item_9","type":"mcp_tool_call","server":"example","tool":"lookup","arguments":{"query":"example","token":"[REDACTED]"},"result":null,"error":{"message":"Example tool failed"},"status":"failed"}}
+{"type":"item.started","item":{"id":"item_10","type":"web_search","query":"example","action":{"type":"search","query":"example","queries":["example"]}}}
+{"type":"item.completed","item":{"id":"item_10","type":"web_search","query":"example","action":{"type":"search","query":"example","queries":["example"]}}}
+{"type":"item.started","item":{"id":"item_11","type":"web_search","query":"example","action":{"type":"open_page","url":"https://example.com"},"results":[]}}
+{"type":"item.completed","item":{"id":"item_11","type":"web_search","query":"example","action":{"type":"open_page","url":"https://example.com"},"results":[]}}
+{"type":"item.started","item":{"id":"item_12","type":"web_search","query":"example","action":{"type":"find_in_page","url":"https://example.com","pattern":"example"},"results":[{"url":"https://example.com","title":"Example"}]}}
+{"type":"item.completed","item":{"id":"item_12","type":"web_search","query":"example","action":{"type":"find_in_page","url":"https://example.com","pattern":"example"},"results":[{"url":"https://example.com","title":"Example"}]}}
+{"type":"item.started","item":{"id":"item_13","type":"web_search","query":"example","action":{"type":"other"}}}
+{"type":"item.completed","item":{"id":"item_13","type":"web_search","query":"example","action":{"type":"other"}}}
+{"type":"item.started","item":{"id":"item_14","type":"todo_list","items":[{"text":"Inspect example","completed":false}]}}
+{"type":"item.updated","item":{"id":"item_14","type":"todo_list","items":[{"text":"Inspect example","completed":true}]}}
+{"type":"item.completed","item":{"id":"item_14","type":"todo_list","items":[{"text":"Inspect example","completed":true}]}}
+{"type":"turn.completed","usage":{"input_tokens":100,"cached_input_tokens":20,"cache_write_input_tokens":5,"output_tokens":25,"reasoning_output_tokens":10}}

@@ -1,0 +1,5 @@
+{"type":"thread.started","thread_id":"example-lanes-matched"}
+{"type":"turn.started"}
+{"type":"item.started","item":{"id":"item_0","type":"collab_tool_call","tool":"spawn_agent","sender_thread_id":"example-parent","receiver_thread_ids":["example-child"],"prompt":"Inspect example","agents_states":{"example-child":{"status":"running","message":null}},"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_0","type":"collab_tool_call","tool":"spawn_agent","sender_thread_id":"example-parent","receiver_thread_ids":["example-child"],"prompt":"Inspect example","agents_states":{"example-child":{"status":"running","message":null}},"status":"completed"}}
+{"type":"turn.completed","usage":{"input_tokens":0,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":0,"reasoning_output_tokens":0}}

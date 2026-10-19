@@ -1,0 +1,5 @@
+{"type":"thread.started","thread_id":"example-permission-failed"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"command_execution","command":"printf example","aggregated_output":"Permission denied","exit_code":null,"status":"declined"}}
+{"type":"error","message":"Permission denied: example workspace access."}
+{"type":"turn.failed","error":{"message":"Permission denied: example workspace access."}}

@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"example-connectivity-failed"}
+{"type":"turn.started"}
+{"type":"error","message":"Connection failed: unable to reach example endpoint."}
+{"type":"turn.failed","error":{"message":"Connection failed: unable to reach example endpoint."}}

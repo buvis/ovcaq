@@ -1,0 +1,15 @@
+{}
+{"type":42}
+{"type":"thread.started","thread_id":null}
+{"type":"item.completed","item":null}
+{"type":"item.completed","item":{"type":"agent_message","text":42}}
+{"type":"turn.completed"}
+{"type":"turn.completed","usage":"invalid"}
+{"type":"turn.completed","usage":{"input_tokens":100,"output_tokens":25}}
+{"type":"turn.completed","usage":{"input_tokens":-1,"cached_input_tokens":false,"output_tokens":"25"}}
+{"type":"future.event","future":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":{"nested":"[REDACTED]"}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}
+{"type":"item.completed","item":{"id":"example-future","type":"future_item","extra":true}}
+{"type":"thread.started","thread_id":"example-unknown-fields","new_field":"[REDACTED]"}
+{"type":"item.completed","item":{"id":"item_replay","type":"agent_message","text":"Replayed example [REDACTED]"}}
+{"type":"item.completed","item":{"id":"item_replay","type":"agent_message","text":"Replayed example [REDACTED]"}}
+{"type":"item.completed","item":

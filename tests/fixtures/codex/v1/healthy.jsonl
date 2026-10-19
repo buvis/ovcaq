@@ -1,0 +1,7 @@
+{"type":"thread.started","thread_id":"example-healthy"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"reasoning","text":"Inspect the example project."}}
+{"type":"error","message":"Temporary stream interruption; retrying."}
+{"type":"item.completed","item":{"id":"item_1","type":"error","message":"Example non-fatal warning."}}
+{"type":"item.completed","item":{"id":"item_2","type":"agent_message","text":"Example task complete. [REDACTED]"}}
+{"type":"turn.completed","usage":{"input_tokens":100,"cached_input_tokens":20,"cache_write_input_tokens":5,"output_tokens":25,"reasoning_output_tokens":10}}

@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "cli_version": "codex-cli 0.160.0",
+  "schema_source": [
+    "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/exec_events.rs",
+    "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/event_processor_with_jsonl_output.rs"
+  ],
+  "captured_at": "2026-10-04T17:43:50.397631+00:00",
+  "families": [
+    {
+      "file": "healthy.jsonl",
+      "source_kind": "schema-synthetic",
+      "source": [
+        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/exec_events.rs",
+        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/event_processor_with_jsonl_output.rs"
+      ],
+      "sanitization": "Constructed with example identifiers, relative paths, example.com, and [REDACTED] sentinels; no live transcript or personal data read.",
+      "unsupported_fields": [
+        "cost",
+        "lane",
+        "telemetry",
+        "live_capture"
+      ],
+      "sha256": "5a3d28b70e50606f99b3371d8c3640f13c274dce39e6c7f5519b80e288ae19b3"
+    },
+    {
+      "file": "tool-active.jsonl",
+      "source_kind": "schema-synthetic",
+      "source": [
+        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/exec_events.rs",
+        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/event_processor_with_jsonl_output.rs"
+      ],
+      "sanitization": "Constructed with example identifiers, relative paths, example.com, and [REDACTED] sentinels; no live transcript or personal data read.",
+      "unsupported_fields": [
+        "cost",
+        "lane",
+        "telemetry",
+        "live_capture"
+      ],
+      "sha256": "4189a110ac8992bc28fe9d0b6ffb35fcddd76e77c054c6aff225218f3a5c4986"
+    },
+    {
+      "file": "lanes.jsonl",
+      "source_kind": "schema-synthetic",
+      "source": [
+        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/exec_events.rs",
+        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/event_processor_with_jsonl_output.rs"
+      ],
+      "sanitization": "Constructed with example identifiers, relative paths, example.com, and [REDACTED] sentinels; no live transcript or personal data read.",
+      "unsupported_fields": [
+        "cost",
+        "lane",
+        "telemetry",
+        "live_capture"
+      ],
+      "sha256": "93fc57e522487e02e72d1fb0e06121ee81c02234226039d75874b776f77a0543"
+    },
+    {
+      "file": "rate-limited.jsonl",
+      "source_kind": "schema-synthetic",
+      "source": [
+        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/exec_events.rs",
+        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/event_processor_with_jsonl_output.rs"
+      ],
+      "sanitization": "Constructed with example identifiers, relative paths, example.com, and [REDACTED] sentinels; no live transcript or personal data read.",
+      "unsupported_fields": [
+        "cost",
+        "lane",
+        "telemetry",
+        "live_capture"
+      ],
+      "sha256": "7d3945d76d78c60138e1faf48d416d9fb97edc157c6ba23d8b1cf52a3690d439"
+    },
+    {
+      "file": "connectivity-failed.jsonl",
+      "source_kind": "schema-synthetic",
+      "source": [
+        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/exec_events.rs",
+        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/event_processor_with_jsonl_output.rs"
+      ],
+      "sanitization": "Constructed with example identifiers, relative paths, example.com, and [REDACTED] sentinels; no live transcript or personal data read.",
+      "unsupported_fields": [
+        "cost",
+        "lane",
+        "telemetry",
+        "live_capture"
+      ],
+      "sha256": "6886dcd6619eb111eab8ec3ec09ac130afca170ad908bcb2351d544381397d7c"
+    },
+    {
+      "file": "permission-failed.jsonl",
+      "source_kind": "schema-synthetic",
+      "source": [
+        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/exec_events.rs",
+        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/event_processor_with_jsonl_output.rs"
+      ],
+      "sanitization": "Constructed with example identifiers, relative paths, example.com, and [REDACTED] sentinels; no live transcript or personal data read.",
+      "unsupported_fields": [
+        "cost",
+        "lane",
+        "telemetry",
+        "live_capture"
+      ],
+      "sha256": "c6c669ab32a274ed26803d5a970452b312391f26b7decd998a1c10c9c96b5886"
+    },
+    {
+      "file": "authentication-failed.jsonl",
+      "source_kind": "schema-synthetic",
+      "source": [
+        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/exec_events.rs",
+        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/event_processor_with_jsonl_output.rs"
+      ],
+      "sanitization": "Constructed with example identifiers, relative paths, example.com, and [REDACTED] sentinels; no live transcript or personal data read.",
+      "unsupported_fields": [
+        "cost",
+        "lane",
+        "telemetry",
+        "live_capture"
+      ],
+      "sha256": "2438a7e2dc2d216845ffe2f66bd7653060c5741e15313b330fd11e26924bfb99"
+    },
+    {
+      "file": "lanes-matched.jsonl",
+      "source_kind": "schema-synthetic",
+      "source": [
+        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/exec_events.rs",
+        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/event_processor_with_jsonl_output.rs"
+      ],
+      "sanitization": "Constructed with example identifiers and matching receiver_thread_ids/agents_states keys for native collaboration projection; no live transcript or personal data read.",
+      "unsupported_fields": [
+        "cost",
+        "lane",
+        "telemetry",
+        "live_capture"
+      ],
+      "sha256": "9c114894c52fb72bd6bb8f311cc0bac0be4c061c2b23d684c3ed5ce2a8fb0a13"
+    },
+    {
+      "file": "malformed.jsonl",
+      "source_kind": "schema-synthetic",
+      "source": [
+        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/exec_events.rs",
+        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/event_processor_with_jsonl_output.rs"
+      ],
+      "sanitization": "Constructed with example identifiers, relative paths, example.com, and [REDACTED] sentinels; no live transcript or personal data read.",
+      "unsupported_fields": [
+        "cost",
+        "lane",
+        "telemetry",
+        "live_capture"
+      ],
+      "sha256": "0c778e8215822000cd464611c136313c2d54cd34733979843887fefbef995258"
+    }
+  ],
+  "cli_evidence": {
+    "source_kind": "captured",
+    "commands": [
+      "codex --version",
+      "codex --help",
+      "codex exec --help"
+    ],
+    "sanitization": "stdout only; omitted sandbox-specific PATH-alias warnings on stderr. In cli-help.txt and exec-help.txt, replaced the generic tilde-prefixed .codex directory before /config.toml with [LAUNCHER_HOME] for artifact safety. No actual personal paths appeared in stdout; all other captured stdout is unchanged.",
+    "files": [
+      "cli-version.txt",
+      "cli-help.txt",
+      "exec-help.txt"
+    ]
+  },
+  "notes": [
+    "No safe controlled existing JSONL transcript was supplied; every JSONL family is schema-synthetic, including failure-message examples.",
+    "lanes.jsonl contains native collab_tool_call fields only; no authoritative lane assignment, cost, or rate-limit telemetry exists in this exec schema.",
+    "Zero usage in lanes.jsonl models producer Usage::default when token telemetry is absent; it is not measured zero consumption.",
+    "lanes-matched.jsonl is a separate schema-synthetic native collaboration example with consistent receiver/state identifiers and absent token telemetry represented by Usage::default; it is not a live capture or authoritative workflow lane assignment.",
+    "malformed.jsonl intentionally contains non-schema tolerance mutations, a legacy missing-usage-field shape, replay, depth 32, and a truncated final line. The unversioned seed remains unchanged.",
+    "Error followed by successful completion follows the producer running-on-error behavior. Failure pairs repeat the terminal message to model last_critical_error fallback.",
+    "file_change in_progress is schema-synthetic enum coverage on a completed item event, not a claim that the producer emits a started file patch."
+  ]
+}

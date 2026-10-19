@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"example-rate-limited"}
+{"type":"turn.started"}
+{"type":"error","message":"Rate limit reached; try again in 60 seconds."}
+{"type":"turn.failed","error":{"message":"Rate limit reached; try again in 60 seconds."}}

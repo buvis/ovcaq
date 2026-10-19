@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"example-authentication-failed"}
+{"type":"turn.started"}
+{"type":"error","message":"Authentication failed: invalid credentials [REDACTED]."}
+{"type":"turn.failed","error":{"message":"Authentication failed: invalid credentials [REDACTED]."}}
