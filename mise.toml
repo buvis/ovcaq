@@ -1,0 +1,35 @@
+[tools]
+python = "3.12.13"
+uv = "0.13.0"
+
+[env]
+_.path = ["tools"]
+
+[settings]
+task.run_auto_install = false
+
+[tasks.onboard]
+description = "Create the development environment from the lockfile"
+run = "uv sync --locked --all-groups"
+
+[tasks.check]
+description = "Check lint, formatting, types, tests, and distributions"
+run = [
+  "uv run --locked ruff check .",
+  "uv run --locked ruff format --check .",
+  "uv run --locked mypy src/ovcaq",
+  "uv run --locked pytest",
+  "uv build",
+]
+
+[tasks.format]
+description = "Format Python sources"
+run = "uv run --locked ruff format"
+
+[tasks.run-tests]
+description = "Run pytest; pass selectors directly to the shim"
+run = "uv run --locked pytest"
+
+[tasks.build]
+description = "Build source and wheel distributions"
+run = "uv build"
