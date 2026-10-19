@@ -1,0 +1,12 @@
+{
+  "batch_id": "20260830-120000",
+  "items": [
+    {
+      "detail": "approval | missing",
+      "op_id": "operation-1",
+      "prd": "00004-workflow-core-v1.md",
+      "site": "design_gate",
+      "type": "stall"
+    }
+  ]
+}
