@@ -1,0 +1,4 @@
+{"type":"system","subtype":"init","claude_code_version":"0.0.0-example","model":"example-model","permissionMode":"example"}
+{"type":"assistant","message":{"content":[{"type":"text","text":"Running the example check."},{"type":"tool_use","id":"example-tool-1","name":"Bash","input":{"command":"python -m pytest","description":"Run example tests"}}]}}
+{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"example-tool-1","is_error":false,"content":"Example tests passed."}]}}
+{"type":"result","subtype":"success","is_error":false,"duration_ms":1200,"num_turns":1,"total_cost_usd":0.01,"usage":{"input_tokens":120,"output_tokens":24},"permission_denials":[]}

@@ -1,0 +1,8 @@
+{"type":"result","subtype":"error","is_error":true,"session_id":"connectivity-session","result":"getaddrinfo ENOTFOUND api.example.test"}
+{"type":"result","subtype":"error","is_error":true,"session_id":"authentication-session","result":"Authentication failed"}
+{"type":"result","subtype":"error","is_error":true,"session_id":"permission-session","result":"Permission denied"}
+{"type":"result","subtype":"error","is_error":true,"session_id":"timeout-session","result":"request timed out"}
+{"type":"result","subtype":"error","is_error":true,"session_id":"agent-session","result":"provider execution failed"}
+{"type":"result","subtype":"error","is_error":true,"session_id":"rate-limit-session","result":"You've hit your usage limit"}
+{"type":"rate_limit_event","session_id":"rate-limit-event-session","rate_limit_info":{"status":"rejected","resetsAt":4102444800,"rateLimitType":"five_hour"}}
+{"type":"result","subtype":"error","is_error":true,"session_id":"rate-limit-banner-session","timestamp":"2099-06-01T10:00:00Z","result":"You've hit your session limit · resets 8:10pm (Europe/Prague)"}

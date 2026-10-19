@@ -1,0 +1,9 @@
+{"type":"system","subtype":"init","session_id":"fixture-session","model":"fixture-model","claude_code_version":"fixture-version","permissionMode":"auto"}
+{"type":"assistant","session_id":"fixture-session","parent_tool_use_id":"lane-parent","message":{"id":"message-1","content":[{"type":"text","text":"Working on the sanitized fixture."},{"type":"thinking","thinking":"Check the public contract."},{"type":"tool_use","id":"tool-1","name":"Read","input":{"file_path":"/sanitized/example"}}],"usage":{"input_tokens":10,"output_tokens":4,"cache_creation_input_tokens":2,"cache_read_input_tokens":3}}}
+{"type":"user","session_id":"fixture-session","parent_tool_use_id":"lane-parent","message":{"content":[{"type":"tool_result","tool_use_id":"tool-1","is_error":false,"content":"Fixture tool completed."}]}}
+{"type":"system","subtype":"task_started","session_id":"fixture-session","task_id":"lane-1","tool_use_id":"tool-lane","description":"Inspect fixture","task_type":"local_agent","subagent_type":"Explore"}
+{"type":"system","subtype":"task_progress","session_id":"fixture-session","task_id":"lane-1","description":"Reading fixture","last_tool_name":"Read","usage":{"tool_uses":2,"total_tokens":12,"duration_ms":40}}
+{"type":"system","subtype":"task_notification","session_id":"fixture-session","task_id":"lane-1","status":"completed"}
+{"type":"system","subtype":"background_tasks_changed","session_id":"fixture-session","tasks":[{"task_id":"background-1","description":"Background fixture","task_type":"local_bash","status":"running"}]}
+{"type":"rate_limit_event","session_id":"fixture-session","rate_limit_info":{"status":"allowed","rateLimitType":"five_hour"}}
+{"type":"result","subtype":"success","is_error":false,"session_id":"fixture-session","result":"Fixture complete.","total_cost_usd":0.25,"usage":{"input_tokens":12,"output_tokens":5,"cache_creation_input_tokens":2,"cache_read_input_tokens":3}}
