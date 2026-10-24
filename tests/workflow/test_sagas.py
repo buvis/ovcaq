@@ -206,30 +206,26 @@ def test_every_characterized_durable_boundary_replays_exactly_once(
     assert ledger_path.read_bytes() == ledger_bytes
 
 
-def test_recovery_operation_preserves_raw_failure_evidence(
+@pytest.mark.parametrize("operation", (_run_stall, _run_park), ids=("stall", "park"))
+def test_missing_prd_refuses_recovery_without_committing_an_unbound_intent(
     saga_environment: tuple[StateStore, LifecyclePaths, Path],
+    operation: Callable[..., None],
 ) -> None:
     store, paths, runtime_root = saga_environment
-
-    paths.wip.joinpath(PRD).unlink()
+    paths.backlog.mkdir()
+    paths.wip.joinpath(PRD).rename(paths.backlog / PRD)
+    before = store.path.read_bytes()
     with pytest.raises(OSError, match="not present in wip or hold"):
-        _run_stall(store, paths, runtime_root)
+        operation(store, paths, runtime_root)
 
-    operation = store.read()["recovery"]["operation"]
-    assert operation is not None
-    assert operation == {
-        "id": OPERATION_ID,
-        "kind": "stall",
-        "step": "intent",
-        "prd": PRD,
-        "site": "design_gate",
-        "detail": "design approval is missing",
-        "source": str(paths.wip / PRD),
-        "destination": str(paths.hold / PRD),
-        "artifact": None,
-        "created_at": NOW,
-    }
+    assert store.path.read_bytes() == before
+    assert not store.path.with_suffix(".json.bak").exists()
     assert _ledger(runtime_root) is None
+    assert paths.backlog.joinpath(PRD).read_text() == "# Workflow core\n"
+    paths.backlog.joinpath(PRD).rename(paths.wip / PRD)
+    operation(store, paths, runtime_root)
+    assert store.read()["recovery"]["operation"] is None
+    assert paths.hold.joinpath(PRD).read_text() == "# Workflow core\n"
 
 
 def test_conflicting_recovery_refuses_without_filesystem_effects(

@@ -41,6 +41,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **workflow**: refuse missing or conflicting PRD artifacts before recovery intent, and verify source identity throughout intent publication so rejected stall/park requests preserve state and backups.
+- **state**: allow explicit backup restoration of an older unbound recovery intent while keeping bound or advanced recovery fenced.
+- **workflow**: require a running batch and an active PRD for phase transitions, with a PRD-free drain allowed from the build phase.
 - **docs**: correct Codex matched-lane fixture provenance and describe tool, message and plan details with the newest-first 20 activity / 20 lanes display window.
 - **tui**: show the newest twenty activity entries before the first twenty lanes, with separate omission counts.
 - **tui**: retain distinct messages without IDs and warning details, match message updates by their full IDs while keeping activity bounded, and show tool details from normalized observations.

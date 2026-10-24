@@ -105,7 +105,7 @@ def test_every_public_state_mutation_rejects_active_recovery_atomically(
         "detail": "approval missing",
         "source": str(tmp_path / "wip/00004-workflow-core-v1.md"),
         "destination": str(tmp_path / "hold/00004-workflow-core-v1.md"),
-        "artifact": None,
+        "artifact": {"device": 1, "inode": 2},
         "created_at": "2026-08-26T10:00:00Z",
     }
     store = _store_for_state(tmp_path, initial)

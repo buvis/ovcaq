@@ -118,6 +118,20 @@ def _capability_by_name(state: State, name: str) -> CapabilityEntry:
     return capability
 
 
+def _require_restorable_recovery(state: State) -> None:
+    operation = state["recovery"]["operation"]
+    # Earlier writers could publish an intent without a source artifact. Such
+    # an operation cannot pass the move's identity check and cannot reconcile.
+    # Explicit backup restoration is safe only before any bound recovery work.
+    if (
+        operation is not None
+        and operation["step"] == "intent"
+        and operation["artifact"] is None
+    ):
+        return
+    _require_recovery_idle(state)
+
+
 def _require_detail(detail: object) -> str | None:
     if detail is not None and not isinstance(detail, str):
         raise ValueError(f"capability detail must be a string or null: {detail!r}")
@@ -659,6 +673,6 @@ class StateService:
     ) -> MutationResult:
         committed = self._store.restore(
             expected_revision=expected_revision,
-            precondition=_require_recovery_idle,
+            precondition=_require_restorable_recovery,
         )
         return _result(committed, None)

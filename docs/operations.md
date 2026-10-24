@@ -82,6 +82,14 @@ top-level `agent`. Model values stay opaque. Repeated `--available-tier KEY`
 flags supply the available keys explicitly; an unavailable hint warns and
 applies no floor. This input reader does not launch or route agents.
 
+Phase transitions require a running batch and an active PRD; only an empty
+build-phase drain may omit the PRD. Batch finalization remains supervisor-owned.
+Stall/park reject missing sources and conflicting destinations before committing
+recovery intent. Source identity remains checked through intent publication.
+An older unbound intent (step `intent`, artifact `null`) cannot move a PRD;
+use `state restore` to recover its pre-intent backup. Bound recovery must
+reconcile before restoration. Restoration does not move PRD files.
+
 After a second consecutive park, the durable pause returns exit 4.
 JSON output includes `ok: false`, `status: systemic_park`, and the committed
 revision/result; human output asks the operator to inspect held PRDs and

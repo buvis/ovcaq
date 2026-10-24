@@ -230,8 +230,9 @@ rejected before a transaction opens.
 - `RecoveryOperation.source`: required source-path string.
 - `RecoveryOperation.destination`: required destination-path string.
 - `RecoveryOperation.artifact`: source `ArtifactIdentity` captured before durable intent;
-  null only when the source was absent, which preserves failure evidence and refuses completion.
-  Recovery verifies the same device and inode before moving, recording, and resetting,
+  older writers could leave null when the source was absent. New operations refuse
+  missing sources before committing intent. Recovery verifies the same device and
+  inode through intent publication and before moving, recording, and resetting,
   including after restart. A replaced artifact must be restored before reconciliation.
 - `ArtifactIdentity.device`: required integer filesystem device identifier.
 - `ArtifactIdentity.inode`: required integer filesystem inode identifier.
@@ -277,6 +278,13 @@ and backup while the exclusive lock remains held.
 Restore validation covers both current state and the raw backup. Restore creates
 a new commit with the next revision, then rotates the pre-restore current bytes
 into the backup through the same durable publication path.
+
+Public restoration refuses active recovery except an unbound `intent` whose
+`artifact` is null. That older invalid intent cannot pass the move's identity
+check; `state restore` can recover its pre-intent backup without touching PRD
+files. Recovery with a captured artifact, or at the `moved` or `recorded` step,
+must reconcile before restoration. Other state mutations remain fenced even
+for unbound intents.
 
 The derived project runtime remains under the resolved project root. Existing
 symlinks in `docs/dev/project-management/ovcaq` are rejected before initialization creates,

@@ -413,14 +413,20 @@ def _advance_operation(
 
 
 def _stamp_intent(
-    store: StateStore, operation: RecoveryOperation, expected_revision: int
+    store: StateStore,
+    operation: RecoveryOperation,
+    expected_revision: int,
+    verify: Callable[[], None],
 ) -> None:
     def stamp(state: State) -> None:
+        verify()
         if state["recovery"]["operation"] is not None:
             raise RecoveryConflictError("another recovery operation is already active")
         state["recovery"]["operation"] = operation
 
-    store.transaction(stamp, expected_revision=expected_revision)
+    store.transaction(
+        stamp, expected_revision=expected_revision, publication_guard=verify
+    )
 
 
 def _commit_operation(
@@ -534,10 +540,13 @@ def _begin_operation(
     prd = operation["prd"]
     _validate_prd_artifact(wip_directory, source, "source")
     _validate_prd_artifact(hold_directory, destination, "destination")
-    if (
-        _artifact_stat(wip_directory, prd) is None
-        and _artifact_stat(hold_directory, prd) is not None
-    ):
+    source_stat = _artifact_stat(wip_directory, prd)
+    destination_stat = _artifact_stat(hold_directory, prd)
+    if source_stat is None and destination_stat is None:
+        raise OSError(f"PRD is not present in wip or hold: {prd}")
+    if source_stat is not None and destination_stat is not None:
+        raise OSError(f"PRD exists in both wip and hold: {prd}")
+    if source_stat is None:
         completed_id = _completed_operation_id(
             state,
             runtime_root,
@@ -556,9 +565,18 @@ def _begin_operation(
             True,
             operation["kind"] == "park" and state["work"]["phase"] == "paused",
         )
-    operation["artifact"] = _artifact_identity(_artifact_stat(wip_directory, prd))
+    operation["artifact"] = _artifact_identity(source_stat)
+
+    def verify_source() -> None:
+        _files._verify_lifecycle_directory_identity(source.parent, wip_directory)
+        _files._verify_lifecycle_directory_identity(destination.parent, hold_directory)
+        _validate_prd_artifact(wip_directory, source, "source")
+        _require_artifact_identity(wip_directory, source, operation["artifact"])
+        if _artifact_stat(hold_directory, prd) is not None:
+            raise OSError(f"PRD exists in both wip and hold: {prd}")
+
     _trip(boundary_hook, SagaBoundary.AFTER_MKDIR_BEFORE_INTENT)
-    _stamp_intent(store, operation, state["revision"])
+    _stamp_intent(store, operation, state["revision"], verify_source)
     return None
 
 

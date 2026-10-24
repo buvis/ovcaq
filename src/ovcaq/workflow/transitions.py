@@ -85,6 +85,10 @@ def apply(state: State, outcome: str) -> State:
         raise UnknownTransition(
             f"no transition from drained state on outcome {outcome!r}"
         )
+    if state["batch"]["status"] != "running":
+        raise UnknownTransition("workflow transitions require a running batch")
+    if state["work"]["prd"] is None and (phase, outcome) != ("build", "drained"):
+        raise UnknownTransition("workflow transitions require an active PRD")
     row = TRANSITIONS.get((phase, outcome))
     if row is None:
         raise UnknownTransition(

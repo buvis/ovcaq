@@ -16,6 +16,7 @@ from ovcaq.drivers.base import LaunchRequest
 from ovcaq.drivers.codex import CodexDriver
 from ovcaq.events.model import FailureClass, ObservationType
 from ovcaq.paths import state_path
+from ovcaq.state.commands import StateService
 from ovcaq.state.store import StateStore
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "codex" / "v1"
@@ -430,6 +431,7 @@ def prepare_workflow_handoff(
     }
     adapter = driver(environment, "workflow")
     store = StateStore(state_path(tmp_path))
+    StateService(store).start_batch("fake-workflow", "2026-10-25T00:00:00Z")
     historical = {
         "filename": "00000-prior.md",
         "cycles": 2,
