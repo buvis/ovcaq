@@ -19,6 +19,7 @@ from typing import NoReturn
 
 DONE = Path("docs") / "dev" / "project-management" / "prds" / "done"
 DEPENDENCIES: dict[int, tuple[int, ...]] = {
+    # 58 also needs a controller core/jobs/reviews/records artifact with no config key yet, so it is gated on 57+62 only.
     58: (57, 62),
     59: (58, 63),
     60: (59,),
@@ -31,6 +32,7 @@ GATES: dict[int, tuple[str, str, str]] = {
     61: ("autopilot", "plugin_artifact", "AP00017"),
     65: ("operator", "client_artifact", "Lantern00003"),
 }
+MAX_ARTIFACT_BYTES = 16 * 1024 * 1024
 
 
 def refuse(message: str) -> NoReturn:
@@ -42,10 +44,13 @@ def is_done(prd: int) -> bool:
     if DONE.is_symlink() or not DONE.is_dir():
         return False
     pattern = re.compile(rf"{prd:05d}-.+\.md")
-    return any(
-        pattern.fullmatch(entry.name) and entry.is_file(follow_symlinks=False)
-        for entry in os.scandir(DONE)
-    )
+    try:
+        return any(
+            pattern.fullmatch(entry.name) and entry.is_file(follow_symlinks=False)
+            for entry in os.scandir(DONE)
+        )
+    except OSError:
+        return False
 
 
 def check_gate(prd: int, config: Path, explicit: bool) -> str | None:
@@ -72,16 +77,26 @@ def check_gate(prd: int, config: Path, explicit: bool) -> str | None:
     if path is None or digest is None:
         return f"{key}: [{table}] needs {key} and {key}_sha256"
     artifact = Path(path)
-    if os.path.realpath(artifact) != os.path.abspath(artifact):
-        return f"{key}: {path} must not traverse a symlink"
+    try:
+        if os.path.realpath(artifact) != os.path.abspath(artifact):
+            return f"{key}: {path} must not traverse a symlink"
+    except ValueError:
+        return f"{key}: {path} is not a usable path"
     if not artifact.is_file():
         return f"{key}: {path} is not a regular file"
-    data = artifact.read_bytes()
+    try:
+        # Hash and parse the same capped bytes, so the file cannot change in between.
+        with artifact.open("rb") as handle:
+            data = handle.read(MAX_ARTIFACT_BYTES + 1)
+    except OSError as error:
+        return f"{key}: cannot read {path}: {error}"
+    if len(data) > MAX_ARTIFACT_BYTES:
+        return f"{key}: {path} exceeds 16 MiB"
     if hashlib.sha256(data).hexdigest() != digest.lower():
         return f"{key}: {path} sha256 does not match {key}_sha256"
     try:
         payload = json.loads(data)
-    except ValueError:
+    except (ValueError, RecursionError):
         return f"{key}: {path} is not valid JSON"
     evidence = payload.get("evidence") if isinstance(payload, dict) else None
     if not isinstance(evidence, list) or token not in evidence:
@@ -94,7 +109,11 @@ def main() -> None:
     parser.add_argument("--prd", required=True, help="PRD number, e.g. 58 or 00058")
     parser.add_argument("--config", help="config file (default: ./ovcaq.toml)")
     args = parser.parse_args()
-    if not re.fullmatch(r"[0-9]+", args.prd) or int(args.prd) not in DEPENDENCIES:
+    if (
+        len(args.prd) > 5
+        or not re.fullmatch(r"[0-9]+", args.prd)
+        or int(args.prd) not in DEPENDENCIES
+    ):
         parser.error(f"unknown PRD: {args.prd!r}")
     prd = int(args.prd)
 
