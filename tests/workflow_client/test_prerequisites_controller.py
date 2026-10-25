@@ -28,6 +28,7 @@ from tests.workflow_client.prerequisites_support import (
     write_artifact,
     write_bundle,
     write_config,
+    write_valid_bundle,
 )
 
 TABLE, KEY, TOKENS = GATES["58"]
@@ -42,14 +43,18 @@ def write_gate(
     evidence: list[str] | None = None,
     bundle: str | None = BUNDLE_PATH,
 ) -> Path:
-    """Done predecessors, a controller artifact and a bundle for PRD 58."""
+    """Done predecessors, a controller artifact and a valid bundle for PRD 58."""
     mark_done(root, *CLOSURE["58"])
     tokens = list(TOKENS) if evidence is None else evidence
     digest = write_artifact(root / ARTIFACT, {"evidence": tokens})
+    bundle_digest = None
     if bundle is not None:
-        write_bundle(root, bundle)
+        bundle_digest = write_valid_bundle(root, bundle)
     config = root / "ovcaq.toml"
-    write_config(config, gate_config("58", ARTIFACT, digest, bundle=bundle))
+    write_config(
+        config,
+        gate_config("58", ARTIFACT, digest, bundle=bundle, bundle_digest=bundle_digest),
+    )
     return config
 
 
@@ -80,16 +85,19 @@ def test_prd_58_is_ready_with_controller_evidence_and_contract_bundle(
     if variant == "relative-lower-digest":
         digest = write_artifact(artifact, {"evidence": list(TOKENS)})
         path = ARTIFACT
-        # The body never parses, so a tool that reads the bundle fails here.
-        write_bundle(tmp_path, BUNDLE_PATH)
         bundle = BUNDLE_PATH
+        bundle_digest = write_valid_bundle(tmp_path, bundle)
     else:
         evidence = ["AP00017", *reversed(TOKENS), "extra"]
         digest = write_artifact(artifact, {"evidence": evidence, "name": KEY}).upper()
         path = str(artifact)
-        bundle = str(write_bundle(tmp_path, "bundles/exported.bin", ""))
+        bundle = str(tmp_path / "bundles" / "exported.json")
+        bundle_digest = write_valid_bundle(
+            tmp_path, "bundles/exported.json", {"bundle": "contract"}
+        ).upper()
     write_config(
-        tmp_path / "ovcaq.toml", gate_config("58", path, digest, bundle=bundle)
+        tmp_path / "ovcaq.toml",
+        gate_config("58", path, digest, bundle=bundle, bundle_digest=bundle_digest),
     )
 
     assert report(run_tool(tmp_path, "58"), 0) == {"ready": True, "prd": "58"}
@@ -182,10 +190,12 @@ def test_controller_artifact_is_read_under_a_16_mib_cap(
     payload = padded_json(size)
     assert len(payload) == size
     digest = write_artifact(tmp_path / ARTIFACT, payload)
-    write_bundle(tmp_path)
+    bundle_digest = write_valid_bundle(tmp_path)
     write_config(
         tmp_path / "ovcaq.toml",
-        gate_config("58", ARTIFACT, digest, bundle=BUNDLE_PATH),
+        gate_config(
+            "58", ARTIFACT, digest, bundle=BUNDLE_PATH, bundle_digest=bundle_digest
+        ),
     )
 
     result = run_tool(tmp_path, "58")
@@ -208,6 +218,8 @@ def test_controller_artifact_is_read_under_a_16_mib_cap(
         f"{BUNDLE_KEY} = 5",
         f'{BUNDLE_KEY} = ["{BUNDLE_PATH}"]',
         f"{BUNDLE_KEY} = true",
+        f"{BUNDLE_KEY}_sha256 = 5",
+        f'{BUNDLE_KEY}_sha256 = ["{DECOY_DIGEST}"]',
     ],
 )
 def test_non_string_workflow_values_are_refused(tmp_path: Path, line: str) -> None:
@@ -283,11 +295,16 @@ def test_relative_paths_resolve_against_cwd_not_the_config_directory(
 ) -> None:
     mark_done(tmp_path, *CLOSURE["58"])
     digest = write_artifact(tmp_path / ARTIFACT, {"evidence": list(TOKENS)})
-    write_bundle(tmp_path)
+    bundle_digest = write_valid_bundle(tmp_path)
     config = tmp_path / "conf" / "gate.toml"
     # Beside the config sits a decoy artifact and no bundle at all.
     write_artifact(config.parent / ARTIFACT, {"evidence": ["core", "jobs"]})
-    write_config(config, gate_config("58", ARTIFACT, digest, bundle=BUNDLE_PATH))
+    write_config(
+        config,
+        gate_config(
+            "58", ARTIFACT, digest, bundle=BUNDLE_PATH, bundle_digest=bundle_digest
+        ),
+    )
 
     result = run_tool(tmp_path, "58", "--config", str(config))
 

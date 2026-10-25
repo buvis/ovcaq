@@ -151,8 +151,20 @@ def write_bundle(root: Path, name: str = BUNDLE_PATH, body: str = "{not json") -
     return path
 
 
+def write_valid_bundle(
+    root: Path, name: str = BUNDLE_PATH, payload: object | None = None
+) -> str:
+    """A parseable JSON contract bundle; returns its sha256 digest."""
+    return write_artifact(root / name, {} if payload is None else payload)
+
+
 def gate_config(
-    prd: str, path: str | None, digest: str | None, *, bundle: str | None = None
+    prd: str,
+    path: str | None,
+    digest: str | None,
+    *,
+    bundle: str | None = None,
+    bundle_digest: str | None = None,
 ) -> str:
     table, key, _ = GATES[prd]
     lines = [f"[{table}]"]
@@ -162,6 +174,8 @@ def gate_config(
         lines.append(f"{key}_sha256 = {json.dumps(digest)}")
     if bundle is not None:
         lines.append(f"{BUNDLE_KEY} = {json.dumps(bundle)}")
+    if bundle_digest is not None:
+        lines.append(f"{BUNDLE_KEY}_sha256 = {json.dumps(bundle_digest)}")
     return "\n".join(lines) + "\n"
 
 
@@ -178,12 +192,19 @@ def satisfy_gate(root: Path, prd: str) -> None:
         root / "artifacts" / f"{key}.json", {"evidence": list(tokens)}
     )
     bundle = None
+    bundle_digest = None
     if prd in PRECONDITION:
-        write_bundle(root)
+        bundle_digest = write_valid_bundle(root)
         bundle = BUNDLE_PATH
     write_config(
         root / "ovcaq.toml",
-        gate_config(prd, f"artifacts/{key}.json", digest, bundle=bundle),
+        gate_config(
+            prd,
+            f"artifacts/{key}.json",
+            digest,
+            bundle=bundle,
+            bundle_digest=bundle_digest,
+        ),
     )
 
 
@@ -240,7 +261,12 @@ def digest_variant(case: str, digest: str) -> str:
 
 
 def path_variant(
-    root: Path, prd: str, case: str, digest: str, bundle: str | None
+    root: Path,
+    prd: str,
+    case: str,
+    digest: str,
+    bundle: str | None,
+    bundle_digest: str | None = None,
 ) -> str | None:
     """Config text for the cases that change the table, keys or path."""
     table, key, tokens = GATES[prd]
@@ -249,7 +275,9 @@ def path_variant(
     path = f"artifacts/{key}.json"
 
     def config(where: str | None, hexdigest: str | None) -> str:
-        return gate_config(prd, where, hexdigest, bundle=bundle)
+        return gate_config(
+            prd, where, hexdigest, bundle=bundle, bundle_digest=bundle_digest
+        )
 
     if case == "no-config-file":
         return None
@@ -288,10 +316,11 @@ def build_unmet_gate(root: Path, prd: str, case: str) -> str | None:
     )
     # A satisfied precondition keeps every case about the artifact alone.
     bundle = None
+    bundle_digest = None
     if prd in PRECONDITION:
-        write_bundle(root)
+        bundle_digest = write_valid_bundle(root)
         bundle = BUNDLE_PATH
-    return path_variant(root, prd, case, digest, bundle)
+    return path_variant(root, prd, case, digest, bundle, bundle_digest)
 
 
 UNMET_GATE_CASES = [
