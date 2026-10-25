@@ -8,10 +8,12 @@ import os
 import signal
 import subprocess
 import tempfile
+import threading
+import time
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import IO, Any
 
 from ovcaq.paths import ProjectPathError, _checked_path
 
@@ -22,6 +24,9 @@ MAX_STDERR_TAIL_CHARS = 512
 TRUNCATION_MARKER = "...(truncated) "
 REDACTED_MARKER = "<redacted>"
 MIN_SECRET_CHARS = 8
+READ_CHUNK_BYTES = 65_536
+POLL_SECONDS = 0.05
+JOIN_SECONDS = 1.0
 REQUIRED_CONTRACT_STRINGS = ("package_version", "schema_digest", "fixture_digest")
 ADVERTISED_CONTRACT_FIELDS = ("operations", "capabilities")
 
@@ -189,19 +194,23 @@ def _reject_constant(name: str) -> Any:
     raise IncompatibleContractError(f"bundle has non-finite number: {name}")
 
 
-def controller_bundle_digest(path: Path, expected_digest: str | None = None) -> str:
-    """Return the sha256 of the bundle's sorted-key canonical JSON form.
+def _read_bundle(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as error:
+        raise IncompatibleContractError(
+            f"cannot read contract bundle {path}: {error}"
+        ) from error
 
-    Raise IncompatibleContractError when the bundle is unreadable or not a
-    strict JSON object, or when expected_digest is given and does not match.
-    """
+
+def _parse_bundle(text: str, path: Path) -> dict[str, Any]:
     try:
         data = json.loads(
-            path.read_text(encoding="utf-8"),
+            text,
             object_pairs_hook=_reject_duplicate_keys,
             parse_constant=_reject_constant,
         )
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+    except json.JSONDecodeError as error:
         raise IncompatibleContractError(
             f"cannot read contract bundle {path}: {error}"
         ) from error
@@ -209,6 +218,12 @@ def controller_bundle_digest(path: Path, expected_digest: str | None = None) -> 
         raise IncompatibleContractError(
             f"contract bundle must be a JSON object: {path}"
         )
+    return data
+
+
+def _bundle_digest(
+    data: Mapping[str, Any], path: Path, expected_digest: str | None
+) -> str:
     canonical = json.dumps(data, sort_keys=True).encode()
     digest = hashlib.sha256(canonical).hexdigest()
     if expected_digest is not None and expected_digest != digest:
@@ -217,6 +232,16 @@ def controller_bundle_digest(path: Path, expected_digest: str | None = None) -> 
             f"expected {expected_digest}, computed {digest}"
         )
     return digest
+
+
+def controller_bundle_digest(path: Path, expected_digest: str | None = None) -> str:
+    """Return the sha256 of the bundle's sorted-key canonical JSON form.
+
+    Raise IncompatibleContractError when the bundle is unreadable or not a
+    strict JSON object, or when expected_digest is given and does not match.
+    """
+    text = _read_bundle(path)
+    return _bundle_digest(_parse_bundle(text, path), path, expected_digest)
 
 
 def _string_set(data: Mapping[str, Any], field: str) -> frozenset[str]:
@@ -251,22 +276,39 @@ def _live_string(live: Mapping[str, Any], field: str, *, allow_empty: bool) -> s
     return value
 
 
-def _check_package_version(pinned: str, live: str) -> None:
-    """Accept the pinned version itself or the pinned version plus a build tag."""
-    prefix = f"{pinned}+"
-    if live == pinned or (live.startswith(prefix) and len(live) > len(prefix)):
-        return
-    raise IncompatibleContractError(
-        f"controller package_version {live!r} does not match pinned {pinned!r}"
-    )
-
-
 def _check_advertised(field: str, pinned: list[str], live: frozenset[str]) -> None:
     missing = sorted(set(pinned) - live)
     if missing:
         raise IncompatibleContractError(
             f"controller does not advertise pinned {field}: {', '.join(missing)}"
         )
+
+
+def _read_capped(stream: IO[bytes], cap: int, sink: list[bytes]) -> None:
+    """Read at most cap bytes from the stream into the sink, then stop."""
+    size = 0
+    while size < cap:
+        chunk = stream.read(min(READ_CHUNK_BYTES, cap - size))
+        if not chunk:
+            return
+        sink.append(chunk)
+        size += len(chunk)
+
+
+def _kill_group(process: subprocess.Popen[bytes]) -> None:
+    """Kill the controller's whole process group, so grandchildren die too."""
+    if process.poll() is None:
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            pass  # the controller exited before the signal reached its group
+    process.wait()
+
+
+def _timed_out(config: ControllerConfig) -> ControllerTimeoutError:
+    return ControllerTimeoutError(
+        f"controller did not answer within {config.timeout_seconds}s"
+    )
 
 
 def _json_strings(value: Any) -> list[str]:
@@ -313,12 +355,62 @@ class ControllerClient:
             text = text.replace(secret, REDACTED_MARKER)
         return text
 
+    def _bounded(self, text: str) -> str:
+        """Controller text, redacted and then bounded to a tail."""
+        redacted = self._redact(text)
+        if len(redacted) > MAX_STDERR_TAIL_CHARS:
+            return TRUNCATION_MARKER + redacted[-MAX_STDERR_TAIL_CHARS:]
+        return redacted
+
     def _detail(self, stderr: bytes) -> str:
         """The controller's stderr, redacted and then bounded to a tail."""
-        text = self._redact(stderr.decode("utf-8", errors="replace").strip())
-        if len(text) > MAX_STDERR_TAIL_CHARS:
-            return TRUNCATION_MARKER + text[-MAX_STDERR_TAIL_CHARS:]
-        return text
+        return self._bounded(stderr.decode("utf-8", errors="replace").strip())
+
+    def _await_output(
+        self,
+        process: subprocess.Popen[bytes],
+        readers: list[threading.Thread],
+        buffers: list[list[bytes]],
+    ) -> None:
+        """Poll until both readers finish, the bound trips or the time runs out."""
+        config = self._config
+        deadline = time.monotonic() + config.timeout_seconds
+        while True:
+            for name, sink in zip(("output", "stderr"), buffers, strict=True):
+                if sum(map(len, sink)) > config.max_output_bytes:
+                    _kill_group(process)
+                    raise ControllerOutputError(
+                        f"controller {name} exceeds {config.max_output_bytes} bytes"
+                    )
+            if not any(reader.is_alive() for reader in readers):
+                break
+            if time.monotonic() >= deadline:
+                _kill_group(process)
+                raise _timed_out(config)
+            time.sleep(POLL_SECONDS)
+        try:
+            process.wait(timeout=max(deadline - time.monotonic(), 0.0))
+        except subprocess.TimeoutExpired:
+            _kill_group(process)
+            raise _timed_out(config) from None
+
+    def _capture(self, process: subprocess.Popen[bytes]) -> tuple[bytes, bytes]:
+        """Both streams, read incrementally and capped one byte over the bound."""
+        cap = self._config.max_output_bytes + 1
+        buffers: list[list[bytes]] = [[], []]
+        pipes = [pipe for pipe in (process.stdout, process.stderr) if pipe is not None]
+        readers = [
+            threading.Thread(target=_read_capped, args=(pipe, cap, sink), daemon=True)
+            for pipe, sink in zip(pipes, buffers, strict=True)
+        ]
+        for reader in readers:
+            reader.start()
+        try:
+            self._await_output(process, readers, buffers)
+        finally:
+            for reader in readers:
+                reader.join(JOIN_SECONDS)
+        return b"".join(buffers[0]), b"".join(buffers[1])
 
     def _run(self, *arguments: str) -> dict[str, Any]:
         config = self._config
@@ -335,19 +427,8 @@ class ControllerClient:
             raise ControllerError(
                 f"cannot run controller program {config.argv[0]}: {error}"
             ) from error
-        try:
-            stdout, stderr = process.communicate(timeout=config.timeout_seconds)
-        except subprocess.TimeoutExpired:
-            os.killpg(process.pid, signal.SIGKILL)
-            process.communicate()
-            raise ControllerTimeoutError(
-                f"controller did not answer within {config.timeout_seconds}s"
-            ) from None
-        for name, stream in (("output", stdout), ("stderr", stderr)):
-            if len(stream) > config.max_output_bytes:
-                raise ControllerOutputError(
-                    f"controller {name} exceeds {config.max_output_bytes} bytes"
-                )
+        with process:
+            stdout, stderr = self._capture(process)
         if process.returncode != 0:
             raise ControllerError(
                 f"controller exited with status {process.returncode}: "
@@ -363,11 +444,21 @@ class ControllerClient:
             raise ControllerOutputError("controller output must be a JSON object")
         return data
 
+    def _check_package_version(self, pinned: str, live: str) -> None:
+        """Accept the pinned version itself or the pinned version plus a build tag."""
+        prefix = f"{pinned}+"
+        if live == pinned or (live.startswith(prefix) and len(live) > len(prefix)):
+            return
+        raise IncompatibleContractError(
+            f"controller package_version {self._bounded(live)!r} "
+            f"does not match pinned {pinned!r}"
+        )
+
     def _pinned_contract(self) -> dict[str, Any]:
         """The pinned bundle, digest-checked and validated before any spawn."""
         pinned_path = self._config.contract_bundle
-        controller_bundle_digest(pinned_path, self._config.bundle_digest)
-        pinned: dict[str, Any] = json.loads(pinned_path.read_text(encoding="utf-8"))
+        pinned = _parse_bundle(_read_bundle(pinned_path), pinned_path)
+        _bundle_digest(pinned, pinned_path, self._config.bundle_digest)
         for field in REQUIRED_CONTRACT_STRINGS:
             _pinned_string(pinned, field)
         for field in ADVERTISED_CONTRACT_FIELDS:
@@ -393,11 +484,11 @@ class ControllerClient:
         for field in ("schema_digest", "fixture_digest"):
             if live.get(field) != pinned.get(field):
                 raise IncompatibleContractError(
-                    f"controller {field} {live.get(field)!r} does not match "
+                    f"controller {field} {self._bounded(live[field])!r} does not match "
                     f"pinned {pinned.get(field)!r}"
                 )
         version = live["package_version"]
-        _check_package_version(pinned["package_version"], version)
+        self._check_package_version(pinned["package_version"], version)
         _check_advertised("operations", pinned["operations"], operations)
         _check_advertised("capabilities", pinned["capabilities"], capabilities)
         self._contract = ControllerContract(
