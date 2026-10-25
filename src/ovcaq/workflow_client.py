@@ -297,12 +297,25 @@ def _read_capped(stream: IO[bytes], cap: int, sink: list[bytes]) -> None:
 
 def _kill_group(process: subprocess.Popen[bytes]) -> None:
     """Kill the controller's whole process group, so grandchildren die too."""
-    if process.poll() is None:
-        try:
-            os.killpg(process.pid, signal.SIGKILL)
-        except (ProcessLookupError, PermissionError):
-            pass  # the controller exited before the signal reached its group
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        pass  # the controller exited before the signal reached its group
     process.wait()
+
+
+def _enforce_bound(
+    process: subprocess.Popen[bytes],
+    buffers: list[list[bytes]],
+    config: ControllerConfig,
+) -> None:
+    """Kill the group and raise when either stream passed the output bound."""
+    for name, sink in zip(("output", "stderr"), buffers, strict=True):
+        if sum(map(len, sink)) > config.max_output_bytes:
+            _kill_group(process)
+            raise ControllerOutputError(
+                f"controller {name} exceeds {config.max_output_bytes} bytes"
+            )
 
 
 def _timed_out(config: ControllerConfig) -> ControllerTimeoutError:
@@ -376,18 +389,14 @@ class ControllerClient:
         config = self._config
         deadline = time.monotonic() + config.timeout_seconds
         while True:
-            for name, sink in zip(("output", "stderr"), buffers, strict=True):
-                if sum(map(len, sink)) > config.max_output_bytes:
-                    _kill_group(process)
-                    raise ControllerOutputError(
-                        f"controller {name} exceeds {config.max_output_bytes} bytes"
-                    )
+            _enforce_bound(process, buffers, config)
             if not any(reader.is_alive() for reader in readers):
                 break
             if time.monotonic() >= deadline:
                 _kill_group(process)
                 raise _timed_out(config)
             time.sleep(POLL_SECONDS)
+        _enforce_bound(process, buffers, config)
         try:
             process.wait(timeout=max(deadline - time.monotonic(), 0.0))
         except subprocess.TimeoutExpired:
