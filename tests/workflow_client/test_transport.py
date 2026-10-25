@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import hashlib
 import json
+import os
 import sys
 import time
 from collections.abc import Callable
@@ -33,7 +34,7 @@ CANARY = "super-secret-credential-xyz"
 SLOW_SECONDS = 10
 TIMEOUT_BUDGET = 5.0
 
-# Fake controller: records its argv, cwd and any --request file, then answers
+# Fake controller: records its argv, cwd, pid and any --request file, then answers
 # with the stdout, stderr, delay and exit code from the spec file in argv[1].
 FAKE_CONTROLLER = """\
 import json
@@ -43,7 +44,7 @@ import time
 from pathlib import Path
 
 spec = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-record = {"argv": sys.argv, "cwd": os.getcwd()}
+record = {"argv": sys.argv, "cwd": os.getcwd(), "pid": os.getpid()}
 if "--request" in sys.argv:
     request = Path(sys.argv[sys.argv.index("--request") + 1])
     record["request"] = request.read_text(encoding="utf-8")
@@ -213,6 +214,19 @@ def same_directory(left: str | Path, right: Path) -> bool:
     return Path(left).resolve() == right.resolve()
 
 
+def process_ended(pid: int, *, within: float = 3.0) -> bool:
+    """Poll until no process has pid, allowing for kill and reap latency."""
+    deadline = time.monotonic() + within
+    while True:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return True
+        if time.monotonic() > deadline:
+            return False
+        time.sleep(0.05)
+
+
 def exception_chain(error: BaseException) -> list[BaseException]:
     chain: list[BaseException] = []
     current: BaseException | None = error
@@ -249,12 +263,23 @@ def test_contract_runs_contract_verb_in_project_root_and_maps_bundle(
     fake: FakeController, project_root: Path, tmp_path: Path, variant: bool
 ) -> None:
     bundle = write_variant_bundle(tmp_path) if variant else BUNDLE
-    data = load_json(bundle)
-    fake.respond(json.dumps(data))
+    pinned = load_json(bundle)
+    # The live controller agrees on both digests but reports other fields the
+    # bundle does not, so only the live answer can produce these values.
+    live = {
+        **pinned,
+        "package_version": pinned["package_version"] + "+live",
+        "operations": [*pinned["operations"], "workflow.live-only"],
+        "capabilities": [*pinned["capabilities"], "live-only"],
+    }
+    fake.respond(json.dumps(live))
 
     contract = make_client(fake, project_root, bundle=bundle).contract()
 
-    assert contract == expected_contract(data)
+    assert contract == expected_contract(live)
+    assert contract.package_version == live["package_version"]
+    assert "workflow.live-only" in contract.operations
+    assert "live-only" in contract.capabilities
     assert isinstance(contract.operations, frozenset)
     assert isinstance(contract.capabilities, frozenset)
     [call] = fake.calls()
@@ -374,6 +399,16 @@ def test_snapshot_runs_snapshot_verb_and_returns_payload_unmodified(
     assert same_directory(call["cwd"], project_root)
 
 
+@pytest.mark.parametrize("stdout", ["[1, 2]", "42", '"x"'], ids=["list", "int", "str"])
+def test_snapshot_rejects_json_that_is_not_an_object(
+    fake: FakeController, project_root: Path, stdout: str
+) -> None:
+    fake.respond(stdout)
+
+    with pytest.raises(ControllerOutputError):
+        make_client(fake, project_root).snapshot(workflow_id="workflow-a")
+
+
 # apply()
 
 ENVELOPES = [
@@ -425,17 +460,26 @@ def test_apply_removes_request_file_after_controller_exits_zero(
 ) -> None:
     # The task does not pin the apply response JSON, so this test checks only
     # the request-file lifecycle on a zero exit, not the returned ApplyResult.
-    envelope = make_envelope(request_id="req-0003", expected_revision=5)
+    # Two back-to-back calls on one client must not share a request file, so
+    # a fixed, predictable path fails here.
+    envelopes = [
+        make_envelope(request_id="req-0003", expected_revision=5),
+        make_envelope(request_id="req-0004", expected_revision=6),
+    ]
     fake.respond(json.dumps({"ok": True, "revision": 6}))
     client = make_client(fake, project_root, actor_file=actor_file)
 
-    with contextlib.suppress(ControllerError):
-        client.apply(envelope)
+    for envelope in envelopes:
+        with contextlib.suppress(ControllerError):
+            client.apply(envelope)
 
-    [call] = fake.calls()
-    assert json.loads(call["request"]) == envelope_as_json(envelope)
-    assert call["request_mode"] == 0o600
-    assert not request_path(call).exists()
+    calls = fake.calls()
+    assert len(calls) == 2
+    for call, envelope in zip(calls, envelopes, strict=True):
+        assert json.loads(call["request"]) == envelope_as_json(envelope)
+        assert call["request_mode"] == 0o600
+        assert not request_path(call).exists()
+    assert request_path(calls[0]) != request_path(calls[1])
     assert list(project_root.iterdir()) == []
 
 
@@ -499,6 +543,31 @@ def test_apply_returns_controller_response_as_apply_result(
     assert not request_path(call).exists()
 
 
+VALID_APPLY_RESPONSE = APPLY_RESPONSES[0][0]
+MALFORMED_APPLY_RESPONSES = {
+    "missing-ok": {k: v for k, v in VALID_APPLY_RESPONSE.items() if k != "ok"},
+    "string-ok": {**VALID_APPLY_RESPONSE, "ok": "yes"},
+    "string-revision": {**VALID_APPLY_RESPONSE, "revision": "3"},
+}
+
+
+@pytest.mark.parametrize("malformed", list(MALFORMED_APPLY_RESPONSES))
+def test_apply_rejects_malformed_controller_response(
+    fake: FakeController, project_root: Path, actor_file: Path, malformed: str
+) -> None:
+    fake.respond(json.dumps(MALFORMED_APPLY_RESPONSES[malformed]))
+    outcome: object = None
+
+    with pytest.raises(ControllerOutputError):
+        outcome = make_client(fake, project_root, actor_file=actor_file).apply(
+            make_envelope()
+        )
+
+    assert outcome is None
+    [call] = fake.calls()
+    assert not request_path(call).exists()
+
+
 def test_apply_without_actor_file_refuses_before_spawning(
     fake: FakeController, project_root: Path
 ) -> None:
@@ -533,6 +602,19 @@ def test_call_raises_timeout_when_controller_outlives_timeout(
         call(client)
 
     assert time.monotonic() - started < TIMEOUT_BUDGET
+    [record] = fake.calls()
+    # A reported timeout must not leave the controller running behind it.
+    assert process_ended(record["pid"])
+
+
+def test_call_waits_up_to_configured_timeout_not_a_fixed_one(
+    fake: FakeController, project_root: Path
+) -> None:
+    # A slow controller inside a generous timeout is a success, not a timeout.
+    fake.respond(json.dumps({"revision": 9}), sleep=3)
+    client = make_client(fake, project_root, timeout_seconds=10)
+
+    assert client.snapshot(workflow_id="workflow-a") == {"revision": 9}
     assert len(fake.calls()) == 1
 
 

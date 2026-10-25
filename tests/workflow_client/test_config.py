@@ -72,6 +72,32 @@ def test_controller_settings_is_opt_in_on_controller_argv(
     assert controller_settings(config_root) is None
 
 
+def test_controller_settings_resolves_relative_paths_against_project_root(
+    config_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle = install_bundle(config_root / "bundles")
+    actor = config_root / "actors" / "actor.json"
+    actor.parent.mkdir()
+    actor.write_text("{}", encoding="utf-8")
+    write_project_config(
+        config_root,
+        '[workflow]\ncontroller_argv = ["autopilot-controller"]\n'
+        'contract_bundle = "bundles/controller-v1.json"\n'
+        'actor_file = "actors/actor.json"\n',
+    )
+    # Run from elsewhere so cwd-relative resolution cannot pass by accident.
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+
+    config = controller_settings(config_root)
+
+    assert config is not None
+    assert config.contract_bundle == bundle
+    assert config.contract_bundle == config_root / "bundles" / "controller-v1.json"
+    assert config.actor_file == config_root / "actors" / "actor.json"
+
+
 @pytest.mark.parametrize(
     "argv",
     [["autopilot-controller"], ["uvx", "autopilot-controller", "--profile", "ci"]],
