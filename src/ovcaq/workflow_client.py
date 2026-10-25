@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from ovcaq.paths import ProjectPathError, _checked_path
+
 PROTOCOL_MAJOR = 1
 INITIAL_OPEN_OPERATION = "workflow.open"
 MAX_TIMEOUT_SECONDS = 300
@@ -75,10 +77,17 @@ class ControllerConfig:
             _require_string(argument, "argv argument")
         if not isinstance(self.contract_bundle, Path):
             raise TypeError("contract_bundle must be a Path")
-        if not self.contract_bundle.is_file():
+        try:
+            bundle = _checked_path(self.contract_bundle)
+        except ProjectPathError as error:
+            raise ValueError(
+                f"contract_bundle must not traverse a symlink: {error}"
+            ) from error
+        if not bundle.is_file():
             raise ValueError(
                 f"contract_bundle must be an existing file: {self.contract_bundle}"
             )
+        object.__setattr__(self, "contract_bundle", bundle)
         if self.actor_file is not None and not isinstance(self.actor_file, Path):
             raise TypeError("actor_file must be a Path or None")
         if not isinstance(self.project_root, Path):
@@ -143,8 +152,44 @@ class MutationEnvelope:
             _require_int(self.lease_epoch, "lease_epoch")
 
 
-def controller_bundle_digest(path: Path) -> str:
-    """Return the sha256 of the bundle's sorted-key canonical JSON form."""
-    data = json.loads(path.read_text(encoding="utf-8"))
+def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise IncompatibleContractError(f"bundle has duplicate key: {key!r}")
+        result[key] = value
+    return result
+
+
+def _reject_constant(name: str) -> Any:
+    raise IncompatibleContractError(f"bundle has non-finite number: {name}")
+
+
+def controller_bundle_digest(path: Path, expected_digest: str | None = None) -> str:
+    """Return the sha256 of the bundle's sorted-key canonical JSON form.
+
+    Raise IncompatibleContractError when the bundle is unreadable or not a
+    strict JSON object, or when expected_digest is given and does not match.
+    """
+    try:
+        data = json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=_reject_duplicate_keys,
+            parse_constant=_reject_constant,
+        )
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise IncompatibleContractError(
+            f"cannot read contract bundle {path}: {error}"
+        ) from error
+    if not isinstance(data, dict):
+        raise IncompatibleContractError(
+            f"contract bundle must be a JSON object: {path}"
+        )
     canonical = json.dumps(data, sort_keys=True).encode()
-    return hashlib.sha256(canonical).hexdigest()
+    digest = hashlib.sha256(canonical).hexdigest()
+    if expected_digest is not None and expected_digest != digest:
+        raise IncompatibleContractError(
+            f"contract bundle digest mismatch for {path}: "
+            f"expected {expected_digest}, computed {digest}"
+        )
+    return digest

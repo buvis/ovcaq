@@ -262,6 +262,26 @@ def test_config_rejects_directory_contract_bundle(tmp_path: Path) -> None:
         make_config(tmp_path, contract_bundle=directory)
 
 
+def test_config_rejects_symlinked_contract_bundle(tmp_path: Path) -> None:
+    target = tmp_path / "controller-v1.json"
+    shutil.copyfile(BUNDLE, target)
+    link = tmp_path / "linked.json"
+    link.symlink_to(target)
+
+    with pytest.raises(ValueError, match="symlink"):
+        make_config(tmp_path, contract_bundle=link)
+
+
+def test_config_rejects_bundle_under_symlinked_directory(tmp_path: Path) -> None:
+    real = tmp_path / "real"
+    real.mkdir()
+    shutil.copyfile(BUNDLE, real / "controller-v1.json")
+    (tmp_path / "alias").symlink_to(real, target_is_directory=True)
+
+    with pytest.raises(ValueError, match="symlink"):
+        make_config(tmp_path, contract_bundle=tmp_path / "alias" / "controller-v1.json")
+
+
 # Bundle content (malformed JSON, missing protocol_major) is deliberately not
 # tested at ControllerConfig construction. This task's contract limits
 # __post_init__ to "contract_bundle must exist and be a regular file"; parsing
@@ -712,3 +732,87 @@ def test_bundle_digest_hashes_bundle_missing_protocol_major(tmp_path: Path) -> N
     assert digest == canonical_sha256(incomplete)
     assert digest == NO_PROTOCOL_MAJOR_DIGEST
     assert digest != FIXTURE_DIGEST
+
+
+def test_bundle_digest_accepts_matching_expected_digest() -> None:
+    assert controller_bundle_digest(BUNDLE, FIXTURE_DIGEST) == FIXTURE_DIGEST
+    assert controller_bundle_digest(BUNDLE, expected_digest=None) == FIXTURE_DIGEST
+
+
+def test_bundle_digest_rejects_wrong_expected_digest() -> None:
+    wrong = "0" * 64
+
+    with pytest.raises(IncompatibleContractError) as caught:
+        controller_bundle_digest(BUNDLE, expected_digest=wrong)
+
+    assert wrong in str(caught.value)
+    assert FIXTURE_DIGEST in str(caught.value)
+
+
+def test_bundle_digest_rejects_mutated_artifact_against_pinned_digest(
+    tmp_path: Path,
+) -> None:
+    data = load_bundle()
+    mutated = write_bundle(
+        tmp_path / "mutated.json", {**data, "protocol_major": PROTOCOL_MAJOR + 1}
+    )
+
+    with pytest.raises(IncompatibleContractError):
+        controller_bundle_digest(mutated, expected_digest=FIXTURE_DIGEST)
+
+
+def test_bundle_digest_rejects_duplicate_keys(tmp_path: Path) -> None:
+    duplicate = tmp_path / "duplicate.json"
+    duplicate.write_text('{"protocol_major": 2, "protocol_major": 1}', encoding="utf-8")
+    single = write_bundle(tmp_path / "single.json", {"protocol_major": 1})
+
+    # Plain json.loads keeps the last value, so both files used to digest alike.
+    assert canonical_sha256(duplicate) == canonical_sha256(single)
+    with pytest.raises(IncompatibleContractError, match="duplicate"):
+        controller_bundle_digest(duplicate)
+
+
+def test_bundle_digest_rejects_nested_duplicate_keys(tmp_path: Path) -> None:
+    nested = tmp_path / "nested.json"
+    nested.write_text('{"outer": {"a": 1, "a": 2}}', encoding="utf-8")
+
+    with pytest.raises(IncompatibleContractError, match="duplicate"):
+        controller_bundle_digest(nested)
+
+
+@pytest.mark.parametrize("constant", ["NaN", "Infinity", "-Infinity"])
+def test_bundle_digest_rejects_non_finite_numbers(
+    tmp_path: Path, constant: str
+) -> None:
+    bundle = tmp_path / "constant.json"
+    bundle.write_text(f'{{"protocol_major": {constant}}}', encoding="utf-8")
+
+    with pytest.raises(IncompatibleContractError):
+        controller_bundle_digest(bundle)
+
+
+@pytest.mark.parametrize("text", ["[1]", '"bundle"', "1", "null"])
+def test_bundle_digest_rejects_non_object_top_level(tmp_path: Path, text: str) -> None:
+    bundle = tmp_path / "top-level.json"
+    bundle.write_text(text, encoding="utf-8")
+
+    with pytest.raises(IncompatibleContractError):
+        controller_bundle_digest(bundle)
+
+
+@pytest.mark.parametrize(
+    "content",
+    [b"{not json", b"", b"\xff\xfe{}"],
+    ids=["malformed", "empty", "not-utf8"],
+)
+def test_bundle_digest_wraps_parse_failures(tmp_path: Path, content: bytes) -> None:
+    bundle = tmp_path / "broken.json"
+    bundle.write_bytes(content)
+
+    with pytest.raises(IncompatibleContractError):
+        controller_bundle_digest(bundle)
+
+
+def test_bundle_digest_wraps_missing_file(tmp_path: Path) -> None:
+    with pytest.raises(IncompatibleContractError):
+        controller_bundle_digest(tmp_path / "absent.json")

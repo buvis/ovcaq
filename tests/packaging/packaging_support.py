@@ -22,6 +22,7 @@ DECLARED_MODULES = (
     "ovcaq.config",
     "ovcaq.paths",
     "ovcaq.errors",
+    "ovcaq.workflow_client",
     "ovcaq.state",
     "ovcaq.state.schema",
     "ovcaq.state.store",
