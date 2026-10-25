@@ -109,7 +109,8 @@ actor_file = "secrets/actor.json"  # credential path, needed only for apply
 ```
 
 Relative paths resolve from the project root. The client checks the
-controller's protocol major and bundle digests before any other call.
+controller's protocol major, bundle digests, advertised capabilities and
+operations, and package version before any other call.
 
 `python3 tools/autopilot-prerequisites --prd <ID> [--config PATH]` reports
 whether a PRD's prerequisites are in place. It runs from the project root,
@@ -118,7 +119,12 @@ writes. Exit 0 prints `{"ready": true, "prd": "<ID>"}`, exit 1 prints the
 same object with `ready: false` and a `missing` list, and exit 2 means an
 unknown PRD ID or a config error (stderr only). A predecessor counts only
 as a regular `docs/dev/project-management/prds/done/000NN-*.md` file.
-PRD 61 also needs `[autopilot] plugin_artifact` and `plugin_artifact_sha256`;
+PRD 58 also needs `[workflow] controller_artifact` and
+`controller_artifact_sha256`, with an `evidence` list holding `core`,
+`jobs`, `reviews` and `records`, plus a `contract_bundle` and
+`contract_bundle_sha256` precondition: a regular file reachable without a
+symlink, whose sha256 matches and whose bytes parse as JSON. PRD 61 also
+needs `[autopilot] plugin_artifact` and `plugin_artifact_sha256`;
 PRD 65 needs `[operator] client_artifact` and `client_artifact_sha256`. The
 artifact is a JSON object of at most 16 MiB with no symlinked path component,
 a matching sha256, and an `evidence` list holding `AP00017` (61) or
