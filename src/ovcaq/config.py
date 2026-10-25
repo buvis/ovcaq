@@ -217,6 +217,17 @@ def agent_settings(root: Path, *, name: str | None = None) -> AgentSettings:
     )
 
 
+def _active_tiers(
+    root: Path, user: Mapping[str, object], project: Mapping[str, object]
+) -> dict[str, str]:
+    active = project.get("agent", user.get("agent"))
+    if active is None:
+        return {}
+    if not isinstance(active, str) or not active:
+        raise ConfigurationError("configuration agent must be a nonempty name")
+    return dict(agent_settings(root, name=active).tiers)
+
+
 def workflow_settings(
     root: Path,
     *,
@@ -253,13 +264,7 @@ def workflow_settings(
         "state_file",
     )
     state = runtime_directory(root, state)
-    active = project.get("agent", user.get("agent"))
-    if active is not None:
-        if not isinstance(active, str) or not active:
-            raise ConfigurationError("configuration agent must be a nonempty name")
-        tiers = dict(agent_settings(root, name=active).tiers)
-    else:
-        tiers = {}
+    tiers = _active_tiers(root, user, project)
     controller = controller_settings(root)
     return WorkflowSettings(
         prds,
