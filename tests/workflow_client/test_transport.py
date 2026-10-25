@@ -398,7 +398,8 @@ def test_apply_rejects_malformed_controller_response(
     fake.respond(json.dumps(MALFORMED_APPLY_RESPONSES[malformed]), verb="apply")
     outcome: object = None
 
-    with pytest.raises(ControllerOutputError):
+    # A malformed apply response is also an ambiguous, post-spawn failure.
+    with pytest.raises(ApplyOutcomeUnknownError):
         outcome = make_client(fake, project_root, actor_file=actor_file).apply(
             make_envelope()
         )
