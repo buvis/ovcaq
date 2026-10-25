@@ -29,6 +29,7 @@ from tests.workflow_client.conftest import (
 
 from ovcaq.workflow_client import (
     PROTOCOL_MAJOR,
+    ApplyOutcomeUnknownError,
     ApplyResult,
     ControllerClient,
     ControllerConfig,
@@ -476,7 +477,10 @@ def test_call_rejects_stdout_over_output_bound(
         fake, project_root, actor_file=actor_file, max_output_bytes=bound
     )
 
-    with pytest.raises(ControllerOutputError):
+    # apply() turns this ambiguous, post-spawn failure into
+    # ApplyOutcomeUnknownError instead; every other verb keeps the plain error.
+    expected = ApplyOutcomeUnknownError if verb == "apply" else ControllerOutputError
+    with pytest.raises(expected):
         CALL_BY_VERB[verb](client)
 
     # The verb's own hop is what the bound rejected, not the negotiation hop.
@@ -521,7 +525,10 @@ def test_call_rejects_unparseable_stdout_on_zero_exit(
     fake.respond(CONTRACT_ANSWER, verb="contract")
     fake.respond(stdout, verb=verb)
 
-    with pytest.raises(ControllerOutputError):
+    # apply() turns this ambiguous, post-spawn failure into
+    # ApplyOutcomeUnknownError instead; every other verb keeps the plain error.
+    expected = ApplyOutcomeUnknownError if verb == "apply" else ControllerOutputError
+    with pytest.raises(expected):
         CALL_BY_VERB[verb](make_client(fake, project_root, actor_file=actor_file))
 
 
