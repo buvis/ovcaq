@@ -304,7 +304,10 @@ def _kill_group(process: subprocess.Popen[bytes]) -> None:
     try:
         process.wait(timeout=JOIN_SECONDS)
     except subprocess.TimeoutExpired:
-        pass  # the group did not die in time; nothing more to wait for here
+        # SIGKILL did not reap the group within the bound; it may still be
+        # a zombie. Nothing further to wait for here without risking the
+        # same indefinite block this bound exists to prevent.
+        pass
 
 
 def _enforce_bound(
@@ -345,7 +348,14 @@ class ControllerClient:
         self._contract: ControllerContract | None = None
 
     def _actor_secrets(self) -> tuple[str, ...]:
-        """The actor file's usable secrets, read fresh so rotation is seen."""
+        """The actor file's usable secrets, read fresh so rotation is seen.
+
+        Secrets shorter than MIN_SECRET_CHARS are intentionally never
+        redacted: a shorter minimum risks redacting unrelated substrings
+        in controller output. An unreadable actor file (OSError) yields no
+        secrets, so redaction becomes a silent no-op for that call rather
+        than raising - this is the documented behavior under test.
+        """
         actor_file = self._config.actor_file
         candidates: list[str] = []
         if actor_file is not None:

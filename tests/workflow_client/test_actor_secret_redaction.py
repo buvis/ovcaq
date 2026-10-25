@@ -48,8 +48,8 @@ def test_redact_with_unreadable_actor_file_does_not_raise(
 
     redacted = client._redact(f"token={WOULD_BE_PROOF}")
 
-    # Documents the current, intentional-under-test outcome: an unreadable
+    # Documented behavior (see _actor_secrets' docstring): an unreadable
     # actor file yields no secrets, so nothing is redacted and no error is
-    # raised. This is the behavior under test, not an accidental pass.
+    # raised.
     assert redacted == f"token={WOULD_BE_PROOF}"
     assert REDACTED_MARKER not in redacted
