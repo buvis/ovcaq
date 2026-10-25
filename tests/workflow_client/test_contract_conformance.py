@@ -7,7 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from tests.workflow_client.test_transport import (
+from tests.workflow_client.conftest import (
     BUNDLE,
     FAKE_CONTROLLER,
     FakeController,
