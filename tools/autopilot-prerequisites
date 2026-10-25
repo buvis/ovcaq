@@ -80,6 +80,7 @@ def read_section(prd: int, settings: dict[str, object]) -> dict[str, object]:
     bundle = BUNDLES.get(prd)
     if bundle is not None:
         names.append(bundle)
+        names.append(f"{bundle}_sha256")
     for name in names:
         value = section.get(name)
         if value is not None and not isinstance(value, str):
@@ -133,13 +134,30 @@ def check_artifact(prd: int, section: dict[str, object]) -> str | None:
 
 
 def check_bundle(prd: int, section: dict[str, object]) -> str | None:
-    """Return a missing-precondition message, or None when the path is usable."""
+    """Return a missing-precondition message, or None when the bundle is usable."""
     table, _, _ = GATES[prd]
     name = BUNDLES[prd]
-    path = section.get(name)
-    if not isinstance(path, str):
-        return f"{name}: [{table}] needs {name}"
-    return check_path(name, path)
+    path, digest = section.get(name), section.get(f"{name}_sha256")
+    if not isinstance(path, str) or not isinstance(digest, str):
+        return f"{name}: [{table}] needs {name} and {name}_sha256"
+    gap = check_path(name, path)
+    if gap is not None:
+        return gap
+    try:
+        # Hash and parse the same capped bytes, so the file cannot change in between.
+        with Path(path).open("rb") as handle:
+            data = handle.read(MAX_ARTIFACT_BYTES + 1)
+    except OSError as error:
+        return f"{name}: cannot read {path}: {error}"
+    if len(data) > MAX_ARTIFACT_BYTES:
+        return f"{name}: {path} exceeds 16 MiB"
+    if hashlib.sha256(data).hexdigest() != digest.lower():
+        return f"{name}: {path} sha256 does not match {name}_sha256"
+    try:
+        json.loads(data)
+    except (ValueError, RecursionError):
+        return f"{name}: {path} is not valid JSON"
+    return None
 
 
 def main() -> None:
