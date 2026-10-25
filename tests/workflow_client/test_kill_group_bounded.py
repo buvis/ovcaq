@@ -5,8 +5,17 @@ import signal
 import subprocess
 import threading
 import time
+from pathlib import Path
 
-from ovcaq.workflow_client import _kill_group
+import pytest
+from tests.workflow_client.conftest import BUNDLE
+
+from ovcaq.workflow_client import (
+    ControllerClient,
+    ControllerConfig,
+    ControllerTimeoutError,
+    _kill_group,
+)
 
 
 class _BlockingProcess:
@@ -57,3 +66,50 @@ def test_kill_group_completes_within_bounded_time_when_signal_is_denied(
     assert elapsed < 5.0
     assert calls == [(process.pid, signal.SIGKILL)]
     assert outcome == []
+
+
+class _OpenPipeProcess:
+    """A Popen-like object whose stdout/stderr are real pipes a detached
+    descendant could keep open indefinitely, used to prove the reader
+    threads _capture starts are joined with a bound rather than awaited
+    forever when such a descendant never closes its end."""
+
+    def __init__(self, read_ends: tuple[object, object]) -> None:
+        self.pid = 4343
+        self.stdout, self.stderr = read_ends
+
+    def wait(self, timeout: float | None = None) -> int:
+        raise subprocess.TimeoutExpired(cmd="controller", timeout=timeout or 0)
+
+
+def test_capture_completes_within_bounded_time_when_a_pipe_stays_open(
+    monkeypatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(os, "killpg", lambda pid, sig: None)
+    read_out, write_out = os.pipe()
+    read_err, write_err = os.pipe()
+    try:
+        process = _OpenPipeProcess(
+            (os.fdopen(read_out, "rb"), os.fdopen(read_err, "rb"))
+        )
+        config = ControllerConfig(
+            argv=("controller",),
+            contract_bundle=BUNDLE,
+            actor_file=None,
+            project_root=tmp_path,
+            timeout_seconds=1,
+        )
+        client = ControllerClient(config)
+        started = time.monotonic()
+
+        with pytest.raises(ControllerTimeoutError):
+            client._capture(process)
+
+        elapsed = time.monotonic() - started
+        assert elapsed < 10.0
+    finally:
+        # The write ends are never closed here, modeling the detached
+        # descendant the finding describes; close explicitly for test
+        # process hygiene rather than relying on garbage collection.
+        os.close(write_out)
+        os.close(write_err)
