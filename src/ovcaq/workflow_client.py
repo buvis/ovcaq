@@ -301,7 +301,10 @@ def _kill_group(process: subprocess.Popen[bytes]) -> None:
         os.killpg(process.pid, signal.SIGKILL)
     except (ProcessLookupError, PermissionError):
         pass  # the controller exited before the signal reached its group
-    process.wait()
+    try:
+        process.wait(timeout=JOIN_SECONDS)
+    except subprocess.TimeoutExpired:
+        pass  # the group did not die in time; nothing more to wait for here
 
 
 def _enforce_bound(
@@ -340,12 +343,9 @@ class ControllerClient:
     def __init__(self, config: ControllerConfig) -> None:
         self._config = config
         self._contract: ControllerContract | None = None
-        self._secrets: tuple[str, ...] | None = None
 
     def _actor_secrets(self) -> tuple[str, ...]:
-        """The actor file's usable secrets, read at most once per client."""
-        if self._secrets is not None:
-            return self._secrets
+        """The actor file's usable secrets, read fresh so rotation is seen."""
         actor_file = self._config.actor_file
         candidates: list[str] = []
         if actor_file is not None:
@@ -360,8 +360,7 @@ class ControllerClient:
             except ValueError:
                 pass
         kept = {text for text in candidates if len(text) >= MIN_SECRET_CHARS}
-        self._secrets = tuple(sorted(kept, key=len, reverse=True))
-        return self._secrets
+        return tuple(sorted(kept, key=len, reverse=True))
 
     def _redact(self, text: str) -> str:
         for secret in self._actor_secrets():
@@ -546,7 +545,7 @@ class ControllerClient:
                 "--request",
                 name,
             )
-        except ControllerTimeoutError as error:
+        except (ControllerTimeoutError, ControllerOutputError) as error:
             raise ApplyOutcomeUnknownError(envelope.request_id, str(error)) from error
         finally:
             os.unlink(name)
@@ -562,5 +561,7 @@ class ControllerClient:
             or not (error_code is None or isinstance(error_code, str))
             or not isinstance(retryable, bool)
         ):
-            raise ControllerOutputError("controller apply response is malformed")
+            raise ApplyOutcomeUnknownError(
+                envelope.request_id, "controller apply response is malformed"
+            )
         return ApplyResult(ok, revision, result, error_code, retryable)
