@@ -3,15 +3,29 @@ from __future__ import annotations
 import contextlib
 import hashlib
 import json
-import os
-import sys
 import time
-from collections.abc import Callable
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import pytest
+from tests.workflow_client.conftest import (
+    ACCEPTED_APPLY,
+    BUNDLE,
+    CALL_BY_VERB,
+    CANARY,
+    EVERY_VERB,
+    SLOW_SECONDS,
+    TIMEOUT_BUDGET,
+    FakeController,
+    envelope_as_json,
+    exception_chain,
+    live_contract,
+    load_json,
+    make_client,
+    make_envelope,
+    process_ended,
+    request_path,
+)
 
 from ovcaq.workflow_client import (
     PROTOCOL_MAJOR,
@@ -26,157 +40,9 @@ from ovcaq.workflow_client import (
     MutationEnvelope,
 )
 
-BUNDLE = Path(__file__).parents[1] / "fixtures" / "workflow" / "controller-v1.json"
-# Synthetic canary placed in the actor file's contents, never in its path.
-CANARY = "super-secret-credential-xyz"
-# The fake sleeps far longer than any timeout used here, so a timeout that
-# fires must fire well inside TIMEOUT_BUDGET.
-SLOW_SECONDS = 10
-TIMEOUT_BUDGET = 5.0
-
-# Fake controller: records its argv, cwd, pid and any --request file, then answers
-# with the stdout, stderr, delay and exit code from the spec file in argv[1].
-FAKE_CONTROLLER = """\
-import json
-import os
-import sys
-import time
-from pathlib import Path
-
-spec = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-record = {"argv": sys.argv, "cwd": os.getcwd(), "pid": os.getpid()}
-if "--request" in sys.argv:
-    request = Path(sys.argv[sys.argv.index("--request") + 1])
-    record["request"] = request.read_text(encoding="utf-8")
-    record["request_mode"] = request.stat().st_mode & 0o777
-with open(spec["log"], "a", encoding="utf-8") as log:
-    log.write(json.dumps(record) + "\\n")
-sys.stdout.write(spec["stdout"])
-sys.stdout.flush()
-sys.stderr.write(spec["stderr"])
-sys.stderr.flush()
-time.sleep(spec["sleep"])
-sys.exit(spec["exit"])
-"""
-
-
-@dataclass(frozen=True)
-class FakeController:
-    script: Path
-    spec: Path
-    log: Path
-
-    @property
-    def argv(self) -> tuple[str, ...]:
-        return (sys.executable, str(self.script), str(self.spec))
-
-    @property
-    def child_argv(self) -> list[str]:
-        """The controller's own sys.argv before the client's arguments."""
-        return [str(self.script), str(self.spec)]
-
-    def respond(
-        self,
-        stdout: str = "",
-        *,
-        stderr: str = "",
-        sleep: float = 0,
-        exit_code: int = 0,
-    ) -> None:
-        spec = {
-            "log": str(self.log),
-            "stdout": stdout,
-            "stderr": stderr,
-            "sleep": sleep,
-            "exit": exit_code,
-        }
-        self.spec.write_text(json.dumps(spec), encoding="utf-8")
-
-    def calls(self) -> list[dict[str, Any]]:
-        if not self.log.exists():
-            return []
-        lines = self.log.read_text(encoding="utf-8").splitlines()
-        return [json.loads(line) for line in lines]
-
-
-@pytest.fixture
-def fake(tmp_path: Path) -> FakeController:
-    directory = tmp_path / "fake controller"
-    directory.mkdir()
-    script = directory / "controller.py"
-    script.write_text(FAKE_CONTROLLER, encoding="utf-8")
-    controller = FakeController(script, directory / "spec.json", tmp_path / "calls.log")
-    controller.respond()
-    return controller
-
-
-@pytest.fixture
-def project_root(tmp_path: Path) -> Path:
-    root = tmp_path / "project root"
-    root.mkdir()
-    return root
-
-
-@pytest.fixture
-def actor_file(tmp_path: Path) -> Path:
-    path = tmp_path / "actor.json"
-    path.write_text(json.dumps({"actor_id": "actor-a", "proof": CANARY}), "utf-8")
-    path.chmod(0o600)
-    return path
-
-
-def make_client(
-    fake: FakeController,
-    project_root: Path,
-    *,
-    actor_file: Path | None = None,
-    bundle: Path = BUNDLE,
-    **overrides: Any,
-) -> ControllerClient:
-    config = ControllerConfig(
-        argv=fake.argv,
-        contract_bundle=bundle,
-        actor_file=actor_file,
-        project_root=project_root,
-        **overrides,
-    )
-    return ControllerClient(config)
-
-
-def make_envelope(**overrides: Any) -> MutationEnvelope:
-    fields: dict[str, Any] = {
-        "protocol_major": PROTOCOL_MAJOR,
-        "operation": "workflow.apply",
-        "request_id": "req-0001",
-        "expected_revision": 3,
-        "project_id": "project-a",
-        "workflow_id": "workflow-a",
-        "actor_id": "actor-a",
-        "lease_epoch": 2,
-        "payload": {"event": "task.done"},
-    }
-    fields.update(overrides)
-    return MutationEnvelope(**fields)
-
-
-def envelope_as_json(envelope: MutationEnvelope) -> dict[str, Any]:
-    return {
-        "protocol_major": envelope.protocol_major,
-        "operation": envelope.operation,
-        "request_id": envelope.request_id,
-        "expected_revision": envelope.expected_revision,
-        "project_id": envelope.project_id,
-        "workflow_id": envelope.workflow_id,
-        "actor_id": envelope.actor_id,
-        "lease_epoch": envelope.lease_epoch,
-        "payload": dict(envelope.payload),
-    }
-
-
-def load_json(path: Path) -> dict[str, Any]:
-    data = json.loads(path.read_text(encoding="utf-8"))
-    assert isinstance(data, dict)
-    return data
+# Negotiation is mandatory, so every snapshot or apply call spends a contract
+# hop first; this answer satisfies the pinned fixture bundle.
+CONTRACT_ANSWER = json.dumps(live_contract())
 
 
 def write_variant_bundle(tmp_path: Path) -> Path:
@@ -205,54 +71,19 @@ def expected_contract(data: dict[str, Any]) -> ControllerContract:
     )
 
 
-def request_path(call: dict[str, Any]) -> Path:
-    argv = call["argv"]
-    return Path(call["cwd"]) / argv[argv.index("--request") + 1]
-
-
 def same_directory(left: str | Path, right: Path) -> bool:
     return Path(left).resolve() == right.resolve()
 
 
-def process_ended(pid: int, *, within: float = 3.0) -> bool:
-    """Poll until no process has pid, allowing for kill and reap latency."""
-    deadline = time.monotonic() + within
-    while True:
-        try:
-            os.kill(pid, 0)
-        except ProcessLookupError:
-            return True
-        if time.monotonic() > deadline:
-            return False
-        time.sleep(0.05)
-
-
-def exception_chain(error: BaseException) -> list[BaseException]:
-    chain: list[BaseException] = []
-    current: BaseException | None = error
-    while current is not None and current not in chain:
-        chain.append(current)
-        current = current.__cause__ or current.__context__
-    return chain
-
-
-def call_contract(client: ControllerClient) -> object:
-    return client.contract()
-
-
-def call_snapshot(client: ControllerClient) -> object:
-    return client.snapshot(workflow_id="workflow-a")
-
-
-def call_apply(client: ControllerClient) -> object:
-    return client.apply(make_envelope())
-
-
-EVERY_CALL = pytest.mark.parametrize(
-    "call",
-    [call_contract, call_snapshot, call_apply],
-    ids=["contract", "snapshot", "apply"],
-)
+def oversized_answer(verb: str, padding: str) -> str:
+    """A well-formed answer for the verb, padded past the output bound."""
+    live = live_contract()
+    answers = {
+        "contract": {**live, "capabilities": [*live["capabilities"], padding]},
+        "snapshot": {"revision": 3, "padding": padding},
+        "apply": {**ACCEPTED_APPLY, "result": {"phase": "review", "pad": padding}},
+    }
+    return json.dumps(answers[verb])
 
 
 # contract()
@@ -266,13 +97,8 @@ def test_contract_runs_contract_verb_in_project_root_and_maps_bundle(
     pinned = load_json(bundle)
     # The live controller agrees on both digests but reports other fields the
     # bundle does not, so only the live answer can produce these values.
-    live = {
-        **pinned,
-        "package_version": pinned["package_version"] + "+live",
-        "operations": [*pinned["operations"], "workflow.live-only"],
-        "capabilities": [*pinned["capabilities"], "live-only"],
-    }
-    fake.respond(json.dumps(live))
+    live = live_contract(pinned, package_version=pinned["package_version"] + "+live")
+    fake.respond(json.dumps(live), verb="contract")
 
     contract = make_client(fake, project_root, bundle=bundle).contract()
 
@@ -282,7 +108,8 @@ def test_contract_runs_contract_verb_in_project_root_and_maps_bundle(
     assert "live-only" in contract.capabilities
     assert isinstance(contract.operations, frozenset)
     assert isinstance(contract.capabilities, frozenset)
-    [call] = fake.calls()
+    assert fake.verbs() == ["contract"]
+    call = fake.call_for("contract")
     assert call["argv"] == [*fake.child_argv, "--json", "contract"]
     assert same_directory(call["cwd"], project_root)
 
@@ -299,7 +126,7 @@ def test_contract_rejects_digest_not_pinned_by_bundle(
         "prefix": pinned[:32],
         "extended": pinned + "0",
     }[kind]
-    fake.respond(json.dumps({**data, field: reported}))
+    fake.respond(json.dumps({**data, field: reported}), verb="contract")
 
     with pytest.raises(IncompatibleContractError) as caught:
         make_client(fake, project_root).contract()
@@ -313,14 +140,14 @@ def test_contract_compares_against_configured_bundle(
 ) -> None:
     # The live controller matches the repo fixture, but the client is pinned
     # to a different bundle, so the pin must win.
-    fake.respond(BUNDLE.read_text(encoding="utf-8"))
+    fake.respond(BUNDLE.read_text(encoding="utf-8"), verb="contract")
 
     with pytest.raises(IncompatibleContractError):
         make_client(
             fake, project_root, bundle=write_variant_bundle(tmp_path)
         ).contract()
 
-    assert len(fake.calls()) == 1
+    assert fake.verbs() == ["contract"]
 
 
 @pytest.mark.parametrize("major", [0, 2, 99])
@@ -328,39 +155,41 @@ def test_contract_rejects_incompatible_protocol_major(
     fake: FakeController, project_root: Path, major: int
 ) -> None:
     assert major != PROTOCOL_MAJOR
-    fake.respond(json.dumps({**load_json(BUNDLE), "protocol_major": major}))
+    fake.respond(
+        json.dumps({**load_json(BUNDLE), "protocol_major": major}), verb="contract"
+    )
 
     with pytest.raises(IncompatibleContractError):
         make_client(fake, project_root).contract()
 
-    assert len(fake.calls()) == 1
+    assert fake.verbs() == ["contract"]
 
 
 def test_contract_is_cached_per_client_instance_only(
     fake: FakeController, project_root: Path
 ) -> None:
     data = load_json(BUNDLE)
-    fake.respond(json.dumps(data))
+    fake.respond(json.dumps(data), verb="contract")
     client = make_client(fake, project_root)
 
     first = client.contract()
     second = client.contract()
 
     assert first == second == expected_contract(data)
-    assert len(fake.calls()) == 1
+    assert fake.verbs() == ["contract"]
 
     fresh = make_client(fake, project_root)
     assert fresh.contract() == first
-    assert len(fake.calls()) == 2
+    assert fake.verbs() == ["contract", "contract"]
 
     # A drifted controller cannot reach a validated instance, but a new
     # instance re-validates and refuses it.
-    fake.respond(json.dumps({**data, "schema_digest": "0" * 64}))
+    fake.respond(json.dumps({**data, "schema_digest": "0" * 64}), verb="contract")
     assert client.contract() == first
-    assert len(fake.calls()) == 2
+    assert fake.verbs() == ["contract", "contract"]
     with pytest.raises(IncompatibleContractError):
         make_client(fake, project_root).contract()
-    assert len(fake.calls()) == 3
+    assert fake.verbs() == ["contract", "contract", "contract"]
 
 
 # snapshot()
@@ -382,13 +211,17 @@ SNAPSHOTS = [
 def test_snapshot_runs_snapshot_verb_and_returns_payload_unmodified(
     fake: FakeController, project_root: Path, payload: dict[str, Any]
 ) -> None:
+    fake.respond(CONTRACT_ANSWER, verb="contract")
     # Stderr noise on a zero exit is not a failure.
-    fake.respond(json.dumps(payload), stderr="warning: lease renewal slow\n")
+    fake.respond(
+        json.dumps(payload), stderr="warning: lease renewal slow\n", verb="snapshot"
+    )
 
     snapshot = make_client(fake, project_root).snapshot(workflow_id="workflow-a")
 
     assert snapshot == payload
-    [call] = fake.calls()
+    assert fake.verbs() == ["contract", "snapshot"]
+    call = fake.call_for("snapshot")
     assert call["argv"] == [
         *fake.child_argv,
         "--json",
@@ -403,7 +236,8 @@ def test_snapshot_runs_snapshot_verb_and_returns_payload_unmodified(
 def test_snapshot_rejects_json_that_is_not_an_object(
     fake: FakeController, project_root: Path, stdout: str
 ) -> None:
-    fake.respond(stdout)
+    fake.respond(CONTRACT_ANSWER, verb="contract")
+    fake.respond(stdout, verb="snapshot")
 
     with pytest.raises(ControllerOutputError):
         make_client(fake, project_root).snapshot(workflow_id="workflow-a")
@@ -432,12 +266,14 @@ def test_apply_hands_envelope_to_controller_in_private_request_file(
     actor_file: Path,
     envelope: MutationEnvelope,
 ) -> None:
-    fake.respond(stderr="rejected: stale revision\n", exit_code=4)
+    fake.respond(CONTRACT_ANSWER, verb="contract")
+    fake.respond(stderr="rejected: stale revision\n", exit_code=4, verb="apply")
 
     with pytest.raises(ControllerError):
         make_client(fake, project_root, actor_file=actor_file).apply(envelope)
 
-    [call] = fake.calls()
+    assert fake.verbs() == ["contract", "apply"]
+    call = fake.call_for("apply")
     assert call["argv"][:-1] == [
         *fake.child_argv,
         "--json",
@@ -466,15 +302,16 @@ def test_apply_removes_request_file_after_controller_exits_zero(
         make_envelope(request_id="req-0003", expected_revision=5),
         make_envelope(request_id="req-0004", expected_revision=6),
     ]
-    fake.respond(json.dumps({"ok": True, "revision": 6}))
+    fake.respond(CONTRACT_ANSWER, verb="contract")
+    fake.respond(json.dumps({"ok": True, "revision": 6}), verb="apply")
     client = make_client(fake, project_root, actor_file=actor_file)
 
     for envelope in envelopes:
         with contextlib.suppress(ControllerError):
             client.apply(envelope)
 
-    calls = fake.calls()
-    assert len(calls) == 2
+    assert fake.verbs() == ["contract", "apply", "apply"]
+    calls = [call for call in fake.calls() if call["verb"] == "apply"]
     for call, envelope in zip(calls, envelopes, strict=True):
         assert json.loads(call["request"]) == envelope_as_json(envelope)
         assert call["request_mode"] == 0o600
@@ -525,8 +362,9 @@ def test_apply_returns_controller_response_as_apply_result(
     response: dict[str, Any],
     expected: ApplyResult,
 ) -> None:
+    fake.respond(CONTRACT_ANSWER, verb="contract")
     # A structured rejection on a zero exit is a normal return, not an error.
-    fake.respond(json.dumps(response) + "\n")
+    fake.respond(json.dumps(response) + "\n", verb="apply")
 
     result = make_client(fake, project_root, actor_file=actor_file).apply(
         make_envelope()
@@ -539,8 +377,8 @@ def test_apply_returns_controller_response_as_apply_result(
     assert result.error_code == expected.error_code
     assert result.retryable is expected.retryable
     assert result == expected
-    [call] = fake.calls()
-    assert not request_path(call).exists()
+    assert fake.verbs() == ["contract", "apply"]
+    assert not request_path(fake.call_for("apply")).exists()
 
 
 VALID_APPLY_RESPONSE = APPLY_RESPONSES[0][0]
@@ -555,7 +393,8 @@ MALFORMED_APPLY_RESPONSES = {
 def test_apply_rejects_malformed_controller_response(
     fake: FakeController, project_root: Path, actor_file: Path, malformed: str
 ) -> None:
-    fake.respond(json.dumps(MALFORMED_APPLY_RESPONSES[malformed]))
+    fake.respond(CONTRACT_ANSWER, verb="contract")
+    fake.respond(json.dumps(MALFORMED_APPLY_RESPONSES[malformed]), verb="apply")
     outcome: object = None
 
     with pytest.raises(ControllerOutputError):
@@ -564,8 +403,8 @@ def test_apply_rejects_malformed_controller_response(
         )
 
     assert outcome is None
-    [call] = fake.calls()
-    assert not request_path(call).exists()
+    assert fake.verbs() == ["contract", "apply"]
+    assert not request_path(fake.call_for("apply")).exists()
 
 
 def test_apply_without_actor_file_refuses_before_spawning(
@@ -579,58 +418,66 @@ def test_apply_without_actor_file_refuses_before_spawning(
     assert fake.calls() == []
     assert list(project_root.iterdir()) == []
     # The same actor-less client still serves read-only calls.
-    fake.respond(json.dumps({"revision": 2}))
+    fake.respond(CONTRACT_ANSWER, verb="contract")
+    fake.respond(json.dumps({"revision": 2}), verb="snapshot")
     assert client.snapshot(workflow_id="workflow-a") == {"revision": 2}
-    assert len(fake.calls()) == 1
+    assert fake.verbs() == ["contract", "snapshot"]
 
 
 # Shared subprocess boundary
 
 
-@EVERY_CALL
+@EVERY_VERB
 def test_call_raises_timeout_when_controller_outlives_timeout(
     fake: FakeController,
     project_root: Path,
     actor_file: Path,
-    call: Callable[[ControllerClient], object],
+    verb: str,
 ) -> None:
-    fake.respond(sleep=SLOW_SECONDS)
+    fake.respond(CONTRACT_ANSWER, verb="contract")
+    fake.respond(sleep=SLOW_SECONDS, verb=verb)
     client = make_client(fake, project_root, actor_file=actor_file, timeout_seconds=1)
     started = time.monotonic()
 
     with pytest.raises(ControllerTimeoutError):
-        call(client)
+        CALL_BY_VERB[verb](client)
 
     assert time.monotonic() - started < TIMEOUT_BUDGET
-    [record] = fake.calls()
+    assert fake.verbs() == (["contract"] if verb == "contract" else ["contract", verb])
     # A reported timeout must not leave the controller running behind it.
-    assert process_ended(record["pid"])
+    assert process_ended(fake.call_for(verb)["pid"])
 
 
 def test_call_waits_up_to_configured_timeout_not_a_fixed_one(
     fake: FakeController, project_root: Path
 ) -> None:
     # A slow controller inside a generous timeout is a success, not a timeout.
-    fake.respond(json.dumps({"revision": 9}), sleep=3)
+    fake.respond(CONTRACT_ANSWER, verb="contract")
+    fake.respond(json.dumps({"revision": 9}), sleep=3, verb="snapshot")
     client = make_client(fake, project_root, timeout_seconds=10)
 
     assert client.snapshot(workflow_id="workflow-a") == {"revision": 9}
-    assert len(fake.calls()) == 1
+    assert fake.verbs() == ["contract", "snapshot"]
 
 
-@EVERY_CALL
+@EVERY_VERB
 def test_call_rejects_stdout_over_output_bound(
     fake: FakeController,
     project_root: Path,
     actor_file: Path,
-    call: Callable[[ControllerClient], object],
+    verb: str,
 ) -> None:
-    # A valid contract, far longer than 16 bytes: only the bound can reject it.
-    fake.respond(BUNDLE.read_text(encoding="utf-8"))
-    client = make_client(fake, project_root, actor_file=actor_file, max_output_bytes=16)
+    # The bound admits the negotiation answer exactly, and every padded answer
+    # is well formed for its verb, so only the bound can reject it.
+    bound = len(CONTRACT_ANSWER.encode())
+    fake.respond(CONTRACT_ANSWER, verb="contract")
+    fake.respond(oversized_answer(verb, "x" * bound), verb=verb)
+    client = make_client(
+        fake, project_root, actor_file=actor_file, max_output_bytes=bound
+    )
 
     with pytest.raises(ControllerOutputError):
-        call(client)
+        CALL_BY_VERB[verb](client)
 
 
 @pytest.mark.parametrize(
@@ -641,9 +488,12 @@ def test_call_rejects_stdout_over_output_bound(
 def test_snapshot_output_bound_admits_output_up_to_the_limit(
     fake: FakeController, project_root: Path, slack: int, accepted: bool
 ) -> None:
-    payload = {"revision": 12, "phase": "build"}
+    # The payload is padded past the negotiation answer, so the limit under
+    # test still leaves the contract hop room to pass.
+    payload = {"revision": 12, "phase": "build", "pad": "x" * len(CONTRACT_ANSWER)}
     text = json.dumps(payload)
-    fake.respond(text)
+    fake.respond(CONTRACT_ANSWER, verb="contract")
+    fake.respond(text, verb="snapshot")
     limit = len(text.encode()) + slack
     client = make_client(fake, project_root, max_output_bytes=limit)
 
@@ -654,7 +504,7 @@ def test_snapshot_output_bound_admits_output_up_to_the_limit(
             client.snapshot(workflow_id="workflow-a")
 
 
-@EVERY_CALL
+@EVERY_VERB
 @pytest.mark.parametrize(
     "stdout", ["{not json", "", '{"revision": 3'], ids=["garbage", "empty", "cut"]
 )
@@ -662,29 +512,33 @@ def test_call_rejects_unparseable_stdout_on_zero_exit(
     fake: FakeController,
     project_root: Path,
     actor_file: Path,
-    call: Callable[[ControllerClient], object],
+    verb: str,
     stdout: str,
 ) -> None:
-    fake.respond(stdout)
+    fake.respond(CONTRACT_ANSWER, verb="contract")
+    fake.respond(stdout, verb=verb)
 
     with pytest.raises(ControllerOutputError):
-        call(make_client(fake, project_root, actor_file=actor_file))
+        CALL_BY_VERB[verb](make_client(fake, project_root, actor_file=actor_file))
 
 
-@EVERY_CALL
+@EVERY_VERB
 @pytest.mark.parametrize("exit_code", [1, 7])
 def test_call_surfaces_stderr_when_controller_exits_nonzero(
     fake: FakeController,
     project_root: Path,
     actor_file: Path,
-    call: Callable[[ControllerClient], object],
+    verb: str,
     exit_code: int,
 ) -> None:
     detail = f"lease store locked (code {exit_code})"
-    fake.respond(stderr=f"controller failed: {detail}\n", exit_code=exit_code)
+    fake.respond(CONTRACT_ANSWER, verb="contract")
+    fake.respond(
+        stderr=f"controller failed: {detail}\n", exit_code=exit_code, verb=verb
+    )
 
     with pytest.raises(ControllerError) as caught:
-        call(make_client(fake, project_root, actor_file=actor_file))
+        CALL_BY_VERB[verb](make_client(fake, project_root, actor_file=actor_file))
 
     assert not isinstance(caught.value, ControllerTimeoutError)
     assert not isinstance(caught.value, ControllerOutputError)
@@ -699,25 +553,36 @@ def test_call_surfaces_stderr_when_controller_exits_nonzero(
 def test_apply_never_returns_result_when_ack_precedes_timeout(
     fake: FakeController, project_root: Path, actor_file: Path, ack: str
 ) -> None:
-    # lost_ack_preserved: output written before a timeout kill is not an ack.
-    fake.respond(ack, sleep=SLOW_SECONDS)
+    # lost_ack_preserved: output written before a timeout kill is not an ack,
+    # and a retry after the lost acknowledgement resends the same request.
+    fake.respond(CONTRACT_ANSWER, verb="contract")
+    fake.respond(ack, sleep=SLOW_SECONDS, verb="apply")
     client = make_client(fake, project_root, actor_file=actor_file, timeout_seconds=1)
-    outcome: object = None
+    envelope = make_envelope()
 
-    with pytest.raises((ControllerTimeoutError, ControllerOutputError)):
-        outcome = client.apply(make_envelope())
+    for _ in range(2):
+        outcome: object = None
+        with pytest.raises((ControllerTimeoutError, ControllerOutputError)):
+            outcome = client.apply(envelope)
+        assert not isinstance(outcome, ApplyResult)
+        assert outcome is None
 
-    assert not isinstance(outcome, ApplyResult)
-    assert outcome is None
-    [call] = fake.calls()
-    assert not request_path(call).exists()
+    assert fake.verbs() == ["contract", "apply", "apply"]
+    first, retry = [call for call in fake.calls() if call["verb"] == "apply"]
+    assert json.loads(first["request"]) == envelope_as_json(envelope)
+    assert json.loads(retry["request"]) == json.loads(first["request"])
+    assert not request_path(first).exists()
+    assert not request_path(retry).exists()
 
 
+# The bound has to admit the negotiation answer, so the oversized failure pads
+# past that answer instead of past a bare 32 bytes.
+OUTPUT_BOUND = len(CONTRACT_ANSWER.encode()) + 32
 CANARY_FAILURES: dict[str, dict[str, Any]] = {
     "nonzero-exit": {"stderr": "actor rejected\n", "exit_code": 3},
     "timeout": {"sleep": SLOW_SECONDS},
     "malformed-output": {"stdout": "{not json"},
-    "oversized-output": {"stdout": json.dumps({"padding": "x" * 64})},
+    "oversized-output": {"stdout": json.dumps({"padding": "x" * OUTPUT_BOUND})},
 }
 
 
@@ -727,13 +592,14 @@ def test_apply_errors_never_expose_actor_file_contents(
 ) -> None:
     assert CANARY in actor_file.read_text(encoding="utf-8")
     assert CANARY not in str(actor_file)
-    fake.respond(**CANARY_FAILURES[failure])
+    fake.respond(CONTRACT_ANSWER, verb="contract")
+    fake.respond(**CANARY_FAILURES[failure], verb="apply")
     client = make_client(
         fake,
         project_root,
         actor_file=actor_file,
         timeout_seconds=1,
-        max_output_bytes=32,
+        max_output_bytes=OUTPUT_BOUND,
     )
 
     with pytest.raises(ControllerError) as caught:
@@ -742,8 +608,8 @@ def test_apply_errors_never_expose_actor_file_contents(
     for error in exception_chain(caught.value):
         assert CANARY not in str(error)
         assert CANARY not in repr(error)
-    [call] = fake.calls()
-    argv = call["argv"]
+    assert fake.verbs() == ["contract", "apply"]
+    argv = fake.call_for("apply")["argv"]
     assert argv[argv.index("--actor-file") + 1] == str(actor_file)
 
 
@@ -757,12 +623,14 @@ def test_argv_reaches_controller_verbatim_without_shell(
         actor_file=None,
         project_root=project_root,
     )
-    fake.respond(json.dumps({"revision": 1}))
+    fake.respond(CONTRACT_ANSWER, verb="contract")
+    fake.respond(json.dumps({"revision": 1}), verb="snapshot")
 
     snapshot = ControllerClient(config).snapshot(workflow_id="workflow-a")
 
     assert snapshot == {"revision": 1}
-    [call] = fake.calls()
+    assert fake.verbs() == ["contract", "snapshot"]
+    call = fake.call_for("snapshot")
     assert call["argv"] == [
         *fake.child_argv,
         hostile,
