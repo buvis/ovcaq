@@ -44,6 +44,10 @@ BUNDLE_KEY = "contract_bundle"
 BUNDLE_PATH = "artifacts/contract-bundle.json"
 PRECONDITION = {"58": BUNDLE_KEY}
 DEPENDENCY_CASES = [(prd, dep) for prd, deps in DIRECT.items() for dep in deps]
+# Every zero-padding width the contract accepts: at most five characters.
+ID_SPELLINGS = [
+    (prd, f"{int(prd):0{width}d}") for prd in sorted(DIRECT) for width in range(2, 6)
+]
 FORBIDDEN_IMPORTS = {"socket", "urllib", "http", "requests", "subprocess", "ovcaq"}
 
 
@@ -100,10 +104,13 @@ def missing_of(result: subprocess.CompletedProcess[str], prd: str) -> list[str]:
     return missing
 
 
-def assert_refused(result: subprocess.CompletedProcess[str]) -> None:
+def assert_refused(result: subprocess.CompletedProcess[str], *named: str) -> None:
+    """Exit 2, nothing on stdout, and stderr names what it refused."""
     assert result.returncode == 2
     assert result.stdout == ""
     assert result.stderr.strip() != ""
+    for offender in named:
+        assert offender in result.stderr, result.stderr
 
 
 def padded(prd: str) -> str:
@@ -201,7 +208,13 @@ def unmet_payloads(prd: str) -> dict[str, object]:
     _, key, tokens = GATES[prd]
     _, _, other_tokens = GATES[OTHER_GATE[prd]]
     return {
-        "no-evidence-key": {"name": key},
+        # The tokens sit under other keys, so only the "evidence" key counts.
+        "no-evidence-key": {"name": key, "rejected_evidence": list(tokens)},
+        "tokens-under-another-key": {
+            "evidence": [],
+            "planned_evidence": list(tokens),
+            "rejected_evidence": list(tokens),
+        },
         "empty-evidence": {"evidence": []},
         "evidence-string": {"evidence": tokens[0]},
         "nested-evidence": {"evidence": [list(tokens)]},
@@ -213,19 +226,27 @@ def unmet_payloads(prd: str) -> dict[str, object]:
     }
 
 
-def build_unmet_gate(root: Path, prd: str, case: str) -> str | None:
+def digest_variant(case: str, digest: str) -> str:
+    """The configured digest for the cases that corrupt it."""
+    if case == "last-hex-differs":
+        return digest[:-1] + ("1" if digest[-1] == "0" else "0")
+    if case == "middle-hex-differs":
+        return digest[:32] + ("1" if digest[32] == "0" else "0") + digest[33:]
+    if case == "digest-mismatch":
+        return hashlib.sha256(b"other").hexdigest()
+    if case == "truncated-digest":
+        return digest[:-1]
+    return digest
+
+
+def path_variant(
+    root: Path, prd: str, case: str, digest: str, bundle: str | None
+) -> str | None:
+    """Config text for the cases that change the table, keys or path."""
     table, key, tokens = GATES[prd]
     other_table, _, _ = GATES[OTHER_GATE[prd]]
     artifact = root / "artifacts" / f"{key}.json"
-    digest = write_artifact(
-        artifact, unmet_payloads(prd).get(case, {"evidence": list(tokens)})
-    )
     path = f"artifacts/{key}.json"
-    # A satisfied precondition keeps every case about the artifact alone.
-    bundle = None
-    if prd in PRECONDITION:
-        write_bundle(root)
-        bundle = BUNDLE_PATH
 
     def config(where: str | None, hexdigest: str | None) -> str:
         return gate_config(prd, where, hexdigest, bundle=bundle)
@@ -245,18 +266,32 @@ def build_unmet_gate(root: Path, prd: str, case: str) -> str | None:
     if case == "directory":
         return config("artifacts", digest)
     if case == "symlinked-file":
-        (root / "artifacts" / "linked.json").symlink_to(artifact)
-        return config("artifacts/linked.json", digest)
+        (root / "artifacts" / "exported.json").symlink_to(artifact)
+        return config("artifacts/exported.json", digest)
     if case == "symlinked-parent-dir":
-        (root / "linked").symlink_to(root / "artifacts", target_is_directory=True)
-        return config(f"linked/{key}.json", digest)
-    if case == "last-hex-differs":
-        return config(path, digest[:-1] + ("1" if digest[-1] == "0" else "0"))
-    if case == "digest-mismatch":
-        return config(path, hashlib.sha256(b"other").hexdigest())
-    if case == "truncated-digest":
-        return config(path, digest[:-1])
-    return config(path, digest)
+        (root / "exports").symlink_to(root / "artifacts", target_is_directory=True)
+        return config(f"exports/{key}.json", digest)
+    if case == "symlinked-parent-escapes-root":
+        # Same bytes, so the digest matches and only the symlink can refuse it.
+        outside = root.parent / f"outside-{root.name}"
+        write_artifact(outside / f"{key}.json", {"evidence": list(tokens)})
+        (root / "exports").symlink_to(outside, target_is_directory=True)
+        return config(f"exports/{key}.json", digest)
+    return config(path, digest_variant(case, digest))
+
+
+def build_unmet_gate(root: Path, prd: str, case: str) -> str | None:
+    _, key, tokens = GATES[prd]
+    digest = write_artifact(
+        root / "artifacts" / f"{key}.json",
+        unmet_payloads(prd).get(case, {"evidence": list(tokens)}),
+    )
+    # A satisfied precondition keeps every case about the artifact alone.
+    bundle = None
+    if prd in PRECONDITION:
+        write_bundle(root)
+        bundle = BUNDLE_PATH
+    return path_variant(root, prd, case, digest, bundle)
 
 
 UNMET_GATE_CASES = [
@@ -269,10 +304,13 @@ UNMET_GATE_CASES = [
     "directory",
     "symlinked-file",
     "symlinked-parent-dir",
+    "symlinked-parent-escapes-root",
     "digest-mismatch",
     "truncated-digest",
     "last-hex-differs",
+    "middle-hex-differs",
     "no-evidence-key",
+    "tokens-under-another-key",
     "empty-evidence",
     "evidence-string",
     "evidence-dict",

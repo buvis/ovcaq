@@ -12,6 +12,7 @@ from tests.workflow_client.prerequisites_support import (
     DIRECT,
     FORBIDDEN_IMPORTS,
     GATES,
+    ID_SPELLINGS,
     OTHER_GATE,
     PRDS,
     TOOL,
@@ -166,13 +167,13 @@ def test_done_entry_must_be_a_regular_file(tmp_path: Path, kind: str) -> None:
 # PRD ID handling
 
 
-@pytest.mark.parametrize("prd", ["58", "058", "00058"])
+@pytest.mark.parametrize(("prd", "given"), ID_SPELLINGS)
 def test_accepts_id_with_or_without_leading_zeros_and_echoes_it(
-    tmp_path: Path, prd: str
+    tmp_path: Path, prd: str, given: str
 ) -> None:
-    make_ready(tmp_path, "58")
+    make_ready(tmp_path, prd)
 
-    assert report(run_tool(tmp_path, prd), 0) == {"ready": True, "prd": prd}
+    assert report(run_tool(tmp_path, given), 0) == {"ready": True, "prd": given}
 
 
 @pytest.mark.parametrize("prd", ["64", "00064"])
@@ -204,13 +205,17 @@ def test_echoes_given_id_when_unavailable(tmp_path: Path, prd: str) -> None:
         "+58",
         " 58 ",
         "٥٨",  # Arabic-Indic digits for 58
+        "000058",  # a supported PRD, but over the five-character limit
+        "000065",
     ],
 )
 def test_unknown_prd(tmp_path: Path, prd: str) -> None:
     mark_done(tmp_path, *CLOSURE["65"])
     satisfy_gate(tmp_path, "61")
 
-    assert_refused(run_tool(tmp_path, prd))
+    named = [prd.strip()] if prd.strip() else []
+
+    assert_refused(run_tool(tmp_path, prd), *named)
 
 
 # Artifact gates (PRD 61 and 65)
@@ -323,15 +328,18 @@ def test_config_errors_exit_2_without_stdout(
     table, key, _ = GATES[prd]
     explicit = tmp_path / "conf" / "explicit.toml"
     extra: list[str] = []
+    named = [str(explicit)]
     if case == "missing-explicit":
         extra = ["--config", str(explicit)]
     elif case == "unparseable-default":
         write_config(tmp_path / "ovcaq.toml", f"[{table}\n{key} = \n")
+        named = ["ovcaq.toml"]
     elif case == "unparseable-explicit":
         write_config(explicit, f"[{table}\n{key} = \n")
         extra = ["--config", str(explicit)]
     elif case == "table-is-scalar":
         write_config(tmp_path / "ovcaq.toml", f'{table} = "oops"\n')
+        named = [table]
     else:
         name, value = {
             "path-is-int": (key, "5"),
@@ -344,8 +352,9 @@ def test_config_errors_exit_2_without_stdout(
             for line in text.splitlines()
         ]
         write_config(tmp_path / "ovcaq.toml", "\n".join(lines) + "\n")
+        named = [name]
 
-    assert_refused(run_tool(tmp_path, prd, *extra))
+    assert_refused(run_tool(tmp_path, prd, *extra), *named)
 
 
 # Script source

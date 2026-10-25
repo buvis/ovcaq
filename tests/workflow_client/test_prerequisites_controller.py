@@ -116,6 +116,9 @@ def test_partial_evidence_leaves_prd_58_unready_and_names_a_missing_token(
     assert len(missing) == 1
     assert KEY in missing[0]
     assert absent in missing[0]
+    # Only the absent tokens are named; a message listing all four is wrong.
+    for token in TOKENS:
+        assert (token in missing[0]) == (token not in evidence)
 
 
 def test_the_message_changes_with_the_tokens_that_are_missing(tmp_path: Path) -> None:
@@ -129,8 +132,9 @@ def test_the_message_changes_with_the_tokens_that_are_missing(tmp_path: Path) ->
     second = missing_of(run_tool(without_records, "58"), "58")
 
     assert "core" in first[0]
+    assert "records" not in first[0]
     assert "records" in second[0]
-    assert first != second
+    assert "core" not in second[0]
 
 
 @pytest.mark.parametrize("token", TOKENS)
@@ -138,13 +142,15 @@ def test_near_miss_evidence_never_satisfies_a_required_token(
     tmp_path: Path, token: str
 ) -> None:
     others = [other for other in TOKENS if other != token]
-    write_gate(tmp_path, evidence=[*others, *near_misses(token)])
+    evidence = [*others, *near_misses(token)]
+    write_gate(tmp_path, evidence=evidence)
 
     missing = missing_of(run_tool(tmp_path, "58"), "58")
 
     assert len(missing) == 1
     assert KEY in missing[0]
-    assert token in missing[0]
+    for other in TOKENS:
+        assert (other in missing[0]) == (other not in evidence)
 
 
 @pytest.mark.parametrize("case", UNMET_GATE_CASES)
@@ -166,7 +172,9 @@ def test_controller_artifact_rejection_is_unmet_not_a_config_error(
         assert not any(padded(dep) in entry for entry in missing)
 
 
-@pytest.mark.parametrize(("size", "ready"), [(CAP, True), (CAP + 1, False)])
+@pytest.mark.parametrize(
+    ("size", "ready"), [(CAP, True), (CAP + 1, False), (4 * CAP, False)]
+)
 def test_controller_artifact_is_read_under_a_16_mib_cap(
     tmp_path: Path, size: int, ready: bool
 ) -> None:
@@ -212,19 +220,26 @@ def test_non_string_workflow_values_are_refused(tmp_path: Path, line: str) -> No
     assert line in kept
     write_config(config, "\n".join(kept) + "\n")
 
-    assert_refused(run_tool(tmp_path, "58"))
+    assert_refused(run_tool(tmp_path, "58"), name)
 
 
 def test_workflow_table_holding_a_scalar_is_refused(tmp_path: Path) -> None:
     write_gate(tmp_path)
     write_config(tmp_path / "ovcaq.toml", f'{TABLE} = "oops"\n')
 
-    assert_refused(run_tool(tmp_path, "58"))
+    assert_refused(run_tool(tmp_path, "58"), TABLE)
 
 
 @pytest.mark.parametrize(
     "case",
-    ["unset", "missing-file", "directory", "symlinked-file", "symlinked-parent-dir"],
+    [
+        "unset",
+        "missing-file",
+        "directory",
+        "symlinked-file",
+        "symlinked-parent-dir",
+        "symlinked-parent-escapes-root",
+    ],
 )
 def test_contract_bundle_must_name_an_existing_regular_file(
     tmp_path: Path, case: str
@@ -240,11 +255,18 @@ def test_contract_bundle_must_name_an_existing_regular_file(
     elif case == "directory":
         bundle = "bundles"
     elif case == "symlinked-file":
-        (tmp_path / "bundles" / "linked.json").symlink_to(real)
-        bundle = "bundles/linked.json"
+        (tmp_path / "bundles" / "mirror.json").symlink_to(real)
+        bundle = "bundles/mirror.json"
+    elif case == "symlinked-parent-dir":
+        (tmp_path / "exports").symlink_to(
+            tmp_path / "bundles", target_is_directory=True
+        )
+        bundle = "exports/exported.json"
     else:
-        (tmp_path / "linked").symlink_to(tmp_path / "bundles", target_is_directory=True)
-        bundle = "linked/exported.json"
+        outside = tmp_path.parent / f"outside-{tmp_path.name}"
+        write_bundle(outside, "exported.json")
+        (tmp_path / "exports").symlink_to(outside, target_is_directory=True)
+        bundle = "exports/exported.json"
     write_config(
         tmp_path / "ovcaq.toml", gate_config("58", ARTIFACT, digest, bundle=bundle)
     )
@@ -285,6 +307,24 @@ def test_prd_58_ignores_the_other_prds_artifact_gates(tmp_path: Path) -> None:
     write_config(config, config.read_text(encoding="utf-8") + decoys)
 
     assert report(run_tool(tmp_path, "58"), 0) == {"ready": True, "prd": "58"}
+
+
+def test_contract_bundle_counts_only_under_the_workflow_table(tmp_path: Path) -> None:
+    mark_done(tmp_path, *CLOSURE["58"])
+    digest = write_artifact(tmp_path / ARTIFACT, {"evidence": list(TOKENS)})
+    write_bundle(tmp_path)
+    # The artifact gate is met; only the bundle hides in a foreign table.
+    write_config(
+        tmp_path / "ovcaq.toml",
+        gate_config("58", ARTIFACT, digest)
+        + f"[autopilot]\n{BUNDLE_KEY} = {json.dumps(BUNDLE_PATH)}\n",
+    )
+
+    missing = missing_of(run_tool(tmp_path, "58"), "58")
+
+    assert len(missing) == 1
+    assert BUNDLE_KEY in missing[0]
+    assert KEY not in missing[0]
 
 
 @pytest.mark.parametrize("prd", ["61", "65"])

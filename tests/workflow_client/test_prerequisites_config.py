@@ -36,7 +36,7 @@ def test_explicit_config_that_does_not_exist_is_refused_for_every_prd(
     make_ready(tmp_path, prd)
     absent = tmp_path / "conf" / "absent.toml"
 
-    assert_refused(run_tool(tmp_path, prd, "--config", str(absent)))
+    assert_refused(run_tool(tmp_path, prd, "--config", str(absent)), str(absent))
 
 
 @pytest.mark.parametrize("prd", EVERY_PRD)
@@ -48,7 +48,7 @@ def test_unparseable_explicit_config_is_refused_for_every_prd(
     explicit = tmp_path / "conf" / "broken.toml"
     write_config(explicit, BROKEN[flaw])
 
-    assert_refused(run_tool(tmp_path, prd, "--config", str(explicit)))
+    assert_refused(run_tool(tmp_path, prd, "--config", str(explicit)), str(explicit))
 
 
 @pytest.mark.parametrize("prd", EVERY_PRD)
@@ -59,7 +59,7 @@ def test_unparseable_default_config_is_refused_for_every_prd(
     make_ready(tmp_path, prd)
     write_config(tmp_path / "ovcaq.toml", BROKEN[flaw])
 
-    assert_refused(run_tool(tmp_path, prd))
+    assert_refused(run_tool(tmp_path, prd), "ovcaq.toml")
 
 
 @pytest.mark.parametrize("prd", EVERY_PRD)
@@ -70,7 +70,28 @@ def test_broken_config_is_refused_before_predecessors_are_evaluated(
     (tmp_path / PRDS / "done").mkdir(parents=True)
     write_config(tmp_path / "ovcaq.toml", BROKEN["unterminated-table"])
 
-    assert_refused(run_tool(tmp_path, prd))
+    assert_refused(run_tool(tmp_path, prd), "ovcaq.toml")
+
+
+def test_each_refusal_class_names_what_it_refused(tmp_path: Path) -> None:
+    make_ready(tmp_path, "58")
+    absent = tmp_path / "conf" / "absent.toml"
+    broken = tmp_path / "conf" / "broken.toml"
+    write_config(broken, BROKEN["unterminated-table"])
+    refusals = {
+        "absent-config": run_tool(tmp_path, "58", "--config", str(absent)),
+        "unparseable-config": run_tool(tmp_path, "58", "--config", str(broken)),
+        "unknown-prd": run_tool(tmp_path, "63"),
+    }
+    write_config(tmp_path / "ovcaq.toml", "[workflow]\ncontroller_artifact = 5\n")
+    refusals["wrong-type"] = run_tool(tmp_path, "58")
+
+    assert_refused(refusals["absent-config"], str(absent))
+    assert_refused(refusals["unparseable-config"], str(broken))
+    assert_refused(refusals["unknown-prd"], "63")
+    assert_refused(refusals["wrong-type"], "controller_artifact")
+    # Four different faults, four different messages.
+    assert len({result.stderr.strip() for result in refusals.values()}) == 4
 
 
 @pytest.mark.parametrize("prd", EVERY_PRD)
