@@ -323,6 +323,9 @@ def controller_settings(root: Path) -> ControllerConfig | None:
         return None
     bundle = _configured_path(root, workflow.get("contract_bundle"), "contract_bundle")
     actor = workflow.get("actor_file")
+    digest = workflow.get("contract_bundle_sha256")
+    if digest is not None and not isinstance(digest, str):
+        raise ConfigurationError("contract_bundle_sha256 must be a string")
     try:
         return ControllerConfig(
             argv=argv,
@@ -331,6 +334,7 @@ def controller_settings(root: Path) -> ControllerConfig | None:
                 None if actor is None else _configured_path(root, actor, "actor_file")
             ),
             project_root=root,
+            bundle_digest=digest,
         )
     except (TypeError, ValueError) as error:
         raise ConfigurationError(

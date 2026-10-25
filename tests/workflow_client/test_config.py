@@ -176,6 +176,55 @@ def test_controller_settings_rejects_unusable_contract_bundle(
         controller_settings(config_root)
 
 
+def test_controller_settings_wires_contract_bundle_sha256_into_bundle_digest(
+    config_root: Path, tmp_path: Path
+) -> None:
+    bundle = install_bundle(tmp_path / "bundles")
+    write_project_config(
+        config_root,
+        '[workflow]\ncontroller_argv = ["autopilot-controller"]\n'
+        f"contract_bundle = {toml_value(str(bundle))}\n"
+        'contract_bundle_sha256 = "deadbeef"\n',
+    )
+
+    config = controller_settings(config_root)
+
+    assert isinstance(config, ControllerConfig)
+    assert config.bundle_digest == "deadbeef"
+
+
+def test_controller_settings_omits_bundle_digest_without_the_key(
+    config_root: Path, tmp_path: Path
+) -> None:
+    bundle = install_bundle(tmp_path / "bundles")
+    write_project_config(
+        config_root,
+        '[workflow]\ncontroller_argv = ["autopilot-controller"]\n'
+        f"contract_bundle = {toml_value(str(bundle))}\n",
+    )
+
+    config = controller_settings(config_root)
+
+    assert isinstance(config, ControllerConfig)
+    assert config.bundle_digest is None
+
+
+@pytest.mark.parametrize("value", ["12", "[1, 2]"], ids=["int", "list"])
+def test_controller_settings_rejects_malformed_bundle_digest(
+    config_root: Path, tmp_path: Path, value: str
+) -> None:
+    bundle = install_bundle(tmp_path / "bundles")
+    write_project_config(
+        config_root,
+        '[workflow]\ncontroller_argv = ["autopilot-controller"]\n'
+        f"contract_bundle = {toml_value(str(bundle))}\n"
+        f"contract_bundle_sha256 = {value}\n",
+    )
+
+    with pytest.raises(ConfigurationError):
+        controller_settings(config_root)
+
+
 @pytest.mark.parametrize("value", ["12", '["actor.json"]'], ids=["int", "list"])
 def test_controller_settings_rejects_malformed_actor_file(
     config_root: Path, tmp_path: Path, value: str
