@@ -106,10 +106,14 @@ def test_capture_completes_within_bounded_time_when_a_pipe_stays_open(
             client._capture(process)
 
         elapsed = time.monotonic() - started
-        assert elapsed < 10.0
+        # Bounded by _kill_group's JOIN_SECONDS wait plus two reader joins,
+        # each capped at JOIN_SECONDS - well under this loose ceiling.
+        assert elapsed < 5.0
     finally:
         # The write ends are never closed here, modeling the detached
         # descendant the finding describes; close explicitly for test
         # process hygiene rather than relying on garbage collection.
         os.close(write_out)
         os.close(write_err)
+        process.stdout.close()
+        process.stderr.close()
