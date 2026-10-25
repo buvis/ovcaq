@@ -262,6 +262,39 @@ def render_state_protocol_command_inventory(
     return "\n".join(lines)
 
 
+CONTROLLER_CLIENT_NOTES = (
+    "## Workflow controller client",
+    "",
+    "The external workflow controller is opt-in. Without `controller_argv`",
+    "there is no controller client, and nothing in OVCAQ invokes it yet: the",
+    "state store above remains the only workflow writer.",
+    "",
+    "```toml",
+    "[workflow]",
+    'controller_argv = ["autopilot-controller"]  # argv array, never a shell string',
+    'contract_bundle = "contracts/controller-v1.json"  # pinned Contract A bundle',
+    'actor_file = "secrets/actor.json"  # credential path, needed only for apply',
+    "```",
+    "",
+    "Relative paths resolve from the project root. The client checks the",
+    "controller's protocol major and bundle digests before any other call.",
+    "",
+    "`python3 tools/autopilot-prerequisites --prd <ID> [--config PATH]` reports",
+    "whether a PRD's prerequisites are in place. It runs from the project root,",
+    "reads `./ovcaq.toml` unless `--config` is given, and never fetches or",
+    'writes. Exit 0 prints `{"ready": true, "prd": "<ID>"}`, exit 1 prints the',
+    "same object with `ready: false` and a `missing` list, and exit 2 means an",
+    "unknown PRD ID or a config error (stderr only). A predecessor counts only",
+    "as a regular `docs/dev/project-management/prds/done/000NN-*.md` file.",
+    "PRD 61 also needs `[autopilot] plugin_artifact` and `plugin_artifact_sha256`;",
+    "PRD 65 needs `[operator] client_artifact` and `client_artifact_sha256`. The",
+    "artifact is a JSON object of at most 16 MiB with no symlinked path component,",
+    "a matching sha256, and an `evidence` list holding `AP00017` (61) or",
+    "`Lantern00003` (65).",
+    "",
+)
+
+
 def render_command_reference(parser: argparse.ArgumentParser | None = None) -> str:
     """Generate the operator command reference from the live parser."""
     live_parser = build_parser() if parser is None else parser
@@ -303,6 +336,7 @@ def render_command_reference(parser: argparse.ArgumentParser | None = None) -> s
         "unavailable, OVCAQ reports the problem and falls back to plain output.",
         "",
         *WORKFLOW_INPUT_NOTES,
+        *CONTROLLER_CLIENT_NOTES,
     ]
     return "\n".join(lines)
 
