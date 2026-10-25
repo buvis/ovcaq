@@ -126,6 +126,6 @@ PRD 58 also needs `[workflow] controller_artifact` and
 symlink, whose sha256 matches and whose bytes parse as JSON. PRD 61 also
 needs `[autopilot] plugin_artifact` and `plugin_artifact_sha256`;
 PRD 65 needs `[operator] client_artifact` and `client_artifact_sha256`. The
-artifact is a JSON object of at most 16 MiB with no symlinked path component,
-a matching sha256, and an `evidence` list holding `AP00017` (61) or
-`Lantern00003` (65).
+PRD 61 and 65 artifacts are each a JSON object of at most 16 MiB with no
+symlinked path component, a matching sha256, and an `evidence` list holding
+`AP00017` (61) or `Lantern00003` (65).
