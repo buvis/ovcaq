@@ -479,6 +479,9 @@ def test_call_rejects_stdout_over_output_bound(
     with pytest.raises(ControllerOutputError):
         CALL_BY_VERB[verb](client)
 
+    # The verb's own hop is what the bound rejected, not the negotiation hop.
+    assert fake.verbs()[-1] == verb
+
 
 @pytest.mark.parametrize(
     ("slack", "accepted"),
