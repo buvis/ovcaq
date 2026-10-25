@@ -1,0 +1,17 @@
+{
+  "protocol_major": 1,
+  "package_version": "1.0.0",
+  "schema_digest": "5f94326d733076d1ad994cbc1f3d86fcedd2b5cd64f6b7c61a48213fdd802c5c",
+  "fixture_digest": "f2af43a4a81985d02812402bc4cf9df596e304ef8e91838872f77fb3c4d853a5",
+  "operations": [
+    "contract.describe",
+    "workflow.open",
+    "workflow.read",
+    "workflow.apply"
+  ],
+  "capabilities": [
+    "expected-revision",
+    "idempotent-request-id",
+    "lease-epoch"
+  ]
+}
