@@ -315,3 +315,32 @@ def test_timed_out_read_call_is_a_plain_timeout_not_an_unknown_apply_outcome(
     assert time.monotonic() - started < TIMEOUT_BUDGET
     assert not isinstance(caught.value, ApplyOutcomeUnknownError)
     assert process_ended(fake.call_for(verb)["pid"])
+
+
+def test_contract_finishes_and_kills_the_group_when_a_grandchild_holds_the_pipes(
+    fake: FakeController, project_root: Path
+) -> None:
+    # The controller exits at once but leaves a long-sleeping grandchild holding
+    # its stdout and stderr write ends, so neither pipe ever reaches EOF by
+    # itself.
+    fake.respond(
+        json.dumps(live_contract()),
+        verb="contract",
+        grandchild=SLOW_SECONDS * 3,
+        grandchild_inherits=True,
+    )
+    client = make_client(fake, project_root, timeout_seconds=1)
+    started = time.monotonic()
+
+    try:
+        client.contract()
+    except ControllerError:
+        # Both terminal paths are legitimate here and the winner is a race: a
+        # ControllerTimeoutError when the readers never saw EOF, or a plain
+        # successful parse. What this test pins is that the call returns control
+        # and that the grandchild is dead, not which path won. Any other
+        # exception type fails the test.
+        pass
+
+    assert time.monotonic() - started < TIMEOUT_BUDGET
+    assert process_ended(fake.call_for("contract")["grandchild_pid"])

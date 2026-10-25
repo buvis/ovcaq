@@ -34,7 +34,9 @@ OMIT = object()
 # holds for that verb, so one fake can answer contract and snapshot/apply
 # differently inside a single test. When the answer asks for a grandchild, it
 # leaves a long-sleeping child of its own in its process group and records that
-# pid, so a test can tell a killed group from a killed direct child.
+# pid, so a test can tell a killed group from a killed direct child. That child
+# inherits the controller's stdout and stderr pipes when the answer asks for it,
+# so the pipes stay open after the controller itself exits.
 FAKE_CONTROLLER = """\
 import json
 import os
@@ -52,11 +54,12 @@ if "--request" in sys.argv:
     record["request_mode"] = request.stat().st_mode & 0o777
 answer = spec["answers"].get(verb, spec["answers"]["default"])
 if answer.get("grandchild"):
+    streams = None if answer.get("grandchild_inherits") else subprocess.DEVNULL
     grandchild = subprocess.Popen(
         [sys.executable, "-c", f"import time; time.sleep({answer['grandchild']})"],
         stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stdout=streams,
+        stderr=streams,
     )
     record["grandchild_pid"] = grandchild.pid
 with open(spec["log"], "a", encoding="utf-8") as log:
@@ -95,6 +98,7 @@ class FakeController:
         sleep: float = 0,
         exit_code: int = 0,
         grandchild: float = 0,
+        grandchild_inherits: bool = False,
     ) -> None:
         self.answers[verb] = {
             "stdout": stdout,
@@ -102,6 +106,7 @@ class FakeController:
             "sleep": sleep,
             "exit": exit_code,
             "grandchild": grandchild,
+            "grandchild_inherits": grandchild_inherits,
         }
         answers = {
             "default": {
@@ -110,6 +115,7 @@ class FakeController:
                 "sleep": 0,
                 "exit": 0,
                 "grandchild": 0,
+                "grandchild_inherits": False,
             },
             **self.answers,
         }
