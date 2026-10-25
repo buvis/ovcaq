@@ -18,6 +18,12 @@ from ovcaq.paths import ProjectPathError, _checked_path
 PROTOCOL_MAJOR = 1
 INITIAL_OPEN_OPERATION = "workflow.open"
 MAX_TIMEOUT_SECONDS = 300
+MAX_STDERR_TAIL_CHARS = 512
+TRUNCATION_MARKER = "...(truncated) "
+REDACTED_MARKER = "<redacted>"
+MIN_SECRET_CHARS = 8
+REQUIRED_CONTRACT_STRINGS = ("package_version", "schema_digest", "fixture_digest")
+ADVERTISED_CONTRACT_FIELDS = ("operations", "capabilities")
 
 
 class ControllerError(RuntimeError):
@@ -34,6 +40,17 @@ class ControllerTimeoutError(ControllerError):
 
 class ControllerOutputError(ControllerError):
     """The controller produced malformed or oversized output."""
+
+
+class ApplyOutcomeUnknownError(ControllerTimeoutError):
+    """An apply timed out, so its outcome is unknown and must be retried."""
+
+    def __init__(self, request_id: str, detail: str) -> None:
+        super().__init__(
+            f"outcome unknown for apply request {request_id}: {detail}; "
+            "retry the same envelope"
+        )
+        self.request_id = request_id
 
 
 class RevisionConflictError(ControllerError):
@@ -71,6 +88,7 @@ class ControllerConfig:
     project_root: Path
     timeout_seconds: int = 30
     max_output_bytes: int = 1_048_576
+    bundle_digest: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.argv, tuple):
@@ -103,6 +121,8 @@ class ControllerConfig:
             )
         if _require_int(self.max_output_bytes, "max_output_bytes") <= 0:
             raise ValueError("max_output_bytes must be positive")
+        if self.bundle_digest is not None:
+            _require_string(self.bundle_digest, "bundle_digest")
 
 
 @dataclass(frozen=True, slots=True)
@@ -206,23 +226,115 @@ def _string_set(data: Mapping[str, Any], field: str) -> frozenset[str]:
     return frozenset(value)
 
 
+def _pinned_string(pinned: Mapping[str, Any], field: str) -> str:
+    value = pinned.get(field)
+    if not isinstance(value, str) or not value:
+        raise IncompatibleContractError(
+            f"pinned contract {field} must be a nonempty string, got {value!r}"
+        )
+    return value
+
+
+def _pinned_names(pinned: Mapping[str, Any], field: str) -> list[str]:
+    value = pinned.get(field)
+    if not isinstance(value, list) or any(not isinstance(v, str) for v in value):
+        raise IncompatibleContractError(
+            f"pinned contract {field} must be a list of strings"
+        )
+    return value
+
+
+def _live_string(live: Mapping[str, Any], field: str, *, allow_empty: bool) -> str:
+    value = live.get(field)
+    if not isinstance(value, str) or (not value and not allow_empty):
+        raise ControllerOutputError(f"contract {field} must be a nonempty string")
+    return value
+
+
+def _check_package_version(pinned: str, live: str) -> None:
+    """Accept the pinned version itself or the pinned version plus a build tag."""
+    prefix = f"{pinned}+"
+    if live == pinned or (live.startswith(prefix) and len(live) > len(prefix)):
+        return
+    raise IncompatibleContractError(
+        f"controller package_version {live!r} does not match pinned {pinned!r}"
+    )
+
+
+def _check_advertised(field: str, pinned: list[str], live: frozenset[str]) -> None:
+    missing = sorted(set(pinned) - live)
+    if missing:
+        raise IncompatibleContractError(
+            f"controller does not advertise pinned {field}: {', '.join(missing)}"
+        )
+
+
+def _json_strings(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, dict):
+        return [text for item in value.values() for text in _json_strings(item)]
+    if isinstance(value, list):
+        return [text for item in value for text in _json_strings(item)]
+    return []
+
+
 class ControllerClient:
     """Run the external workflow controller through explicit argv only."""
 
     def __init__(self, config: ControllerConfig) -> None:
         self._config = config
         self._contract: ControllerContract | None = None
+        self._secrets: tuple[str, ...] | None = None
+
+    def _actor_secrets(self) -> tuple[str, ...]:
+        """The actor file's usable secrets, read at most once per client."""
+        if self._secrets is not None:
+            return self._secrets
+        actor_file = self._config.actor_file
+        candidates: list[str] = []
+        if actor_file is not None:
+            try:
+                with actor_file.open(encoding="utf-8", errors="replace") as stream:
+                    text = stream.read(self._config.max_output_bytes).strip()
+            except OSError:
+                text = ""
+            candidates.append(text)
+            try:
+                candidates.extend(_json_strings(json.loads(text)))
+            except ValueError:
+                pass
+        kept = {text for text in candidates if len(text) >= MIN_SECRET_CHARS}
+        self._secrets = tuple(sorted(kept, key=len, reverse=True))
+        return self._secrets
+
+    def _redact(self, text: str) -> str:
+        for secret in self._actor_secrets():
+            text = text.replace(secret, REDACTED_MARKER)
+        return text
+
+    def _detail(self, stderr: bytes) -> str:
+        """The controller's stderr, redacted and then bounded to a tail."""
+        text = self._redact(stderr.decode("utf-8", errors="replace").strip())
+        if len(text) > MAX_STDERR_TAIL_CHARS:
+            return TRUNCATION_MARKER + text[-MAX_STDERR_TAIL_CHARS:]
+        return text
 
     def _run(self, *arguments: str) -> dict[str, Any]:
         config = self._config
-        process = subprocess.Popen(
-            [*config.argv, "--json", *arguments],
-            cwd=config.project_root,
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            start_new_session=True,
-        )
+        try:
+            process = subprocess.Popen(
+                [*config.argv, "--json", *arguments],
+                cwd=config.project_root,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                start_new_session=True,
+            )
+        except OSError as error:
+            raise ControllerError(
+                f"cannot run controller program {config.argv[0]}: {error}"
+            ) from error
         try:
             stdout, stderr = process.communicate(timeout=config.timeout_seconds)
         except subprocess.TimeoutExpired:
@@ -231,33 +343,48 @@ class ControllerClient:
             raise ControllerTimeoutError(
                 f"controller did not answer within {config.timeout_seconds}s"
             ) from None
+        for name, stream in (("output", stdout), ("stderr", stderr)):
+            if len(stream) > config.max_output_bytes:
+                raise ControllerOutputError(
+                    f"controller {name} exceeds {config.max_output_bytes} bytes"
+                )
         if process.returncode != 0:
-            detail = stderr.decode("utf-8", errors="replace").strip()
             raise ControllerError(
-                f"controller exited with status {process.returncode}: {detail}"
-            )
-        if len(stdout) > config.max_output_bytes:
-            raise ControllerOutputError(
-                f"controller output exceeds {config.max_output_bytes} bytes"
+                f"controller exited with status {process.returncode}: "
+                f"{self._detail(stderr)}"
             )
         try:
             data = json.loads(stdout)
         except ValueError as error:
             raise ControllerOutputError(
-                f"controller output is not valid JSON: {error}"
+                f"controller output is not valid JSON: {self._redact(str(error))}"
             ) from None
         if not isinstance(data, dict):
             raise ControllerOutputError("controller output must be a JSON object")
         return data
 
+    def _pinned_contract(self) -> dict[str, Any]:
+        """The pinned bundle, digest-checked and validated before any spawn."""
+        pinned_path = self._config.contract_bundle
+        controller_bundle_digest(pinned_path, self._config.bundle_digest)
+        pinned: dict[str, Any] = json.loads(pinned_path.read_text(encoding="utf-8"))
+        for field in REQUIRED_CONTRACT_STRINGS:
+            _pinned_string(pinned, field)
+        for field in ADVERTISED_CONTRACT_FIELDS:
+            _pinned_names(pinned, field)
+        return pinned
+
     def contract(self) -> ControllerContract:
         """Return the live contract once it matches the pinned bundle."""
         if self._contract is not None:
             return self._contract
-        pinned_path = self._config.contract_bundle
-        controller_bundle_digest(pinned_path)
-        pinned = json.loads(pinned_path.read_text(encoding="utf-8"))
+        pinned = self._pinned_contract()
         live = self._run("contract")
+        _live_string(live, "package_version", allow_empty=True)
+        for field in ("schema_digest", "fixture_digest"):
+            _live_string(live, field, allow_empty=False)
+        operations = _string_set(live, "operations")
+        capabilities = _string_set(live, "capabilities")
         major = live.get("protocol_major")
         if type(major) is not int or major != PROTOCOL_MAJOR:
             raise IncompatibleContractError(
@@ -269,22 +396,24 @@ class ControllerClient:
                     f"controller {field} {live.get(field)!r} does not match "
                     f"pinned {pinned.get(field)!r}"
                 )
-        version = live.get("package_version")
-        if not isinstance(version, str):
-            raise ControllerOutputError("contract package_version must be a string")
+        version = live["package_version"]
+        _check_package_version(pinned["package_version"], version)
+        _check_advertised("operations", pinned["operations"], operations)
+        _check_advertised("capabilities", pinned["capabilities"], capabilities)
         self._contract = ControllerContract(
             protocol_major=major,
             package_version=version,
             schema_digest=live["schema_digest"],
             fixture_digest=live["fixture_digest"],
-            operations=_string_set(live, "operations"),
-            capabilities=_string_set(live, "capabilities"),
+            operations=operations,
+            capabilities=capabilities,
         )
         return self._contract
 
     def snapshot(self, *, workflow_id: str) -> dict[str, Any]:
         """Return the controller's snapshot payload unmodified."""
         _require_string(workflow_id, "workflow_id")
+        self.contract()
         return self._run("snapshot", "--project-root", str(self._config.project_root))
 
     def apply(self, envelope: MutationEnvelope) -> ApplyResult:
@@ -292,6 +421,7 @@ class ControllerClient:
         actor_file = self._config.actor_file
         if actor_file is None:
             raise ControllerError("apply requires a configured actor_file")
+        self.contract()
         request = {
             "protocol_major": envelope.protocol_major,
             "operation": envelope.operation,
@@ -316,6 +446,8 @@ class ControllerClient:
                 "--request",
                 name,
             )
+        except ControllerTimeoutError as error:
+            raise ApplyOutcomeUnknownError(envelope.request_id, str(error)) from error
         finally:
             os.unlink(name)
         ok = response.get("ok")
