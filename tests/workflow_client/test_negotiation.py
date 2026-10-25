@@ -7,10 +7,12 @@ from typing import Any
 import pytest
 from tests.workflow_client.conftest import (
     ACCEPTED_APPLY,
+    APPLY_RESPONSES,
     BUNDLE,
     FIXTURE,
     OMIT,
     FakeController,
+    envelope_as_json,
     live_contract,
     load_json,
     make_client,
@@ -60,6 +62,55 @@ def test_contract_rejects_live_controller_missing_a_pinned_capability(
     assert len(fake.calls()) == 1
 
 
+def test_contract_rejects_live_operation_that_only_extends_a_pinned_name(
+    fake: FakeController, project_root: Path
+) -> None:
+    # "workflow.apply-v2" is a different operation, not the pinned one.
+    pinned = "workflow.apply"
+    renamed = [
+        f"{name}-v2" if name == pinned else name for name in FIXTURE["operations"]
+    ]
+    fake.respond(json.dumps(live_contract(operations=renamed)), verb="contract")
+
+    with pytest.raises(IncompatibleContractError) as caught:
+        make_client(fake, project_root).contract()
+
+    assert pinned in str(caught.value)
+    assert len(fake.calls()) == 1
+
+
+def test_contract_rejects_a_capability_advertised_only_as_an_operation(
+    fake: FakeController, project_root: Path
+) -> None:
+    capability = "idempotent-request-id"
+    live = live_contract(
+        capabilities=[name for name in FIXTURE["capabilities"] if name != capability]
+    )
+    live["operations"] = [*live["operations"], capability]
+    fake.respond(json.dumps(live), verb="contract")
+
+    with pytest.raises(IncompatibleContractError) as caught:
+        make_client(fake, project_root).contract()
+
+    assert capability in str(caught.value)
+
+
+def test_contract_rejects_a_pinned_name_present_only_in_an_unrelated_field(
+    fake: FakeController, project_root: Path, tmp_path: Path
+) -> None:
+    # The digest text mentions the capability; the capability list does not.
+    capability = "lease-epoch"
+    bundle = write_bundle(tmp_path, schema_digest=f"{capability}-{'0' * 48}")
+    pinned = load_json(bundle)
+    kept = [name for name in pinned["capabilities"] if name != capability]
+    fake.respond(json.dumps(live_contract(pinned, capabilities=kept)), verb="contract")
+
+    with pytest.raises(IncompatibleContractError) as caught:
+        make_client(fake, project_root, bundle=bundle).contract()
+
+    assert capability in str(caught.value)
+
+
 @pytest.mark.parametrize(
     ("operations", "capabilities"),
     [
@@ -91,7 +142,9 @@ def test_contract_accepts_live_controller_advertising_more_than_pinned(
 
 
 @pytest.mark.parametrize("pinned_version", ["1.0.0", "1.4.2"])
-@pytest.mark.parametrize("suffix", ["", "+live", "+build.7"])
+@pytest.mark.parametrize(
+    "suffix", ["", "+live", "+build.7", "+sha.deadbeef", "+2", "+g1a2b3c.dirty"]
+)
 def test_contract_accepts_live_package_version_equal_or_build_tagged(
     fake: FakeController,
     project_root: Path,
@@ -154,8 +207,12 @@ def test_contract_rejects_pinned_bundle_with_an_unusable_required_string(
     bundle = write_bundle(tmp_path, **{field_name: pinned_value})
     fake.respond(json.dumps(live_contract()), verb="contract")
 
-    with pytest.raises(IncompatibleContractError):
+    with pytest.raises(IncompatibleContractError) as caught:
         make_client(fake, project_root, bundle=bundle).contract()
+
+    # The pinned document is at fault, not the controller's output.
+    assert field_name in str(caught.value)
+    assert not isinstance(caught.value, ControllerOutputError)
 
 
 def test_contract_rejects_pinned_bundle_holding_only_protocol_major(
@@ -172,19 +229,31 @@ def test_contract_rejects_pinned_bundle_holding_only_protocol_major(
     assert load_json(bundle) == {"protocol_major": PROTOCOL_MAJOR}
     fake.respond(json.dumps(live_contract()), verb="contract")
 
-    with pytest.raises(IncompatibleContractError):
+    with pytest.raises(IncompatibleContractError) as caught:
         make_client(fake, project_root, bundle=bundle).contract()
 
+    assert any(name in str(caught.value) for name in PINNED_FIELDS)
+    assert not isinstance(caught.value, ControllerOutputError)
 
-@pytest.mark.parametrize("field_name", ["schema_digest", "fixture_digest"])
-def test_contract_refuses_digests_that_are_null_in_both_documents(
-    fake: FakeController, project_root: Path, tmp_path: Path, field_name: str
+
+@pytest.mark.parametrize("unusable", [None, ""], ids=["null", "empty"])
+@pytest.mark.parametrize("field_name", PINNED_FIELDS)
+def test_contract_refuses_required_strings_that_are_unusable_in_both_documents(
+    fake: FakeController,
+    project_root: Path,
+    tmp_path: Path,
+    field_name: str,
+    unusable: Any,
 ) -> None:
-    bundle = write_bundle(tmp_path, **{field_name: None})
-    fake.respond(json.dumps(live_contract(**{field_name: None})), verb="contract")
+    # Matching values are not agreement when neither value is usable.
+    bundle = write_bundle(tmp_path, **{field_name: unusable})
+    fake.respond(json.dumps(live_contract(**{field_name: unusable})), verb="contract")
 
-    with pytest.raises((IncompatibleContractError, ControllerOutputError)):
+    with pytest.raises(IncompatibleContractError) as caught:
         make_client(fake, project_root, bundle=bundle).contract()
+
+    assert field_name in str(caught.value)
+    assert not isinstance(caught.value, ControllerOutputError)
 
 
 @pytest.mark.parametrize(("field_name", "live_value"), UNUSABLE_LIVE_CASES)
@@ -218,7 +287,23 @@ def test_config_leaves_bundle_digest_unpinned_by_default(
     assert config.bundle_digest is None
 
 
-@pytest.mark.parametrize("value", [123, "", b"abc", [], 1.5])
+@pytest.mark.parametrize(
+    "value",
+    [
+        123,
+        "",
+        b"",
+        b"abc",
+        [],
+        ["0" * 64],
+        {},
+        {"digest": "0" * 64},
+        1.5,
+        0.5,
+        True,
+        object(),
+    ],
+)
 def test_config_rejects_bundle_digest_that_is_not_a_nonempty_string(
     fake: FakeController, project_root: Path, value: Any
 ) -> None:
@@ -317,21 +402,32 @@ def test_snapshot_negotiates_the_contract_before_issuing_its_verb(
     ]
 
 
+@pytest.mark.parametrize("response", APPLY_RESPONSES, ids=["accepted", "rejected"])
 def test_apply_negotiates_the_contract_before_issuing_its_verb(
-    fake: FakeController, project_root: Path, actor_file: Path
+    fake: FakeController,
+    project_root: Path,
+    actor_file: Path,
+    response: dict[str, Any],
 ) -> None:
+    envelope = make_envelope(request_id="req-0101", expected_revision=4)
     fake.respond(json.dumps(live_contract()), verb="contract")
-    fake.respond(json.dumps(ACCEPTED_APPLY), verb="apply")
+    fake.respond(json.dumps(response), verb="apply")
 
-    result = make_client(fake, project_root, actor_file=actor_file).apply(
-        make_envelope()
-    )
+    result = make_client(fake, project_root, actor_file=actor_file).apply(envelope)
 
     assert isinstance(result, ApplyResult)
-    assert result.revision == ACCEPTED_APPLY["revision"]
+    assert result.ok is response["ok"]
+    assert result.revision == response["revision"]
+    assert result.result == response["result"]
+    assert result.error_code == response["error_code"]
+    assert result.retryable is response["retryable"]
     assert fake.verbs() == ["contract", "apply"]
     assert fake.call_for("contract")["argv"] == [*fake.child_argv, "--json", "contract"]
-    assert not request_path(fake.call_for("apply")).exists()
+    call = fake.call_for("apply")
+    # The envelope really travelled in the request file, privately.
+    assert json.loads(call["request"]) == envelope_as_json(envelope)
+    assert call["request_mode"] == 0o600
+    assert not request_path(call).exists()
 
 
 def failing_negotiation(

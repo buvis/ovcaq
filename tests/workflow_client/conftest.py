@@ -32,10 +32,13 @@ OMIT = object()
 # Fake controller: records its argv, cwd, pid, verb and any --request file, then
 # answers with the stdout, stderr, delay and exit code the spec file in argv[1]
 # holds for that verb, so one fake can answer contract and snapshot/apply
-# differently inside a single test.
+# differently inside a single test. When the answer asks for a grandchild, it
+# leaves a long-sleeping child of its own in its process group and records that
+# pid, so a test can tell a killed group from a killed direct child.
 FAKE_CONTROLLER = """\
 import json
 import os
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -47,9 +50,17 @@ if "--request" in sys.argv:
     request = Path(sys.argv[sys.argv.index("--request") + 1])
     record["request"] = request.read_text(encoding="utf-8")
     record["request_mode"] = request.stat().st_mode & 0o777
+answer = spec["answers"].get(verb, spec["answers"]["default"])
+if answer.get("grandchild"):
+    grandchild = subprocess.Popen(
+        [sys.executable, "-c", f"import time; time.sleep({answer['grandchild']})"],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    record["grandchild_pid"] = grandchild.pid
 with open(spec["log"], "a", encoding="utf-8") as log:
     log.write(json.dumps(record) + "\\n")
-answer = spec["answers"].get(verb, spec["answers"]["default"])
 sys.stdout.write(answer["stdout"])
 sys.stdout.flush()
 sys.stderr.write(answer["stderr"])
@@ -83,15 +94,23 @@ class FakeController:
         stderr: str = "",
         sleep: float = 0,
         exit_code: int = 0,
+        grandchild: float = 0,
     ) -> None:
         self.answers[verb] = {
             "stdout": stdout,
             "stderr": stderr,
             "sleep": sleep,
             "exit": exit_code,
+            "grandchild": grandchild,
         }
         answers = {
-            "default": {"stdout": "", "stderr": "", "sleep": 0, "exit": 0},
+            "default": {
+                "stdout": "",
+                "stderr": "",
+                "sleep": 0,
+                "exit": 0,
+                "grandchild": 0,
+            },
             **self.answers,
         }
         spec = {"log": str(self.log), "answers": answers}
@@ -206,6 +225,21 @@ def make_envelope(**overrides: Any) -> MutationEnvelope:
     return MutationEnvelope(**fields)
 
 
+def envelope_as_json(envelope: MutationEnvelope) -> dict[str, Any]:
+    """The request body the controller must receive for an envelope."""
+    return {
+        "protocol_major": envelope.protocol_major,
+        "operation": envelope.operation,
+        "request_id": envelope.request_id,
+        "expected_revision": envelope.expected_revision,
+        "project_id": envelope.project_id,
+        "workflow_id": envelope.workflow_id,
+        "actor_id": envelope.actor_id,
+        "lease_epoch": envelope.lease_epoch,
+        "payload": dict(envelope.payload),
+    }
+
+
 ACCEPTED_APPLY = {
     "ok": True,
     "revision": 6,
@@ -213,6 +247,15 @@ ACCEPTED_APPLY = {
     "error_code": None,
     "retryable": False,
 }
+
+REJECTED_APPLY = {
+    "ok": False,
+    "revision": None,
+    "result": None,
+    "error_code": "stale-revision",
+    "retryable": True,
+}
+APPLY_RESPONSES = [ACCEPTED_APPLY, REJECTED_APPLY]
 
 
 def request_path(call: dict[str, Any]) -> Path:
@@ -244,6 +287,17 @@ def exception_chain(error: BaseException) -> list[BaseException]:
 
 def secret_fragments(secret: str, length: int = 8) -> list[str]:
     return [secret[index : index + length] for index in range(len(secret) - length + 1)]
+
+
+def hides_secret(error: BaseException, secret: str) -> bool:
+    """No exception in the chain shows the secret or a long fragment of it."""
+    for item in exception_chain(error):
+        for text in (str(item), repr(item)):
+            if secret in text:
+                return False
+            if any(piece in text for piece in secret_fragments(secret)):
+                return False
+    return True
 
 
 def marks_truncation(message: str) -> bool:
@@ -281,3 +335,26 @@ EVERY_CALL = pytest.mark.parametrize(
     [call_contract, call_snapshot, call_apply],
     ids=["contract", "snapshot", "apply"],
 )
+
+CALL_BY_VERB = {
+    "contract": call_contract,
+    "snapshot": call_snapshot,
+    "apply": call_apply,
+}
+EVERY_VERB = pytest.mark.parametrize("verb", list(CALL_BY_VERB))
+
+
+def write_actor_file(
+    tmp_path: Path, name: str, *, secret: str | None = None, flavor: str = "json"
+) -> Path:
+    """An actor file that holds the secret, or only short values without one."""
+    if secret is None:
+        body = "actor-a\n"
+    elif flavor == "plain":
+        body = secret + "\n"
+    else:
+        body = json.dumps({"actor_id": "actor-a", "auth": {"proof": secret}})
+    path = tmp_path / name
+    path.write_text(body, encoding="utf-8")
+    path.chmod(0o600)
+    return path
