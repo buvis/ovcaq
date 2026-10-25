@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+"""Report whether a PRD's prerequisites are met in the current project.
+
+Prints one JSON line. Exit 0 when ready, 1 when something is missing,
+2 on a usage or config error (message on stderr, nothing on stdout).
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import re
+import sys
+import tomllib
+from pathlib import Path
+from typing import NoReturn
+
+DONE = Path("docs") / "dev" / "project-management" / "prds" / "done"
+DEPENDENCIES: dict[int, tuple[int, ...]] = {
+    58: (57, 62),
+    59: (58, 63),
+    60: (59,),
+    61: (60,),
+    64: (58,),
+    65: (60, 61, 64),
+}
+# PRD -> (config table, artifact path key, required evidence token)
+GATES: dict[int, tuple[str, str, str]] = {
+    61: ("autopilot", "plugin_artifact", "AP00017"),
+    65: ("operator", "client_artifact", "Lantern00003"),
+}
+
+
+def refuse(message: str) -> NoReturn:
+    print(f"autopilot-prerequisites: {message}", file=sys.stderr)
+    sys.exit(2)
+
+
+def is_done(prd: int) -> bool:
+    if DONE.is_symlink() or not DONE.is_dir():
+        return False
+    pattern = re.compile(rf"{prd:05d}-.+\.md")
+    return any(
+        pattern.fullmatch(entry.name) and entry.is_file(follow_symlinks=False)
+        for entry in os.scandir(DONE)
+    )
+
+
+def check_gate(prd: int, config: Path, explicit: bool) -> str | None:
+    """Return a missing-artifact message, or None when the gate is met."""
+    table, key, token = GATES[prd]
+    try:
+        with config.open("rb") as handle:
+            settings = tomllib.load(handle)
+    except FileNotFoundError:
+        if explicit:
+            refuse(f"config file not found: {config}")
+        return f"{key}: no config file {config.name}"
+    except (OSError, ValueError) as error:
+        refuse(f"cannot read config {config}: {error}")
+    section = settings.get(table)
+    if section is None:
+        return f"{key}: [{table}] table not configured"
+    if not isinstance(section, dict):
+        refuse(f"[{table}] must be a table")
+    path, digest = section.get(key), section.get(f"{key}_sha256")
+    for name, value in ((key, path), (f"{key}_sha256", digest)):
+        if value is not None and not isinstance(value, str):
+            refuse(f"[{table}] {name} must be a string")
+    if path is None or digest is None:
+        return f"{key}: [{table}] needs {key} and {key}_sha256"
+    artifact = Path(path)
+    if os.path.realpath(artifact) != os.path.abspath(artifact):
+        return f"{key}: {path} must not traverse a symlink"
+    if not artifact.is_file():
+        return f"{key}: {path} is not a regular file"
+    data = artifact.read_bytes()
+    if hashlib.sha256(data).hexdigest() != digest.lower():
+        return f"{key}: {path} sha256 does not match {key}_sha256"
+    try:
+        payload = json.loads(data)
+    except ValueError:
+        return f"{key}: {path} is not valid JSON"
+    evidence = payload.get("evidence") if isinstance(payload, dict) else None
+    if not isinstance(evidence, list) or token not in evidence:
+        return f"{key}: {path} evidence list lacks {token}"
+    return None
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--prd", required=True, help="PRD number, e.g. 58 or 00058")
+    parser.add_argument("--config", help="config file (default: ./ovcaq.toml)")
+    args = parser.parse_args()
+    if not re.fullmatch(r"[0-9]+", args.prd) or int(args.prd) not in DEPENDENCIES:
+        parser.error(f"unknown PRD: {args.prd!r}")
+    prd = int(args.prd)
+
+    missing = [
+        f"PRD {dep:05d} is not in {DONE.as_posix()}"
+        for dep in DEPENDENCIES[prd]
+        if not is_done(dep)
+    ]
+    if prd in GATES:
+        config = Path(args.config or "ovcaq.toml")
+        gap = check_gate(prd, config, args.config is not None)
+        if gap is not None:
+            missing.append(gap)
+
+    if missing:
+        print(json.dumps({"ready": False, "prd": args.prd, "missing": missing}))
+        sys.exit(1)
+    print(json.dumps({"ready": True, "prd": args.prd}))
+
+
+if __name__ == "__main__":
+    main()

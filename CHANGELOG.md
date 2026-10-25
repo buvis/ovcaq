@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **tools**: add read-only `tools/autopilot-prerequisites --prd <ID>`, which reports whether a PRD's done-bucket predecessors and digest-pinned evidence artifacts are in place.
 - **dev**: add pinned mise development tasks, executable command shims, the Claude instruction bridge, and a linked architecture overview.
 - **drivers**: run supervised workflows with Codex, configured models and effort, verified version/authentication checks, and state-based phase handoffs.
 - **drivers**: show Codex activity, tools, receiver lanes and cache-aware usage with retained raw evidence; conflicting native threads fail safely even after supervisor ownership binding.
