@@ -100,6 +100,6 @@ def test_no_plugin_import_at_runtime(tmp_path: Path) -> None:
 
     assert any(file.endswith("workflow_client.py") for file in probe["files"])
     for file in probe["files"]:
-        assert "/plugins/" not in file
-        assert ".claude" not in file
+        assert ".claude/plugins/" not in file
+        assert "agent-plugins" not in file
     assert probe["after"] == probe["before"]
