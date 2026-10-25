@@ -253,3 +253,18 @@ def test_workflow_settings_without_controller_keys_is_unchanged(
     assert settings.controller_argv is None
     assert settings.contract_bundle is None
     assert settings.actor_file is None
+
+
+def test_workflow_settings_tolerates_controller_argv_without_contract_bundle(
+    config_root: Path,
+) -> None:
+    write_project_config(
+        config_root,
+        '[workflow]\ncontroller_argv = ["autopilot-controller"]\n',
+    )
+
+    settings = workflow_settings(config_root)
+
+    assert settings.controller_argv == ("autopilot-controller",)
+    assert settings.contract_bundle is None
+    assert settings.actor_file is None

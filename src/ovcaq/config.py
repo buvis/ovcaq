@@ -217,6 +217,47 @@ def agent_settings(root: Path, *, name: str | None = None) -> AgentSettings:
     )
 
 
+def _workflow_tables(
+    root: Path,
+) -> tuple[Mapping[str, object], Mapping[str, object], dict[str, object]]:
+    """Read the user and project TOML once and merge their [workflow] tables."""
+    config_home = _trusted_path(
+        Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    )
+    user = _read_config(config_home / "ovcaq/config.toml")
+    project = _read_config(root / CONFIG_NAME)
+    return user, project, {**_table(user, "workflow"), **_table(project, "workflow")}
+
+
+def _controller_argv(workflow: Mapping[str, object]) -> tuple[str, ...] | None:
+    argv = workflow.get("controller_argv")
+    if argv is None:
+        return None
+    if (
+        not isinstance(argv, list)
+        or not argv
+        or any(not isinstance(part, str) or not part for part in argv)
+    ):
+        raise ConfigurationError("controller_argv must be a nonempty array of strings")
+    return tuple(argv)
+
+
+def _controller_inputs(
+    root: Path, workflow: Mapping[str, object]
+) -> tuple[tuple[str, ...] | None, Path | None, Path | None]:
+    """Validate the controller keys' shapes without touching the filesystem."""
+    argv = _controller_argv(workflow)
+    if argv is None:
+        return None, None, None
+    bundle = workflow.get("contract_bundle")
+    actor = workflow.get("actor_file")
+    return (
+        argv,
+        None if bundle is None else _configured_path(root, bundle, "contract_bundle"),
+        None if actor is None else _configured_path(root, actor, "actor_file"),
+    )
+
+
 def _active_tiers(
     root: Path, user: Mapping[str, object], project: Mapping[str, object]
 ) -> dict[str, str]:
@@ -238,11 +279,7 @@ def workflow_settings(
 ) -> WorkflowSettings:
     """Resolve only workflow inputs; model values and runtime policy stay opaque."""
     root = _trusted_path(root)
-    config_home = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-    config_home = _trusted_path(config_home)
-    user = _read_config(config_home / "ovcaq/config.toml")
-    project = _read_config(root / CONFIG_NAME)
-    workflow = {**_table(user, "workflow"), **_table(project, "workflow")}
+    user, project, workflow = _workflow_tables(root)
     prds = _configured_path(
         root,
         prd_root or workflow.get("prd_root", "docs/dev/project-management/prds"),
@@ -265,41 +302,30 @@ def workflow_settings(
     )
     state = runtime_directory(root, state)
     tiers = _active_tiers(root, user, project)
-    controller = controller_settings(root)
+    argv, bundle, actor = _controller_inputs(root, workflow)
     return WorkflowSettings(
         prds,
         runtime,
         state,
         frozenset(tiers if available_tiers is None else available_tiers),
-        None if controller is None else controller.argv,
-        None if controller is None else controller.contract_bundle,
-        None if controller is None else controller.actor_file,
+        argv,
+        bundle,
+        actor,
     )
 
 
 def controller_settings(root: Path) -> ControllerConfig | None:
     """Build the controller client config, or None when no argv is declared."""
     root = _trusted_path(root)
-    config_home = _trusted_path(
-        Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-    )
-    user = _read_config(config_home / "ovcaq/config.toml")
-    project = _read_config(root / CONFIG_NAME)
-    workflow = {**_table(user, "workflow"), **_table(project, "workflow")}
-    argv = workflow.get("controller_argv")
+    _, _, workflow = _workflow_tables(root)
+    argv = _controller_argv(workflow)
     if argv is None:
         return None
-    if (
-        not isinstance(argv, list)
-        or not argv
-        or any(not isinstance(part, str) or not part for part in argv)
-    ):
-        raise ConfigurationError("controller_argv must be a nonempty array of strings")
     bundle = _configured_path(root, workflow.get("contract_bundle"), "contract_bundle")
     actor = workflow.get("actor_file")
     try:
         return ControllerConfig(
-            argv=tuple(argv),
+            argv=argv,
             contract_bundle=bundle,
             actor_file=(
                 None if actor is None else _configured_path(root, actor, "actor_file")
