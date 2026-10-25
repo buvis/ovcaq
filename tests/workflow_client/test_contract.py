@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import hashlib
 import itertools
 import json
+import re
 import shutil
 from collections.abc import Callable
 from dataclasses import FrozenInstanceError, is_dataclass
@@ -95,6 +97,12 @@ def make_contract() -> ControllerContract:
 def write_bundle(path: Path, data: dict[str, Any], **dump_args: Any) -> Path:
     path.write_text(json.dumps(data, **dump_args), encoding="utf-8")
     return path
+
+
+def canonical_sha256(path: Path) -> str:
+    """Reference digest: sha256 of the sort_keys canonical JSON dump."""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
 
 
 # Protocol and error hierarchy
@@ -254,6 +262,13 @@ def test_config_rejects_directory_contract_bundle(tmp_path: Path) -> None:
         make_config(tmp_path, contract_bundle=directory)
 
 
+# Bundle content (malformed JSON, missing protocol_major) is deliberately not
+# tested at ControllerConfig construction. This task's contract limits
+# __post_init__ to "contract_bundle must exist and be a regular file"; parsing
+# and checking the bundle belongs to the later contract()/transport task.
+# Requiring it here would invent a requirement the task contract does not state.
+
+
 def test_config_accepts_bundle_copied_elsewhere(tmp_path: Path) -> None:
     copy = tmp_path / "controller-v1.json"
     shutil.copyfile(BUNDLE, copy)
@@ -311,6 +326,58 @@ def test_contract_maps_bundle_fixture_fields() -> None:
     assert contract.fixture_digest == data["fixture_digest"]
     assert contract.operations == frozenset(data["operations"])
     assert contract.capabilities == frozenset(data["capabilities"])
+    # Pin the fixture's actual values so the mapping is checked against known
+    # content, not only read back from whatever the fixture happens to hold.
+    assert contract.protocol_major == 1
+    assert contract.package_version == "1.0.0"
+    assert contract.operations == frozenset(
+        {"contract.describe", "workflow.open", "workflow.read", "workflow.apply"}
+    )
+    assert contract.capabilities == frozenset(
+        {"expected-revision", "idempotent-request-id", "lease-epoch"}
+    )
+    assert isinstance(contract.operations, frozenset)
+    assert isinstance(contract.capabilities, frozenset)
+
+
+def test_contract_fields_follow_declared_order_and_compare_by_value() -> None:
+    data = load_bundle()
+    positional = ControllerContract(
+        data["protocol_major"],
+        data["package_version"],
+        data["schema_digest"],
+        data["fixture_digest"],
+        frozenset(data["operations"]),
+        frozenset(data["capabilities"]),
+    )
+
+    assert positional == make_contract()
+    assert hash(positional) == hash(make_contract())
+    assert positional != ControllerContract(
+        data["protocol_major"] + 1,
+        data["package_version"],
+        data["schema_digest"],
+        data["fixture_digest"],
+        frozenset(data["operations"]),
+        frozenset(data["capabilities"]),
+    )
+
+
+def test_apply_result_fields_follow_declared_order() -> None:
+    positional = ApplyResult(False, 9, {"phase": "done"}, "stale", True)
+
+    assert positional.ok is False
+    assert positional.revision == 9
+    assert positional.result == {"phase": "done"}
+    assert positional.error_code == "stale"
+    assert positional.retryable is True
+    assert positional == ApplyResult(
+        ok=False,
+        revision=9,
+        result={"phase": "done"},
+        error_code="stale",
+        retryable=True,
+    )
 
 
 def test_apply_result_holds_success_and_rejection_shapes() -> None:
@@ -420,6 +487,121 @@ def test_envelope_rejects_null_identity_outside_initial_open(
         )
 
 
+# Only the exact string "workflow.open" is exempt; unknown operations and
+# near-miss spellings are not, even at expected_revision 0.
+NOT_OPEN_OPERATIONS = [
+    "workflow.bogus",
+    "workflow.Open",
+    "WORKFLOW.OPEN",
+    "workflow.open ",
+    " workflow.open",
+    "workflow.opened",
+    "workflow_open",
+    "open",
+    "",
+]
+
+
+@pytest.mark.parametrize(
+    ("operation", "nulls"),
+    [(operation, nulls) for operation in NOT_OPEN_OPERATIONS for nulls in NULL_SUBSETS],
+    ids=[
+        f"{operation!r}-null-{'+'.join(nulls)}"
+        for operation in NOT_OPEN_OPERATIONS
+        for nulls in NULL_SUBSETS
+    ],
+)
+def test_envelope_rejects_null_identity_for_non_open_operation_at_revision_zero(
+    operation: str, nulls: tuple[str, ...]
+) -> None:
+    with pytest.raises(INVALID):
+        make_envelope(
+            operation=operation,
+            expected_revision=0,
+            **{field: None for field in nulls},
+        )
+
+
+# The exemption needs expected_revision to be the int 0, not merely falsy or
+# below one.
+NOT_REVISION_ZERO = [-1, -100, False, 0.0, None]
+
+
+@pytest.mark.parametrize(
+    ("expected_revision", "nulls"),
+    [(revision, nulls) for revision in NOT_REVISION_ZERO for nulls in NULL_SUBSETS],
+    ids=[
+        f"rev{revision!r}-null-{'+'.join(nulls)}"
+        for revision in NOT_REVISION_ZERO
+        for nulls in NULL_SUBSETS
+    ],
+)
+def test_envelope_rejects_null_identity_for_open_without_int_zero_revision(
+    expected_revision: object, nulls: tuple[str, ...]
+) -> None:
+    with pytest.raises(INVALID):
+        make_envelope(
+            operation="workflow.open",
+            expected_revision=expected_revision,
+            **{field: None for field in nulls},
+        )
+
+
+@pytest.mark.parametrize("protocol_major", [0, 2, -1, 99, "1", None])
+def test_envelope_rejects_protocol_major_other_than_current(
+    protocol_major: object,
+) -> None:
+    assert protocol_major != PROTOCOL_MAJOR
+    with pytest.raises(INVALID):
+        make_envelope(protocol_major=protocol_major)
+
+
+@pytest.mark.parametrize("protocol_major", [0, 2, -1, 99, "1", None])
+def test_envelope_rejects_protocol_major_other_than_current_on_initial_open(
+    protocol_major: object,
+) -> None:
+    with pytest.raises(INVALID):
+        make_envelope(
+            protocol_major=protocol_major,
+            operation="workflow.open",
+            expected_revision=0,
+            workflow_id=None,
+            actor_id=None,
+            lease_epoch=None,
+        )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [("request_id", ""), ("project_id", ""), ("project_id", None)],
+    ids=["empty-request-id", "empty-project-id", "none-project-id"],
+)
+def test_envelope_rejects_missing_request_or_project_id(
+    field: str, value: object
+) -> None:
+    with pytest.raises(INVALID):
+        make_envelope(**{field: value})
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [("request_id", ""), ("project_id", ""), ("project_id", None)],
+    ids=["empty-request-id", "empty-project-id", "none-project-id"],
+)
+def test_envelope_rejects_missing_request_or_project_id_on_initial_open(
+    field: str, value: object
+) -> None:
+    with pytest.raises(INVALID):
+        make_envelope(
+            operation="workflow.open",
+            expected_revision=0,
+            workflow_id=None,
+            actor_id=None,
+            lease_epoch=None,
+            **{field: value},
+        )
+
+
 # controller_bundle_digest
 
 
@@ -483,3 +665,50 @@ def test_bundle_digest_rejects_mismatched_artifact(tmp_path: Path, field: str) -
     mutated = write_bundle(tmp_path / "mutated.json", {**data, field: mutations[field]})
 
     assert controller_bundle_digest(mutated) != controller_bundle_digest(BUNDLE)
+
+
+# Pinned digest of controller-v1.json: sha256 hexdigest of
+# json.dumps(json.loads(text), sort_keys=True).encode(). Update it only when the
+# fixture changes on purpose.
+FIXTURE_DIGEST = "b98f0a684c273ecda4448b41bb4f909b34cc834edb972b775616e579a91bc728"
+NO_PROTOCOL_MAJOR_DIGEST = (
+    "7aa99a16f7381c22142e03c5a8fa3d229f46badc78d0b1ddd6e95d2d2c785884"
+)
+
+
+def test_bundle_digest_is_sha256_of_sorted_key_canonical_json() -> None:
+    digest = controller_bundle_digest(BUNDLE)
+
+    assert re.fullmatch(r"[0-9a-f]{64}", digest)
+    assert digest == canonical_sha256(BUNDLE)
+    assert digest == FIXTURE_DIGEST
+
+
+def test_bundle_digest_follows_canonical_algorithm_for_mutated_copy(
+    tmp_path: Path,
+) -> None:
+    data = load_bundle()
+    mutated = write_bundle(
+        tmp_path / "mutated.json", {**data, "package_version": "9.9.9"}, indent=3
+    )
+    digest = controller_bundle_digest(mutated)
+
+    assert re.fullmatch(r"[0-9a-f]{64}", digest)
+    assert digest == canonical_sha256(mutated)
+    assert digest != FIXTURE_DIGEST
+
+
+# Digesting is a content hash, not schema validation: a bundle missing a field
+# still digests, to a value distinct from the complete fixture. Rejecting the
+# incomplete artifact is the consumer's job when it compares digests.
+def test_bundle_digest_hashes_bundle_missing_protocol_major(tmp_path: Path) -> None:
+    data = load_bundle()
+    del data["protocol_major"]
+    incomplete = write_bundle(tmp_path / "no-protocol-major.json", data)
+
+    digest = controller_bundle_digest(incomplete)
+
+    assert re.fullmatch(r"[0-9a-f]{64}", digest)
+    assert digest == canonical_sha256(incomplete)
+    assert digest == NO_PROTOCOL_MAJOR_DIGEST
+    assert digest != FIXTURE_DIGEST
