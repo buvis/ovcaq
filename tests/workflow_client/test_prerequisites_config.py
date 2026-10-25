@@ -22,10 +22,12 @@ from tests.workflow_client.prerequisites_support import (
 )
 
 EVERY_PRD = sorted(DIRECT)
-# Two unrelated syntax errors, so a tool that only recognises one still fails.
+# Unrelated faults, so a tool that only recognises one still fails. The nested
+# value exhausts the parser's recursion limit instead of raising a parse error.
 BROKEN = {
     "unterminated-table": "[workflow\ncontroller_artifact = \n",
     "unterminated-string": 'controller_artifact = "exported\n',
+    "deeply-nested-value": "a = " + "[" * 20000 + "]" * 20000 + "\n",
 }
 
 

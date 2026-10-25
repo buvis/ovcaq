@@ -64,7 +64,7 @@ def load_config(config: Path, explicit: bool) -> dict[str, object]:
         if explicit:
             refuse(f"config file not found: {config}")
         return {}
-    except (OSError, ValueError) as error:
+    except (OSError, ValueError, RecursionError) as error:
         refuse(f"cannot read config {config}: {error}")
 
 
