@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import signal
+import subprocess
+import tempfile
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -193,3 +197,138 @@ def controller_bundle_digest(path: Path, expected_digest: str | None = None) -> 
             f"expected {expected_digest}, computed {digest}"
         )
     return digest
+
+
+def _string_set(data: Mapping[str, Any], field: str) -> frozenset[str]:
+    value = data.get(field)
+    if not isinstance(value, list) or any(not isinstance(v, str) for v in value):
+        raise ControllerOutputError(f"contract {field} must be a list of strings")
+    return frozenset(value)
+
+
+class ControllerClient:
+    """Run the external workflow controller through explicit argv only."""
+
+    def __init__(self, config: ControllerConfig) -> None:
+        self._config = config
+        self._contract: ControllerContract | None = None
+
+    def _run(self, *arguments: str) -> dict[str, Any]:
+        config = self._config
+        process = subprocess.Popen(
+            [*config.argv, "--json", *arguments],
+            cwd=config.project_root,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=True,
+        )
+        try:
+            stdout, stderr = process.communicate(timeout=config.timeout_seconds)
+        except subprocess.TimeoutExpired:
+            os.killpg(process.pid, signal.SIGKILL)
+            process.communicate()
+            raise ControllerTimeoutError(
+                f"controller did not answer within {config.timeout_seconds}s"
+            ) from None
+        if process.returncode != 0:
+            detail = stderr.decode("utf-8", errors="replace").strip()
+            raise ControllerError(
+                f"controller exited with status {process.returncode}: {detail}"
+            )
+        if len(stdout) > config.max_output_bytes:
+            raise ControllerOutputError(
+                f"controller output exceeds {config.max_output_bytes} bytes"
+            )
+        try:
+            data = json.loads(stdout)
+        except ValueError as error:
+            raise ControllerOutputError(
+                f"controller output is not valid JSON: {error}"
+            ) from None
+        if not isinstance(data, dict):
+            raise ControllerOutputError("controller output must be a JSON object")
+        return data
+
+    def contract(self) -> ControllerContract:
+        """Return the live contract once it matches the pinned bundle."""
+        if self._contract is not None:
+            return self._contract
+        pinned_path = self._config.contract_bundle
+        controller_bundle_digest(pinned_path)
+        pinned = json.loads(pinned_path.read_text(encoding="utf-8"))
+        live = self._run("contract")
+        major = live.get("protocol_major")
+        if type(major) is not int or major != PROTOCOL_MAJOR:
+            raise IncompatibleContractError(
+                f"controller protocol_major {major!r} is not {PROTOCOL_MAJOR}"
+            )
+        for field in ("schema_digest", "fixture_digest"):
+            if live.get(field) != pinned.get(field):
+                raise IncompatibleContractError(
+                    f"controller {field} {live.get(field)!r} does not match "
+                    f"pinned {pinned.get(field)!r}"
+                )
+        version = live.get("package_version")
+        if not isinstance(version, str):
+            raise ControllerOutputError("contract package_version must be a string")
+        self._contract = ControllerContract(
+            protocol_major=major,
+            package_version=version,
+            schema_digest=live["schema_digest"],
+            fixture_digest=live["fixture_digest"],
+            operations=_string_set(live, "operations"),
+            capabilities=_string_set(live, "capabilities"),
+        )
+        return self._contract
+
+    def snapshot(self, *, workflow_id: str) -> dict[str, Any]:
+        """Return the controller's snapshot payload unmodified."""
+        _require_string(workflow_id, "workflow_id")
+        return self._run("snapshot", "--project-root", str(self._config.project_root))
+
+    def apply(self, envelope: MutationEnvelope) -> ApplyResult:
+        """Hand one mutation envelope to the controller in a private file."""
+        actor_file = self._config.actor_file
+        if actor_file is None:
+            raise ControllerError("apply requires a configured actor_file")
+        request = {
+            "protocol_major": envelope.protocol_major,
+            "operation": envelope.operation,
+            "request_id": envelope.request_id,
+            "expected_revision": envelope.expected_revision,
+            "project_id": envelope.project_id,
+            "workflow_id": envelope.workflow_id,
+            "actor_id": envelope.actor_id,
+            "lease_epoch": envelope.lease_epoch,
+            "payload": dict(envelope.payload),
+        }
+        descriptor, name = tempfile.mkstemp(prefix="ovcaq-request-", suffix=".json")
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+                json.dump(request, stream)
+            response = self._run(
+                "apply",
+                "--project-root",
+                str(self._config.project_root),
+                "--actor-file",
+                str(actor_file),
+                "--request",
+                name,
+            )
+        finally:
+            os.unlink(name)
+        ok = response.get("ok")
+        revision = response.get("revision")
+        result = response.get("result")
+        error_code = response.get("error_code")
+        retryable = response.get("retryable")
+        if (
+            not isinstance(ok, bool)
+            or not (revision is None or type(revision) is int)
+            or not (result is None or isinstance(result, dict))
+            or not (error_code is None or isinstance(error_code, str))
+            or not isinstance(retryable, bool)
+        ):
+            raise ControllerOutputError("controller apply response is malformed")
+        return ApplyResult(ok, revision, result, error_code, retryable)

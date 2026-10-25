@@ -20,6 +20,7 @@ from ovcaq.paths import (
     resolve_runtime_paths,
     runtime_directory,
 )
+from ovcaq.workflow_client import ControllerConfig
 
 if TYPE_CHECKING:
     from ovcaq.runtime.decision import SupervisorPolicy
@@ -48,6 +49,9 @@ class WorkflowSettings:
     runtime_root: Path
     state_file: Path
     available_tiers: frozenset[str]
+    controller_argv: tuple[str, ...] | None = None
+    contract_bundle: Path | None = None
+    actor_file: Path | None = None
 
 
 _CREDENTIAL_KEY = re.compile(
@@ -256,12 +260,51 @@ def workflow_settings(
         tiers = dict(agent_settings(root, name=active).tiers)
     else:
         tiers = {}
+    controller = controller_settings(root)
     return WorkflowSettings(
         prds,
         runtime,
         state,
         frozenset(tiers if available_tiers is None else available_tiers),
+        None if controller is None else controller.argv,
+        None if controller is None else controller.contract_bundle,
+        None if controller is None else controller.actor_file,
     )
+
+
+def controller_settings(root: Path) -> ControllerConfig | None:
+    """Build the controller client config, or None when no argv is declared."""
+    root = _trusted_path(root)
+    config_home = _trusted_path(
+        Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    )
+    user = _read_config(config_home / "ovcaq/config.toml")
+    project = _read_config(root / CONFIG_NAME)
+    workflow = {**_table(user, "workflow"), **_table(project, "workflow")}
+    argv = workflow.get("controller_argv")
+    if argv is None:
+        return None
+    if (
+        not isinstance(argv, list)
+        or not argv
+        or any(not isinstance(part, str) or not part for part in argv)
+    ):
+        raise ConfigurationError("controller_argv must be a nonempty array of strings")
+    bundle = _configured_path(root, workflow.get("contract_bundle"), "contract_bundle")
+    actor = workflow.get("actor_file")
+    try:
+        return ControllerConfig(
+            argv=tuple(argv),
+            contract_bundle=bundle,
+            actor_file=(
+                None if actor is None else _configured_path(root, actor, "actor_file")
+            ),
+            project_root=root,
+        )
+    except (TypeError, ValueError) as error:
+        raise ConfigurationError(
+            f"invalid controller configuration: {error}"
+        ) from error
 
 
 @dataclass(frozen=True)
