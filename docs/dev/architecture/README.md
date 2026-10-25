@@ -1,5 +1,21 @@
 # Architecture
 
+## Three-layer target — 2026-10-25
+
+Current code still bundles workflow state and terminal presentation. The approved
+target extracts one canonical workflow controller into external Autopilot and
+terminal presentation into separate Lantern (working name). OVCAQ owns headless
+session/process orchestration, mixed-driver collaboration, execution records and
+the public operations API. Standalone Autopilot uses the same controller with
+manually started isolated sessions. The TUI accesses only OVCAQ's API.
+
+Workflow extraction precedes consumer activation; the operations API precedes
+external UI integration; installed parity precedes removing bundled Textual/Rich
+and automatic attach. Existing behavior remains required under its new owner.
+The sections below describe the current implementation, not permission to retain
+two workflow writers or to remove code before extraction acceptance.
+
+
 OVCAQ is a Python CLI/TUI with one durable state writer. Lifecycle decisions use
 committed state and normalized session results. Agent messages are observations,
 not transition authority.
