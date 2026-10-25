@@ -43,7 +43,9 @@ FORBIDDEN_IMPORTS = {"socket", "urllib", "http", "requests", "subprocess", "ovca
 
 
 def snapshot(root: Path) -> dict[str, tuple[int, int, int]]:
-    entries: dict[str, tuple[int, int, int]] = {}
+    # Root's own mtime catches a file created and deleted directly in cwd.
+    info = root.lstat()
+    entries = {".": (stat.S_IFMT(info.st_mode), info.st_size, info.st_mtime_ns)}
     for dirpath, dirnames, filenames in os.walk(root):
         for name in dirnames + filenames:
             path = Path(dirpath) / name
@@ -114,7 +116,9 @@ def mark_done(root: Path, *prds: str, bucket: str = "done") -> None:
 
 def write_artifact(path: Path, payload: object) -> str:
     path.parent.mkdir(parents=True, exist_ok=True)
-    data = json.dumps(payload).encode("utf-8")
+    data = (
+        payload if isinstance(payload, bytes) else json.dumps(payload).encode("utf-8")
+    )
     path.write_bytes(data)
     return hashlib.sha256(data).hexdigest()
 
@@ -237,13 +241,16 @@ def test_predecessor_outside_done_is_never_accepted(
         ("0057-x.md", False),
         ("57-x.md", False),
         ("x00057-x.md", False),
+        ("nested/00057-x.md", False),
     ],
 )
 def test_done_file_name_must_be_padded_id_dash_slug_md(
     tmp_path: Path, name: str, accepted: bool
 ) -> None:
     mark_done(tmp_path, "62")
-    (tmp_path / PRDS / "done" / name).write_text("# PRD 57\n", encoding="utf-8")
+    entry = tmp_path / PRDS / "done" / name
+    entry.parent.mkdir(parents=True, exist_ok=True)
+    entry.write_text("# PRD 57\n", encoding="utf-8")
 
     result = run_tool(tmp_path, "58")
 
@@ -255,20 +262,27 @@ def test_done_file_name_must_be_padded_id_dash_slug_md(
         assert "00057" in missing[0]
 
 
-@pytest.mark.parametrize("kind", ["symlink", "directory"])
+@pytest.mark.parametrize("kind", ["symlink", "directory", "symlinked-done-dir"])
 def test_done_entry_must_be_a_regular_file(tmp_path: Path, kind: str) -> None:
-    mark_done(tmp_path, "62")
-    mark_done(tmp_path, "57", bucket="backlog")
-    entry = tmp_path / PRDS / "done" / "00057-slice-57.md"
-    if kind == "symlink":
-        entry.symlink_to(tmp_path / PRDS / "backlog" / "00057-slice-57.md")
+    mark_done(tmp_path, "57", "62", bucket="backlog")
+    done = tmp_path / PRDS / "done"
+    unmet: tuple[str, ...] = ("57",)
+    if kind == "symlinked-done-dir":
+        done.symlink_to(tmp_path / PRDS / "backlog", target_is_directory=True)
+        unmet = ("57", "62")
     else:
-        entry.mkdir()
+        mark_done(tmp_path, "62")
+        entry = done / "00057-slice-57.md"
+        if kind == "symlink":
+            entry.symlink_to(tmp_path / PRDS / "backlog" / "00057-slice-57.md")
+        else:
+            entry.mkdir()
 
     missing = missing_of(run_tool(tmp_path, "58"), "58")
 
-    assert len(missing) == 1
-    assert "00057" in missing[0]
+    assert len(missing) == len(unmet)
+    for index, dep in enumerate(unmet):
+        assert padded(dep) in missing[index]
 
 
 # PRD ID handling
@@ -295,7 +309,23 @@ def test_echoes_given_id_when_unavailable(tmp_path: Path, prd: str) -> None:
 
 @pytest.mark.parametrize(
     "prd",
-    ["abc", "", "00057", "00062", "00099", "63", "5", "580", "5800058", "58.0", "0x3a"],
+    [
+        "abc",
+        "",
+        "00057",
+        "00062",
+        "00099",
+        "63",
+        "5",
+        "580",
+        "5800058",
+        "58.0",
+        "0x3a",
+        "5_8",
+        "+58",
+        " 58 ",
+        "٥٨",  # Arabic-Indic digits for 58
+    ],
 )
 def test_unknown_prd(tmp_path: Path, prd: str) -> None:
     mark_done(tmp_path, *CLOSURE["65"])
@@ -339,6 +369,9 @@ def build_unmet_gate(root: Path, prd: str, case: str) -> str | None:
             "evidence": [token + "0", token.lower(), "X" + token, token[:-1]]
         },
         "other-prd-evidence": {"evidence": [other_token]},
+        "evidence-dict": {"evidence": {token: False}},
+        "not-json": b"{x",
+        "top-level-list": [token],
     }
     artifact = root / "artifacts" / f"{key}.json"
     digest = write_artifact(artifact, payloads.get(case, {"evidence": [token]}))
@@ -360,6 +393,11 @@ def build_unmet_gate(root: Path, prd: str, case: str) -> str | None:
     if case == "symlinked-file":
         (root / "artifacts" / "linked.json").symlink_to(artifact)
         return gate_config(prd, "artifacts/linked.json", digest)
+    if case == "symlinked-parent-dir":
+        (root / "linked").symlink_to(root / "artifacts", target_is_directory=True)
+        return gate_config(prd, f"linked/{key}.json", digest)
+    if case == "last-hex-differs":
+        return gate_config(prd, path, digest[:-1] + ("1" if digest[-1] == "0" else "0"))
     if case == "digest-mismatch":
         return gate_config(prd, path, hashlib.sha256(b"other").hexdigest())
     if case == "truncated-digest":
@@ -376,14 +414,19 @@ UNMET_GATE_CASES = [
     "missing-file",
     "directory",
     "symlinked-file",
+    "symlinked-parent-dir",
     "digest-mismatch",
     "truncated-digest",
+    "last-hex-differs",
     "no-evidence-key",
     "empty-evidence",
     "evidence-string",
+    "evidence-dict",
     "nested-evidence",
     "near-miss-evidence",
     "other-prd-evidence",
+    "not-json",
+    "top-level-list",
 ]
 
 
@@ -463,6 +506,8 @@ def test_explicit_config_replaces_project_config(
         "unparseable-explicit",
         "path-is-int",
         "path-is-list",
+        "digest-is-int",
+        "table-is-scalar",
     ],
 )
 def test_config_errors_exit_2_without_stdout(
@@ -479,11 +524,17 @@ def test_config_errors_exit_2_without_stdout(
     elif case == "unparseable-explicit":
         write_config(explicit, f"[{table}\n{key} = \n")
         extra = ["--config", str(explicit)]
+    elif case == "table-is-scalar":
+        write_config(tmp_path / "ovcaq.toml", f'{table} = "oops"\n')
     else:
-        value = "5" if case == "path-is-int" else json.dumps([f"artifacts/{key}.json"])
+        name, value = {
+            "path-is-int": (key, "5"),
+            "path-is-list": (key, json.dumps([f"artifacts/{key}.json"])),
+            "digest-is-int": (f"{key}_sha256", "5"),
+        }[case]
         text = (tmp_path / "ovcaq.toml").read_text(encoding="utf-8")
         lines = [
-            f"{key} = {value}" if line.startswith(f"{key} =") else line
+            f"{name} = {value}" if line.startswith(f"{name} =") else line
             for line in text.splitlines()
         ]
         write_config(tmp_path / "ovcaq.toml", "\n".join(lines) + "\n")
