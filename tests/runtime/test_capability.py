@@ -3,6 +3,7 @@ from __future__ import annotations
 import errno
 import fcntl
 import os
+import re
 import select
 import signal
 import stat
@@ -13,6 +14,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import FrozenInstanceError, replace
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 
@@ -33,6 +35,7 @@ _NAMES = (
     "directory_fsync",
     "process_identity",
 )
+_ARITY_MESSAGE = r"exactly one fact for each capability"
 _DARWIN_ONLY = pytest.mark.skipif(
     sys.platform != "darwin", reason="personal-cutover integration requires macOS"
 )
@@ -121,14 +124,64 @@ def test_platform_probe_returns_exactly_six_facts_in_a_stable_order() -> None:
         assert isinstance(result.detail, str)
 
 
+@_DARWIN_ONLY
+def test_the_default_probe_exercises_every_boundary_it_reports_as_supported(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # `ovcaq doctor` and the supervisor call probe_platform() with no argument,
+    # so the real work must happen on that path, not only on an explicit one.
+    real_flock, real_popen = fcntl.flock, subprocess.Popen
+    real_killpg, real_fsync = os.killpg, os.fsync
+    calls = {"flock": 0, "spawn": 0, "killpg": 0, "fsync": 0}
+
+    def counted_flock(descriptor: int, operation: int) -> None:
+        calls["flock"] += 1
+        real_flock(descriptor, operation)
+
+    def counted_popen(*args: object, **kwargs: object) -> subprocess.Popen[str]:
+        calls["spawn"] += 1
+        return real_popen(*args, **kwargs)
+
+    def counted_killpg(group: int, number: int) -> None:
+        calls["killpg"] += 1
+        real_killpg(group, number)
+
+    def counted_fsync(descriptor: int) -> None:
+        calls["fsync"] += 1
+        real_fsync(descriptor)
+
+    with monkeypatch.context() as boundary:
+        boundary.setattr(fcntl, "flock", counted_flock)
+        boundary.setattr(subprocess, "Popen", counted_popen)
+        boundary.setattr(os, "killpg", counted_killpg)
+        boundary.setattr(os, "fsync", counted_fsync)
+        results = probe_platform()
+
+    assert tuple(result.name for result in results) == _NAMES
+    assert all(result.status == "supported" for result in results), results
+    assert all(result.detail.strip() for result in results), results
+    assert all(count > 0 for count in calls.values()), calls
+    assert require_process_capabilities(results) is None
+    explicit = probe_platform(platform_name="darwin")
+    assert [(result.name, result.status) for result in explicit] == [
+        (result.name, result.status) for result in results
+    ]
+
+
 @pytest.mark.parametrize("platform_name", ["linux", "win32", "freebsd", ""])
 def test_other_platforms_cannot_pass_personal_cutover(platform_name: str) -> None:
     results = probe_platform(platform_name=platform_name)
     assert len(results) == 6
     assert tuple(result.name for result in results) == _NAMES
     assert all(result.status in {"unsupported", "degraded"} for result in results)
-    with pytest.raises(RuntimeError):
-        require_process_capabilities(results)
+    # An operator on another platform must read why, fact by fact.
+    assert all(result.detail.strip() for result in results), results
+    assert all("macOS" in result.detail for result in results), results
+    for result in results:
+        with pytest.raises(
+            RuntimeError, match=re.escape(f"{result.name}: {result.detail}")
+        ):
+            require_process_capabilities(results)
 
 
 def _ineffective_lock(descriptor: int, operation: int) -> None:
@@ -184,7 +237,7 @@ def test_probes_reject_successful_os_calls_that_do_not_provide_the_capability(
     assert observed[fact] in {"unsupported", "degraded"}, (
         f"{fact} was reported supported without demonstrating its behavior"
     )
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match=rf"{fact}: \S"):
         require_process_capabilities(results)
 
 
@@ -205,12 +258,15 @@ def test_preflight_rejects_each_required_fact_when_it_is_not_supported(
         replace(result, status=status) if result.name == name else result
         for result in supported_darwin
     )
-    with pytest.raises(RuntimeError):
+    rejected = next(result for result in results if result.name == name)
+    with pytest.raises(
+        RuntimeError, match=re.escape(f"{rejected.name}: {rejected.detail}")
+    ):
         require_process_capabilities(results)
 
 
 def test_preflight_rejects_an_empty_result_set() -> None:
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match=_ARITY_MESSAGE):
         require_process_capabilities(())
 
 
@@ -220,7 +276,7 @@ def test_preflight_rejects_each_missing_required_fact(
     name: str,
 ) -> None:
     results = tuple(result for result in supported_darwin if result.name != name)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match=_ARITY_MESSAGE):
         require_process_capabilities(results)
 
 
@@ -230,7 +286,7 @@ def test_preflight_rejects_duplicate_or_unknown_facts(
     name: str,
 ) -> None:
     extra = CapabilityResult(name=name, status="supported", detail="extra fact")
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match=_ARITY_MESSAGE):
         require_process_capabilities((*supported_darwin, extra))
 
 
@@ -264,16 +320,20 @@ def test_process_identity_fact_reports_the_resolved_start_token_as_evidence(
     with monkeypatch.context() as patch:
         patch.setattr(capability, "process_identity", resolve)
         results = probe_platform(platform_name="darwin")
+        # The default path is what `ovcaq doctor` calls; it must re-read the
+        # kernel rather than replay a token memoized by an earlier probe.
+        repeated = probe_platform()
 
-    assert probed == [os.getpid()]
-    assert tuple(result.name for result in results) == _NAMES
-    fact = results[-1]
-    assert (fact.name, fact.status, fact.detail) == (
-        "process_identity",
-        "supported",
-        started,
-    )
-    assert require_process_capabilities(results) is None
+    assert probed == [os.getpid(), os.getpid()]
+    for probe in (results, repeated):
+        assert tuple(result.name for result in probe) == _NAMES
+        fact = probe[-1]
+        assert (fact.name, fact.status, fact.detail) == (
+            "process_identity",
+            "supported",
+            started,
+        )
+        assert require_process_capabilities(probe) is None
 
 
 @_DARWIN_ONLY
@@ -294,7 +354,9 @@ def test_process_identity_fact_degrades_when_the_probe_resolves_no_identity(
         "degraded",
         "probe returned no identity",
     )
-    with pytest.raises(RuntimeError):
+    with pytest.raises(
+        RuntimeError, match=r"process_identity: probe returned no identity"
+    ):
         require_process_capabilities(results)
 
 
@@ -303,11 +365,19 @@ def test_process_identity_fact_degrades_when_the_probe_resolves_no_identity(
     "error",
     [
         CommandError(ErrorCode.PROCESS_PROBE, "kernel refused the identity probe"),
+        # Generated per run, so no literal table of known messages can cover it.
+        CommandError(ErrorCode.PROCESS_PROBE, f"kernel refusal {uuid4().hex}"),
         OSError(errno.EPERM, "operation not permitted"),
         ValueError("identity token is not parsable"),
         struct.error("unpack requires a buffer of 648 bytes"),
     ],
-    ids=["command_error", "os_error", "value_error", "struct_error"],
+    ids=[
+        "command_error",
+        "unforeseen_command_error",
+        "os_error",
+        "value_error",
+        "struct_error",
+    ],
 )
 def test_process_identity_probe_degrades_instead_of_crashing_the_doctor(
     monkeypatch: pytest.MonkeyPatch,
@@ -327,8 +397,23 @@ def test_process_identity_probe_degrades_instead_of_crashing_the_doctor(
         "degraded",
         str(error),
     )
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match=re.escape(f"process_identity: {error}")):
         require_process_capabilities(results)
+
+
+@_DARWIN_ONLY
+@pytest.mark.parametrize("interrupt", [KeyboardInterrupt, SystemExit])
+def test_an_interrupted_identity_probe_stops_the_doctor_instead_of_becoming_a_fact(
+    monkeypatch: pytest.MonkeyPatch,
+    interrupt: type[BaseException],
+) -> None:
+    def interrupted(pid: int) -> ProcessIdentity | None:
+        raise interrupt()
+
+    with monkeypatch.context() as patch:
+        patch.setattr(capability, "process_identity", interrupted)
+        with pytest.raises(interrupt):
+            probe_platform(platform_name="darwin")
 
 
 @_DARWIN_ONLY
@@ -339,7 +424,7 @@ def test_preflight_rejects_the_legacy_five_fact_set_and_accepts_the_full_six(
         result for result in supported_darwin if result.name != "process_identity"
     )
     assert len(legacy) == 5
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match=_ARITY_MESSAGE):
         require_process_capabilities(legacy)
     assert len(supported_darwin) == 6
     assert require_process_capabilities(supported_darwin) is None
@@ -358,7 +443,7 @@ def test_preflight_rejects_a_fact_whose_name_only_resembles_process_identity(
         for result in supported_darwin
     )
     assert len(results) == len(supported_darwin)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match=_ARITY_MESSAGE):
         require_process_capabilities(results)
 
 
@@ -401,7 +486,7 @@ def test_failed_os_probes_do_not_claim_support_or_pass_preflight(
     assert tuple(result.name for result in results) == _NAMES
     observed = {result.name: result.status for result in results}
     assert observed[fact] in {"unsupported", "degraded"}
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match=rf"{fact}: \S"):
         require_process_capabilities(results)
 
 
