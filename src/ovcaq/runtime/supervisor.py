@@ -11,8 +11,14 @@ from pathlib import Path
 from typing import Protocol
 from uuid import uuid4
 
-from ovcaq.config import SupervisorSettings, resolve_phase_route, workflow_settings
+from ovcaq.config import (
+    ConfigurationError,
+    SupervisorSettings,
+    resolve_phase_route,
+    workflow_settings,
+)
 from ovcaq.drivers.base import AgentDriver, LaunchRequest, LaunchSpec
+from ovcaq.errors import CommandError, ErrorCode
 from ovcaq.events import (
     FailureClass,
     Observation,
@@ -133,12 +139,31 @@ class Supervisor:
         self._sessions = 0
         self._state_halt: SupervisorDecision | None = None
 
+    def preflight(self) -> None:
+        """Validate identity and every phase route before any state write."""
+        if process_identity(os.getpid()) is None:
+            raise CommandError(
+                ErrorCode.USAGE, "process identity is unavailable for this process"
+            )
+        phases: tuple[Phase, ...] = ("build", "review", "done")
+        for phase in phases:
+            try:
+                resolve_phase_route(
+                    self._root,
+                    phase,
+                    agent=self._driver.name,
+                    phase_settings=self._settings.phases[phase],
+                )
+            except ConfigurationError as error:
+                raise CommandError(ErrorCode.USAGE, str(error)) from error
+
     def run(self) -> SupervisorOutcome:
         self._sessions = 0
         self._state_halt = None
         with RunLock.acquire(self._paths.run_lock):
             publish_terminal_evidence(self._paths)
             require_no_emergency_failure(self._paths)
+            self.preflight()
             reconcile_metrics(self._paths)
             try:
                 self._reconcile_capabilities()
