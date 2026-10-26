@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **runtime**: `ovcaq doctor` reports a sixth capability fact, `process_identity`: `supported` with the start token as detail, or `degraded` with the error text, which makes `doctor --json` report `ok: false`.
+- **runtime**: add the `process_probe` error code (exit 12) for a libproc process-identity probe that cannot run; its message names the platform and points to `ovcaq doctor`.
+- **runtime**: `ovcaq run` validates the process identity probe and the build, review and done phase routes before any state write, so a failure leaves `state.json` at the same revision.
+- **runtime**: a failure while publishing run metadata or the fleet entry removes what was written, returns a fresh batch to idle or records an attention notice on a resumed batch, and exits 1.
 - **tools**: add read-only `tools/autopilot-prerequisites --prd <ID>`, which reports whether a PRD's done-bucket predecessors, digest-pinned evidence artifacts and pinned contract bundle are in place. Configuration is read and refused for every supported PRD, not only the ones carrying an artifact gate.
 - **workflow-client**: add an internal Contract A controller client (contract, snapshot and apply over an explicit argv, with digest-pinned bundles, mandatory capability negotiation, producer-identity checks, bounded output on both streams, and actor-secret redaction in error messages); nothing invokes it yet.
 - **dev**: add pinned mise development tasks, executable command shims, the Claude instruction bridge, and a linked architecture overview.
@@ -41,8 +45,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Parsed-token protection for generic state recovery, with explicit unsafe override.
 - P01-T10 state CLI dispatch, stable errors, root discovery, and parser-derived command documentation.
 
+### Changed
+
+- **runtime**: process identity reads libproc through ctypes; OVCAQ no longer spawns `ps`.
+- **runtime**: process start tokens are `"<sec>.<usec>"` instead of the `ps lstart` string; a supervisor running across the upgrade reads as dead once and its records are cleaned up, without migration.
+
 ### Fixed
 
+- **cli**: `ovcaq capability retry NAME` with a name not in `batch.capabilities` is a `usage` error (`unknown capability: NAME`, exit 1) instead of a traceback.
 - **workflow**: refuse missing or conflicting PRD artifacts before recovery intent, and verify source identity throughout intent publication so rejected stall/park requests preserve state and backups.
 - **state**: allow explicit backup restoration of an older unbound recovery intent while keeping bound or advanced recovery fenced.
 - **workflow**: require a running batch and an active PRD for phase transitions, with a PRD-free drain allowed from the build phase.

@@ -129,3 +129,32 @@ PRD 65 needs `[operator] client_artifact` and `client_artifact_sha256`. The
 PRD 61 and 65 artifacts are each a JSON object of at most 16 MiB with no
 symlinked path component, a matching sha256, and an `evidence` list holding
 `AP00017` (61) or `Lantern00003` (65).
+
+## Process identity and start preflight
+
+`ovcaq doctor` reports six capability facts: `platform`, `advisory_lock`,
+`process_group`, `group_signal`, `directory_fsync` and `process_identity`.
+`process_identity` is `supported`, with the start token as detail, when the
+libproc probe returns an identity, and `degraded` with the error text
+otherwise. `ovcaq doctor --json` lists it under `capabilities` and reports
+`ok: false` when it is degraded. OVCAQ reads process identity through
+libproc and never spawns `ps`.
+
+The start token is `"<sec>.<usec>"`, with microseconds zero-padded to six
+digits. Tokens persisted in the former `ps lstart` form never match it, so
+a supervisor still running across the upgrade reads as dead and its
+records are cleaned up once; old tokens are not migrated.
+
+A probe that cannot run is a `process_probe` error (exit 12): a non-darwin
+platform, a libproc load failure, a returned size other than 0 or 136, a
+`pbi_pid` that differs from the requested pid, or an errno other than
+`ESRCH` on a zero return. The message names the platform and tells the
+operator to run `ovcaq doctor`.
+
+Before any state write, `ovcaq run` validates the process identity probe
+and the build, review and done phase routes; a failure leaves `state.json`
+at the same revision. An unknown tier is a `usage` error, a raising probe
+is `process_probe` (exit 12), and a probe that returns no identity is a
+`usage` error. A failure while publishing run metadata or the fleet entry
+removes what was written, returns a fresh batch to idle or records an
+attention notice on a resumed batch, and exits 1.

@@ -308,6 +308,17 @@ non-standard-constant, over-deep, or oversized-integer backup JSON is
 keys and `NaN`/`Infinity` constants, are `usage`; their oversized integer
 literals remain `resource_limit`.
 
+`process_probe` means the libproc process-identity probe cannot run: a
+non-darwin platform, a libproc load failure, a returned size other than 0 or
+136, a `pbi_pid` that differs from the requested pid, or an errno other than
+`ESRCH` on a zero return. The message names the platform and tells the
+operator to run `ovcaq doctor`, whose `process_identity` capability fact is
+then `degraded` with the error text. Process start tokens are
+`"<sec>.<usec>"` (microseconds zero-padded to six digits) instead of the
+former `ps lstart` string; tokens persisted before the upgrade never match,
+so a supervisor running across the upgrade reads as dead and its records are
+cleaned up once, without migration.
+
 | Symbolic error | Exit code |
 | --- | ---: |
 | `usage` | 1 |
@@ -321,6 +332,7 @@ literals remain `resource_limit`.
 | `protected_path` | 1 |
 | `durability_unsupported` | 10 |
 | `resource_limit` | 11 |
+| `process_probe` | 12 |
 | `oversized_plan` | 3 |
 | `runtime_format` | 1 |
 
