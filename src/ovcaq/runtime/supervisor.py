@@ -144,11 +144,18 @@ class Supervisor:
         self._state_halt: SupervisorDecision | None = None
 
     def preflight(self) -> None:
-        """Validate identity and every phase route before any state write."""
+        """Validate identity, then every route unless the workflow cannot launch."""
         if process_identity(os.getpid()) is None:
             raise CommandError(
                 ErrorCode.USAGE, "process identity is unavailable for this process"
             )
+        # A paused or drained work position launches no phase session; operator
+        # controls do not waive routes. start_batch changes no field read here.
+        position = replace(
+            snapshot(self._store.read()), pause_requested=False, attention=None
+        )
+        if boundary_decision(position) is not None:
+            return
         phases: tuple[Phase, ...] = ("build", "review", "done")
         for phase in phases:
             try:
@@ -169,7 +176,10 @@ class Supervisor:
         with RunLock.acquire(self._paths.run_lock):
             publish_terminal_evidence(self._paths)
             require_no_emergency_failure(self._paths)
-            self.preflight()
+            try:
+                self.preflight()
+            except _STATE_ERRORS:
+                return SupervisorOutcome(1, self._state_failure("startup"), 0)
             reconcile_metrics(self._paths)
             try:
                 started = self._start_batch()

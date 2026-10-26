@@ -20,6 +20,7 @@ from ovcaq.events.model import FailureClass, ObservationType, Usage
 from ovcaq.events.reducer import reduce_session
 from ovcaq.events.tail import NormalizedEventWriter, RawFirstDecoder
 from ovcaq.runtime.process import OwnedProcess
+from ovcaq.runtime.registry import process_identity
 from ovcaq.runtime.session import SessionEvidenceWriter
 
 FIXTURES = Path(__file__).parents[1] / "fixtures"
@@ -334,14 +335,7 @@ def test_raw_is_durable_before_decode_and_normalized_is_redacted(
 
 
 def stopped(pid: int) -> bool:
-    status = subprocess.run(
-        ["ps", "-o", "stat=", "-p", str(pid)],
-        capture_output=True,
-        timeout=2,
-        check=False,
-    )
-    assert status.returncode in (0, 1)
-    return not status.stdout.strip() or status.stdout.strip().startswith(b"Z")
+    return process_identity(pid) is None
 
 
 def group_command(adapter: str, scenario: str) -> tuple[str, ...]:

@@ -14,6 +14,8 @@ from typing import Any
 import pytest
 from packaging_support import InstalledWheel, isolated_environment
 
+from ovcaq.runtime.registry import process_identity
+
 COMPLETED = {
     "filename": "finished.md",
     "cycles": 1,
@@ -317,14 +319,7 @@ def _running(
 def _assert_process_stopped(pid: int) -> None:
     deadline = time.monotonic() + 3
     while time.monotonic() < deadline:
-        result = subprocess.run(
-            ["ps", "-o", "stat=", "-p", str(pid)],
-            capture_output=True,
-            text=True,
-            timeout=2,
-            check=False,
-        )
-        if not result.stdout.strip() or result.stdout.strip().startswith("Z"):
+        if process_identity(pid) is None:
             return
         time.sleep(0.02)
     pytest.fail(f"owned driver {pid} survived supervisor termination")

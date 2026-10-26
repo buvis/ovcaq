@@ -22,7 +22,7 @@ from typing import Any
 import pytest
 
 from ovcaq.paths import resolve_runtime_paths
-from ovcaq.runtime.registry import FleetEntry, FleetRegistry
+from ovcaq.runtime.registry import FleetEntry, FleetRegistry, process_identity
 from ovcaq.state.store import StateStore
 
 COMPLETED = {
@@ -115,8 +115,7 @@ def ps_field(name: str, pid: int) -> str:
 
 
 def gone(pid: int) -> bool:
-    stat = ps_field("stat", pid)
-    return not stat or stat.startswith("Z")
+    return process_identity(pid) is None
 
 
 def invocations(root: Path) -> list[dict[str, Any]]:
