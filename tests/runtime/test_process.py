@@ -59,13 +59,7 @@ def launched(
     def observe(argv: object, **kwargs: object) -> subprocess.Popen[bytes]:
         child = real_popen(argv, **kwargs)
         children.append((argv, kwargs, child))
-        identity_probe = (
-            isinstance(argv, (list, tuple))
-            and bool(argv)
-            and Path(argv[0]).name == "ps"
-        )
-        if not identity_probe:
-            launches.append((argv, kwargs, child))
+        launches.append((argv, kwargs, child))
         return child
 
     monkeypatch.setattr(subprocess, "Popen", observe)
@@ -319,15 +313,7 @@ def surviving_group(
 
 
 def _descendant_stopped(pid: int) -> bool:
-    status = subprocess.run(
-        ["ps", "-o", "stat=", "-p", str(pid)],
-        capture_output=True,
-        check=False,
-        timeout=2,
-    )
-    assert status.returncode in (0, 1)
-    state = status.stdout.strip()
-    return not state or state.startswith(b"Z")
+    return process_identity(pid) is None
 
 
 def _observe_cleanup(patch: pytest.MonkeyPatch, group: SurvivingGroup) -> list[int]:

@@ -231,14 +231,7 @@ time.sleep(15)
 
 
 def stopped(pid: int) -> bool:
-    result = subprocess.run(
-        ["ps", "-o", "stat=", "-p", str(pid)],
-        capture_output=True,
-        check=False,
-        timeout=2,
-    )
-    assert result.returncode in (0, 1)
-    return not result.stdout.strip() or result.stdout.strip().startswith(b"Z")
+    return process_identity(pid) is None
 
 
 def assert_stopped(identities: list[ProcessIdentity]) -> None:

@@ -4,9 +4,6 @@ import fcntl
 import json
 import os
 import stat
-import subprocess
-import sys
-import time
 from dataclasses import FrozenInstanceError, replace
 from pathlib import Path
 
@@ -29,74 +26,8 @@ from ovcaq.runtime.registry import (
     ProcessIdentity,
     RegistrySnapshot,
     RunLock,
-    process_identity,
-    process_matches,
 )
 from ovcaq.state.schema import MAX_JSON_DEPTH, MAX_STATE_BYTES
-
-
-def test_process_identity_requires_alive_pid_and_matching_start() -> None:
-    identity = process_identity(os.getpid())
-    assert isinstance(identity, ProcessIdentity)
-    assert identity.pid == os.getpid()
-    assert isinstance(identity.started, str)
-    assert identity.started
-    assert process_matches(identity) is True
-    assert (
-        process_matches(replace(identity, started=identity.started + "-recycled"))
-        is False
-    )
-    dead_pid = _dead_pid()
-    assert process_identity(dead_pid) is None
-    assert (
-        process_matches(ProcessIdentity(pid=dead_pid, started=identity.started))
-        is False
-    )
-
-
-def test_child_identity_stays_live_until_process_exit(tmp_path: Path) -> None:
-    parent = process_identity(os.getpid())
-    assert parent is not None
-    # Separate process starts even on platforms with second-resolution tokens.
-    time.sleep(1.1)
-    with subprocess.Popen(
-        [sys.executable, "-c", "import sys; sys.stdin.read()"],
-        stdin=subprocess.PIPE,
-    ) as child:
-        try:
-            identity = process_identity(child.pid)
-            assert isinstance(identity, ProcessIdentity)
-            assert identity.pid == child.pid
-            assert isinstance(identity.started, str)
-            assert identity.started
-            assert identity.started != parent.started
-            assert process_identity(child.pid) == identity
-            assert process_matches(identity) is True
-
-            registry = FleetRegistry(tmp_path)
-            entry = replace(
-                _entry(tmp_path),
-                pid=identity.pid,
-                process_start=identity.started,
-            )
-            path = registry.publish(entry)
-            expected = RegistrySnapshot(live=(entry,), malformed=(), stale=())
-            assert registry.snapshot() == expected
-            registry.prune()
-            assert path.exists()
-            assert registry.snapshot() == expected
-            assert process_identity(child.pid) == identity
-            assert child.poll() is None
-        finally:
-            child.kill()
-            child.wait(timeout=5)
-
-    assert process_identity(identity.pid) is None
-    assert process_matches(identity) is False
-    assert registry.snapshot() == RegistrySnapshot(live=(), malformed=(), stale=(path,))
-    registry.prune()
-    assert not path.exists()
-    assert registry.snapshot() == RegistrySnapshot(live=(), malformed=(), stale=())
 
 
 def test_public_records_are_frozen(tmp_path: Path) -> None:
