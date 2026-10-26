@@ -207,7 +207,15 @@ def test_non_positive_pid_is_gone_without_touching_the_kernel(
 
 @pytest.mark.parametrize(
     "errno_value",
-    [errno.EPERM, errno.EACCES, errno.EINVAL, errno.ENOMEM, errno.EFAULT, 0, errno.ESRCH],
+    [
+        errno.EPERM,
+        errno.EACCES,
+        errno.EINVAL,
+        errno.ENOMEM,
+        errno.EFAULT,
+        0,
+        errno.ESRCH,
+    ],
 )
 def test_absent_pid_is_simply_gone_whatever_errno_the_kernel_leaves(
     monkeypatch: pytest.MonkeyPatch, errno_value: int
@@ -305,7 +313,7 @@ def test_kernel_zombie_status_has_no_identity(monkeypatch: pytest.MonkeyPatch) -
 def test_probe_failure_never_answers_that_a_process_is_gone(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """process_matches must raise on a genuinely broken probe; False would kill a live run."""
+    """process_matches must raise on a genuinely broken probe, not answer False."""
     identity = ProcessIdentity(pid=os.getpid(), started="1700000000.000042")
     _kernel_answers(monkeypatch, _bsdinfo(identity.pid), written=7)
     _probe_failure(lambda: process_matches(identity))
