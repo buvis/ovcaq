@@ -268,20 +268,25 @@ class Supervisor:
     def _cleanup_ownership_records(self) -> None:
         # Each record is tracked as attempted before its own publish call,
         # so a write-then-raise still leaves a matching record for cleanup;
-        # the two are then cleaned independently rather than through the
-        # joint cleanup_run_records (which requires both to exist and
-        # match, and would abort the whole cleanup when only one ever
-        # reached disk). Both removals are best-effort: a cleanup failure
-        # must never block the batch revert that follows.
-        try:
-            if self._metadata is not None:
+        # the two are then cleaned independently, in their own try/except,
+        # rather than through the joint cleanup_run_records (which requires
+        # both to exist and match, and would abort the whole cleanup when
+        # only one ever reached disk) and rather than one shared try (which
+        # would let a metadata failure skip the fleet removal). Each removal
+        # is best-effort: a cleanup failure must never block the batch
+        # revert that follows.
+        if self._metadata is not None:
+            try:
                 self._paths.run_metadata.unlink(missing_ok=True)
-            if self._fleet_entry is not None:
+            except OSError:
+                pass
+        if self._fleet_entry is not None:
+            try:
                 FleetRegistry(self._paths.fleet_root).remove(
                     self._fleet_entry.run_id, expected=self._fleet_entry
                 )
-        except OSError:
-            pass
+            except OSError:
+                pass
 
     def _state_failure(self, site: str) -> SupervisorDecision:
         detail = "Supervisor state operation failed; inspect state before restarting."
