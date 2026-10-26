@@ -9,7 +9,7 @@ from uuid import uuid4
 import pytest
 from tests.runtime.test_supervisor import Harness, Step, add_capability, harness
 
-from ovcaq.config import PhaseSettings
+from ovcaq.config import ConfigurationError, PhaseSettings, resolve_phase_route
 from ovcaq.errors import EXIT_CODES, CommandError, ErrorCode
 from ovcaq.runtime.decision import DecisionKind
 from ovcaq.runtime.registry import FleetEntry, FleetRegistry, process_identity
@@ -528,3 +528,123 @@ def test_early_failure_lets_an_interrupt_propagate(
         h.supervisor().run()
 
     assert caught.value is interrupt
+
+
+def fail_route_on_the_nth_call(
+    monkeypatch: pytest.MonkeyPatch, *, fail_at_call: int, error: Exception
+) -> list[int]:
+    """Let preflight's own route checks pass; break only a later call (the
+    one `_attempt` makes for the current phase, after preflight passed)."""
+    calls: list[int] = []
+
+    def route(
+        root: Path, phase: str, *, agent: str, phase_settings: PhaseSettings
+    ) -> object:
+        calls.append(len(calls) + 1)
+        if len(calls) == fail_at_call:
+            raise error
+        return resolve_phase_route(
+            root, phase, agent=agent, phase_settings=phase_settings
+        )
+
+    monkeypatch.setattr("ovcaq.runtime.supervisor.resolve_phase_route", route)
+    return calls
+
+
+def test_attempt_failure_before_a_session_opens_reverts_a_fresh_batch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A ConfigurationError raised by `_attempt`'s own route lookup - after
+    preflight's three checks already passed - must not leave batch.status
+    running with no supervisor (the exact defect this fix addresses)."""
+    h = harness(tmp_path, monkeypatch)
+    before = unstarted(h)
+    calls = fail_route_on_the_nth_call(
+        monkeypatch,
+        fail_at_call=4,
+        error=ConfigurationError("synthetic broken route for the build phase"),
+    )
+
+    outcome = h.supervisor().run()
+
+    after = h.store.read()
+    assert len(calls) == 4
+    assert outcome.exit_code == 1 and outcome.sessions_attempted == 1
+    assert outcome.decision.kind is DecisionKind.HALT
+    assert after["batch"]["id"] == ""
+    assert after["batch"]["started_at"] is None
+    assert after["batch"]["status"] == "idle"
+    assert after["control"]["attention"] is None
+    assert after["revision"] > before["revision"]
+    assert h.driver.requests == []
+
+
+def test_attempt_failure_on_a_resumed_batch_records_attention(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The same failure on a batch this run did not freshly start (no
+    `started` to revert) falls back to an attention notice, not a silent
+    running-with-no-supervisor state."""
+    h = harness(tmp_path, monkeypatch)
+
+    def resume(state: State) -> None:
+        state["batch"].update(
+            id="batch-resumed", status="running", started_at="2026-10-02T11:00:00Z"
+        )
+
+    before = h.store.transaction(resume)
+    fail_route_on_the_nth_call(
+        monkeypatch,
+        fail_at_call=4,
+        error=ConfigurationError("synthetic broken route for the build phase"),
+    )
+
+    outcome = h.supervisor().run()
+
+    after = h.store.read()
+    attention = after["control"]["attention"]
+    assert outcome.exit_code == 1
+    assert outcome.decision.kind is DecisionKind.HALT
+    assert attention is not None and attention["site"] == "startup"
+    assert after["batch"]["id"] == "batch-resumed"
+    assert after["batch"]["status"] == "running"
+    assert after["batch"]["started_at"] == "2026-10-02T11:00:00Z"
+    assert after["revision"] > before["revision"]
+    assert h.driver.requests == []
+
+
+def fail_run_metadata_after_writing(
+    monkeypatch: pytest.MonkeyPatch, error: BaseException
+) -> None:
+    """Let `publish_run_metadata` write its file, then raise, as a crashed
+    fsync or a disk-full error on the following write might."""
+    import ovcaq.runtime.supervisor as supervisor_module
+
+    real_publish = supervisor_module.publish_run_metadata
+
+    def publish(paths: object, metadata: object) -> None:
+        real_publish(paths, metadata)
+        raise error
+
+    monkeypatch.setattr(supervisor_module, "publish_run_metadata", publish)
+
+
+def test_run_metadata_write_then_raise_leaves_no_orphan(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A tracking write before the call (not after it returns) is what lets
+    cleanup find a file that was written just before the publisher raised."""
+    h = harness(tmp_path, monkeypatch)
+    unstarted(h)
+    foreign = seed_foreign_fleet_entry(h)
+    error = OSError("synthetic fsync failure after run metadata was written")
+    fail_run_metadata_after_writing(monkeypatch, error)
+
+    outcome = h.supervisor().run()
+
+    after = h.store.read()
+    assert outcome.exit_code == 1 and outcome.sessions_attempted == 0
+    assert outcome.decision.kind is DecisionKind.HALT
+    assert after["batch"]["id"] == ""
+    assert after["batch"]["status"] == "idle"
+    assert_no_ownership_records(h, foreign)

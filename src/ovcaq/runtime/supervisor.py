@@ -199,6 +199,10 @@ class Supervisor:
                     SupervisorDecision(DecisionKind.HALT, "supervisor signal"),
                     self._sessions,
                 )
+            except (ConfigurationError, CommandError) as error:
+                return SupervisorOutcome(
+                    1, self._abandon_attempt(started, error), self._sessions
+                )
             finally:
                 self._run_id = None
                 try:
@@ -233,13 +237,37 @@ class Supervisor:
     def _abandon_start(
         self, started: State | None, error: Exception
     ) -> SupervisorDecision:
-        try:
-            if self._metadata is not None and self._fleet_entry is not None:
-                cleanup_run_records(self._paths, self._metadata, self._fleet_entry)
-            elif self._metadata is not None:
+        # Each record is tracked as attempted before its own publish call, so
+        # a write-then-raise still leaves a matching record for cleanup; the
+        # two are then cleaned independently rather than through the joint
+        # cleanup_run_records (which requires both to exist and match, and
+        # would abort the whole cleanup when only one ever reached disk).
+        if self._metadata is not None:
+            try:
                 self._paths.run_metadata.unlink(missing_ok=True)
-        except OSError:
-            pass
+            except OSError:
+                pass
+        if self._fleet_entry is not None:
+            FleetRegistry(self._paths.fleet_root).remove(
+                self._fleet_entry.run_id, expected=self._fleet_entry
+            )
+        self._revert_fresh_start(started)
+        return SupervisorDecision(
+            DecisionKind.HALT, f"ownership publication failed: {error}"
+        )
+
+    def _abandon_attempt(
+        self, started: State | None, error: Exception
+    ) -> SupervisorDecision:
+        """The first attempt can fail before a session ever opens (a bad
+        phase route, or a process-identity probe error in _open_session); a
+        fresh batch must revert like any other pre-loop failure instead of
+        leaving batch.status running with no supervisor."""
+        if self._sessions <= 1:
+            self._revert_fresh_start(started)
+        return SupervisorDecision(DecisionKind.HALT, f"attempt failed: {error}")
+
+    def _revert_fresh_start(self, started: State | None) -> None:
         if started is None:
             self._state_failure("startup")
         else:
@@ -249,9 +277,6 @@ class Supervisor:
                 )
             except (ValueError, *_STATE_ERRORS):
                 self._state_failure("startup")
-        return SupervisorDecision(
-            DecisionKind.HALT, f"ownership publication failed: {error}"
-        )
 
     def _state_failure(self, site: str) -> SupervisorDecision:
         detail = "Supervisor state operation failed; inspect state before restarting."
@@ -311,10 +336,12 @@ class Supervisor:
             self._driver.name,
             started_at,
         )
-        publish_run_metadata(self._paths, metadata)
+        # Track attempted publication before each call: a write-then-raise
+        # still leaves a record matching the file on disk for cleanup.
         self._metadata = metadata
-        FleetRegistry(self._paths.fleet_root).publish(entry)
+        publish_run_metadata(self._paths, metadata)
         self._fleet_entry = entry
+        FleetRegistry(self._paths.fleet_root).publish(entry)
         self._run_id = run_id
         return metadata, entry
 
