@@ -19,7 +19,7 @@ from typing import Protocol
 from uuid import uuid4
 
 from ovcaq.config import supervisor_settings, validate_capability_timeout
-from ovcaq.errors import CommandError
+from ovcaq.errors import CommandError, ErrorCode
 from ovcaq.paths import RuntimePaths
 from ovcaq.runtime.registry import ProcessIdentity, process_identity, process_matches
 from ovcaq.runtime.session import (
@@ -338,6 +338,8 @@ class CapabilityService:
 
     def retry(self, name: str, runner: CapabilityRunner) -> State:
         """Run exactly one new attempt for a failed or stale capability."""
+        if name not in self._store.read()["batch"]["capabilities"]:
+            raise CommandError(ErrorCode.USAGE, f"unknown capability: {name}")
         if self.reconcile(name)["batch"]["capabilities"][name]["status"] == "running":
             raise ValueError(f"capability {name!r} is still running")
         return self._execute(name, runner, self._state.retry_capability)
