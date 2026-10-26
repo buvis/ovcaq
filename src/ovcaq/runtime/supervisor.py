@@ -171,23 +171,8 @@ class Supervisor:
             require_no_emergency_failure(self._paths)
             self.preflight()
             reconcile_metrics(self._paths)
-            started: State | None = None
             try:
-                self._reconcile_capabilities()
-                state = self._store.read()
-                batch = state["batch"]
-                if (
-                    not batch["id"]
-                    or not batch["started_at"]
-                    or batch["status"] == "idle"
-                ):
-                    committed = StateService(self._store).start_batch(
-                        uuid4().hex,
-                        _timestamp(self._clock.now()),
-                        expected_revision=state["revision"],
-                    )
-                    if committed["batch"]["id"] != batch["id"]:
-                        started = committed
+                started = self._start_batch()
             except _STATE_ERRORS:
                 return SupervisorOutcome(1, self._state_failure("startup"), 0)
             try:
@@ -219,6 +204,21 @@ class Supervisor:
                     cleanup_run_records(self._paths, self._metadata or metadata, entry)
         terminal_ok = decision.kind in (DecisionKind.PAUSE, DecisionKind.COMPLETE)
         return SupervisorOutcome(0 if terminal_ok else 1, decision, self._sessions)
+
+    def _start_batch(self) -> State | None:
+        """Start a batch when none is active; return it only if newly started."""
+        self._reconcile_capabilities()
+        state = self._store.read()
+        batch = state["batch"]
+        if not batch["id"] or not batch["started_at"] or batch["status"] == "idle":
+            committed = StateService(self._store).start_batch(
+                uuid4().hex,
+                _timestamp(self._clock.now()),
+                expected_revision=state["revision"],
+            )
+            if committed["batch"]["id"] != batch["id"]:
+                return committed
+        return None
 
     def _abandon_start(
         self, started: State | None, error: Exception
