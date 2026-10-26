@@ -7,6 +7,7 @@ import json
 import os
 import select
 import signal
+import struct
 import subprocess
 import sys
 from collections.abc import Callable
@@ -18,6 +19,7 @@ from typing import Protocol
 from uuid import uuid4
 
 from ovcaq.config import supervisor_settings, validate_capability_timeout
+from ovcaq.errors import CommandError
 from ovcaq.paths import RuntimePaths
 from ovcaq.runtime.registry import ProcessIdentity, process_identity, process_matches
 from ovcaq.runtime.session import (
@@ -39,6 +41,7 @@ _NAMES = (
     "process_group",
     "group_signal",
     "directory_fsync",
+    "process_identity",
 )
 _DEFAULT_TIMEOUT = object()
 _LOCK_CONTENDER = """
@@ -84,6 +87,7 @@ def probe_platform(*, platform_name: str | None = None) -> tuple[CapabilityResul
     results.append(_probe_advisory_lock())
     results.extend(_probe_process_group())
     results.append(_probe_directory_fsync())
+    results.append(_probe_process_identity())
     return tuple(results)
 
 
@@ -174,6 +178,20 @@ def _probe_directory_fsync() -> CapabilityResult:
         return CapabilityResult("directory_fsync", "supported", "Directory synced")
     except OSError as error:
         return CapabilityResult("directory_fsync", "degraded", str(error))
+
+
+def _probe_process_identity() -> CapabilityResult:
+    """Report whether the kernel identity probe resolves this process."""
+    try:
+        identity = process_identity(os.getpid())
+    except (CommandError, OSError, ValueError, struct.error) as error:
+        # A refused or unreadable probe is evidence, not a doctor crash.
+        return CapabilityResult("process_identity", "degraded", str(error))
+    if identity is None:
+        return CapabilityResult(
+            "process_identity", "degraded", "probe returned no identity"
+        )
+    return CapabilityResult("process_identity", "supported", identity.started)
 
 
 def require_process_capabilities(results: tuple[CapabilityResult, ...]) -> None:
