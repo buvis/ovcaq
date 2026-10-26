@@ -928,6 +928,43 @@ def test_doctor_surfaces_failed_and_unsupported_probe_facts_and_unhealthy_aggreg
     ]
 
 
+def test_doctor_reports_process_identity_fact(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _initialize(tmp_path, capsys)
+    live = process_identity(os.getpid())
+    assert live is not None
+    report = _doctor_payload(tmp_path, capsys)
+    facts = {entry["name"]: entry for entry in report["capabilities"]}
+    assert facts["process_identity"] == {
+        "name": "process_identity",
+        "status": "supported",
+        "detail": live.started,
+    }
+
+    degraded = (
+        CapabilityResult("process_group", "supported", "Isolation verified"),
+        CapabilityResult("process_identity", "degraded", "probe returned no identity"),
+    )
+    with patch("ovcaq.cli.probe_platform", autospec=True, return_value=degraded):
+        _code, stdout, stderr = _invoke(tmp_path, capsys, "doctor")
+    assert stderr == ""
+    payload = json.loads(stdout)
+    assert payload["ok"] is False
+    assert payload["capabilities"] == [
+        {
+            "name": "process_group",
+            "status": "supported",
+            "detail": "Isolation verified",
+        },
+        {
+            "name": "process_identity",
+            "status": "degraded",
+            "detail": "probe returned no identity",
+        },
+    ]
+
+
 def _emergency(paths: Any) -> None:
     def unwritable_state(*_args: Any, **_kwargs: Any) -> None:
         raise OSError("test state persistence failure")

@@ -6,6 +6,7 @@ import os
 import select
 import signal
 import stat
+import struct
 import subprocess
 import sys
 from collections.abc import Iterator
@@ -15,11 +16,14 @@ from pathlib import Path
 
 import pytest
 
+from ovcaq.errors import CommandError, ErrorCode
+from ovcaq.runtime import capability
 from ovcaq.runtime.capability import (
     CapabilityResult,
     probe_platform,
     require_process_capabilities,
 )
+from ovcaq.runtime.registry import ProcessIdentity, process_identity
 
 _NAMES = (
     "platform",
@@ -27,6 +31,7 @@ _NAMES = (
     "process_group",
     "group_signal",
     "directory_fsync",
+    "process_identity",
 )
 _DARWIN_ONLY = pytest.mark.skipif(
     sys.platform != "darwin", reason="personal-cutover integration requires macOS"
@@ -99,13 +104,17 @@ def test_capability_facts_preserve_their_values_and_cannot_be_mutated(
         setattr(result, field, "changed")
 
 
-def test_platform_probe_returns_exactly_five_facts_in_a_stable_order() -> None:
+def test_platform_probe_returns_exactly_six_facts_in_a_stable_order() -> None:
     first = probe_platform()
     second = probe_platform()
     assert isinstance(first, tuple)
     assert isinstance(second, tuple)
+    assert len(first) == 6
+    assert len(second) == 6
     assert tuple(result.name for result in first) == _NAMES
     assert tuple(result.name for result in second) == _NAMES
+    assert first[-1].name == "process_identity"
+    assert second[-1].name == "process_identity"
     for result in (*first, *second):
         assert isinstance(result, CapabilityResult)
         assert result.status in {"supported", "unsupported", "degraded"}
@@ -115,6 +124,7 @@ def test_platform_probe_returns_exactly_five_facts_in_a_stable_order() -> None:
 @pytest.mark.parametrize("platform_name", ["linux", "win32", "freebsd", ""])
 def test_other_platforms_cannot_pass_personal_cutover(platform_name: str) -> None:
     results = probe_platform(platform_name=platform_name)
+    assert len(results) == 6
     assert tuple(result.name for result in results) == _NAMES
     assert all(result.status in {"unsupported", "degraded"} for result in results)
     with pytest.raises(RuntimeError):
@@ -222,6 +232,134 @@ def test_preflight_rejects_duplicate_or_unknown_facts(
     extra = CapabilityResult(name=name, status="supported", detail="extra fact")
     with pytest.raises(RuntimeError):
         require_process_capabilities((*supported_darwin, extra))
+
+
+@_DARWIN_ONLY
+def test_process_identity_fact_carries_the_live_kernel_start_token(
+    supported_darwin: tuple[CapabilityResult, ...],
+) -> None:
+    live = process_identity(os.getpid())
+    assert live is not None
+    assert live.pid == os.getpid()
+    fact = supported_darwin[-1]
+    assert (fact.name, fact.status, fact.detail) == (
+        "process_identity",
+        "supported",
+        live.started,
+    )
+
+
+@_DARWIN_ONLY
+@pytest.mark.parametrize("started", ["1761400000", "604800-boot-token"])
+def test_process_identity_fact_reports_the_resolved_start_token_as_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+    started: str,
+) -> None:
+    probed: list[int] = []
+
+    def resolve(pid: int) -> ProcessIdentity:
+        probed.append(pid)
+        return ProcessIdentity(pid, started)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(capability, "process_identity", resolve)
+        results = probe_platform(platform_name="darwin")
+
+    assert probed == [os.getpid()]
+    assert tuple(result.name for result in results) == _NAMES
+    fact = results[-1]
+    assert (fact.name, fact.status, fact.detail) == (
+        "process_identity",
+        "supported",
+        started,
+    )
+    assert require_process_capabilities(results) is None
+
+
+@_DARWIN_ONLY
+def test_process_identity_fact_degrades_when_the_probe_resolves_no_identity(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def unresolved(pid: int) -> ProcessIdentity | None:
+        return None
+
+    with monkeypatch.context() as patch:
+        patch.setattr(capability, "process_identity", unresolved)
+        results = probe_platform(platform_name="darwin")
+
+    assert tuple(result.name for result in results) == _NAMES
+    fact = results[-1]
+    assert (fact.name, fact.status, fact.detail) == (
+        "process_identity",
+        "degraded",
+        "probe returned no identity",
+    )
+    with pytest.raises(RuntimeError):
+        require_process_capabilities(results)
+
+
+@_DARWIN_ONLY
+@pytest.mark.parametrize(
+    "error",
+    [
+        CommandError(ErrorCode.PROCESS_PROBE, "kernel refused the identity probe"),
+        OSError(errno.EPERM, "operation not permitted"),
+        ValueError("identity token is not parsable"),
+        struct.error("unpack requires a buffer of 648 bytes"),
+    ],
+    ids=["command_error", "os_error", "value_error", "struct_error"],
+)
+def test_process_identity_probe_degrades_instead_of_crashing_the_doctor(
+    monkeypatch: pytest.MonkeyPatch,
+    error: Exception,
+) -> None:
+    def failing(pid: int) -> ProcessIdentity | None:
+        raise error
+
+    with monkeypatch.context() as patch:
+        patch.setattr(capability, "process_identity", failing)
+        results = probe_platform(platform_name="darwin")
+
+    assert tuple(result.name for result in results) == _NAMES
+    fact = results[-1]
+    assert (fact.name, fact.status, fact.detail) == (
+        "process_identity",
+        "degraded",
+        str(error),
+    )
+    with pytest.raises(RuntimeError):
+        require_process_capabilities(results)
+
+
+@_DARWIN_ONLY
+def test_preflight_rejects_the_legacy_five_fact_set_and_accepts_the_full_six(
+    supported_darwin: tuple[CapabilityResult, ...],
+) -> None:
+    legacy = tuple(
+        result for result in supported_darwin if result.name != "process_identity"
+    )
+    assert len(legacy) == 5
+    with pytest.raises(RuntimeError):
+        require_process_capabilities(legacy)
+    assert len(supported_darwin) == 6
+    assert require_process_capabilities(supported_darwin) is None
+
+
+@_DARWIN_ONLY
+@pytest.mark.parametrize(
+    "near_miss", ["process_identit", "process_identity_probe", "identity"]
+)
+def test_preflight_rejects_a_fact_whose_name_only_resembles_process_identity(
+    supported_darwin: tuple[CapabilityResult, ...],
+    near_miss: str,
+) -> None:
+    results = tuple(
+        replace(result, name=near_miss) if result.name == "process_identity" else result
+        for result in supported_darwin
+    )
+    assert len(results) == len(supported_darwin)
+    with pytest.raises(RuntimeError):
+        require_process_capabilities(results)
 
 
 @_DARWIN_ONLY
