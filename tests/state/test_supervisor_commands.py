@@ -6,7 +6,7 @@ from typing import Any, cast
 
 import pytest
 
-from ovcaq.state.commands import StateService
+from ovcaq.state.commands import StateMutationConflictError, StateService
 from ovcaq.state.schema import (
     CapabilityAttempt,
     CapabilityEntry,
@@ -610,6 +610,7 @@ def test_revert_batch_start_returns_a_fresh_running_batch_to_defaults(
         ("completed", "batch-1"),
         ("longer-id", "batch-12"),
         ("shorter-id", "batch"),
+        ("same-length-id", "batch-2"),
         ("work-prd", "batch-1"),
         ("one-completed-prd", "batch-1"),
         ("two-completed-prds", "batch-1"),
@@ -620,6 +621,7 @@ def test_revert_batch_start_returns_a_fresh_running_batch_to_defaults(
         "completed",
         "longer-id",
         "shorter-id",
+        "same-length-id",
         "work-prd",
         "one-completed-prd",
         "two-completed-prds",
@@ -666,6 +668,55 @@ def test_revert_batch_start_obeys_the_expected_revision(tmp_path: Path) -> None:
     assert reverted["revision"] == 2
     assert reverted["batch"]["id"] == "" and reverted["batch"]["status"] == "idle"
     assert reverted["batch"]["started_at"] is None
+
+
+def test_revert_batch_start_rejects_an_active_recovery_without_writes(
+    tmp_path: Path,
+) -> None:
+    initial = _fresh_batch(tmp_path, batch_id="batch-1", started_at=T0)
+    initial["recovery"]["operation"] = {
+        "id": "recovery-1",
+        "kind": "park",
+        "step": "intent",
+        "prd": "example.md",
+        "site": "supervisor",
+        "detail": "Moving PRD",
+        "source": "backlog/example.md",
+        "destination": "parked/example.md",
+        "artifact": None,
+        "created_at": T0,
+    }
+    service, store = _service(tmp_path, initial)
+    store.transaction(lambda _state: None)
+    before, data = store.read(), _bytes(tmp_path)
+    with pytest.raises(StateMutationConflictError):
+        service.revert_batch_start("batch-1", expected_revision=1)
+    assert store.read() == before
+    assert _bytes(tmp_path) == data
+
+
+def test_revert_batch_start_honors_the_publication_guard_without_writes(
+    tmp_path: Path,
+) -> None:
+    class GuardRefusal(Exception):
+        pass
+
+    calls: list[int] = []
+
+    def refuse() -> None:
+        calls.append(1)
+        raise GuardRefusal("publication is fenced")
+
+    initial = _fresh_batch(tmp_path, batch_id="batch-1", started_at=T0)
+    _, store = _service(tmp_path, initial)
+    store.transaction(lambda _state: None)
+    before, data = store.read(), _bytes(tmp_path)
+    service = StateService(store, publication_guard=refuse)
+    with pytest.raises(GuardRefusal):
+        service.revert_batch_start("batch-1", expected_revision=1)
+    assert calls
+    assert store.read() == before
+    assert _bytes(tmp_path) == data
 
 
 @pytest.mark.parametrize(

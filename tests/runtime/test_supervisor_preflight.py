@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import copy
 import os
 from dataclasses import replace
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 from tests.runtime.test_supervisor import Harness, Step, add_capability, harness
 
 from ovcaq.config import PhaseSettings
 from ovcaq.errors import EXIT_CODES, CommandError, ErrorCode
+from ovcaq.runtime.decision import DecisionKind
+from ovcaq.runtime.registry import FleetEntry, FleetRegistry, process_identity
+from ovcaq.runtime.session import require_no_emergency_failure
 from ovcaq.state.schema import State, new_state
 
 HEALTHY_TIERS = {"build": "sonnet", "review": "opus", "done": "sonnet"}
@@ -367,7 +372,7 @@ def test_preflight_passes_on_a_healthy_host_and_the_run_mints_a_batch(
     assert after["revision"] > before["revision"]
 
 
-def fail_fleet_publish(monkeypatch: pytest.MonkeyPatch, error: Exception) -> None:
+def fail_fleet_publish(monkeypatch: pytest.MonkeyPatch, error: BaseException) -> None:
     """Break ownership publication after the run metadata is already on disk."""
 
     def publish(self: object, entry: object) -> Path:
@@ -376,9 +381,36 @@ def fail_fleet_publish(monkeypatch: pytest.MonkeyPatch, error: Exception) -> Non
     monkeypatch.setattr("ovcaq.runtime.registry.FleetRegistry.publish", publish)
 
 
-def assert_no_ownership_records(h: Harness) -> None:
+def fleet_contents(h: Harness) -> dict[str, bytes | None]:
+    return {
+        path.name: path.read_bytes() if path.is_file() else None
+        for path in h.paths.fleet_root.iterdir()
+    }
+
+
+def seed_foreign_fleet_entry(h: Harness) -> dict[str, bytes | None]:
+    """Publish a live entry owned by another project; a failed start must keep it."""
+    identity = process_identity(os.getpid())
+    assert identity is not None
+    run_id = uuid4().hex
+    foreign = FleetEntry(
+        1,
+        h.root.parent / "other-project",
+        identity.pid,
+        identity.started,
+        run_id,
+        "local",
+        "2026-10-01T09:00:00Z",
+    )
+    FleetRegistry(h.paths.fleet_root).publish(foreign)
+    seeded = fleet_contents(h)
+    assert seeded[f"{run_id}.json"]
+    return seeded
+
+
+def assert_no_ownership_records(h: Harness, foreign: dict[str, bytes | None]) -> None:
     assert not h.paths.run_metadata.exists()
-    assert list(h.paths.fleet_root.iterdir()) == []
+    assert fleet_contents(h) == foreign
     assert list(h.paths.sessions.iterdir()) == []
     assert h.driver.requests == [] and h.runner.requests == []
 
@@ -393,23 +425,33 @@ def test_early_failure_returns_fresh_batch_to_idle(
 ) -> None:
     h = harness(tmp_path, monkeypatch)
     before = unstarted(h)
+    foreign = seed_foreign_fleet_entry(h)
     fail_fleet_publish(monkeypatch, error)
 
     outcome = h.supervisor().run()
 
     after = h.store.read()
     assert outcome.exit_code == 1 and outcome.sessions_attempted == 0
+    assert outcome.decision.kind is DecisionKind.HALT
+    assert outcome.decision.reason.strip()
     assert after["batch"]["id"] == ""
     assert after["batch"]["started_at"] is None
     assert after["batch"]["status"] == "idle"
     assert after["control"]["attention"] is None
     assert after["revision"] > before["revision"]
-    assert_no_ownership_records(h)
+    assert not (h.paths.runtime_root / "state-write-failed.json").exists()
+    require_no_emergency_failure(h.paths)
+    assert_no_ownership_records(h, foreign)
 
 
 @pytest.mark.parametrize(
     ("batch_id", "started_at"),
-    [("batch-resumed", "2026-10-02T11:00:00Z"), ("batch-9", "2026-09-30T08:15:00Z")],
+    [
+        ("batch-resumed", "2026-10-02T11:00:00Z"),
+        ("batch-9", "2026-09-30T08:15:00Z"),
+        (uuid4().hex, "2026-10-20T07:45:00Z"),
+    ],
+    ids=["named", "short", "minted-shape"],
 )
 def test_early_failure_on_resumed_batch_records_attention(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, batch_id: str, started_at: str
@@ -419,7 +461,8 @@ def test_early_failure_on_resumed_batch_records_attention(
     def resume(state: State) -> None:
         state["batch"].update(id=batch_id, status="running", started_at=started_at)
 
-    h.store.transaction(resume)
+    before = h.store.transaction(resume)
+    foreign = seed_foreign_fleet_entry(h)
     fail_fleet_publish(monkeypatch, OSError("synthetic fleet publish failure"))
 
     outcome = h.supervisor().run()
@@ -432,7 +475,12 @@ def test_early_failure_on_resumed_batch_records_attention(
     assert after["batch"]["id"] == batch_id
     assert after["batch"]["status"] == "running"
     assert after["batch"]["started_at"] == started_at
-    assert_no_ownership_records(h)
+    assert after["revision"] > before["revision"]
+    expected = copy.deepcopy(before)
+    expected["revision"] = after["revision"]
+    expected["control"]["attention"] = attention
+    assert after == expected
+    assert_no_ownership_records(h, foreign)
 
 
 def test_early_failure_falls_back_to_attention_when_the_revert_is_rejected(
@@ -440,7 +488,10 @@ def test_early_failure_falls_back_to_attention_when_the_revert_is_rejected(
 ) -> None:
     h = harness(tmp_path, monkeypatch)
     unstarted(h)
-    h.store.transaction(lambda state: state["work"].update(prd="00007-feature.md"))
+    before = h.store.transaction(
+        lambda state: state["work"].update(prd="00007-feature.md")
+    )
+    foreign = seed_foreign_fleet_entry(h)
     fail_fleet_publish(monkeypatch, OSError("synthetic fleet publish failure"))
 
     outcome = h.supervisor().run()
@@ -453,4 +504,27 @@ def test_early_failure_falls_back_to_attention_when_the_revert_is_rejected(
     assert after["batch"]["status"] == "running"
     assert after["batch"]["started_at"] is not None
     assert after["work"]["prd"] == "00007-feature.md"
-    assert_no_ownership_records(h)
+    expected = copy.deepcopy(before)
+    expected["revision"] = after["revision"]
+    expected["control"]["attention"] = attention
+    expected["batch"].update(
+        id=after["batch"]["id"],
+        status="running",
+        started_at=after["batch"]["started_at"],
+    )
+    assert after == expected
+    assert_no_ownership_records(h, foreign)
+
+
+def test_early_failure_lets_an_interrupt_propagate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    h = harness(tmp_path, monkeypatch)
+    unstarted(h)
+    interrupt = KeyboardInterrupt()
+    fail_fleet_publish(monkeypatch, interrupt)
+
+    with pytest.raises(KeyboardInterrupt) as caught:
+        h.supervisor().run()
+
+    assert caught.value is interrupt
