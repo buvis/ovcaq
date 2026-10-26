@@ -365,3 +365,92 @@ def test_preflight_passes_on_a_healthy_host_and_the_run_mints_a_batch(
     ] == [("model-s", "high", 3)]
     assert after["batch"]["id"].strip() and after["batch"]["status"] == "running"
     assert after["revision"] > before["revision"]
+
+
+def fail_fleet_publish(monkeypatch: pytest.MonkeyPatch, error: Exception) -> None:
+    """Break ownership publication after the run metadata is already on disk."""
+
+    def publish(self: object, entry: object) -> Path:
+        raise error
+
+    monkeypatch.setattr("ovcaq.runtime.registry.FleetRegistry.publish", publish)
+
+
+def assert_no_ownership_records(h: Harness) -> None:
+    assert not h.paths.run_metadata.exists()
+    assert list(h.paths.fleet_root.iterdir()) == []
+    assert list(h.paths.sessions.iterdir()) == []
+    assert h.driver.requests == [] and h.runner.requests == []
+
+
+@pytest.mark.parametrize(
+    "error",
+    [OSError("synthetic fleet publish failure"), RuntimeError("registry unavailable")],
+    ids=["oserror", "runtimeerror"],
+)
+def test_early_failure_returns_fresh_batch_to_idle(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error: Exception
+) -> None:
+    h = harness(tmp_path, monkeypatch)
+    before = unstarted(h)
+    fail_fleet_publish(monkeypatch, error)
+
+    outcome = h.supervisor().run()
+
+    after = h.store.read()
+    assert outcome.exit_code == 1 and outcome.sessions_attempted == 0
+    assert after["batch"]["id"] == ""
+    assert after["batch"]["started_at"] is None
+    assert after["batch"]["status"] == "idle"
+    assert after["control"]["attention"] is None
+    assert after["revision"] > before["revision"]
+    assert_no_ownership_records(h)
+
+
+@pytest.mark.parametrize(
+    ("batch_id", "started_at"),
+    [("batch-resumed", "2026-10-02T11:00:00Z"), ("batch-9", "2026-09-30T08:15:00Z")],
+)
+def test_early_failure_on_resumed_batch_records_attention(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, batch_id: str, started_at: str
+) -> None:
+    h = harness(tmp_path, monkeypatch)
+
+    def resume(state: State) -> None:
+        state["batch"].update(id=batch_id, status="running", started_at=started_at)
+
+    h.store.transaction(resume)
+    fail_fleet_publish(monkeypatch, OSError("synthetic fleet publish failure"))
+
+    outcome = h.supervisor().run()
+
+    after = h.store.read()
+    assert outcome.exit_code == 1 and outcome.sessions_attempted == 0
+    attention = after["control"]["attention"]
+    assert attention is not None and attention["site"] == "startup"
+    assert attention["detail"].strip()
+    assert after["batch"]["id"] == batch_id
+    assert after["batch"]["status"] == "running"
+    assert after["batch"]["started_at"] == started_at
+    assert_no_ownership_records(h)
+
+
+def test_early_failure_falls_back_to_attention_when_the_revert_is_rejected(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    h = harness(tmp_path, monkeypatch)
+    unstarted(h)
+    h.store.transaction(lambda state: state["work"].update(prd="00007-feature.md"))
+    fail_fleet_publish(monkeypatch, OSError("synthetic fleet publish failure"))
+
+    outcome = h.supervisor().run()
+
+    after = h.store.read()
+    assert outcome.exit_code == 1 and outcome.sessions_attempted == 0
+    attention = after["control"]["attention"]
+    assert attention is not None and attention["site"] == "startup"
+    assert after["batch"]["id"].strip()
+    assert after["batch"]["status"] == "running"
+    assert after["batch"]["started_at"] is not None
+    assert after["work"]["prd"] == "00007-feature.md"
+    assert_no_ownership_records(h)

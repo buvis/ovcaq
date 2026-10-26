@@ -92,6 +92,25 @@ def _state(tmp_path: Path, *, empty: bool = False) -> State:
     return state
 
 
+def _completed(filename: str) -> dict[str, Any]:
+    return {
+        "filename": filename,
+        "cycles": 1,
+        "autonomous_decisions": 1,
+        "escalated_decisions": 0,
+        "tasks_completed": 1,
+        "tasks_total": 1,
+    }
+
+
+def _fresh_batch(tmp_path: Path, *, batch_id: str, started_at: str) -> State:
+    """A batch this run started and never served: no PRD, no completed work."""
+    state = new_state(repo_root=tmp_path)
+    state["batch"].update(id=batch_id, status="running", started_at=started_at)
+    state["batch"]["capabilities"] = {"archive": _capability()}
+    return state
+
+
 def _service(tmp_path: Path, state: State) -> tuple[StateService, StateStore]:
     store = StateStore(tmp_path / "state.json")
     store.initialize(state)
@@ -558,6 +577,95 @@ def test_invalid_capability_completion_preserves_state_and_backup(
         )
     assert store.read() == before
     assert _bytes(tmp_path) == data
+
+
+@pytest.mark.parametrize(
+    ("batch_id", "started_at"), [("batch-1", T0), ("batch-alternate", T1)]
+)
+def test_revert_batch_start_returns_a_fresh_running_batch_to_defaults(
+    tmp_path: Path, batch_id: str, started_at: str
+) -> None:
+    initial = _fresh_batch(tmp_path, batch_id=batch_id, started_at=started_at)
+    service, store = _service(tmp_path, initial)
+    result = service.revert_batch_start(batch_id, expected_revision=0)
+    expected = copy.deepcopy(initial)
+    expected["revision"] = 1
+    expected["batch"].update(id="", status="idle", started_at=None)
+    assert result == expected == store.read()
+    assert result["revision"] > initial["revision"]
+    defaults = new_state(repo_root=tmp_path)["batch"]
+    assert result["batch"]["id"] == defaults["id"] == ""
+    assert result["batch"]["status"] == defaults["status"] == "idle"
+    assert result["batch"]["started_at"] == defaults["started_at"] is None
+    assert result["batch"]["capabilities"] == initial["batch"]["capabilities"]
+    _unchanged_work(initial, result)
+    assert validate_state(result) == result
+
+
+@pytest.mark.parametrize(
+    ("case", "requested"),
+    [
+        ("idle", "batch-1"),
+        ("attention", "batch-1"),
+        ("completed", "batch-1"),
+        ("longer-id", "batch-12"),
+        ("shorter-id", "batch"),
+        ("work-prd", "batch-1"),
+        ("one-completed-prd", "batch-1"),
+        ("two-completed-prds", "batch-1"),
+    ],
+    ids=[
+        "idle",
+        "attention",
+        "completed",
+        "longer-id",
+        "shorter-id",
+        "work-prd",
+        "one-completed-prd",
+        "two-completed-prds",
+    ],
+)
+def test_revert_batch_start_requires_fresh_running_batch(
+    tmp_path: Path, case: str, requested: str
+) -> None:
+    initial = _fresh_batch(tmp_path, batch_id="batch-1", started_at=T0)
+    if case in {"idle", "attention", "completed"}:
+        initial["batch"]["status"] = cast(Any, case)
+        if case == "completed":
+            initial["batch"].update(completed_at=T1, capabilities={})
+    elif case == "work-prd":
+        initial["work"]["prd"] = "00007-feature.md"
+    elif case == "one-completed-prd":
+        initial["batch"]["completed_prds"] = [_completed("first.md")]
+    elif case == "two-completed-prds":
+        initial["batch"]["completed_prds"] = [
+            _completed("first.md"),
+            _completed("second.md"),
+        ]
+    service, store = _service(tmp_path, initial)
+    store.transaction(lambda _state: None)
+    before, data = store.read(), _bytes(tmp_path)
+    with pytest.raises(ValueError) as caught:
+        service.revert_batch_start(requested, expected_revision=1)
+    assert str(caught.value) == "batch is not a fresh started batch"
+    assert store.read() == before
+    assert _bytes(tmp_path) == data
+
+
+def test_revert_batch_start_obeys_the_expected_revision(tmp_path: Path) -> None:
+    initial = _fresh_batch(tmp_path, batch_id="batch-1", started_at=T0)
+    service, store = _service(tmp_path, initial)
+    store.transaction(lambda _state: None)
+    before, data = store.read(), _bytes(tmp_path)
+    with pytest.raises(RevisionConflictError):
+        service.revert_batch_start("batch-1", expected_revision=0)
+    assert store.read() == before
+    assert _bytes(tmp_path) == data
+    reverted = service.revert_batch_start("batch-1", expected_revision=1)
+    assert reverted == store.read()
+    assert reverted["revision"] == 2
+    assert reverted["batch"]["id"] == "" and reverted["batch"]["status"] == "idle"
+    assert reverted["batch"]["started_at"] is None
 
 
 @pytest.mark.parametrize(
