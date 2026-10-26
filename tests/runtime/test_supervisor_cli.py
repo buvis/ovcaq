@@ -786,11 +786,11 @@ def test_retry_unknown_capability_is_a_usage_error(
     tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str
 ) -> None:
     _success(_invoke(tmp_path, capsys, "init"))
-    state_file = tmp_path / "docs/dev/project-management/ovcaq/state.json"
-    before = state_file.read_bytes()
+    before = {p: p.read_bytes() if p.is_file() else None for p in tmp_path.rglob("*")}
     code, stdout, stderr = _invoke(tmp_path, capsys, "capability", "retry", name)
     failure = _failure((code, stdout, stderr))
     assert code == 1 and "Traceback" not in stdout + stderr
     assert failure["error"]["code"] == "usage"
     assert f"unknown capability: {name}" in failure["error"]["message"]
-    assert state_file.read_bytes() == before
+    after = {p: p.read_bytes() if p.is_file() else None for p in tmp_path.rglob("*")}
+    assert after == before

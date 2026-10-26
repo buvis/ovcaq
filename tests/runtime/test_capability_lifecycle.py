@@ -168,6 +168,14 @@ def _evidence(harness: Harness) -> dict[str, bytes]:
     }
 
 
+def _tree(root: Path) -> dict[str, bytes | None]:
+    """Snapshot every file and directory under root (runtime and state homes too)."""
+    return {
+        str(path.relative_to(root)): path.read_bytes() if path.is_file() else None
+        for path in root.rglob("*")
+    }
+
+
 def _finish(
     harness: Harness, attempt: CapabilityAttempt, success: bool, elapsed: int = 60
 ) -> State:
@@ -630,25 +638,28 @@ def test_retry_rejects_pending_optional_or_skipped_capabilities_without_invoking
         (False, ""),
         (True, "archiv"),
         (True, "archive-old"),
+        (True, "ARCHIVE"),
+        (True, " archive"),
+        (True, "archive "),
         (True, ""),
+        (True, "cap-{random}"),
     ],
 )
 def test_retry_rejects_an_unknown_capability_as_a_usage_error_without_writes(
     tmp_path: Path, declared: bool, unknown: str
 ) -> None:
+    unknown = unknown.replace("{random}", uuid4().hex)
     harness = _harness(tmp_path, declared=declared)
     if declared:
         _finish(harness, harness.service.start("archive"), False)
     runner = FakeRunner(harness, True)
-    before, evidence = harness.store.read(), _evidence(harness)
-    state_bytes = harness.paths.state_file.read_bytes()
+    before, tree = harness.store.read(), _tree(tmp_path)
     message = f"^{re.escape(f'unknown capability: {unknown}')}$"
     with pytest.raises(CommandError, match=message) as caught:
         harness.service.retry(unknown, runner)
     assert caught.value.code is ErrorCode.USAGE
     assert harness.store.read() == before
-    assert harness.paths.state_file.read_bytes() == state_bytes
-    assert _evidence(harness) == evidence
+    assert _tree(tmp_path) == tree
     assert runner.requests == []
     if declared:
         state = harness.service.retry("archive", runner)
@@ -657,6 +668,37 @@ def test_retry_rejects_an_unknown_capability_as_a_usage_error_without_writes(
         assert len(state["batch"]["capabilities"]["archive"]["attempts"]) == 2
     else:
         assert before["batch"]["capabilities"] == {}
+
+
+def _declare_agoge(state: State) -> None:
+    archive = state["batch"]["capabilities"]["archive"]
+    state["batch"]["capabilities"]["agoge"] = {
+        **archive,
+        "plugin": "fake/agoge",
+        "attempts": [],
+    }
+
+
+@pytest.mark.parametrize("target", ["archive", "agoge"])
+def test_retry_runs_only_the_named_capability_when_several_are_declared(
+    tmp_path: Path, target: str
+) -> None:
+    harness = _harness(tmp_path)
+    harness.store.transaction(_declare_agoge)
+    for name in ("archive", "agoge"):
+        attempt = harness.service.start(name)
+        assert attempt["session_id"] is not None
+        failure = CapabilityExecution(False, attempt["session_id"], f"{name} down")
+        harness.service.finish(name, attempt["id"], failure)
+    before = harness.store.read()["batch"]["capabilities"]
+    runner = FakeRunner(harness, True)
+    after = harness.service.retry(target, runner)["batch"]["capabilities"]
+    assert [request.name for request in runner.requests] == [target]
+    assert after[target]["status"] == "succeeded"
+    assert len(after[target]["attempts"]) == 2
+    assert after[target]["attempts"][0] == before[target]["attempts"][0]
+    (other,) = {"archive", "agoge"} - {target}
+    assert after[other] == before[other] and after[other]["status"] == "failed"
 
 
 def test_run_declares_no_required_capability(
