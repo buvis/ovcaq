@@ -310,9 +310,10 @@ literals remain `resource_limit`.
 
 `process_probe` means the libproc process-identity probe cannot run: a
 non-darwin platform, a libproc load failure, a returned size other than 0 or
-136, a `pbi_pid` that differs from the requested pid, or an errno other than
-`ESRCH` on a zero return. The message names the platform and tells the
-operator to run `ovcaq doctor`, whose `process_identity` capability fact is
+136, or a `pbi_pid` that differs from the requested pid. A zero-byte return
+always means the pid is gone, regardless of errno. The message names the
+platform and tells the operator to run `ovcaq doctor`, whose
+`process_identity` capability fact is
 then `degraded` with the error text. Process start tokens are
 `"<sec>.<usec>"` (microseconds zero-padded to six digits) instead of the
 former `ps lstart` string; tokens persisted before the upgrade never match,

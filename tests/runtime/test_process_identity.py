@@ -207,19 +207,15 @@ def test_non_positive_pid_is_gone_without_touching_the_kernel(
 
 @pytest.mark.parametrize(
     "errno_value",
-    [errno.EPERM, errno.EACCES, errno.EINVAL, errno.ENOMEM, errno.EFAULT, 0],
+    [errno.EPERM, errno.EACCES, errno.EINVAL, errno.ENOMEM, errno.EFAULT, 0, errno.ESRCH],
 )
-def test_denied_probe_is_typed_failure_while_absent_pid_is_simply_gone(
+def test_absent_pid_is_simply_gone_whatever_errno_the_kernel_leaves(
     monkeypatch: pytest.MonkeyPatch, errno_value: int
 ) -> None:
-    """Only ESRCH means gone; every other empty answer is a failure to report."""
+    """A zero-byte answer means gone, regardless of errno (spec: size 0 or 136)."""
     pid = os.getpid()
     record = _bsdinfo(pid)
     calls = _kernel_answers(monkeypatch, record, written=0, errno_value=errno_value)
-    _probe_failure(lambda: process_identity(pid))
-    assert calls == [(pid, _FLAVOR, 0, _RECORD_SIZE)]
-
-    calls = _kernel_answers(monkeypatch, record, written=0, errno_value=errno.ESRCH)
     assert process_identity(pid) is None
     assert calls == [(pid, _FLAVOR, 0, _RECORD_SIZE)]
 
@@ -309,13 +305,8 @@ def test_kernel_zombie_status_has_no_identity(monkeypatch: pytest.MonkeyPatch) -
 def test_probe_failure_never_answers_that_a_process_is_gone(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """process_matches must raise on a broken probe; False would kill a live run."""
+    """process_matches must raise on a genuinely broken probe; False would kill a live run."""
     identity = ProcessIdentity(pid=os.getpid(), started="1700000000.000042")
-    _kernel_answers(
-        monkeypatch, _bsdinfo(identity.pid), written=0, errno_value=errno.EPERM
-    )
-    _probe_failure(lambda: process_matches(identity))
-
     _kernel_answers(monkeypatch, _bsdinfo(identity.pid), written=7)
     _probe_failure(lambda: process_matches(identity))
 

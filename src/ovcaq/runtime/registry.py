@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import ctypes
 import ctypes.util
-import errno
 import fcntl
 import json
 import os
@@ -176,22 +175,14 @@ def process_identity(pid: int) -> ProcessIdentity | None:
         return None
     library = _libproc()
     buffer = ctypes.create_string_buffer(PROC_BSDINFO_SIZE)
-    ctypes.set_errno(0)
     written = library.proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, buffer, PROC_BSDINFO_SIZE)
     if written == 0:
-        code = ctypes.get_errno()
-        if code == errno.ESRCH:
-            return None
-        raise CommandError(
-            ErrorCode.PROCESS_PROBE,
-            f"Process probe for pid {pid} was refused: "
-            f"errno {code} ({os.strerror(code)})",
-        )
+        return None
     if written != PROC_BSDINFO_SIZE:
         raise CommandError(
             ErrorCode.PROCESS_PROBE,
-            f"Process probe for pid {pid} returned {written} bytes "
-            f"instead of {PROC_BSDINFO_SIZE}",
+            f"Process probe for pid {pid} on {sys.platform} returned {written} bytes "
+            f"instead of {PROC_BSDINFO_SIZE}; run ovcaq doctor",
         )
     record = buffer.raw
     (status,) = struct.unpack_from("=I", record, PBI_STATUS_OFFSET)
@@ -199,7 +190,8 @@ def process_identity(pid: int) -> ProcessIdentity | None:
     if reported != pid:
         raise CommandError(
             ErrorCode.PROCESS_PROBE,
-            f"Process probe for pid {pid} described pid {reported}",
+            f"Process probe for pid {pid} on {sys.platform} described pid {reported}; "
+            "run ovcaq doctor",
         )
     if status == SZOMB:
         return None
