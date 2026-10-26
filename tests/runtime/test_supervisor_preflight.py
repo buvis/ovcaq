@@ -40,6 +40,14 @@ def assert_no_state_change(h: Harness, before: State) -> None:
     }
     assert after == before
     assert h.driver.requests == [] and h.runner.requests == []
+    assert_no_runtime_write(h)
+
+
+def assert_no_runtime_write(h: Harness) -> None:
+    """The rejection precedes ownership publication and metric reconciliation."""
+    assert not h.paths.run_metadata.exists()
+    assert not h.paths.metrics.exists()
+    assert list(h.paths.sessions.iterdir()) == []
 
 
 def break_routes(h: Harness, *phases: str) -> None:
@@ -82,6 +90,11 @@ def test_preflight_rejects_unknown_tier_without_state_change(
         phases={**h.settings.phases, "build": PhaseSettings(tier, "high", 3)},
     )
 
+    with pytest.raises(CommandError) as direct:
+        h.supervisor().preflight()
+    assert direct.value.code is ErrorCode.USAGE
+    assert str(direct.value) == f"Unknown agent tier: {tier}"
+
     with pytest.raises(CommandError) as caught:
         h.supervisor().run()
 
@@ -98,6 +111,13 @@ def test_preflight_rejects_missing_process_identity_without_state_change(
     h = harness(tmp_path, monkeypatch)
     before = unstarted(h)
     probed = patch_probe(monkeypatch, None)
+
+    with pytest.raises(CommandError) as direct:
+        h.supervisor().preflight()
+    assert direct.value.code is ErrorCode.USAGE
+    assert str(direct.value) == "process identity is unavailable for this process"
+    assert probed == [os.getpid()]
+    probed.clear()
 
     with pytest.raises(CommandError) as caught:
         h.supervisor().run()
@@ -188,6 +208,131 @@ def test_preflight_resolves_routes_for_the_driver_agent(
     assert_no_state_change(h, before)
 
 
+def test_preflight_accepts_a_tier_only_the_agent_override_supplies(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    h = harness(tmp_path, monkeypatch)
+    (h.root / "ovcaq.toml").write_text(
+        'agent = "local"\n[agents.local]\ncommand = ["runner"]\n'
+        'tiers = { sonnet = "model-s", opus = "model-o", custom = "model-c" }\n'
+        '[agents.local.phases.review]\ntier = "custom"\n'
+    )
+    before = unstarted(h)
+    h.settings = replace(
+        h.settings,
+        phases={**h.settings.phases, "review": PhaseSettings("bespoke", "high", 3)},
+    )
+
+    assert h.supervisor().preflight() is None
+    assert_no_state_change(h, before)
+
+
+def test_preflight_reports_the_override_tier_not_the_neutral_one(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    h = harness(tmp_path, monkeypatch)
+    config = h.root / "ovcaq.toml"
+    config.write_text(
+        config.read_text() + '[agents.local.phases.done]\ntier = "ghost"\n'
+    )
+    before = unstarted(h)
+    assert h.settings.phases["done"].tier == "sonnet"
+
+    with pytest.raises(CommandError) as caught:
+        h.supervisor().preflight()
+
+    assert caught.value.code is ErrorCode.USAGE
+    assert str(caught.value) == "Unknown agent tier: ghost"
+    assert_no_state_change(h, before)
+
+
+def test_preflight_converts_a_configuration_fault_that_names_no_tier(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    h = harness(tmp_path, monkeypatch)
+    config = h.root / "ovcaq.toml"
+    config.write_text(
+        config.read_text() + "[agents.local.phases.build]\ntimeout_seconds = 5\n"
+    )
+    before = unstarted(h)
+
+    with pytest.raises(CommandError) as direct:
+        h.supervisor().preflight()
+    assert str(direct.value) == "unknown fields for phase build"
+
+    with pytest.raises(CommandError) as caught:
+        h.supervisor().run()
+
+    error = caught.value
+    assert error.code is ErrorCode.USAGE
+    assert error.exit_code == EXIT_CODES[ErrorCode.USAGE] == 1
+    assert str(error) == "unknown fields for phase build"
+    assert_no_state_change(h, before)
+
+
+def test_preflight_probes_process_identity_before_resolving_routes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    h = harness(tmp_path, monkeypatch)
+    before = unstarted(h)
+    break_routes(h, "build", "review", "done")
+    probed = patch_probe(monkeypatch, None)
+
+    with pytest.raises(CommandError) as caught:
+        h.supervisor().preflight()
+
+    assert caught.value.code is ErrorCode.USAGE
+    assert str(caught.value) == "process identity is unavailable for this process"
+    assert probed == [os.getpid()]
+    assert_no_state_change(h, before)
+
+
+def test_preflight_rejects_a_broken_route_for_an_already_started_batch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    h = harness(tmp_path, monkeypatch)
+    before = h.store.read()
+    assert before["batch"]["id"] == "batch-1"
+    assert before["batch"]["status"] == "running"
+    break_routes(h, "review")
+
+    with pytest.raises(CommandError) as caught:
+        h.supervisor().run()
+
+    error = caught.value
+    assert error.code is ErrorCode.USAGE
+    assert error.exit_code == EXIT_CODES[ErrorCode.USAGE] == 1
+    assert str(error) == "Unknown agent tier: missing-review"
+    assert h.store.read() == before
+    assert h.driver.requests == [] and h.runner.requests == []
+    assert_no_runtime_write(h)
+
+
+def test_preflight_revalidates_routes_after_an_earlier_healthy_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    h = harness(tmp_path, monkeypatch)
+    assert h.supervisor().preflight() is None
+    h.driver.steps = [
+        Step(
+            effect=lambda: h.store.transaction(
+                lambda state: state["control"].update(pause_requested=True)
+            )
+        )
+    ]
+    assert h.supervisor().run().exit_code == 0
+    settled = h.store.read()
+
+    break_routes(h, "build")
+    with pytest.raises(CommandError) as caught:
+        h.supervisor().run()
+
+    assert caught.value.code is ErrorCode.USAGE
+    assert str(caught.value) == "Unknown agent tier: missing-build"
+    assert h.store.read() == settled
+    assert len(h.driver.requests) == 1
+
+
 def test_preflight_passes_on_a_healthy_host_and_the_run_mints_a_batch(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -201,12 +346,22 @@ def test_preflight_passes_on_a_healthy_host_and_the_run_mints_a_batch(
         )
     ]
     supervisor = h.supervisor()
+    settings = supervisor._settings
+    project_entries = sorted(path.name for path in h.root.iterdir())
 
     assert supervisor.preflight() is None
+
+    assert supervisor._settings is settings and h.settings is settings
+    assert sorted(path.name for path in h.root.iterdir()) == project_entries
+    assert_no_runtime_write(h)
 
     outcome = supervisor.run()
     after = h.store.read()
     assert outcome.exit_code == 0 and outcome.sessions_attempted == 1
     assert [request.phase for request in h.driver.requests] == ["build"]
+    assert [
+        (request.model, request.effort, request.timeout_seconds)
+        for request in h.driver.requests
+    ] == [("model-s", "high", 3)]
     assert after["batch"]["id"].strip() and after["batch"]["status"] == "running"
     assert after["revision"] > before["revision"]
