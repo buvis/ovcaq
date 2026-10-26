@@ -103,10 +103,7 @@ def test_state_restore_cli_routes_through_state_service(
 
 
 def test_error_code_contains_exactly_the_public_failure_values() -> None:
-    assert tuple(error.value for error in ErrorCode) == (
-        *ERROR_CODES,
-        "process_probe",
-    )
+    assert tuple(error.value for error in ErrorCode) == ERROR_CODES
 
 
 @pytest.mark.parametrize(

@@ -469,6 +469,7 @@ ERROR_CODES = (
     "resource_limit",
     "oversized_plan",
     "runtime_format",
+    "process_probe",
 )
 
 
