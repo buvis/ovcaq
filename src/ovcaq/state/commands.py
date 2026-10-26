@@ -513,6 +513,26 @@ class StateService:
 
         return self._transaction(mutate, expected_revision=expected_revision)
 
+    def revert_batch_start(
+        self, batch_id: str, *, expected_revision: int | None = None
+    ) -> State:
+        """Return a batch this run started, and never served, to its defaults."""
+
+        def mutate(state: State) -> None:
+            batch = state["batch"]
+            if (
+                batch["status"] != "running"
+                or batch["id"] != batch_id
+                or state["work"]["prd"] is not None
+                or batch["completed_prds"] != []
+            ):
+                raise ValueError("batch is not a fresh started batch")
+            batch["id"] = ""
+            batch["started_at"] = None
+            batch["status"] = "idle"
+
+        return self._transaction(mutate, expected_revision=expected_revision)
+
     def complete_batch(
         self, completed_at: str, *, expected_revision: int | None = None
     ) -> State:

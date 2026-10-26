@@ -91,6 +91,9 @@ _CONTINUING = frozenset(
 )
 _READ_CHUNK = 65536
 _STATE_ERRORS = (StateError, SchemaError, OSError)
+# Ownership publication can fail on the filesystem, in state, in the process probe
+# or in the registry; KeyboardInterrupt and other BaseExceptions still propagate.
+_PUBLISH_ERRORS = (*_STATE_ERRORS, CommandError, RuntimeError, ValueError)
 
 
 class Clock(WatchdogClock, Protocol):
@@ -134,6 +137,7 @@ class Supervisor:
         self._sleeper = sleeper
         self._run_id: str | None = None
         self._metadata: SessionMetadata | None = None
+        self._fleet_entry: FleetEntry | None = None
         self._retries = RetryState()
         self._last_failure: FailureClass | None = None
         self._sessions = 0
@@ -160,11 +164,14 @@ class Supervisor:
     def run(self) -> SupervisorOutcome:
         self._sessions = 0
         self._state_halt = None
+        self._metadata = None
+        self._fleet_entry = None
         with RunLock.acquire(self._paths.run_lock):
             publish_terminal_evidence(self._paths)
             require_no_emergency_failure(self._paths)
             self.preflight()
             reconcile_metrics(self._paths)
+            started: State | None = None
             try:
                 self._reconcile_capabilities()
                 state = self._store.read()
@@ -174,14 +181,19 @@ class Supervisor:
                     or not batch["started_at"]
                     or batch["status"] == "idle"
                 ):
-                    StateService(self._store).start_batch(
+                    committed = StateService(self._store).start_batch(
                         uuid4().hex,
                         _timestamp(self._clock.now()),
                         expected_revision=state["revision"],
                     )
+                    if committed["batch"]["id"] != batch["id"]:
+                        started = committed
             except _STATE_ERRORS:
                 return SupervisorOutcome(1, self._state_failure("startup"), 0)
-            metadata, entry = self._publish_ownership()
+            try:
+                metadata, entry = self._publish_ownership()
+            except _PUBLISH_ERRORS as error:
+                return SupervisorOutcome(1, self._abandon_start(started, error), 0)
             try:
                 with supervisor_signal_scope():
                     decision = self._loop()
@@ -207,6 +219,30 @@ class Supervisor:
                     cleanup_run_records(self._paths, self._metadata or metadata, entry)
         terminal_ok = decision.kind in (DecisionKind.PAUSE, DecisionKind.COMPLETE)
         return SupervisorOutcome(0 if terminal_ok else 1, decision, self._sessions)
+
+    def _abandon_start(
+        self, started: State | None, error: Exception
+    ) -> SupervisorDecision:
+        """Remove partial ownership records, then undo or flag the batch start."""
+        try:
+            if self._metadata is not None and self._fleet_entry is not None:
+                cleanup_run_records(self._paths, self._metadata, self._fleet_entry)
+            elif self._metadata is not None:
+                self._paths.run_metadata.unlink(missing_ok=True)
+        except OSError:
+            pass
+        if started is None:
+            self._state_failure("startup")
+        else:
+            try:
+                StateService(self._store).revert_batch_start(
+                    started["batch"]["id"], expected_revision=started["revision"]
+                )
+            except (ValueError, *_STATE_ERRORS):
+                self._state_failure("startup")
+        return SupervisorDecision(
+            DecisionKind.HALT, f"ownership publication failed: {error}"
+        )
 
     def _state_failure(self, site: str) -> SupervisorDecision:
         detail = "Supervisor state operation failed; inspect state before restarting."
@@ -267,9 +303,10 @@ class Supervisor:
             started_at,
         )
         publish_run_metadata(self._paths, metadata)
-        FleetRegistry(self._paths.fleet_root).publish(entry)
-        self._run_id = run_id
         self._metadata = metadata
+        FleetRegistry(self._paths.fleet_root).publish(entry)
+        self._fleet_entry = entry
+        self._run_id = run_id
         return metadata, entry
 
     def _loop(self) -> SupervisorDecision:
