@@ -153,8 +153,7 @@ operator to run `ovcaq doctor`.
 
 Before any state write, `ovcaq run` validates the process identity probe
 and the build, review and done phase routes; a failure leaves `state.json`
-at the same revision. An unknown tier is a `usage` error, a raising probe
-is `process_probe` (exit 12), and a probe that returns no identity is a
-`usage` error. A failure while publishing run metadata or the fleet entry
+at the same revision. An unknown tier or a probe that returns no identity is
+a `usage` error. A failure while publishing run metadata or the fleet entry
 removes what was written, returns a fresh batch to idle or records an
 attention notice on a resumed batch, and exits 1.
