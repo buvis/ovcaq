@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import select
 import stat
 import subprocess
@@ -14,7 +15,9 @@ from pathlib import Path
 from uuid import UUID, uuid4
 
 import pytest
+from tests.runtime.test_supervisor import Step, harness
 
+from ovcaq.errors import CommandError, ErrorCode
 from ovcaq.paths import RuntimePaths, ensure_runtime_layout, resolve_runtime_paths
 from ovcaq.runtime.capability import (
     CapabilityExecution,
@@ -100,6 +103,7 @@ def _harness(
     skipped: bool = False,
     name: str = "archive",
     batch_id: str = "batch-1",
+    declared: bool = True,
 ) -> Harness:
     root = tmp_path / "repo"
     root.mkdir(parents=True)
@@ -109,11 +113,12 @@ def _harness(
         )
     )
     store = StateStore(paths.state_file)
-    initial = store.initialize(
-        _fixture_state(
-            root, required=required, skipped=skipped, name=name, batch_id=batch_id
-        )
+    state = _fixture_state(
+        root, required=required, skipped=skipped, name=name, batch_id=batch_id
     )
+    if not declared:
+        state["batch"]["capabilities"] = {}
+    initial = store.initialize(state)
     clock = [datetime(2026, 9, 14, 10, tzinfo=UTC)]
     service = CapabilityService(
         root,
@@ -616,3 +621,64 @@ def test_retry_rejects_pending_optional_or_skipped_capabilities_without_invoking
     assert harness.store.read() == harness.initial
     assert _evidence(harness) == evidence
     assert runner.requests == []
+
+
+@pytest.mark.parametrize(
+    ("declared", "unknown"),
+    [
+        (False, "archive"),
+        (False, ""),
+        (True, "archiv"),
+        (True, "archive-old"),
+        (True, ""),
+    ],
+)
+def test_retry_rejects_an_unknown_capability_as_a_usage_error_without_writes(
+    tmp_path: Path, declared: bool, unknown: str
+) -> None:
+    harness = _harness(tmp_path, declared=declared)
+    if declared:
+        _finish(harness, harness.service.start("archive"), False)
+    runner = FakeRunner(harness, True)
+    before, evidence = harness.store.read(), _evidence(harness)
+    state_bytes = harness.paths.state_file.read_bytes()
+    message = f"^{re.escape(f'unknown capability: {unknown}')}$"
+    with pytest.raises(CommandError, match=message) as caught:
+        harness.service.retry(unknown, runner)
+    assert caught.value.code is ErrorCode.USAGE
+    assert harness.store.read() == before
+    assert harness.paths.state_file.read_bytes() == state_bytes
+    assert _evidence(harness) == evidence
+    assert runner.requests == []
+    if declared:
+        state = harness.service.retry("archive", runner)
+        assert [request.name for request in runner.requests] == ["archive"]
+        assert state["batch"]["capabilities"]["archive"]["status"] == "succeeded"
+        assert len(state["batch"]["capabilities"]["archive"]["attempts"]) == 2
+    else:
+        assert before["batch"]["capabilities"] == {}
+
+
+def test_run_declares_no_required_capability(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    h = harness(tmp_path, monkeypatch)
+
+    def unstarted(state: State) -> None:
+        state["batch"] = new_state(repo_root=h.root)["batch"]
+
+    before = h.store.transaction(unstarted)
+    assert not before["batch"]["id"].strip() and before["batch"]["capabilities"] == {}
+    seen: list[State] = []
+
+    def at_first_session() -> None:
+        seen.append(h.store.read())
+        h.store.transaction(lambda state: state["control"].update(pause_requested=True))
+
+    h.driver.steps = [Step(effect=at_first_session)]
+    outcome = h.supervisor().run()
+    assert outcome.exit_code == 0 and len(h.driver.requests) == 1
+    (first,) = seen
+    assert first["batch"]["id"].strip() and first["batch"]["status"] == "running"
+    assert first["batch"]["capabilities"] == {}
+    assert h.store.read()["batch"]["capabilities"] == {}

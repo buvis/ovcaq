@@ -779,3 +779,18 @@ def test_child_rejects_outside_report_destination_without_writing_it(
     assert main(["--root", str(tmp_path), "run", "--no-tui"]) != 0
     assert constructed == []
     assert outside.read_text(encoding="utf-8") == "preserve me"
+
+
+@pytest.mark.parametrize("name", ["agoge", "archive-old"])
+def test_retry_unknown_capability_is_a_usage_error(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str
+) -> None:
+    _success(_invoke(tmp_path, capsys, "init"))
+    state_file = tmp_path / "docs/dev/project-management/ovcaq/state.json"
+    before = state_file.read_bytes()
+    code, stdout, stderr = _invoke(tmp_path, capsys, "capability", "retry", name)
+    failure = _failure((code, stdout, stderr))
+    assert code == 1 and "Traceback" not in stdout + stderr
+    assert failure["error"]["code"] == "usage"
+    assert f"unknown capability: {name}" in failure["error"]["message"]
+    assert state_file.read_bytes() == before
