@@ -516,8 +516,6 @@ class StateService:
     def revert_batch_start(
         self, batch_id: str, *, expected_revision: int | None = None
     ) -> State:
-        """Return a batch this run started, and never served, to its defaults."""
-
         def mutate(state: State) -> None:
             batch = state["batch"]
             if (

@@ -223,7 +223,6 @@ class Supervisor:
     def _abandon_start(
         self, started: State | None, error: Exception
     ) -> SupervisorDecision:
-        """Remove partial ownership records, then undo or flag the batch start."""
         try:
             if self._metadata is not None and self._fleet_entry is not None:
                 cleanup_run_records(self._paths, self._metadata, self._fleet_entry)
