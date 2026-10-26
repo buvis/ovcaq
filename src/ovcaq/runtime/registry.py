@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import ctypes
+import ctypes.util
+import errno
 import fcntl
 import json
 import os
 import secrets
 import stat
 import struct
-import subprocess
 import sys
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
@@ -16,6 +18,7 @@ from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 from typing import Self
 
+from ovcaq.errors import CommandError, ErrorCode
 from ovcaq.state.schema import MAX_STATE_BYTES, decode_json, validate_timestamp
 
 
@@ -123,22 +126,86 @@ class ProcessIdentity:
     started: str
 
 
+# Darwin <sys/proc_info.h>: struct proc_bsdinfo, naturally aligned fields.
+PROC_PIDTBSDINFO = 3
+PROC_BSDINFO_SIZE = 136
+PBI_STATUS_OFFSET = 4
+PBI_PID_OFFSET = 12
+PBI_START_TVSEC_OFFSET = 120
+PBI_START_TVUSEC_OFFSET = 128
+SZOMB = 5
+
+
+def _libproc() -> ctypes.CDLL:
+    """Load libproc, or raise the typed probe failure."""
+    platform = sys.platform
+    if platform != "darwin":
+        raise CommandError(
+            ErrorCode.PROCESS_PROBE,
+            f"Process probe requires macOS, not {platform}; run ovcaq doctor",
+        )
+    path = ctypes.util.find_library("proc")
+    if path is None:
+        raise CommandError(
+            ErrorCode.PROCESS_PROBE,
+            f"Process probe library libproc is missing on {platform}; run ovcaq doctor",
+        )
+    try:
+        library = ctypes.CDLL(path, use_errno=True)
+        probe = library.proc_pidinfo
+    except (OSError, AttributeError) as error:
+        raise CommandError(
+            ErrorCode.PROCESS_PROBE,
+            f"Process probe library {path} is unusable on {platform}: {error}; "
+            "run ovcaq doctor",
+        ) from error
+    probe.argtypes = [
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_uint64,
+        ctypes.c_void_p,
+        ctypes.c_int,
+    ]
+    probe.restype = ctypes.c_int
+    return library
+
+
 def process_identity(pid: int) -> ProcessIdentity | None:
     """Observe a live process and its start token without signalling it."""
     if pid <= 0:
         return None
-    result = subprocess.run(
-        ["ps", "-p", str(pid), "-o", "lstart=", "-o", "stat="],
-        capture_output=True,
-        text=True,
-        env={**os.environ, "LC_ALL": "C"},
-        timeout=5,
-        check=False,
-    )
-    parts = result.stdout.strip().rsplit(maxsplit=1)
-    if result.returncode or len(parts) != 2 or parts[1].startswith("Z"):
+    library = _libproc()
+    buffer = ctypes.create_string_buffer(PROC_BSDINFO_SIZE)
+    ctypes.set_errno(0)
+    written = library.proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, buffer, PROC_BSDINFO_SIZE)
+    if written == 0:
+        code = ctypes.get_errno()
+        if code == errno.ESRCH:
+            return None
+        raise CommandError(
+            ErrorCode.PROCESS_PROBE,
+            f"Process probe for pid {pid} was refused: "
+            f"errno {code} ({os.strerror(code)})",
+        )
+    if written != PROC_BSDINFO_SIZE:
+        raise CommandError(
+            ErrorCode.PROCESS_PROBE,
+            f"Process probe for pid {pid} returned {written} bytes "
+            f"instead of {PROC_BSDINFO_SIZE}",
+        )
+    record = buffer.raw
+    (status,) = struct.unpack_from("=I", record, PBI_STATUS_OFFSET)
+    (reported,) = struct.unpack_from("=I", record, PBI_PID_OFFSET)
+    if reported != pid:
+        raise CommandError(
+            ErrorCode.PROCESS_PROBE,
+            f"Process probe for pid {pid} described pid {reported}",
+        )
+    if status == SZOMB:
         return None
-    return ProcessIdentity(pid=pid, started=parts[0])
+    (tvsec,) = struct.unpack_from("=Q", record, PBI_START_TVSEC_OFFSET)
+    (tvusec,) = struct.unpack_from("=Q", record, PBI_START_TVUSEC_OFFSET)
+    return ProcessIdentity(pid=pid, started=f"{tvsec}.{tvusec:06d}")
 
 
 def process_matches(identity: ProcessIdentity) -> bool:

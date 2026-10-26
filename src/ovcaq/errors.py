@@ -17,6 +17,7 @@ class ErrorCode(StrEnum):
     RESOURCE_LIMIT = "resource_limit"
     OVERSIZED_PLAN = "oversized_plan"
     RUNTIME_FORMAT = "runtime_format"
+    PROCESS_PROBE = "process_probe"
 
 
 EXIT_CODES: dict[ErrorCode, int] = {
@@ -33,6 +34,7 @@ EXIT_CODES: dict[ErrorCode, int] = {
     ErrorCode.RESOURCE_LIMIT: 11,
     ErrorCode.OVERSIZED_PLAN: 3,
     ErrorCode.RUNTIME_FORMAT: 1,
+    ErrorCode.PROCESS_PROBE: 12,
 }
 
 
