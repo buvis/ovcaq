@@ -262,6 +262,8 @@ def digest_variant(case: str, digest: str) -> str:
         return hashlib.sha256(b"other").hexdigest()
     if case == "truncated-digest":
         return digest[:-1]
+    if case == "single-hex":
+        return digest[:1]
     return digest
 
 

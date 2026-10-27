@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -463,15 +464,19 @@ def test_prerequisites_and_client_share_one_digest(
     assert controller_bundle_digest(settings.contract_bundle, pin) == pin
 
 
-@pytest.mark.parametrize("case", ["last-hex-differs", "middle-hex-differs"])
+@pytest.mark.parametrize(
+    "case",
+    ["last-hex-differs", "middle-hex-differs", "truncated-digest", "single-hex"],
+)
 def test_prerequisites_and_client_share_one_digest_refusing_a_near_miss(
     tmp_path: Path, case: str
 ) -> None:
     body = BUNDLE_FIXTURE.read_bytes()
     pin = raw_sha256(body)
     near = digest_variant(case, pin)
+    # Both consumers compare the whole digest, so a prefix of it pins nothing.
     assert near != pin
-    assert len(near) == len(pin)
+    assert re.fullmatch(r"[0-9a-f]{64}", pin)
     bundle = stage_bundle(tmp_path, body, near)
 
     missing = missing_of(run_tool(tmp_path, "58"), "58")
@@ -482,6 +487,7 @@ def test_prerequisites_and_client_share_one_digest_refusing_a_near_miss(
     with pytest.raises(IncompatibleContractError) as caught:
         controller_bundle_digest(bundle, near)
     assert near in str(caught.value)
+    assert pin in str(caught.value)
 
 
 def test_one_digest_definition_hashes_raw_bytes_not_canonical_json(
@@ -499,12 +505,19 @@ def test_one_digest_definition_hashes_raw_bytes_not_canonical_json(
     assert controller_bundle_digest(first) == raw_sha256(pretty)
     assert controller_bundle_digest(second) == raw_sha256(canonical)
     assert controller_bundle_digest(first) != controller_bundle_digest(second)
+    # Neither form answers to the other's pin, in either direction.
+    with pytest.raises(IncompatibleContractError):
+        controller_bundle_digest(first, raw_sha256(canonical))
+    with pytest.raises(IncompatibleContractError):
+        controller_bundle_digest(second, raw_sha256(pretty))
 
-    stage_bundle(tmp_path, canonical, raw_sha256(pretty))
-    missing = missing_of(run_tool(tmp_path, "58"), "58")
+    for body, pin in ((canonical, pretty), (pretty, canonical)):
+        stage_bundle(tmp_path, body, raw_sha256(pin))
+        missing = missing_of(run_tool(tmp_path, "58"), "58")
 
-    assert len(missing) == 1
-    assert BUNDLE_KEY in missing[0]
+        assert len(missing) == 1
+        assert BUNDLE_KEY in missing[0]
+        assert KEY_58 not in missing[0]
 
 
 @pytest.mark.parametrize(
@@ -535,3 +548,75 @@ def test_bundle_rejects_non_contract_json(
     assert KEY_58 not in missing[0]
     with pytest.raises(IncompatibleContractError):
         controller_bundle_digest(bundle)
+
+
+# The bundle path earns the same hardening as the artifact path. Content and pin
+# are correct in every case below, so only the path check can refuse them.
+CAP = 16 * 1024 * 1024
+BUNDLE_PATH_CASES = [
+    "directory",
+    "symlinked-file",
+    "symlinked-parent-dir",
+    "symlinked-parent-escapes-root",
+]
+
+
+def stage_bundle_elsewhere(root: Path, where: str, pin: str) -> None:
+    """PRD 58 ready, with the bundle pinned at the configured path `where`."""
+    mark_done(root, *CLOSURE["58"])
+    artifact = write_artifact(root / ARTIFACT_58, {"evidence": list(TOKENS_58)})
+    write_config(
+        root / "ovcaq.toml",
+        gate_config("58", ARTIFACT_58, artifact, bundle=where, bundle_digest=pin),
+    )
+
+
+@pytest.mark.parametrize("case", BUNDLE_PATH_CASES)
+def test_valid_pinned_bundle_is_refused_when_its_path_is_not_a_plain_file(
+    tmp_path: Path, case: str
+) -> None:
+    body = BUNDLE_FIXTURE.read_bytes()
+    pin = raw_sha256(body)
+    real = tmp_path / "bundles" / "contract-bundle.json"
+    write_artifact(real, body)
+    where = "bundles"
+    if case == "symlinked-file":
+        (real.parent / "mirror.json").symlink_to(real)
+        where = "bundles/mirror.json"
+    elif case == "symlinked-parent-dir":
+        (tmp_path / "exports").symlink_to(real.parent, target_is_directory=True)
+        where = "exports/contract-bundle.json"
+    elif case == "symlinked-parent-escapes-root":
+        outside = tmp_path.parent / f"outside-{tmp_path.name}"
+        write_artifact(outside / "contract-bundle.json", body)
+        (tmp_path / "exports").symlink_to(outside, target_is_directory=True)
+        where = "exports/contract-bundle.json"
+    stage_bundle_elsewhere(tmp_path, where, pin)
+
+    missing = missing_of(run_tool(tmp_path, "58"), "58")
+
+    assert len(missing) == 1
+    assert BUNDLE_KEY in missing[0]
+    assert KEY_58 not in missing[0]
+
+
+@pytest.mark.parametrize(("size", "ready"), [(CAP, True), (CAP + 1, False)])
+def test_bundle_is_hashed_and_parsed_from_one_read_under_a_16_mib_cap(
+    tmp_path: Path, size: int, ready: bool
+) -> None:
+    """Padding is valid JSON and correctly pinned, so only the cap refuses it."""
+    body = BUNDLE_FIXTURE.read_bytes()
+    padded_body = body + b" " * (size - len(body))
+    assert len(padded_body) == size
+    assert json.loads(padded_body) == json.loads(body)
+    stage_bundle(tmp_path, padded_body, raw_sha256(padded_body))
+
+    result = run_tool(tmp_path, "58")
+
+    if ready:
+        assert report(result, 0) == {"ready": True, "prd": "58"}
+        return
+    missing = missing_of(result, "58")
+    assert len(missing) == 1
+    assert BUNDLE_KEY in missing[0]
+    assert KEY_58 not in missing[0]

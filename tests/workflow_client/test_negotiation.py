@@ -215,18 +215,21 @@ def test_contract_rejects_pinned_bundle_with_an_unusable_required_string(
     assert not isinstance(caught.value, ControllerOutputError)
 
 
-def test_contract_rejects_pinned_bundle_holding_only_protocol_major(
-    fake: FakeController, project_root: Path, tmp_path: Path
+@pytest.mark.parametrize(
+    "omitted",
+    [
+        PINNED_FIELDS + ["operations", "capabilities"],
+        ["operations", "capabilities"],
+    ],
+    ids=["only-protocol-major", "every-string-but-no-sets"],
+)
+def test_contract_rejects_pinned_bundle_without_operations_or_capabilities(
+    fake: FakeController, project_root: Path, tmp_path: Path, omitted: list[str]
 ) -> None:
-    bundle = write_bundle(
-        tmp_path,
-        package_version=OMIT,
-        schema_digest=OMIT,
-        fixture_digest=OMIT,
-        operations=OMIT,
-        capabilities=OMIT,
-    )
-    assert load_json(bundle) == {"protocol_major": PROTOCOL_MAJOR}
+    bundle = write_bundle(tmp_path, **{name: OMIT for name in omitted})
+    pinned = load_json(bundle)
+    assert pinned["protocol_major"] == PROTOCOL_MAJOR
+    assert not {"operations", "capabilities"} & set(pinned)
     fake.respond(json.dumps(live_contract()), verb="contract")
 
     with pytest.raises(IncompatibleContractError) as caught:
@@ -235,6 +238,7 @@ def test_contract_rejects_pinned_bundle_holding_only_protocol_major(
     # A bundle without operations or capabilities is refused as a bundle, so the
     # reason names one of those before any pinned string is ever compared.
     assert any(name in str(caught.value) for name in ("operations", "capabilities"))
+    assert "package_version" not in str(caught.value)
     assert not isinstance(caught.value, ControllerOutputError)
 
 

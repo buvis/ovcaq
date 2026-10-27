@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import hashlib
 import itertools
 import json
-import re
 import shutil
 from collections.abc import Callable
 from dataclasses import FrozenInstanceError, is_dataclass
@@ -24,7 +22,6 @@ from ovcaq.workflow_client import (
     MutationEnvelope,
     RejectedRequestError,
     RevisionConflictError,
-    controller_bundle_digest,
 )
 
 BUNDLE = Path(__file__).parents[1] / "fixtures" / "workflow" / "controller-v1.json"
@@ -92,16 +89,6 @@ def make_contract() -> ControllerContract:
         operations=frozenset(data["operations"]),
         capabilities=frozenset(data["capabilities"]),
     )
-
-
-def write_bundle(path: Path, data: dict[str, Any], **dump_args: Any) -> Path:
-    path.write_text(json.dumps(data, **dump_args), encoding="utf-8")
-    return path
-
-
-def raw_sha256(path: Path) -> str:
-    """Reference digest: sha256 of the file's raw bytes, as sha256sum prints."""
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 # Protocol and error hierarchy
@@ -619,203 +606,3 @@ def test_envelope_rejects_missing_request_or_project_id_on_initial_open(
             lease_epoch=None,
             **{field: value},
         )
-
-
-# controller_bundle_digest
-
-
-def test_bundle_digest_is_stable_for_the_fixture() -> None:
-    first = controller_bundle_digest(BUNDLE)
-    second = controller_bundle_digest(BUNDLE)
-
-    assert isinstance(first, str)
-    assert first
-    assert first == second
-
-
-def test_bundle_digest_matches_byte_copy_at_another_path(tmp_path: Path) -> None:
-    copy = tmp_path / "elsewhere" / "bundle.json"
-    copy.parent.mkdir()
-    shutil.copyfile(BUNDLE, copy)
-
-    assert controller_bundle_digest(copy) == controller_bundle_digest(BUNDLE)
-
-
-def test_bundle_digest_changes_with_key_order_and_whitespace(tmp_path: Path) -> None:
-    data = load_bundle()
-    reordered = dict(reversed(list(data.items())))
-    compact = write_bundle(tmp_path / "compact.json", data, separators=(",", ":"))
-    spaced = write_bundle(tmp_path / "spaced.json", data, indent=8)
-    shuffled = write_bundle(
-        tmp_path / "shuffled.json", reordered, separators=(",", ":")
-    )
-
-    fixture = controller_bundle_digest(BUNDLE)
-
-    # Same values, different bytes: whitespace alone moves the digest.
-    assert controller_bundle_digest(compact) != fixture
-    assert controller_bundle_digest(spaced) != fixture
-    assert controller_bundle_digest(spaced) != controller_bundle_digest(compact)
-    # Same values and same formatting, different key order.
-    assert controller_bundle_digest(shuffled) != controller_bundle_digest(compact)
-
-
-def test_bundle_digest_detects_single_byte_value_change(tmp_path: Path) -> None:
-    text = BUNDLE.read_text(encoding="utf-8")
-    version = load_bundle()["package_version"]
-    mutated_version = version[:-1] + ("1" if version[-1] != "1" else "2")
-    mutated = tmp_path / "mutated.json"
-    mutated.write_text(
-        text.replace(f'"{version}"', f'"{mutated_version}"', 1), encoding="utf-8"
-    )
-
-    assert len(mutated.read_bytes()) == len(BUNDLE.read_bytes())
-    assert mutated.read_bytes() != BUNDLE.read_bytes()
-    assert controller_bundle_digest(mutated) != controller_bundle_digest(BUNDLE)
-
-
-@pytest.mark.parametrize(
-    "field",
-    ["protocol_major", "schema_digest", "fixture_digest", "operations", "capabilities"],
-)
-def test_bundle_digest_rejects_mismatched_artifact(tmp_path: Path, field: str) -> None:
-    data = load_bundle()
-    mutations: dict[str, object] = {
-        "protocol_major": data["protocol_major"] + 1,
-        "schema_digest": data["schema_digest"][::-1],
-        "fixture_digest": "0" * len(data["fixture_digest"]),
-        "operations": [*data["operations"], "workflow.extra"],
-        "capabilities": data["capabilities"][:-1],
-    }
-    assert mutations[field] != data[field]
-    mutated = write_bundle(tmp_path / "mutated.json", {**data, field: mutations[field]})
-
-    assert controller_bundle_digest(mutated) != controller_bundle_digest(BUNDLE)
-
-
-# Digest of controller-v1.json, recomputed from the committed file's bytes, so
-# the rule stays described even when the fixture changes on purpose. This is the
-# value `sha256sum tests/fixtures/workflow/controller-v1.json` prints.
-FIXTURE_DIGEST = raw_sha256(BUNDLE)
-
-
-def test_bundle_digest_is_sha256_of_the_raw_file_bytes() -> None:
-    canonical = json.dumps(load_bundle(), sort_keys=True).encode()
-    digest = controller_bundle_digest(BUNDLE)
-
-    assert re.fullmatch(r"[0-9a-f]{64}", digest)
-    assert digest == raw_sha256(BUNDLE)
-    assert digest == FIXTURE_DIGEST
-    # The pretty-printed fixture's bytes differ from its canonical JSON form.
-    assert BUNDLE.read_bytes() != canonical
-    assert digest != hashlib.sha256(canonical).hexdigest()
-
-
-def test_bundle_digest_follows_raw_byte_algorithm_for_mutated_copy(
-    tmp_path: Path,
-) -> None:
-    data = load_bundle()
-    mutated = write_bundle(
-        tmp_path / "mutated.json", {**data, "package_version": "9.9.9"}, indent=3
-    )
-    digest = controller_bundle_digest(mutated)
-
-    assert re.fullmatch(r"[0-9a-f]{64}", digest)
-    assert digest == raw_sha256(mutated)
-    assert digest != FIXTURE_DIGEST
-
-
-# Digesting a bundle is also validation: an artifact missing a required contract
-# field is not a bundle, has no digest, and its refusal names the missing field.
-@pytest.mark.parametrize("field", ["protocol_major", "operations", "capabilities"])
-def test_bundle_digest_refuses_bundle_missing_a_required_field(
-    tmp_path: Path, field: str
-) -> None:
-    data = load_bundle()
-    del data[field]
-    incomplete = write_bundle(tmp_path / f"no-{field}.json", data)
-
-    with pytest.raises(IncompatibleContractError, match=field):
-        controller_bundle_digest(incomplete)
-
-
-def test_bundle_digest_accepts_matching_expected_digest() -> None:
-    assert controller_bundle_digest(BUNDLE, FIXTURE_DIGEST) == FIXTURE_DIGEST
-    assert controller_bundle_digest(BUNDLE, expected_digest=None) == FIXTURE_DIGEST
-
-
-def test_bundle_digest_rejects_wrong_expected_digest() -> None:
-    wrong = "0" * 64
-
-    with pytest.raises(IncompatibleContractError) as caught:
-        controller_bundle_digest(BUNDLE, expected_digest=wrong)
-
-    assert wrong in str(caught.value)
-    assert FIXTURE_DIGEST in str(caught.value)
-
-
-def test_bundle_digest_rejects_mutated_artifact_against_pinned_digest(
-    tmp_path: Path,
-) -> None:
-    data = load_bundle()
-    mutated = write_bundle(
-        tmp_path / "mutated.json", {**data, "protocol_major": PROTOCOL_MAJOR + 1}
-    )
-
-    with pytest.raises(IncompatibleContractError):
-        controller_bundle_digest(mutated, expected_digest=FIXTURE_DIGEST)
-
-
-def test_bundle_digest_rejects_duplicate_keys(tmp_path: Path) -> None:
-    duplicate = tmp_path / "duplicate.json"
-    duplicate.write_text('{"protocol_major": 2, "protocol_major": 1}', encoding="utf-8")
-
-    # Hashing raw bytes would accept this file; the refusal comes from parsing.
-    with pytest.raises(IncompatibleContractError, match="duplicate"):
-        controller_bundle_digest(duplicate)
-
-
-def test_bundle_digest_rejects_nested_duplicate_keys(tmp_path: Path) -> None:
-    nested = tmp_path / "nested.json"
-    nested.write_text('{"outer": {"a": 1, "a": 2}}', encoding="utf-8")
-
-    with pytest.raises(IncompatibleContractError, match="duplicate"):
-        controller_bundle_digest(nested)
-
-
-@pytest.mark.parametrize("constant", ["NaN", "Infinity", "-Infinity"])
-def test_bundle_digest_rejects_non_finite_numbers(
-    tmp_path: Path, constant: str
-) -> None:
-    bundle = tmp_path / "constant.json"
-    bundle.write_text(f'{{"protocol_major": {constant}}}', encoding="utf-8")
-
-    with pytest.raises(IncompatibleContractError):
-        controller_bundle_digest(bundle)
-
-
-@pytest.mark.parametrize("text", ["[1]", '"bundle"', "1", "null"])
-def test_bundle_digest_rejects_non_object_top_level(tmp_path: Path, text: str) -> None:
-    bundle = tmp_path / "top-level.json"
-    bundle.write_text(text, encoding="utf-8")
-
-    with pytest.raises(IncompatibleContractError):
-        controller_bundle_digest(bundle)
-
-
-@pytest.mark.parametrize(
-    "content",
-    [b"{not json", b"", b"\xff\xfe{}"],
-    ids=["malformed", "empty", "not-utf8"],
-)
-def test_bundle_digest_wraps_parse_failures(tmp_path: Path, content: bytes) -> None:
-    bundle = tmp_path / "broken.json"
-    bundle.write_bytes(content)
-
-    with pytest.raises(IncompatibleContractError):
-        controller_bundle_digest(bundle)
-
-
-def test_bundle_digest_wraps_missing_file(tmp_path: Path) -> None:
-    with pytest.raises(IncompatibleContractError):
-        controller_bundle_digest(tmp_path / "absent.json")
