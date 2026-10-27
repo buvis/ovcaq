@@ -13,6 +13,11 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 TOOL = REPO / "tools" / "autopilot-prerequisites"
 PRDS = Path("docs") / "dev" / "project-management" / "prds"
+# The committed contract bundle: pretty-printed, so its raw bytes differ from
+# its canonical JSON dump.
+BUNDLE_FIXTURE = REPO / "tests" / "fixtures" / "workflow" / "controller-v1.json"
+# Every field a contract bundle carries, so the default bundle is acceptable.
+VALID_BUNDLE: dict[str, object] = json.loads(BUNDLE_FIXTURE.read_text(encoding="utf-8"))
 
 DIRECT: dict[str, tuple[str, ...]] = {
     "58": ("57", "62"),
@@ -154,8 +159,8 @@ def write_bundle(root: Path, name: str = BUNDLE_PATH, body: str = "{not json") -
 def write_valid_bundle(
     root: Path, name: str = BUNDLE_PATH, payload: object | None = None
 ) -> str:
-    """A parseable JSON contract bundle; returns its sha256 digest."""
-    return write_artifact(root / name, {} if payload is None else payload)
+    """A valid JSON contract bundle; returns its raw-byte sha256 digest."""
+    return write_artifact(root / name, VALID_BUNDLE if payload is None else payload)
 
 
 def gate_config(

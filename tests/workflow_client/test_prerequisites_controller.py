@@ -14,6 +14,7 @@ from tests.workflow_client.prerequisites_support import (
     DIRECT,
     GATES,
     UNMET_GATE_CASES,
+    VALID_BUNDLE,
     assert_refused,
     build_unmet_gate,
     foreign_keys,
@@ -93,7 +94,9 @@ def test_prd_58_is_ready_with_controller_evidence_and_contract_bundle(
         path = str(artifact)
         bundle = str(tmp_path / "bundles" / "exported.json")
         bundle_digest = write_valid_bundle(
-            tmp_path, "bundles/exported.json", {"bundle": "contract"}
+            tmp_path,
+            "bundles/exported.json",
+            {**VALID_BUNDLE, "package_version": "1.4.2"},
         ).upper()
     write_config(
         tmp_path / "ovcaq.toml",

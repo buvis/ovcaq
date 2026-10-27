@@ -232,7 +232,9 @@ def test_contract_rejects_pinned_bundle_holding_only_protocol_major(
     with pytest.raises(IncompatibleContractError) as caught:
         make_client(fake, project_root, bundle=bundle).contract()
 
-    assert any(name in str(caught.value) for name in PINNED_FIELDS)
+    # A bundle without operations or capabilities is refused as a bundle, so the
+    # reason names one of those before any pinned string is ever compared.
+    assert any(name in str(caught.value) for name in ("operations", "capabilities"))
     assert not isinstance(caught.value, ControllerOutputError)
 
 

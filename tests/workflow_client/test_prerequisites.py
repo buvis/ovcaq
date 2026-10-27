@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
 import sys
 from pathlib import Path
 
 import pytest
 from tests.workflow_client.prerequisites_support import (
+    BUNDLE_FIXTURE,
+    BUNDLE_KEY,
+    BUNDLE_PATH,
     CLOSURE,
     DEPENDENCY_CASES,
     DIRECT,
@@ -19,6 +23,7 @@ from tests.workflow_client.prerequisites_support import (
     UNMET_GATE_CASES,
     assert_refused,
     build_unmet_gate,
+    digest_variant,
     foreign_keys,
     gate_config,
     make_ready,
@@ -31,6 +36,9 @@ from tests.workflow_client.prerequisites_support import (
     write_artifact,
     write_config,
 )
+
+from ovcaq.config import controller_settings
+from ovcaq.workflow_client import IncompatibleContractError, controller_bundle_digest
 
 # Dependency graph
 
@@ -390,3 +398,140 @@ def test_script_is_stdlib_only_without_network_or_subprocess() -> None:
     assert modules
     assert not modules & FORBIDDEN_IMPORTS
     assert modules <= set(sys.stdlib_module_names)
+
+
+# One digest definition and strict bundle validation
+
+TABLE_58, KEY_58, TOKENS_58 = GATES["58"]
+ARTIFACT_58 = f"artifacts/{KEY_58}.json"
+CONTROLLER_ARGV = ["autopilot-controller", "serve"]
+REQUIRED_BUNDLE_FIELDS = ["protocol_major", "operations", "capabilities"]
+
+
+def raw_sha256(data: bytes) -> str:
+    """The one digest an operator computes: sha256 of the bundle file's bytes."""
+    return hashlib.sha256(data).hexdigest()
+
+
+def stage_bundle(root: Path, body: bytes, pin: str, *, argv: bool = False) -> Path:
+    """PRD 58 with every predecessor done, its artifact met and `body` pinned."""
+    mark_done(root, *CLOSURE["58"])
+    artifact = write_artifact(root / ARTIFACT_58, {"evidence": list(TOKENS_58)})
+    bundle = root / BUNDLE_PATH
+    bundle.parent.mkdir(parents=True, exist_ok=True)
+    bundle.write_bytes(body)
+    text = gate_config(
+        "58", ARTIFACT_58, artifact, bundle=BUNDLE_PATH, bundle_digest=pin
+    )
+    if argv:
+        text += f"controller_argv = {json.dumps(CONTROLLER_ARGV)}\n"
+    write_config(root / "ovcaq.toml", text)
+    return bundle
+
+
+def bundle_body(case: str) -> bytes:
+    """Raw bundle bytes; only "fixture" is a valid contract bundle."""
+    if case == "fixture":
+        return BUNDLE_FIXTURE.read_bytes()
+    if case == "null":
+        return b"null"
+    if case == "empty-object":
+        return b"{}"
+    data = json.loads(BUNDLE_FIXTURE.read_bytes())
+    del data[case.removeprefix("no-")]
+    return json.dumps(data, indent=2).encode("utf-8")
+
+
+def test_prerequisites_and_client_share_one_digest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The committed pretty-printed fixture, pinned by its raw file bytes."""
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "user-config"))
+    body = BUNDLE_FIXTURE.read_bytes()
+    pin = raw_sha256(body)
+    # Only a raw-bytes digest can accept this file: its bytes are not canonical.
+    assert body != json.dumps(json.loads(body), sort_keys=True).encode("utf-8")
+    stage_bundle(tmp_path, body, pin, argv=True)
+
+    assert report(run_tool(tmp_path, "58"), 0) == {"ready": True, "prd": "58"}
+
+    settings = controller_settings(tmp_path)
+    assert settings is not None
+    assert settings.contract_bundle == tmp_path / BUNDLE_PATH
+    assert settings.contract_bundle.read_bytes() == body
+    assert settings.bundle_digest == pin
+    assert controller_bundle_digest(settings.contract_bundle, pin) == pin
+
+
+@pytest.mark.parametrize("case", ["last-hex-differs", "middle-hex-differs"])
+def test_prerequisites_and_client_share_one_digest_refusing_a_near_miss(
+    tmp_path: Path, case: str
+) -> None:
+    body = BUNDLE_FIXTURE.read_bytes()
+    pin = raw_sha256(body)
+    near = digest_variant(case, pin)
+    assert near != pin
+    assert len(near) == len(pin)
+    bundle = stage_bundle(tmp_path, body, near)
+
+    missing = missing_of(run_tool(tmp_path, "58"), "58")
+
+    assert len(missing) == 1
+    assert BUNDLE_KEY in missing[0]
+    assert KEY_58 not in missing[0]
+    with pytest.raises(IncompatibleContractError) as caught:
+        controller_bundle_digest(bundle, near)
+    assert near in str(caught.value)
+
+
+def test_one_digest_definition_hashes_raw_bytes_not_canonical_json(
+    tmp_path: Path,
+) -> None:
+    """Same JSON, different bytes, so the pin of one must refuse the other."""
+    pretty = BUNDLE_FIXTURE.read_bytes()
+    canonical = json.dumps(json.loads(pretty), sort_keys=True).encode("utf-8")
+    assert json.loads(pretty) == json.loads(canonical)
+    assert pretty != canonical
+    first, second = tmp_path / "pretty.json", tmp_path / "canonical.json"
+    first.write_bytes(pretty)
+    second.write_bytes(canonical)
+
+    assert controller_bundle_digest(first) == raw_sha256(pretty)
+    assert controller_bundle_digest(second) == raw_sha256(canonical)
+    assert controller_bundle_digest(first) != controller_bundle_digest(second)
+
+    stage_bundle(tmp_path, canonical, raw_sha256(pretty))
+    missing = missing_of(run_tool(tmp_path, "58"), "58")
+
+    assert len(missing) == 1
+    assert BUNDLE_KEY in missing[0]
+
+
+@pytest.mark.parametrize(
+    ("case", "accepted"),
+    [
+        ("fixture", True),
+        ("null", False),
+        ("empty-object", False),
+        *((f"no-{field}", False) for field in REQUIRED_BUNDLE_FIELDS),
+    ],
+)
+def test_bundle_rejects_non_contract_json(
+    tmp_path: Path, case: str, accepted: bool
+) -> None:
+    body = bundle_body(case)
+    bundle = stage_bundle(tmp_path, body, raw_sha256(body))
+
+    result = run_tool(tmp_path, "58")
+
+    assert "Traceback" not in result.stderr
+    if accepted:
+        assert report(result, 0) == {"ready": True, "prd": "58"}
+        assert controller_bundle_digest(bundle) == raw_sha256(body)
+        return
+    missing = missing_of(result, "58")
+    assert len(missing) == 1
+    assert BUNDLE_KEY in missing[0]
+    assert KEY_58 not in missing[0]
+    with pytest.raises(IncompatibleContractError):
+        controller_bundle_digest(bundle)

@@ -11,6 +11,7 @@ from tests.workflow_client.prerequisites_support import (
     BUNDLE_PATH,
     CLOSURE,
     GATES,
+    VALID_BUNDLE,
     digest_variant,
     gate_config,
     mark_done,
@@ -97,8 +98,8 @@ def test_two_distinct_valid_bundle_payloads_each_report_ready(tmp_path: Path) ->
     first.mkdir()
     second.mkdir()
     cases = (
-        (first, {"bundle": "a"}),
-        (second, {"bundle": "b", "extra": [1, 2, 3]}),
+        (first, {**VALID_BUNDLE, "package_version": "1.2.3"}),
+        (second, {**VALID_BUNDLE, "package_version": "4.5.6"}),
     )
     for root, payload in cases:
         digest = write_ready_artifact(root)

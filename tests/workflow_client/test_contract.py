@@ -99,10 +99,9 @@ def write_bundle(path: Path, data: dict[str, Any], **dump_args: Any) -> Path:
     return path
 
 
-def canonical_sha256(path: Path) -> str:
-    """Reference digest: sha256 of the sort_keys canonical JSON dump."""
-    data = json.loads(path.read_text(encoding="utf-8"))
-    return hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
+def raw_sha256(path: Path) -> str:
+    """Reference digest: sha256 of the file's raw bytes, as sha256sum prints."""
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 # Protocol and error hierarchy
@@ -642,16 +641,23 @@ def test_bundle_digest_matches_byte_copy_at_another_path(tmp_path: Path) -> None
     assert controller_bundle_digest(copy) == controller_bundle_digest(BUNDLE)
 
 
-def test_bundle_digest_ignores_key_order_and_whitespace(tmp_path: Path) -> None:
+def test_bundle_digest_changes_with_key_order_and_whitespace(tmp_path: Path) -> None:
     data = load_bundle()
     reordered = dict(reversed(list(data.items())))
-    compact = write_bundle(tmp_path / "compact.json", reordered, separators=(",", ":"))
-    spaced = write_bundle(tmp_path / "spaced.json", reordered, indent=8)
+    compact = write_bundle(tmp_path / "compact.json", data, separators=(",", ":"))
+    spaced = write_bundle(tmp_path / "spaced.json", data, indent=8)
+    shuffled = write_bundle(
+        tmp_path / "shuffled.json", reordered, separators=(",", ":")
+    )
 
-    expected = controller_bundle_digest(BUNDLE)
+    fixture = controller_bundle_digest(BUNDLE)
 
-    assert controller_bundle_digest(compact) == expected
-    assert controller_bundle_digest(spaced) == expected
+    # Same values, different bytes: whitespace alone moves the digest.
+    assert controller_bundle_digest(compact) != fixture
+    assert controller_bundle_digest(spaced) != fixture
+    assert controller_bundle_digest(spaced) != controller_bundle_digest(compact)
+    # Same values and same formatting, different key order.
+    assert controller_bundle_digest(shuffled) != controller_bundle_digest(compact)
 
 
 def test_bundle_digest_detects_single_byte_value_change(tmp_path: Path) -> None:
@@ -687,24 +693,25 @@ def test_bundle_digest_rejects_mismatched_artifact(tmp_path: Path, field: str) -
     assert controller_bundle_digest(mutated) != controller_bundle_digest(BUNDLE)
 
 
-# Pinned digest of controller-v1.json: sha256 hexdigest of
-# json.dumps(json.loads(text), sort_keys=True).encode(). Update it only when the
-# fixture changes on purpose.
-FIXTURE_DIGEST = "b98f0a684c273ecda4448b41bb4f909b34cc834edb972b775616e579a91bc728"
-NO_PROTOCOL_MAJOR_DIGEST = (
-    "7aa99a16f7381c22142e03c5a8fa3d229f46badc78d0b1ddd6e95d2d2c785884"
-)
+# Digest of controller-v1.json, recomputed from the committed file's bytes, so
+# the rule stays described even when the fixture changes on purpose. This is the
+# value `sha256sum tests/fixtures/workflow/controller-v1.json` prints.
+FIXTURE_DIGEST = raw_sha256(BUNDLE)
 
 
-def test_bundle_digest_is_sha256_of_sorted_key_canonical_json() -> None:
+def test_bundle_digest_is_sha256_of_the_raw_file_bytes() -> None:
+    canonical = json.dumps(load_bundle(), sort_keys=True).encode()
     digest = controller_bundle_digest(BUNDLE)
 
     assert re.fullmatch(r"[0-9a-f]{64}", digest)
-    assert digest == canonical_sha256(BUNDLE)
+    assert digest == raw_sha256(BUNDLE)
     assert digest == FIXTURE_DIGEST
+    # The pretty-printed fixture's bytes differ from its canonical JSON form.
+    assert BUNDLE.read_bytes() != canonical
+    assert digest != hashlib.sha256(canonical).hexdigest()
 
 
-def test_bundle_digest_follows_canonical_algorithm_for_mutated_copy(
+def test_bundle_digest_follows_raw_byte_algorithm_for_mutated_copy(
     tmp_path: Path,
 ) -> None:
     data = load_bundle()
@@ -714,24 +721,22 @@ def test_bundle_digest_follows_canonical_algorithm_for_mutated_copy(
     digest = controller_bundle_digest(mutated)
 
     assert re.fullmatch(r"[0-9a-f]{64}", digest)
-    assert digest == canonical_sha256(mutated)
+    assert digest == raw_sha256(mutated)
     assert digest != FIXTURE_DIGEST
 
 
-# Digesting is a content hash, not schema validation: a bundle missing a field
-# still digests, to a value distinct from the complete fixture. Rejecting the
-# incomplete artifact is the consumer's job when it compares digests.
-def test_bundle_digest_hashes_bundle_missing_protocol_major(tmp_path: Path) -> None:
+# Digesting a bundle is also validation: an artifact missing a required contract
+# field is not a bundle, has no digest, and its refusal names the missing field.
+@pytest.mark.parametrize("field", ["protocol_major", "operations", "capabilities"])
+def test_bundle_digest_refuses_bundle_missing_a_required_field(
+    tmp_path: Path, field: str
+) -> None:
     data = load_bundle()
-    del data["protocol_major"]
-    incomplete = write_bundle(tmp_path / "no-protocol-major.json", data)
+    del data[field]
+    incomplete = write_bundle(tmp_path / f"no-{field}.json", data)
 
-    digest = controller_bundle_digest(incomplete)
-
-    assert re.fullmatch(r"[0-9a-f]{64}", digest)
-    assert digest == canonical_sha256(incomplete)
-    assert digest == NO_PROTOCOL_MAJOR_DIGEST
-    assert digest != FIXTURE_DIGEST
+    with pytest.raises(IncompatibleContractError, match=field):
+        controller_bundle_digest(incomplete)
 
 
 def test_bundle_digest_accepts_matching_expected_digest() -> None:
@@ -764,10 +769,8 @@ def test_bundle_digest_rejects_mutated_artifact_against_pinned_digest(
 def test_bundle_digest_rejects_duplicate_keys(tmp_path: Path) -> None:
     duplicate = tmp_path / "duplicate.json"
     duplicate.write_text('{"protocol_major": 2, "protocol_major": 1}', encoding="utf-8")
-    single = write_bundle(tmp_path / "single.json", {"protocol_major": 1})
 
-    # Plain json.loads keeps the last value, so both files used to digest alike.
-    assert canonical_sha256(duplicate) == canonical_sha256(single)
+    # Hashing raw bytes would accept this file; the refusal comes from parsing.
     with pytest.raises(IncompatibleContractError, match="duplicate"):
         controller_bundle_digest(duplicate)
 
