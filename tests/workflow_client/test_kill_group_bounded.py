@@ -48,13 +48,13 @@ def test_kill_group_completes_within_bounded_time_when_signal_is_denied(
 
     monkeypatch.setattr(os, "killpg", deny_signal)
     process = _BlockingProcess(never_set)
-    outcome: list[BaseException] = []
+    # A raise inside the thread leaves outcome empty (pytest reports the
+    # unhandled thread exception), so the final assertion catches it without
+    # a blind except.
+    outcome: list[None] = []
 
     def run() -> None:
-        try:
-            _kill_group(process)
-        except BaseException as error:
-            outcome.append(error)
+        outcome.append(_kill_group(process))
 
     runner = threading.Thread(target=run, daemon=True)
     started = time.monotonic()
@@ -65,7 +65,7 @@ def test_kill_group_completes_within_bounded_time_when_signal_is_denied(
     assert not runner.is_alive()
     assert elapsed < 5.0
     assert calls == [(process.pid, signal.SIGKILL)]
-    assert outcome == []
+    assert outcome == [None]
 
 
 class _OpenPipeProcess:
