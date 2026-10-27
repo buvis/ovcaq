@@ -47,8 +47,19 @@ class ControllerOutputError(ControllerError):
     """The controller produced malformed or oversized output."""
 
 
-class ApplyOutcomeUnknownError(ControllerTimeoutError):
-    """An apply timed out, so its outcome is unknown and must be retried."""
+class ControllerLaunchError(ControllerError):
+    """The controller program could not be launched, so it never ran."""
+
+
+class ApplyOutcomeUnknownError(ControllerError):
+    """An apply may have committed without acking, so it must be retried.
+
+    Raised for every post-spawn failure of an apply: the controller timed
+    out, tripped the output bound (an overrun), answered with a non-JSON or
+    non-dict body, broke the ApplyResult contract, or exited non-zero after
+    the spawn. Deliberately not a ControllerTimeoutError: a caller that
+    swallows timeouts must not swallow an unknown outcome.
+    """
 
     def __init__(self, request_id: str, detail: str) -> None:
         super().__init__(
@@ -451,7 +462,7 @@ class ControllerClient:
                 start_new_session=True,
             )
         except OSError as error:
-            raise ControllerError(
+            raise ControllerLaunchError(
                 f"cannot run controller program {config.argv[0]}: {error}"
             ) from error
         # Not `with process:`: Popen.__exit__ closes the pipes, and closing a
@@ -567,7 +578,9 @@ class ControllerClient:
                 "--request",
                 name,
             )
-        except (ControllerTimeoutError, ControllerOutputError) as error:
+        except ControllerLaunchError:
+            raise  # the controller never ran, so the mutation did not happen
+        except ControllerError as error:
             raise ApplyOutcomeUnknownError(envelope.request_id, str(error)) from error
         finally:
             os.unlink(name)

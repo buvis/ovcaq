@@ -287,7 +287,7 @@ def test_timed_out_apply_reports_an_unknown_outcome_for_its_request_id(
         client.apply(make_envelope(request_id=request_id))
 
     assert time.monotonic() - started < TIMEOUT_BUDGET
-    assert isinstance(caught.value, ControllerTimeoutError)
+    assert not isinstance(caught.value, ControllerTimeoutError)
     assert isinstance(caught.value, ControllerError)
     assert caught.value.request_id == request_id
     assert request_id in str(caught.value)

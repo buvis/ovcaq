@@ -441,7 +441,10 @@ def test_call_raises_timeout_when_controller_outlives_timeout(
     client = make_client(fake, project_root, actor_file=actor_file, timeout_seconds=1)
     started = time.monotonic()
 
-    with pytest.raises(ControllerTimeoutError):
+    # apply() turns an ambiguous, post-spawn timeout into
+    # ApplyOutcomeUnknownError instead; every other verb keeps the plain error.
+    expected = ApplyOutcomeUnknownError if verb == "apply" else ControllerTimeoutError
+    with pytest.raises(expected):
         CALL_BY_VERB[verb](client)
 
     assert time.monotonic() - started < TIMEOUT_BUDGET
@@ -573,7 +576,7 @@ def test_apply_never_returns_result_when_ack_precedes_timeout(
 
     for _ in range(2):
         outcome: object = None
-        with pytest.raises((ControllerTimeoutError, ControllerOutputError)):
+        with pytest.raises((ApplyOutcomeUnknownError, ControllerOutputError)):
             outcome = client.apply(envelope)
         assert not isinstance(outcome, ApplyResult)
         assert outcome is None
