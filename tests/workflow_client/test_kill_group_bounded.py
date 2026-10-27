@@ -3,12 +3,13 @@ from __future__ import annotations
 import os
 import signal
 import subprocess
+import sys
 import threading
 import time
 from pathlib import Path
 
 import pytest
-from tests.workflow_client.conftest import BUNDLE
+from tests.workflow_client.conftest import BUNDLE, process_ended
 
 from ovcaq.workflow_client import (
     ControllerClient,
@@ -117,3 +118,54 @@ def test_capture_completes_within_bounded_time_when_a_pipe_stays_open(
         os.close(write_err)
         process.stdout.close()
         process.stderr.close()
+
+
+# A controller that exits at once, but first spawns a descendant in a session
+# of its own that inherits the controller's stdout and stderr and holds them
+# open for 8 seconds. The pipes therefore outlive the controller, and the
+# descendant is outside the controller's process group, so killing that group
+# does not close them.
+DETACHED_DESCENDANT_CONTROLLER = """\
+import subprocess
+import sys
+from pathlib import Path
+
+descendant = subprocess.Popen(
+    [sys.executable, "-c", "import time; time.sleep(8)"],
+    stdin=subprocess.DEVNULL,
+    start_new_session=True,
+)
+Path(sys.argv[1]).write_text(str(descendant.pid), encoding="utf-8")
+sys.exit(0)
+"""
+
+
+def test_run_with_detached_descendant_times_out_within_bound(tmp_path: Path) -> None:
+    script = tmp_path / "detached_controller.py"
+    script.write_text(DETACHED_DESCENDANT_CONTROLLER, encoding="utf-8")
+    pid_file = tmp_path / "descendant.pid"
+    config = ControllerConfig(
+        argv=(sys.executable, str(script), str(pid_file)),
+        contract_bundle=BUNDLE,
+        actor_file=None,
+        project_root=tmp_path,
+        timeout_seconds=1,
+    )
+    client = ControllerClient(config)
+    started = time.monotonic()
+
+    with pytest.raises(ControllerTimeoutError):
+        client._run("contract")
+
+    elapsed = time.monotonic() - started
+    descendant = int(pid_file.read_text(encoding="utf-8"))
+    try:
+        assert elapsed < 3.0
+        # The descendant is still alive, so the pipes were still open when the
+        # call returned: it returned on its own deadline, not on end of stream.
+        assert not process_ended(descendant, within=0.0)
+    finally:
+        try:
+            os.kill(descendant, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
