@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import signal
 import subprocess
 import tempfile
@@ -24,6 +25,7 @@ MAX_STDERR_TAIL_CHARS = 512
 TRUNCATION_MARKER = "...(truncated) "
 REDACTED_MARKER = "<redacted>"
 MIN_SECRET_CHARS = 8
+_LONG_TOKEN = re.compile(rf"\S{{{MIN_SECRET_CHARS},}}")
 READ_CHUNK_BYTES = 65_536
 POLL_SECONDS = 0.05
 JOIN_SECONDS = 1.0
@@ -364,14 +366,11 @@ def _timed_out(config: ControllerConfig) -> ControllerTimeoutError:
     )
 
 
-def _json_strings(value: Any) -> list[str]:
-    if isinstance(value, str):
-        return [value]
-    if isinstance(value, dict):
-        return [text for item in value.values() for text in _json_strings(item)]
-    if isinstance(value, list):
-        return [text for item in value for text in _json_strings(item)]
-    return []
+def _truncated(text: str) -> str:
+    """Text bounded to its tail, marked when anything was dropped."""
+    if len(text) > MAX_STDERR_TAIL_CHARS:
+        return TRUNCATION_MARKER + text[-MAX_STDERR_TAIL_CHARS:]
+    return text
 
 
 class ControllerClient:
@@ -381,42 +380,19 @@ class ControllerClient:
         self._config = config
         self._contract: ControllerContract | None = None
 
-    def _actor_secrets(self) -> tuple[str, ...]:
-        """The actor file's usable secrets, read fresh so rotation is seen.
-
-        Secrets shorter than MIN_SECRET_CHARS are intentionally never
-        redacted: a shorter minimum risks redacting unrelated substrings
-        in controller output. An unreadable actor file (OSError) yields no
-        secrets, so redaction becomes a silent no-op for that call rather
-        than raising - this is the documented behavior under test.
-        """
-        actor_file = self._config.actor_file
-        candidates: list[str] = []
-        if actor_file is not None:
-            try:
-                with actor_file.open(encoding="utf-8", errors="replace") as stream:
-                    text = stream.read(self._config.max_output_bytes).strip()
-            except OSError:
-                text = ""
-            candidates.append(text)
-            try:
-                candidates.extend(_json_strings(json.loads(text)))
-            except ValueError:
-                pass
-        kept = {text for text in candidates if len(text) >= MIN_SECRET_CHARS}
-        return tuple(sorted(kept, key=len, reverse=True))
-
     def _redact(self, text: str) -> str:
-        for secret in self._actor_secrets():
-            text = text.replace(secret, REDACTED_MARKER)
-        return text
+        """Mask every whitespace-delimited token long enough to be a secret.
+
+        The actor file is never read: only its path is ever passed to the
+        controller, so the credential's value is unknown here by design.
+        Tokens shorter than MIN_SECRET_CHARS stay legible: they are prose,
+        and masking them would cost the diagnostic its meaning.
+        """
+        return _LONG_TOKEN.sub(REDACTED_MARKER, text)
 
     def _bounded(self, text: str) -> str:
         """Controller text, redacted and then bounded to a tail."""
-        redacted = self._redact(text)
-        if len(redacted) > MAX_STDERR_TAIL_CHARS:
-            return TRUNCATION_MARKER + redacted[-MAX_STDERR_TAIL_CHARS:]
-        return redacted
+        return _truncated(self._redact(text))
 
     def _detail(self, stderr: bytes) -> str:
         """The controller's stderr, redacted and then bounded to a tail."""
@@ -506,7 +482,7 @@ class ControllerClient:
         if live == pinned or (live.startswith(prefix) and len(live) > len(prefix)):
             return
         raise IncompatibleContractError(
-            f"controller package_version {self._bounded(live)!r} "
+            f"controller package_version {_truncated(live)!r} "
             f"does not match pinned {pinned!r}"
         )
 
@@ -540,7 +516,7 @@ class ControllerClient:
         for field in ("schema_digest", "fixture_digest"):
             if live.get(field) != pinned.get(field):
                 raise IncompatibleContractError(
-                    f"controller {field} {self._bounded(live[field])!r} does not match "
+                    f"controller {field} {_truncated(live[field])!r} does not match "
                     f"pinned {pinned.get(field)!r}"
                 )
         version = live["package_version"]
