@@ -285,14 +285,22 @@ def _check_advertised(field: str, pinned: list[str], live: frozenset[str]) -> No
 
 
 def _read_capped(stream: IO[bytes], cap: int, sink: list[bytes]) -> None:
-    """Read at most cap bytes from the stream into the sink, then stop."""
+    """Read at most cap bytes from the stream into the sink, then stop.
+
+    The reader closes its own stream: closing it from another thread while
+    this read is blocked waits out that read, so a detached descendant
+    holding the pipe open would stall the caller past its deadline.
+    """
     size = 0
-    while size < cap:
-        chunk = stream.read(min(READ_CHUNK_BYTES, cap - size))
-        if not chunk:
-            return
-        sink.append(chunk)
-        size += len(chunk)
+    try:
+        while size < cap:
+            chunk = stream.read(min(READ_CHUNK_BYTES, cap - size))
+            if not chunk:
+                return
+            sink.append(chunk)
+            size += len(chunk)
+    finally:
+        stream.close()
 
 
 def _kill_group(process: subprocess.Popen[bytes]) -> None:
@@ -423,11 +431,12 @@ class ControllerClient:
         ]
         for reader in readers:
             reader.start()
-        try:
-            self._await_output(process, readers, buffers)
-        finally:
-            for reader in readers:
-                reader.join(JOIN_SECONDS)
+        # The readers are never joined: _await_output returns only once every
+        # reader has finished, so a join can only ever wait on a reader still
+        # blocked on a pipe a detached descendant holds open. Such a reader is
+        # a daemon thread that closes its own stream and is abandoned here,
+        # because waiting for it would breach the configured bound.
+        self._await_output(process, readers, buffers)
         return b"".join(buffers[0]), b"".join(buffers[1])
 
     def _run(self, *arguments: str) -> dict[str, Any]:
@@ -445,8 +454,11 @@ class ControllerClient:
             raise ControllerError(
                 f"cannot run controller program {config.argv[0]}: {error}"
             ) from error
-        with process:
-            stdout, stderr = self._capture(process)
+        # Not `with process:`: Popen.__exit__ closes the pipes, and closing a
+        # pipe a reader thread is still blocked on waits out that read. The
+        # readers close their own streams instead, and _capture always reaps
+        # the controller, on its own wait or through _kill_group.
+        stdout, stderr = self._capture(process)
         if process.returncode != 0:
             raise ControllerError(
                 f"controller exited with status {process.returncode}: "
