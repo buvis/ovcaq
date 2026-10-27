@@ -34,6 +34,8 @@ GATES: dict[int, tuple[str, str, tuple[str, ...]]] = {
 }
 # PRD -> config key naming a read-only precondition path in the same table
 BUNDLES: dict[int, str] = {58: "contract_bundle"}
+# The fields a file must carry before it is a contract bundle at all.
+BUNDLE_FIELDS = ("protocol_major", "operations", "capabilities")
 MAX_ARTIFACT_BYTES = 16 * 1024 * 1024
 
 
@@ -154,9 +156,14 @@ def check_bundle(prd: int, section: dict[str, object]) -> str | None:
     if hashlib.sha256(data).hexdigest() != digest.lower():
         return f"{name}: {path} sha256 does not match {name}_sha256"
     try:
-        json.loads(data)
+        payload = json.loads(data)
     except (ValueError, RecursionError):
         return f"{name}: {path} is not valid JSON"
+    if not isinstance(payload, dict):
+        return f"{name}: {path} is not a JSON object"
+    absent = [field for field in BUNDLE_FIELDS if field not in payload]
+    if absent:
+        return f"{name}: {path} lacks {', '.join(absent)}"
     return None
 
 

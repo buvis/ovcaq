@@ -31,6 +31,9 @@ POLL_SECONDS = 0.05
 JOIN_SECONDS = 1.0
 REQUIRED_CONTRACT_STRINGS = ("package_version", "schema_digest", "fixture_digest")
 ADVERTISED_CONTRACT_FIELDS = ("operations", "capabilities")
+# The fields a file must carry before it is a contract bundle at all. Presence
+# only: contract() negotiates their shapes and the protocol major.
+REQUIRED_BUNDLE_FIELDS = ("protocol_major", *ADVERTISED_CONTRACT_FIELDS)
 
 
 class ControllerError(RuntimeError):
@@ -222,54 +225,64 @@ def _reject_constant(name: str) -> Any:
     raise IncompatibleContractError(f"bundle has non-finite number: {name}")
 
 
-def _read_bundle(path: Path) -> str:
+def _read_bundle(path: Path) -> bytes:
     try:
-        return path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError) as error:
+        return path.read_bytes()
+    except OSError as error:
         raise IncompatibleContractError(
             f"cannot read contract bundle {path}: {error}"
         ) from error
 
 
-def _parse_bundle(text: str, path: Path) -> dict[str, Any]:
+def _parse_bundle(data: bytes, path: Path) -> dict[str, Any]:
     try:
-        data = json.loads(
-            text,
+        parsed = json.loads(
+            data,
             object_pairs_hook=_reject_duplicate_keys,
             parse_constant=_reject_constant,
         )
-    except json.JSONDecodeError as error:
+    except (json.JSONDecodeError, UnicodeDecodeError) as error:
         raise IncompatibleContractError(
             f"cannot read contract bundle {path}: {error}"
         ) from error
-    if not isinstance(data, dict):
+    if not isinstance(parsed, dict):
         raise IncompatibleContractError(
             f"contract bundle must be a JSON object: {path}"
         )
-    return data
+    return parsed
 
 
-def _bundle_digest(
-    data: Mapping[str, Any], path: Path, expected_digest: str | None
-) -> str:
-    canonical = json.dumps(data, sort_keys=True).encode()
-    digest = hashlib.sha256(canonical).hexdigest()
+def _validated_bundle(
+    path: Path, expected_digest: str | None
+) -> tuple[dict[str, Any], str]:
+    """The bundle's body and digest, hashed and parsed from one read.
+
+    The digest is the sha256 of the file's raw bytes, so it is what
+    `sha256sum <file>` and tools/autopilot-prerequisites both compute. The
+    whole digest is compared: a prefix of it pins nothing.
+    """
+    data = _read_bundle(path)
+    digest = hashlib.sha256(data).hexdigest()
+    parsed = _parse_bundle(data, path)
+    for field in REQUIRED_BUNDLE_FIELDS:
+        if field not in parsed:
+            raise IncompatibleContractError(f"contract bundle {path} has no {field}")
     if expected_digest is not None and expected_digest != digest:
         raise IncompatibleContractError(
             f"contract bundle digest mismatch for {path}: "
             f"expected {expected_digest}, computed {digest}"
         )
-    return digest
+    return parsed, digest
 
 
 def controller_bundle_digest(path: Path, expected_digest: str | None = None) -> str:
-    """Return the sha256 of the bundle's sorted-key canonical JSON form.
+    """Return the sha256 of the contract bundle file's raw bytes.
 
-    Raise IncompatibleContractError when the bundle is unreadable or not a
-    strict JSON object, or when expected_digest is given and does not match.
+    Raise IncompatibleContractError when the bundle is unreadable, is not a
+    strict JSON object, lacks a required contract field, or when
+    expected_digest is given and is not that whole digest.
     """
-    text = _read_bundle(path)
-    return _bundle_digest(_parse_bundle(text, path), path, expected_digest)
+    return _validated_bundle(path, expected_digest)[1]
 
 
 def _string_set(data: Mapping[str, Any], field: str) -> frozenset[str]:
@@ -489,8 +502,7 @@ class ControllerClient:
     def _pinned_contract(self) -> dict[str, Any]:
         """The pinned bundle, digest-checked and validated before any spawn."""
         pinned_path = self._config.contract_bundle
-        pinned = _parse_bundle(_read_bundle(pinned_path), pinned_path)
-        _bundle_digest(pinned, pinned_path, self._config.bundle_digest)
+        pinned, _ = _validated_bundle(pinned_path, self._config.bundle_digest)
         for field in REQUIRED_CONTRACT_STRINGS:
             _pinned_string(pinned, field)
         for field in ADVERTISED_CONTRACT_FIELDS:

@@ -123,7 +123,11 @@ PRD 58 also needs `[workflow] controller_artifact` and
 `controller_artifact_sha256`, with an `evidence` list holding `core`,
 `jobs`, `reviews` and `records`, plus a `contract_bundle` and
 `contract_bundle_sha256` precondition: a regular file reachable without a
-symlink, whose sha256 matches and whose bytes parse as JSON. PRD 61 also
+symlink, whose bytes parse as a JSON object holding `protocol_major`,
+`operations` and `capabilities`, and whose sha256 matches.
+`contract_bundle_sha256` is the sha256 of the bundle file's raw bytes, the
+digest `sha256sum <file>` prints, and the client checks the pinned bundle
+against that same digest. PRD 61 also
 needs `[autopilot] plugin_artifact` and `plugin_artifact_sha256`;
 PRD 65 needs `[operator] client_artifact` and `client_artifact_sha256`. The
 PRD 61 and 65 artifacts are each a JSON object of at most 16 MiB with no
