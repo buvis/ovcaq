@@ -192,6 +192,21 @@ class MutationEnvelope:
             _require_int(self.lease_epoch, "lease_epoch")
 
 
+def _apply_request(envelope: MutationEnvelope) -> dict[str, Any]:
+    """The wire request body for one mutation envelope."""
+    return {
+        "protocol_major": envelope.protocol_major,
+        "operation": envelope.operation,
+        "request_id": envelope.request_id,
+        "expected_revision": envelope.expected_revision,
+        "project_id": envelope.project_id,
+        "workflow_id": envelope.workflow_id,
+        "actor_id": envelope.actor_id,
+        "lease_epoch": envelope.lease_epoch,
+        "payload": dict(envelope.payload),
+    }
+
+
 def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for key, value in pairs:
@@ -554,17 +569,7 @@ class ControllerClient:
         if actor_file is None:
             raise ControllerError("apply requires a configured actor_file")
         self.contract()
-        request = {
-            "protocol_major": envelope.protocol_major,
-            "operation": envelope.operation,
-            "request_id": envelope.request_id,
-            "expected_revision": envelope.expected_revision,
-            "project_id": envelope.project_id,
-            "workflow_id": envelope.workflow_id,
-            "actor_id": envelope.actor_id,
-            "lease_epoch": envelope.lease_epoch,
-            "payload": dict(envelope.payload),
-        }
+        request = _apply_request(envelope)
         descriptor, name = tempfile.mkstemp(prefix="ovcaq-request-", suffix=".json")
         try:
             with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
