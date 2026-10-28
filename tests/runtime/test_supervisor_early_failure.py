@@ -247,9 +247,7 @@ def test_create_session_os_error_before_session_opens_reverts_a_fresh_batch(
     def fail_create_session(*args: object, **kwargs: object) -> object:
         raise OSError("synthetic session directory creation failure")
 
-    monkeypatch.setattr(
-        "ovcaq.runtime.supervisor.create_session", fail_create_session
-    )
+    monkeypatch.setattr("ovcaq.runtime.supervisor.create_session", fail_create_session)
 
     outcome = h.supervisor().run()
 
