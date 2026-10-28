@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import random
 from pathlib import Path
 
 import pytest
@@ -24,6 +25,7 @@ from tests.workflow_client.prerequisites_support import (
     VALID_BUNDLE,
     assert_refused,
     build_unmet_gate,
+    digest_variant,
     foreign_keys,
     gate_config,
     make_ready,
@@ -420,26 +422,40 @@ def stage_bundle(root: Path, body: bytes, pin: str) -> Path:
 
 
 def hex_case(digest: str, case: str) -> str:
+    """The same digest in the letter case an operator might paste."""
     if case == "upper":
         return digest.upper()
-    if case == "mixed":
+    if case == "alternating":
         return "".join(
             char.upper() if index % 2 else char for index, char in enumerate(digest)
+        )
+    if case == "first-letter-only":
+        index = next(at for at, char in enumerate(digest) if char.isalpha())
+        return digest[:index] + digest[index].upper() + digest[index + 1 :]
+    if case == "scattered":
+        picker = random.Random(20261028)
+        return "".join(
+            char.upper() if picker.getrandbits(1) else char for char in digest
         )
     return digest
 
 
-@pytest.mark.parametrize("case", ["lower", "upper", "mixed"])
+@pytest.mark.parametrize(
+    "case", ["lower", "upper", "alternating", "first-letter-only", "scattered"]
+)
 def test_one_pin_in_any_hex_case_is_accepted_by_the_tool_and_the_client(
     tmp_path: Path, fake: FakeController, project_root: Path, case: str
 ) -> None:
     """The pin an operator configures once is read the same way by both."""
     root = tmp_path / "project"
     body = json.dumps({**VALID_BUNDLE, "package_version": "1.4.2"}).encode("utf-8")
-    pin = hex_case(hashlib.sha256(body).hexdigest(), case)
+    digest = hashlib.sha256(body).hexdigest()
+    pin = hex_case(digest, case)
     bundle = stage_bundle(root, body, pin)
-    # The pinned value is the sha256 of the bundle file's raw bytes.
+    # The pinned value is the sha256 of the bundle file's raw bytes, spelled in
+    # a letter case that differs from it unless the case is "lower".
     assert pin.lower() == hashlib.sha256(bundle.read_bytes()).hexdigest()
+    assert (pin == digest) == (case == "lower")
     fake.respond(
         json.dumps(live_contract(load_json(bundle), package_version="1.4.2+live")),
         verb="contract",
@@ -452,13 +468,24 @@ def test_one_pin_in_any_hex_case_is_accepted_by_the_tool_and_the_client(
     ).contract()
 
     assert contract.package_version == "1.4.2+live"
-    assert controller_bundle_digest(bundle, pin).lower() == pin.lower()
+    # Both consumers answer with the file's own lowercase digest.
+    assert controller_bundle_digest(bundle, pin) == digest
     # The configured controller argv reached the process the client spawned.
     assert len(fake.calls()) == 1
     assert fake.call_for("contract")["argv"][:2] == fake.child_argv
 
 
-@pytest.mark.parametrize("case", ["prefix", "extended", "surrounded", "other-bundle"])
+@pytest.mark.parametrize(
+    "case",
+    [
+        "prefix",
+        "extended",
+        "surrounded",
+        "other-bundle",
+        "last-hex-differs",
+        "middle-hex-differs",
+    ],
+)
 def test_a_pin_that_is_not_the_whole_digest_is_refused_by_both(
     tmp_path: Path, case: str
 ) -> None:
@@ -471,6 +498,10 @@ def test_a_pin_that_is_not_the_whole_digest_is_refused_by_both(
         "extended": digest.upper() + "0",
         "surrounded": f" {digest.upper()} ",
         "other-bundle": hashlib.sha256(b"other bundle").hexdigest().upper(),
+        # One hex character wrong, at the end and in the middle: same length,
+        # same leading characters, still a different bundle.
+        "last-hex-differs": digest_variant("last-hex-differs", digest).upper(),
+        "middle-hex-differs": digest_variant("middle-hex-differs", digest).upper(),
     }[case]
     assert pin.lower() != digest
     bundle = stage_bundle(root, body, pin)
@@ -503,7 +534,14 @@ def test_the_client_refuses_an_uppercase_prefix_pin_before_spawning(
 
 
 @pytest.mark.parametrize(
-    "case", ["duplicate-key", "nested-duplicate-key", "nan", "infinity"]
+    "case",
+    [
+        "duplicate-key",
+        "duplicate-optional-key",
+        "nested-duplicate-key",
+        "nan",
+        "infinity",
+    ],
 )
 def test_a_bundle_that_is_not_strict_json_is_refused_by_both(
     tmp_path: Path, fake: FakeController, project_root: Path, case: str
@@ -513,6 +551,11 @@ def test_a_bundle_that_is_not_strict_json_is_refused_by_both(
     text = {
         "duplicate-key": bundle_text(
             f'"operations": {json.dumps(VALID_BUNDLE["operations"])}'
+        ),
+        # A repeated key neither consumer requires: strictness is about the
+        # document, not about the fields a bundle must carry.
+        "duplicate-optional-key": bundle_text(
+            f'"package_version": {json.dumps(VALID_BUNDLE["package_version"])}'
         ),
         "nested-duplicate-key": bundle_text('"extra": {"a": 1, "a": 2}'),
         "nan": bundle_text(override={"protocol_major": "NaN"}),
@@ -537,15 +580,23 @@ def test_a_bundle_that_is_not_strict_json_is_refused_by_both(
     assert fake.calls() == []
 
 
+@pytest.mark.parametrize(
+    "extra",
+    ["", '"note": "NaN and Infinity are words in this string"'],
+    ids=["plain", "non-finite-words-inside-a-string"],
+)
 def test_a_strict_bundle_written_the_same_way_is_accepted_by_both(
-    tmp_path: Path, fake: FakeController, project_root: Path
+    tmp_path: Path, fake: FakeController, project_root: Path, extra: str
 ) -> None:
     """Same construction without the defect: the accept side of the same shape."""
     root = tmp_path / "project"
-    body = bundle_text().encode("utf-8")
+    body = bundle_text(*([extra] if extra else [])).encode("utf-8")
     pin = hashlib.sha256(body).hexdigest()
     bundle = stage_bundle(root, body, pin)
-    assert json.loads(body) == VALID_BUNDLE
+    parsed = json.loads(body)
+    # Every valid field, unchanged; the spelling NaN only ever sits in a string.
+    assert {name: parsed[name] for name in VALID_BUNDLE} == VALID_BUNDLE
+    assert ("NaN" in body.decode("utf-8")) == bool(extra)
     fake.respond(json.dumps(live_contract(load_json(bundle))), verb="contract")
 
     assert report(run_tool(root, "58"), 0) == {"ready": True, "prd": "58"}
@@ -556,6 +607,93 @@ def test_a_strict_bundle_written_the_same_way_is_accepted_by_both(
 
     assert contract.package_version == VALID_BUNDLE["package_version"]
     assert controller_bundle_digest(bundle, pin) == pin
+
+
+def without_field(field: str) -> bytes:
+    body = {name: value for name, value in VALID_BUNDLE.items() if name != field}
+    assert field not in body
+    return json.dumps(body).encode("utf-8")
+
+
+@pytest.mark.parametrize(
+    "body",
+    [b"{not json", b"{}", without_field("protocol_major")],
+    ids=["not-json", "empty-object", "no-protocol_major"],
+)
+def test_a_pinned_file_that_is_not_a_contract_bundle_is_refused_by_both(
+    tmp_path: Path, body: bytes
+) -> None:
+    """A matching pin waives no validation: both consumers still read the file."""
+    root = tmp_path / "project"
+    pin = hashlib.sha256(body).hexdigest()
+    bundle = stage_bundle(root, body, pin)
+    assert hashlib.sha256(bundle.read_bytes()).hexdigest() == pin
+
+    missing = missing_of(run_tool(root, "58"), "58")
+
+    assert len(missing) == 1
+    assert BUNDLE_KEY in missing[0]
+    assert KEY not in missing[0]
+    with pytest.raises(IncompatibleContractError):
+        controller_bundle_digest(bundle, pin)
+
+
+def test_a_bundle_configured_without_a_pin_is_not_accepted(tmp_path: Path) -> None:
+    """An unpinned bundle names nothing, however valid the file itself is."""
+    mark_done(tmp_path, *CLOSURE["58"])
+    digest = write_artifact(tmp_path / ARTIFACT, {"evidence": list(TOKENS)})
+    bundle_digest = write_valid_bundle(tmp_path)
+    assert (tmp_path / BUNDLE_PATH).is_file()
+    unpinned = gate_config("58", ARTIFACT, digest, bundle=BUNDLE_PATH)
+    write_config(tmp_path / "ovcaq.toml", unpinned)
+
+    missing = missing_of(run_tool(tmp_path, "58"), "58")
+
+    assert len(missing) == 1
+    assert BUNDLE_KEY in missing[0]
+    assert KEY not in missing[0]
+    # The same valid bundle with its pin configured is ready, so only the
+    # absent pin refused it.
+    write_config(
+        tmp_path / "ovcaq.toml",
+        gate_config(
+            "58", ARTIFACT, digest, bundle=BUNDLE_PATH, bundle_digest=bundle_digest
+        ),
+    )
+    assert report(run_tool(tmp_path, "58"), 0) == {"ready": True, "prd": "58"}
+
+
+def padded_bundle(size: int) -> bytes:
+    """The valid bundle padded with whitespace to exactly size bytes."""
+    body = json.dumps(VALID_BUNDLE).encode("utf-8")
+    return body + b" " * (size - len(body))
+
+
+@pytest.mark.parametrize(("size", "ready"), [(CAP, True), (CAP + 1, False)])
+def test_contract_bundle_is_read_under_a_16_mib_cap(
+    tmp_path: Path, size: int, ready: bool
+) -> None:
+    mark_done(tmp_path, *CLOSURE["58"])
+    digest = write_artifact(tmp_path / ARTIFACT, {"evidence": list(TOKENS)})
+    payload = padded_bundle(size)
+    assert len(payload) == size
+    bundle_digest = write_valid_bundle(tmp_path, BUNDLE_PATH, payload)
+    write_config(
+        tmp_path / "ovcaq.toml",
+        gate_config(
+            "58", ARTIFACT, digest, bundle=BUNDLE_PATH, bundle_digest=bundle_digest
+        ),
+    )
+
+    result = run_tool(tmp_path, "58")
+
+    if ready:
+        assert report(result, 0) == {"ready": True, "prd": "58"}
+    else:
+        missing = missing_of(result, "58")
+        assert len(missing) == 1
+        assert BUNDLE_KEY in missing[0]
+        assert KEY not in missing[0]
 
 
 def test_the_tool_imports_nothing_from_ovcaq() -> None:

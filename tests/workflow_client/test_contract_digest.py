@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import random
 import re
 import shutil
 from pathlib import Path
@@ -68,6 +69,11 @@ def incomplete_body(field: str) -> bytes:
 # the rule stays described even when the fixture changes on purpose. This is the
 # value `sha256sum tests/fixtures/workflow/controller-v1.json` prints.
 FIXTURE_DIGEST = raw_sha256(BUNDLE)
+
+
+def flip_hex(digest: str, index: int) -> str:
+    """The same digest with one hex character changed, same length."""
+    return digest[:index] + ("1" if digest[index] == "0" else "0") + digest[index + 1 :]
 
 
 def test_bundle_digest_is_stable_for_the_fixture() -> None:
@@ -251,8 +257,19 @@ def test_bundle_digest_rejects_wrong_expected_digest() -> None:
         FIXTURE_DIGEST + "0",
         "",
         "b",
+        flip_hex(FIXTURE_DIGEST, len(FIXTURE_DIGEST) - 1),
+        flip_hex(FIXTURE_DIGEST, 32),
     ],
-    ids=["one-hex", "half", "truncated", "extended", "empty", "single-letter"],
+    ids=[
+        "one-hex",
+        "half",
+        "truncated",
+        "extended",
+        "empty",
+        "single-letter",
+        "last-hex-differs",
+        "middle-hex-differs",
+    ],
 )
 def test_bundle_digest_rejects_a_pin_that_is_not_the_whole_digest(pin: str) -> None:
     """A pin is compared whole: a prefix of the digest pins nothing."""
@@ -324,10 +341,16 @@ def test_bundle_digest_rejects_nested_duplicate_keys(tmp_path: Path) -> None:
     clean = write_raw(
         tmp_path / "clean.json", complete_bundle_text('"extra": {"a": 1, "b": 2}')
     )
+    siblings = write_raw(
+        tmp_path / "siblings.json", complete_bundle_text('"a": {"x": 1}, "b": {"x": 2}')
+    )
 
     # The same bundle without the repeated inner key has a digest, so the
     # refusal is about the duplicate, not about the extra field.
     assert controller_bundle_digest(clean) == raw_sha256(clean)
+    # One name used once in each of two sibling objects is not a duplicate: a
+    # text scan for a repeated `"name":` token would refuse valid JSON.
+    assert controller_bundle_digest(siblings) == raw_sha256(siblings)
     with pytest.raises(IncompatibleContractError, match="duplicate"):
         controller_bundle_digest(nested)
 
@@ -373,28 +396,57 @@ def test_bundle_digest_wraps_missing_file(tmp_path: Path) -> None:
 
 # Hex letter case is not part of a pin's identity: the operator who pastes
 # `sha256sum` output in capitals names the same bundle the tool accepts.
-MIXED_CASE_DIGEST = "".join(
-    char.upper() if index % 2 else char for index, char in enumerate(FIXTURE_DIGEST)
-)
+def upper_at(digest: str, positions: frozenset[int]) -> str:
+    return "".join(
+        char.upper() if index in positions else char
+        for index, char in enumerate(digest)
+    )
 
 
-@pytest.mark.parametrize(
-    "pin",
-    [FIXTURE_DIGEST, FIXTURE_DIGEST.upper(), MIXED_CASE_DIGEST],
-    ids=["lower", "upper", "mixed"],
-)
+def first_letter(digest: str) -> int:
+    return next(index for index, char in enumerate(digest) if char.isalpha())
+
+
+def scattered(digest: str, seed: int) -> str:
+    """One capitalisation nobody could enumerate: per-character, seeded."""
+    picker = random.Random(seed)
+    return upper_at(
+        digest,
+        frozenset(index for index in range(len(digest)) if picker.getrandbits(1)),
+    )
+
+
+# Every spelling an operator could paste, including ones no if/else enumerates.
+CASE_SPELLINGS = {
+    "lower": FIXTURE_DIGEST,
+    "upper": FIXTURE_DIGEST.upper(),
+    "alternating": upper_at(
+        FIXTURE_DIGEST, frozenset(range(1, len(FIXTURE_DIGEST), 2))
+    ),
+    "first-letter-only": upper_at(
+        FIXTURE_DIGEST, frozenset({first_letter(FIXTURE_DIGEST)})
+    ),
+    "scattered": scattered(FIXTURE_DIGEST, 20261028),
+    "scattered-again": scattered(FIXTURE_DIGEST, 1757),
+}
+
+
+@pytest.mark.parametrize("spelling", sorted(CASE_SPELLINGS))
 def test_bundle_digest_accepts_a_pin_differing_only_in_hex_letter_case(
-    pin: str,
+    spelling: str,
 ) -> None:
     """One configured value: the same digest in any letter case is one pin."""
+    pin = CASE_SPELLINGS[spelling]
     # The fixture digest holds hex letters, so the capitalised variants differ.
     assert any(char.isalpha() for char in FIXTURE_DIGEST)
-    assert FIXTURE_DIGEST.upper() != FIXTURE_DIGEST
+    assert len(set(CASE_SPELLINGS.values())) == len(CASE_SPELLINGS)
     assert pin.lower() == FIXTURE_DIGEST
 
     accepted = controller_bundle_digest(BUNDLE, expected_digest=pin)
 
-    assert accepted.lower() == FIXTURE_DIGEST
+    # The answer is the file's own digest as sha256sum prints it, never the
+    # operator's spelling echoed back.
+    assert accepted == FIXTURE_DIGEST
 
 
 @pytest.mark.parametrize(
@@ -404,8 +456,17 @@ def test_bundle_digest_accepts_a_pin_differing_only_in_hex_letter_case(
         FIXTURE_DIGEST.upper() + "0",
         f" {FIXTURE_DIGEST.upper()} ",
         hashlib.sha256(b"other bundle").hexdigest().upper(),
+        flip_hex(FIXTURE_DIGEST, len(FIXTURE_DIGEST) - 1).upper(),
+        flip_hex(FIXTURE_DIGEST, 32).upper(),
     ],
-    ids=["half", "extended", "surrounded", "other-bundle"],
+    ids=[
+        "half",
+        "extended",
+        "surrounded",
+        "other-bundle",
+        "last-hex-differs",
+        "middle-hex-differs",
+    ],
 )
 def test_bundle_digest_rejects_an_uppercase_pin_that_is_not_the_whole_digest(
     pin: str,
@@ -434,4 +495,26 @@ def test_bundle_digest_rejects_an_uppercase_pin_taken_from_another_bundle(
     assert raw_sha256(other) in str(caught.value)
     # The same call for the same file, pinned by its own digest in capitals.
     accepted = controller_bundle_digest(other, raw_sha256(other).upper())
-    assert accepted.lower() == raw_sha256(other)
+    assert accepted == raw_sha256(other)
+
+
+def test_bundle_digest_follows_the_bytes_now_at_the_pinned_path(
+    tmp_path: Path,
+) -> None:
+    """Each call reads the file again: no answer is remembered for a path."""
+    bundle = write_bundle(tmp_path / "bundle.json", load_bundle())
+    first = controller_bundle_digest(bundle, expected_digest=raw_sha256(bundle))
+
+    write_bundle(bundle, {**load_bundle(), "package_version": "9.9.9"}, indent=4)
+    rewritten = raw_sha256(bundle)
+    assert rewritten != first
+
+    assert controller_bundle_digest(bundle) == rewritten
+    # The pin that matched the old bytes no longer names this file, and the
+    # rewritten bytes are validated again rather than trusted from before.
+    with pytest.raises(IncompatibleContractError) as caught:
+        controller_bundle_digest(bundle, expected_digest=first)
+    assert rewritten in str(caught.value)
+    broken = write_raw(bundle, "{not json")
+    with pytest.raises(IncompatibleContractError):
+        controller_bundle_digest(broken, expected_digest=raw_sha256(broken))
