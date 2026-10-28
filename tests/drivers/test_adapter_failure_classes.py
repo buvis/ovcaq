@@ -276,6 +276,63 @@ def test_model_capacity_uses_connectivity_wait_until_exact_retry_bound(
     )
 
 
+_CODEX_DIAGNOSTIC_ROWS: list[tuple[str, FailureClass]] = [
+    # One row per authentication marker new to this change.
+    (
+        "the OAuth login flow could not refresh the session",
+        FailureClass.AUTHENTICATION,
+    ),
+    ("OAuth token has expired", FailureClass.AUTHENTICATION),
+    ("the stored token expired before the turn started", FailureClass.AUTHENTICATION),
+    ("the CLI sent an expired token to the API", FailureClass.AUTHENTICATION),
+    # One row per connectivity marker new to this change.
+    ("read ECONNRESET while streaming the response", FailureClass.CONNECTIVITY),
+    ("connect ETIMEDOUT 10.0.0.1:443", FailureClass.CONNECTIVITY),
+    ("connect ECONNREFUSED 127.0.0.1:443", FailureClass.CONNECTIVITY),
+    ("the host lookup returned ENOTFOUND for the API host", FailureClass.CONNECTIVITY),
+    ("getaddrinfo failed for the API host", FailureClass.CONNECTIVITY),
+    # eai_again holds an underscore and still needs its own word boundaries.
+    ("the resolver returned EAI_AGAIN for the API host", FailureClass.CONNECTIVITY),
+    # Diagnostics classified before this change keep their classes.
+    ("unexpected status 503 Service Unavailable", FailureClass.CONNECTIVITY),
+    ("unexpected status 502 Bad Gateway", FailureClass.CONNECTIVITY),
+    ("unexpected status 403 Forbidden", FailureClass.PERMISSION),
+    (
+        "exceeded retry limit, last status: 429 Too Many Requests",
+        FailureClass.RATE_LIMIT,
+    ),
+    # Generic authentication prose carries no marker and stays unclassified.
+    ("Authentication failed", FailureClass.UNKNOWN),
+    ("MCP server authentication failed", FailureClass.UNKNOWN),
+    # A marker or a status number glued into a longer token does not match.
+    ("job server-429-id failed", FailureClass.UNKNOWN),
+    ("unexpected status 4290", FailureClass.UNKNOWN),
+    ("the econnreset_handler module raised", FailureClass.UNKNOWN),
+    # Earlier classes win over later ones when both markers are present.
+    (
+        "OAuth token has expired after HTTP 429 Too Many Requests",
+        FailureClass.AUTHENTICATION,
+    ),
+    ("unexpected status 403 Forbidden after read ECONNRESET", FailureClass.PERMISSION),
+    (
+        "status: 429 Too Many Requests after the lookup returned ENOTFOUND",
+        FailureClass.RATE_LIMIT,
+    ),
+    ("read ECONNRESET while the request hit a timeout", FailureClass.CONNECTIVITY),
+    # Each marker reaches its class in whatever casing a provider emits.
+    ("read EcOnNrEsEt while streaming the response", FailureClass.CONNECTIVITY),
+    ("the oauth login flow needs to run again", FailureClass.AUTHENTICATION),
+    ("THE STORED TOKEN EXPIRED FOR THIS WORKSPACE", FailureClass.AUTHENTICATION),
+]
+
+
+@pytest.mark.parametrize(("detail", "expected"), _CODEX_DIAGNOSTIC_ROWS)
+def test_codex_diagnostics_classify_by_table(
+    detail: str, expected: FailureClass
+) -> None:
+    assert classify_failure(detail) is expected
+
+
 _CLAUDE_BANNER = (
     "Claude Code wrapper captured the following stderr stream from the child "
     "process before the terminal event was emitted. A version banner, the node "
