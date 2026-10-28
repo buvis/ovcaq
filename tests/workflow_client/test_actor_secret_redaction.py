@@ -421,6 +421,30 @@ def test_contract_drops_controller_text_when_the_credential_may_be_unmaskable(
     assert fake.verbs() == ["contract"]
 
 
+@pytest.mark.parametrize("state", ["tiny-credential", "ordinary-name", "missing-actor"])
+def test_contract_drops_controller_text_for_a_mismatched_protocol_major(
+    fake: FakeController, project_root: Path, tmp_path: Path, state: str
+) -> None:
+    """A non-int protocol_major is controller output, exactly as stderr is."""
+    actor_path = unmaskable_actor_file(tmp_path, state)
+    minted = fresh_secret()
+    live_value = f"{CONTROLLER_PROSE[0]} {TINY_SECRET} {minted} {CONTROLLER_PROSE[1]}"
+    fake.respond(json.dumps(live_contract(protocol_major=live_value)), verb="contract")
+    client = make_client(fake, project_root, actor_file=actor_path)
+
+    with pytest.raises(IncompatibleContractError) as caught:
+        client.contract()
+
+    message = str(caught.value)
+    assert TINY_SECRET not in message
+    assert minted not in message
+    assert not any(word in message for word in CONTROLLER_PROSE)
+    assert REDACTED_MARKER in message
+    # The diagnostic still names the field that disagreed.
+    assert "protocol_major" in message
+    assert fake.verbs() == ["contract"]
+
+
 def test_contract_keeps_controller_prose_when_the_actor_file_reaches_the_threshold(
     fake: FakeController, project_root: Path, tmp_path: Path
 ) -> None:

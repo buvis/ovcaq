@@ -557,7 +557,8 @@ class ControllerClient:
         major = live.get("protocol_major")
         if type(major) is not int or major != PROTOCOL_MAJOR:
             raise IncompatibleContractError(
-                f"controller protocol_major {major!r} is not {PROTOCOL_MAJOR}"
+                f"controller protocol_major {self._bounded(repr(major))} "
+                f"is not {PROTOCOL_MAJOR}"
             )
         for field in ("schema_digest", "fixture_digest"):
             if live.get(field) != pinned.get(field):
