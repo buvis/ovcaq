@@ -6,10 +6,15 @@ from uuid import uuid4
 
 import pytest
 
+from ovcaq import drivers
 from ovcaq.config import (
+    DEFAULT_PHASE_TIERS,
+    NEUTRAL_TIERS,
     AgentSettings,
     ConfigurationError,
+    PhaseSettings,
     agent_settings,
+    resolve_phase_route,
     workflow_settings,
 )
 from ovcaq.paths import ProjectPathError
@@ -157,14 +162,18 @@ def test_project_agent_selection_uses_only_its_merged_abstract_tier_keys(
     (config_root / "ovcaq.toml").write_text(
         'agent = "active"\n[agents.active.tiers]\ndeep = "opaque"\n'
     )
-    assert workflow_settings(config_root).available_tiers == {"fast", "deep"}
+    assert workflow_settings(config_root).available_tiers == {
+        "fast",
+        "deep",
+        "standard",
+    }
     assert workflow_settings(config_root, available_tiers=[]).available_tiers == set()
     assert workflow_settings(
         config_root, available_tiers=["custom"]
     ).available_tiers == {"custom"}
     assert workflow_settings(config_root).available_tiers == set(
         agent_settings(config_root).tiers
-    )
+    ) | {"standard", "deep"}
 
 
 @pytest.mark.parametrize("selection", ("explicit", "project", "user"))
@@ -513,3 +522,176 @@ def test_loaded_agent_settings_remain_immutable_and_independent_of_later_loads(
         first.environment["MODE"] = "changed"
     with pytest.raises(TypeError):
         first.options["nested"][0]["enabled"] = False
+
+
+def test_neutral_default_tiers_are_always_available(config_root: Path) -> None:
+    assert DEFAULT_PHASE_TIERS == {
+        "build": "standard",
+        "review": "deep",
+        "done": "standard",
+    }
+    assert NEUTRAL_TIERS == frozenset(DEFAULT_PHASE_TIERS.values())
+    assert NEUTRAL_TIERS == frozenset({"standard", "deep"})
+
+    config = config_root / "ovcaq.toml"
+    config.write_text('agent = "active"\n')
+
+    assert workflow_settings(config_root).available_tiers == {"standard", "deep"}
+
+    config.write_text(
+        'agent = "active"\n[agents.active]\ncommand = ["runner"]\n'
+        "environment = {}\n[agents.active.tiers]\n"
+        'standard_plus = "opaque-one"\ndeeper = "opaque-two"\n'
+    )
+
+    assert workflow_settings(config_root).available_tiers == {
+        "standard_plus",
+        "deeper",
+        "standard",
+        "deep",
+    }
+
+
+def test_drivers_no_longer_publish_the_default_phase_tier_table() -> None:
+    assert not hasattr(drivers, "DEFAULT_PHASE_TIERS")
+    assert "DEFAULT_PHASE_TIERS" not in drivers.__all__
+    assert "DEFAULT_PHASE_TIERS" not in dir(drivers)
+
+
+@pytest.mark.parametrize(
+    "phase, tier, model",
+    (("build", "fast", "opaque-small"), ("review", "slow", "opaque-large")),
+)
+def test_route_without_default_tiers_resolves_a_configured_tier(
+    config_root: Path, phase: str, tier: str, model: str
+) -> None:
+    (config_root / "ovcaq.toml").write_text(
+        'agent = "active"\n[agents.active]\ncommand = ["runner"]\n'
+        "environment = {}\n[agents.active.tiers]\n"
+        'fast = "opaque-small"\nslow = "opaque-large"\n'
+    )
+
+    route = resolve_phase_route(
+        config_root,
+        phase,
+        phase_settings=PhaseSettings(tier, "high", 1234),
+        default_tiers=None,
+    )
+
+    assert route.agent == "active"
+    assert route.phase == phase
+    assert route.tier == tier
+    assert route.model == model
+    assert route.effort == "high"
+    assert route.timeout_seconds == 1234
+
+
+@pytest.mark.parametrize("default_tiers", (None, {}))
+@pytest.mark.parametrize("tier", ("standard", "deep"))
+def test_route_names_the_unknown_agent_tier_it_cannot_resolve(
+    config_root: Path, default_tiers: dict[str, str] | None, tier: str
+) -> None:
+    (config_root / "ovcaq.toml").write_text(
+        'agent = "active"\n[agents.active]\ncommand = ["runner"]\n'
+        'environment = {}\n[agents.active.tiers]\nfast = "opaque-small"\n'
+    )
+
+    with pytest.raises(ConfigurationError) as error:
+        resolve_phase_route(
+            config_root,
+            "build",
+            phase_settings=PhaseSettings(tier, "medium", 600),
+            default_tiers=default_tiers,
+        )
+
+    assert str(error.value) == f"Unknown agent tier: {tier}"
+
+
+def test_default_tiers_supply_models_the_agent_has_not_configured(
+    config_root: Path,
+) -> None:
+    user = config_root.parent / "user-config/ovcaq/config.toml"
+    user.parent.mkdir(parents=True)
+    user.write_text('[agents.active.tiers]\nslow = "opaque-user"\n')
+    (config_root / "ovcaq.toml").write_text(
+        'agent = "active"\n[agents.active]\ncommand = ["runner"]\n'
+        'environment = {}\n[agents.active.tiers]\nfast = "opaque-small"\n'
+    )
+    defaults = {"standard": "opaque-standard", "deep": "opaque-deep"}
+    routes = {
+        tier: resolve_phase_route(
+            config_root,
+            phase,
+            phase_settings=PhaseSettings(tier, "medium", 600),
+            default_tiers=defaults,
+        )
+        for phase, tier in (
+            ("build", "standard"),
+            ("review", "deep"),
+            ("done", "fast"),
+            ("build", "slow"),
+        )
+    }
+
+    assert routes["standard"].model == "opaque-standard"
+    assert routes["deep"].model == "opaque-deep"
+    assert routes["fast"].model == "opaque-small"
+    assert routes["slow"].model == "opaque-user"
+    assert [route.tier for route in routes.values()] == [
+        "standard",
+        "deep",
+        "fast",
+        "slow",
+    ]
+
+
+def test_configured_tier_shadows_a_default_tier_of_the_same_key(
+    config_root: Path,
+) -> None:
+    (config_root / "ovcaq.toml").write_text(
+        'agent = "active"\n[agents.active]\ncommand = ["runner"]\n'
+        'environment = {}\n[agents.active.tiers]\ndeep = "opaque-configured"\n'
+    )
+    defaults = {"deep": "opaque-default-deep", "standard": "opaque-default-standard"}
+
+    shadowed = resolve_phase_route(
+        config_root,
+        "review",
+        phase_settings=PhaseSettings("deep", "medium", 600),
+        default_tiers=defaults,
+    )
+    inherited = resolve_phase_route(
+        config_root,
+        "build",
+        phase_settings=PhaseSettings("standard", "medium", 600),
+        default_tiers=defaults,
+    )
+
+    assert shadowed.model == "opaque-configured"
+    assert inherited.model == "opaque-default-standard"
+
+
+@pytest.mark.parametrize(
+    "tier, defaults",
+    (
+        ("standard", {"standardized": "opaque-near-default"}),
+        ("deep", {"deeper": "opaque-near-default"}),
+    ),
+)
+def test_route_rejects_a_tier_only_resembling_a_known_key(
+    config_root: Path, tier: str, defaults: dict[str, str]
+) -> None:
+    (config_root / "ovcaq.toml").write_text(
+        'agent = "active"\n[agents.active]\ncommand = ["runner"]\n'
+        'environment = {}\n[agents.active.tiers]\nfastest = "opaque-small"\n'
+    )
+
+    with pytest.raises(ConfigurationError) as error:
+        resolve_phase_route(
+            config_root,
+            "done",
+            phase_settings=PhaseSettings(tier, "low", 60),
+            default_tiers=defaults,
+        )
+
+    assert str(error.value) == f"Unknown agent tier: {tier}"
