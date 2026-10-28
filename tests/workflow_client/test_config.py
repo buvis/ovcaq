@@ -298,7 +298,7 @@ def test_workflow_settings_without_controller_keys_is_unchanged(
     assert settings.prd_root == prd_root
     assert settings.runtime_root == runtime_root
     assert settings.state_file == state_file
-    assert settings.available_tiers == frozenset()
+    assert settings.available_tiers == frozenset({"standard", "deep"})
     assert settings.controller_argv is None
     assert settings.contract_bundle is None
     assert settings.actor_file is None

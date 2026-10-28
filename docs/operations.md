@@ -79,10 +79,9 @@ Runtime roots remain inside the project and reject symlink components.
 the workflow state file independently of the runtime root.
 Frontmatter receives the neutral tier keys `standard` and `deep` unioned with
 the keys from `[agents.<agent>.tiers]` for the configured top-level `agent`.
-An `[agents.<agent>.tiers]` table must now define `standard` and `deep`,
-because the phase routes ask for those keys; a table that defines neither
-neutral key silently falls through to the driver's own models instead of
-failing.
+An `[agents.<agent>.tiers]` table must now define `standard` and `deep`, because
+the phase routes ask for those keys; a table that defines neither neutral key
+silently falls through to the driver's own models instead of failing.
 Codex reserves the tier value `default`, which keeps the Codex CLI on its own
 configured model. Model values stay opaque. Repeated `--available-tier KEY`
 flags supply the available keys explicitly; an unavailable hint warns and
