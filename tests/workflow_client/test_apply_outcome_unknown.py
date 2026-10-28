@@ -19,6 +19,7 @@ from tests.workflow_client.conftest import (
 )
 
 from ovcaq.workflow_client import (
+    MIN_SECRET_CHARS,
     ApplyOutcomeUnknownError,
     ControllerError,
     ControllerOutputError,
@@ -84,6 +85,12 @@ CRASHED_AFTER_COMMIT = [
     ("req-crash-after-commit", 1, ""),
     ("req-crash", 17, '{"ok": tr'),
 ]
+
+# Credential-agnostic redaction masks every token of MIN_SECRET_CHARS or more,
+# so the controller's dying words are only legible to the caller when each of
+# them is shorter than that; the test asserts that premise rather than assuming
+# it, so raising the threshold fails here instead of voiding the assertion.
+CRASH_STDERR = "wrote it, then died"
 
 # A response that is syntactically JSON but breaks the ApplyResult contract,
 # one field at a time, so a presence-only check on "ok" cannot pass.
@@ -198,11 +205,12 @@ def test_apply_nonzero_exit_after_spawn_is_outcome_unknown(
     exit_code: int,
     partial_stdout: str,
 ) -> None:
+    assert max(len(token) for token in CRASH_STDERR.split()) < MIN_SECRET_CHARS
     fake.respond(CONTRACT_ANSWER, verb="contract")
     fake.respond(
         partial_stdout,
         verb="apply",
-        stderr="committed, then crashed",
+        stderr=CRASH_STDERR,
         exit_code=exit_code,
     )
     client = make_client(fake, project_root, actor_file=actor_file)
@@ -215,7 +223,7 @@ def test_apply_nonzero_exit_after_spawn_is_outcome_unknown(
     # The caller has to learn which request to replay and what the controller
     # said before it died.
     assert request_id in str(caught.value)
-    assert "committed, then crashed" in str(caught.value)
+    assert CRASH_STDERR in str(caught.value)
     assert isinstance(caught.value.__cause__, ControllerError)
     assert fake.verbs() == ["contract", "apply"]
     # The whole envelope must travel to the controller in a private file, with
