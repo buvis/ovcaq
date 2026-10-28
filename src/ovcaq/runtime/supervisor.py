@@ -272,12 +272,11 @@ class Supervisor:
             self._revert_fresh_start(started)
         else:
             try:
+                # Record the original probe or route error from `error`
+                # above, not the generic _state_failure text, so it stays
+                # visible in the attention notice.
                 self._attention_notice("startup", detail)
             except _STATE_ERRORS:
-                # The generic _state_failure text would mislabel this as a
-                # state-store failure when it is really the original probe or
-                # route error from `error` above; only the attention write
-                # itself failed.
                 self._state_failure("startup")
         return SupervisorDecision(DecisionKind.HALT, detail)
 

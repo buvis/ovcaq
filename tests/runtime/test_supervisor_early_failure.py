@@ -225,7 +225,7 @@ def test_failure_after_session_opened_never_reverts(
     assert minted["batch"]["started_at"] is not None
     assert after["batch"]["started_at"] == minted["batch"]["started_at"]
     assert attention is not None and attention["site"] == "startup"
-    assert attention["detail"].strip()
+    assert attention["detail"] == "attempt failed: kernel probe refused"
     assert after["revision"] > before["revision"]
     expected = copy.deepcopy(minted)
     expected["revision"] = after["revision"]
