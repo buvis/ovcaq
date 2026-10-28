@@ -24,6 +24,7 @@ from ovcaq.workflow_client import (
     REDACTED_MARKER,
     TRUNCATION_MARKER,
     ControllerError,
+    IncompatibleContractError,
 )
 
 CONTRACT_ANSWER = json.dumps(live_contract())
@@ -47,6 +48,13 @@ PROSE = "exit 3: denied by remote"
 # Multibyte words, all shorter than the threshold, so they must come back
 # byte-identical and a different decoder is visible.
 MULTIBYTE_PROSE = "échec révisé"
+# A credential short enough that token-length masking can never reach it; the
+# file holding it is one byte below MIN_SECRET_CHARS.
+TINY_SECRET = "zq7xkv"
+# Nonsense words, so the controller's own prose cannot be confused with the
+# client's own wording in a diagnostic. Both are one character below the
+# threshold, so token masking alone never reaches them.
+CONTROLLER_PROSE = ("frobniz", "zarquon")
 
 
 def fresh_secret() -> str:
@@ -60,6 +68,18 @@ def fresh_secret() -> str:
 def refuse_file_access(*args: Any, **kwargs: Any) -> Any:
     """Any attempt to open a file during redaction must be visible."""
     raise AssertionError("the redaction path tried to read a file")
+
+
+def tiny_actor_file(tmp_path: Path) -> Path:
+    """An actor file too small to hold a credential masking could reach."""
+    path = write_actor_file(tmp_path, "tiny-actor", secret=TINY_SECRET, flavor="plain")
+    assert path.stat().st_size < MIN_SECRET_CHARS
+    return path
+
+
+def controller_stderr(secret: str) -> str:
+    """Controller output that frames a secret with words of its own."""
+    return f"{CONTROLLER_PROSE[0]} {secret} {CONTROLLER_PROSE[1]}"
 
 
 def test_the_published_redaction_constants_keep_their_values() -> None:
@@ -314,3 +334,125 @@ def test_apply_diagnostic_is_masked_with_an_unreadable_actor_file(
     assert not any(piece in message for piece in secret_fragments(minted))
     # The path the client was configured with is what the controller received.
     assert str(actor_path) in fake.call_for("apply")["argv"]
+
+
+def test_apply_diagnostic_drops_controller_text_when_the_credential_is_tiny(
+    fake: FakeController, project_root: Path, tmp_path: Path
+) -> None:
+    """A credential too short to mask costs the controller its whole message."""
+    actor_path = tiny_actor_file(tmp_path)
+    fake.respond(CONTRACT_ANSWER, verb="contract")
+    fake.respond("", verb="apply", stderr=controller_stderr(TINY_SECRET), exit_code=3)
+    client = make_client(fake, project_root, actor_file=actor_path)
+
+    with pytest.raises(ControllerError) as caught:
+        client.apply(make_envelope(request_id="req-tiny-credential"))
+
+    message = str(caught.value)
+    assert TINY_SECRET not in message
+    assert not any(word in message for word in CONTROLLER_PROSE)
+    assert REDACTED_MARKER in message
+    # The path the client was configured with is what the controller received.
+    assert str(actor_path) in fake.call_for("apply")["argv"]
+
+
+def test_apply_diagnostic_drops_controller_text_when_the_actor_file_cannot_be_stated(
+    fake: FakeController, project_root: Path, tmp_path: Path
+) -> None:
+    """An actor file behind an untraversable directory proves nothing safe."""
+    locked = tmp_path / "locked dir"
+    locked.mkdir()
+    actor_path = write_actor_file(locked, "actor.json", secret=LONG_FIRST)
+    locked.chmod(0o000)
+    minted = fresh_secret()
+    fake.respond(CONTRACT_ANSWER, verb="contract")
+    fake.respond("", verb="apply", stderr=controller_stderr(minted), exit_code=3)
+    client = make_client(fake, project_root, actor_file=actor_path)
+
+    try:
+        with pytest.raises(ControllerError) as caught:
+            client.apply(make_envelope(request_id="req-unstatable-actor"))
+    finally:
+        locked.chmod(0o700)
+
+    message = str(caught.value)
+    assert minted not in message
+    assert not any(piece in message for piece in secret_fragments(minted))
+    assert not any(word in message for word in CONTROLLER_PROSE)
+    assert REDACTED_MARKER in message
+
+
+@pytest.mark.parametrize("state", ["tiny-credential", "missing-actor"])
+def test_contract_drops_controller_text_when_the_credential_may_be_unmaskable(
+    fake: FakeController, project_root: Path, tmp_path: Path, state: str
+) -> None:
+    """A mismatching live field is controller output, exactly as stderr is."""
+    if state == "tiny-credential":
+        actor_path = tiny_actor_file(tmp_path)
+    else:
+        actor_path = tmp_path / "absent-actor.json"
+        assert not actor_path.exists()
+    minted = fresh_secret()
+    live_value = f"{CONTROLLER_PROSE[0]} {TINY_SECRET} {minted} {CONTROLLER_PROSE[1]}"
+    fake.respond(json.dumps(live_contract(schema_digest=live_value)), verb="contract")
+    client = make_client(fake, project_root, actor_file=actor_path)
+
+    with pytest.raises(IncompatibleContractError) as caught:
+        client.contract()
+
+    message = str(caught.value)
+    assert TINY_SECRET not in message
+    assert minted not in message
+    assert not any(word in message for word in CONTROLLER_PROSE)
+    assert REDACTED_MARKER in message
+    # The diagnostic still names the field that disagreed.
+    assert "schema_digest" in message
+    assert fake.verbs() == ["contract"]
+
+
+def test_contract_keeps_controller_prose_when_the_actor_file_reaches_the_threshold(
+    fake: FakeController, project_root: Path, tmp_path: Path
+) -> None:
+    """One byte more in the actor file, and the controller's words come back."""
+    actor_path = write_actor_file(
+        tmp_path, "boundary-actor", secret=NEAR_MISS_TOKEN, flavor="plain"
+    )
+    assert actor_path.stat().st_size == MIN_SECRET_CHARS
+    minted = fresh_secret()
+    live = live_contract(schema_digest=controller_stderr(minted))
+    fake.respond(json.dumps(live), verb="contract")
+    client = make_client(fake, project_root, actor_file=actor_path)
+
+    with pytest.raises(IncompatibleContractError) as caught:
+        client.contract()
+
+    message = str(caught.value)
+    assert all(word in message for word in CONTROLLER_PROSE)
+    assert REDACTED_MARKER in message
+    assert minted not in message
+    assert not any(piece in message for piece in secret_fragments(minted))
+
+
+def test_a_diagnostic_is_built_without_reading_the_actor_file(
+    fake: FakeController,
+    project_root: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Credential safety is settled without ever opening the actor file."""
+    actor_path = write_actor_file(tmp_path, "actor.json", secret=LONG_FIRST)
+    assert actor_path.stat().st_size >= MIN_SECRET_CHARS
+    client = make_client(fake, project_root, actor_file=actor_path)
+    minted = fresh_secret()
+    raw = f"{CONTROLLER_PROSE[0]} {minted} {CONTROLLER_PROSE[1]} {NEAR_MISS_TOKEN}"
+
+    with monkeypatch.context() as patched:
+        patched.setattr(pathlib.Path, "read_bytes", refuse_file_access)
+        patched.setattr(pathlib.Path, "open", refuse_file_access)
+        patched.setattr(builtins, "open", refuse_file_access)
+        detail = client._detail(raw.encode("utf-8"))
+
+    assert all(word in detail for word in CONTROLLER_PROSE)
+    assert REDACTED_MARKER in detail
+    assert minted not in detail
+    assert NEAR_MISS_TOKEN in detail

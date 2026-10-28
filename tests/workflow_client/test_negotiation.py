@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import secrets
 from pathlib import Path
 from typing import Any
 
@@ -17,12 +18,18 @@ from tests.workflow_client.conftest import (
     load_json,
     make_client,
     make_envelope,
+    marks_truncation,
     request_path,
+    secret_fragments,
     write_bundle,
 )
 
 from ovcaq.workflow_client import (
+    MAX_STDERR_TAIL_CHARS,
+    MIN_SECRET_CHARS,
     PROTOCOL_MAJOR,
+    REDACTED_MARKER,
+    TRUNCATION_MARKER,
     ApplyResult,
     ControllerClient,
     ControllerConfig,
@@ -533,3 +540,90 @@ def test_an_already_negotiated_client_does_not_negotiate_again(
     client.apply(make_envelope())
 
     assert fake.verbs() == ["contract", "snapshot", "apply"]
+
+
+# 10. Mismatch diagnostics carry live values through the stderr pipeline
+
+# Synthetic canaries only; never a real credential. Two distinct long values, so
+# a replacement list hardcoded to one of them fails.
+LONG_CANARY = "canary-negotiate-" + "n" * (MIN_SECRET_CHARS + 40)
+RIVAL_CANARY = "canary-rival-" + "r" * (MIN_SECRET_CHARS + 40)
+# One character below the threshold, and a strict prefix of both canaries, so
+# prefix or substring masking eats it and fails.
+LEGIBLE_WORD = RIVAL_CANARY[: MIN_SECRET_CHARS - 1]
+# Filler short enough to survive masking, so the bound measures real text.
+SHORT_FILLER = "t" * (MIN_SECRET_CHARS - 1)
+# Marker words that sit at one end of a padded value only, so a dropped head
+# and a kept tail are both visible.
+HEAD_WORD = "zarq-hd"
+TAIL_WORD = "zarq-tl"
+
+
+def minted_secret() -> str:
+    """A long token minted at run time, so no literal can be pre-baked."""
+    return secrets.token_urlsafe(24)
+
+
+def padded_live_value(words: int) -> str:
+    """A mismatching live value built only from tokens masking must keep."""
+    filler = " ".join([SHORT_FILLER] * words)
+    return f"{HEAD_WORD} {filler} {TAIL_WORD}"
+
+
+@pytest.mark.parametrize("field_name", PINNED_FIELDS)
+@pytest.mark.parametrize("canary", [LONG_CANARY, RIVAL_CANARY], ids=["alpha", "rival"])
+def test_contract_redacts_a_secret_echoed_into_a_mismatching_live_field(
+    fake: FakeController, project_root: Path, field_name: str, canary: str
+) -> None:
+    """A controller cannot smuggle credential bytes out through a mismatch."""
+    minted = minted_secret()
+    live_value = f"{LEGIBLE_WORD} {canary} {minted}"
+    assert live_value != FIXTURE[field_name]
+    live: dict[str, Any] = {field_name: live_value}
+    fake.respond(json.dumps(live_contract(**live)), verb="contract")
+
+    with pytest.raises(IncompatibleContractError) as caught:
+        make_client(fake, project_root, actor_file=None).contract()
+
+    message = str(caught.value)
+    assert canary not in message
+    assert minted not in message
+    assert not any(piece in message for piece in secret_fragments(canary))
+    assert not any(piece in message for piece in secret_fragments(minted))
+    assert REDACTED_MARKER in message
+    # Short words stay legible, and the pinned side comes from the local bundle.
+    assert LEGIBLE_WORD in message
+    assert FIXTURE[field_name] in message
+    assert fake.verbs() == ["contract"]
+
+
+@pytest.mark.parametrize(
+    ("words", "truncates"),
+    [(MAX_STDERR_TAIL_CHARS // 32, False), (MAX_STDERR_TAIL_CHARS // 4, True)],
+    ids=["within-bound", "over-long"],
+)
+def test_contract_bounds_the_mismatching_live_value_it_reports(
+    fake: FakeController, project_root: Path, words: int, truncates: bool
+) -> None:
+    """An over-long live value cannot grow the diagnostic without limit."""
+    live_value = padded_live_value(words)
+    assert (len(live_value) > MAX_STDERR_TAIL_CHARS) is truncates
+    fake.respond(json.dumps(live_contract(schema_digest=live_value)), verb="contract")
+
+    with pytest.raises(IncompatibleContractError) as caught:
+        make_client(fake, project_root, actor_file=None).contract()
+
+    message = str(caught.value)
+    # The tail is what a reader needs, so it survives either way.
+    assert TAIL_WORD in message
+    if truncates:
+        assert live_value not in message
+        assert HEAD_WORD not in message
+        assert TRUNCATION_MARKER in message
+        assert marks_truncation(message)
+        assert message.count(SHORT_FILLER) <= MAX_STDERR_TAIL_CHARS // 8
+    else:
+        assert live_value in message
+        assert HEAD_WORD in message
+    # The live value really came from the controller this client spawned.
+    assert fake.call_for("contract")["argv"] == [*fake.child_argv, "--json", "contract"]
