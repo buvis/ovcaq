@@ -396,9 +396,7 @@ class Supervisor:
                 if not self.apply(decision):
                     return self._state_halt or decision
             except _ATTEMPT_ERRORS as error:
-                if not self._session_opened:
-                    return self._abandon_attempt(self._started, error)
-                return self._state_failure("supervisor.loop")
+                return self._abandon_attempt(self._started, error)
 
     def run_once(self) -> AttemptResult:
         require_no_emergency_failure(self._paths)
