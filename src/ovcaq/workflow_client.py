@@ -415,8 +415,11 @@ class ControllerClient:
         Known residual: size bounds the credential only from above, so a
         short credential wrapped in a larger file (a JSON actor document, or
         a trailing newline) still reads as safe and survives masking in a
-        diagnostic. Closing that needs the credential's length declared in
-        configuration, since reading the actor file here is forbidden.
+        diagnostic. That is a known miss against PRD 00057's task-3
+        criterion for short secrets, deferred at the review gate of cycle 1:
+        closing it needs the credential's length, or a redaction token,
+        declared in configuration, since reading the actor file here is
+        forbidden.
         """
         actor_file = self._config.actor_file
         if actor_file is None:
