@@ -409,10 +409,8 @@ class ControllerClient:
         Settled from a stat alone, never a read: the actor file's contents
         stay unknown here by design, so the only evidence available is its
         size. A file of at least MIN_SECRET_CHARS bytes may hold a token
-        long enough for _redact to mask, which is what today's legible
-        diagnostics rest on. A smaller file necessarily holds a shorter
-        credential, which masking can never reach, and a file that cannot be
-        stat'ed at all proves nothing. Both cases are treated as unsafe.
+        long enough for _redact to mask; a smaller file, or one that cannot
+        be stat'ed at all, is unsafe.
         """
         actor_file = self._config.actor_file
         if actor_file is None:
@@ -427,8 +425,7 @@ class ControllerClient:
 
         Dropped wholesale, down to the marker alone, when masking cannot
         reach the credential: the controller's own bytes may then be the
-        credential itself, and no inspection here can tell. The client's own
-        wording is what remains, so the diagnostic still names what failed.
+        credential itself, and no inspection here can tell.
         """
         if not self._can_mask_credential():
             return REDACTED_MARKER
