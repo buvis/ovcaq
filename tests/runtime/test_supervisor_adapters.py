@@ -62,7 +62,7 @@ def workflow_agent(h: Harness, tmp_path: Path, provider: str) -> AgentSettings:
     (h.root / "ovcaq.toml").write_text(
         f"agent = {json.dumps(provider)}\n"
         f"[agents.{provider}]\ncommand = {json.dumps(command)}\n"
-        'tiers = { sonnet = "model-s", opus = "model-o" }\n'
+        'tiers = { standard = "model-s", deep = "model-o" }\n'
         "[workflow]\nruntime_root = 'runtime'\n"
         f"state_file = {json.dumps(str(h.paths.state_file))}\n"
     )
@@ -72,7 +72,7 @@ def workflow_agent(h: Harness, tmp_path: Path, provider: str) -> AgentSettings:
     return AgentSettings(
         provider,
         tuple(command),
-        {"sonnet": "model-s", "opus": "model-o"},
+        {"standard": "model-s", "deep": "model-o"},
         environment,
         options,
     )

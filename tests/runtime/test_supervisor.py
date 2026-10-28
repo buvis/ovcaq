@@ -198,7 +198,7 @@ def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Harness:
     root.mkdir()
     (root / "ovcaq.toml").write_text(
         'agent = "local"\n[agents.local]\ncommand = ["runner"]\n'
-        'tiers = { sonnet = "model-s", opus = "model-o" }\n'
+        'tiers = { standard = "model-s", deep = "model-o" }\n'
         "[phases.build]\ntimeout_seconds = 3\n"
         "[phases.review]\ntimeout_seconds = 3\n"
         "[phases.done]\ntimeout_seconds = 3\n"
@@ -222,9 +222,9 @@ def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Harness:
         {
             phase: PhaseSettings(tier, "high", 3)
             for phase, tier in (
-                ("build", "sonnet"),
-                ("review", "opus"),
-                ("done", "sonnet"),
+                ("build", "standard"),
+                ("review", "deep"),
+                ("done", "standard"),
             )
         },
     )
@@ -552,7 +552,7 @@ def test_supplied_phase_settings_control_each_workflow_launch(
     literal = "Run ${HOME} $(touch injected); literal"
     (h.root / "ovcaq.toml").write_text(
         'agent = "local"\n[agents.local]\ncommand = ["runner", "--configured"]\n'
-        'tiers = { sonnet = "model-s", opus = "model-o", custom = "model-c" }\n'
+        'tiers = { standard = "model-s", deep = "model-o", custom = "model-c" }\n'
         '[agents.local.phases.review]\ntier = "custom"\neffort = "low"\n'
         f"[agents.local.prompts]\nbuild = '{literal} build'\n"
         f"review = '{literal} review'\ndone = '{literal} done'\n"
@@ -562,8 +562,8 @@ def test_supplied_phase_settings_control_each_workflow_launch(
         h.settings,
         phases={
             "build": PhaseSettings("custom", "medium", 11),
-            "review": PhaseSettings("opus", "xhigh", 13),
-            "done": PhaseSettings("opus", "low", 17),
+            "review": PhaseSettings("deep", "xhigh", 13),
+            "done": PhaseSettings("deep", "low", 17),
         },
     )
     h.driver.steps = [

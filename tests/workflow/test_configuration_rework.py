@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from ovcaq.config import (
+    NEUTRAL_TIERS,
     AgentSettings,
     ConfigurationError,
     agent_settings,
@@ -27,7 +28,7 @@ def test_workflow_settings_load_without_an_agent_selection(config_root: Path) ->
     settings = workflow_settings(config_root)
 
     assert settings.prd_root == config_root / "requirements"
-    assert settings.available_tiers == set()
+    assert settings.available_tiers == set(NEUTRAL_TIERS)
     assert config.read_text() == '[workflow]\nprd_root = "requirements"\n'
 
 

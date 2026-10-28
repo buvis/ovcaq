@@ -222,7 +222,7 @@ def test_installed_explicit_available_tiers_override_the_active_map(
         'agent = "local"\n[agents.local.tiers]\nfast = "opaque"\n'
     )
     prd = root / "docs/dev/project-management/prds/wip" / PRD
-    prd.write_text("---\ndefault_model: deep\n---\n")
+    prd.write_text("---\ndefault_model: bespoke\n---\n")
     command = [
         installed_wheel.console_script,
         "--root",
@@ -234,11 +234,11 @@ def test_installed_explicit_available_tiers_override_the_active_map(
         prd,
     ]
     applied = _run(
-        [*command, "--available-tier", "fast", "--available-tier", "deep"],
+        [*command, "--available-tier", "fast", "--available-tier", "bespoke"],
         cwd=root,
         installed_wheel=installed_wheel,
     )
-    assert json.loads(applied.stdout)["result"]["fields"]["tier"] == "deep"
+    assert json.loads(applied.stdout)["result"]["fields"]["tier"] == "bespoke"
     missing = _run(command, cwd=root, installed_wheel=installed_wheel)
     assert "unavailable" in missing.stderr
     assert "tier" not in json.loads(missing.stdout)["result"]["fields"]

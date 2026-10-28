@@ -15,7 +15,7 @@ def driver() -> ClaudeDriver:
         AgentSettings(
             name="claude",
             command=(sys.executable,),
-            tiers={"sonnet": "fixture-model"},
+            tiers={"standard": "fixture-model"},
             environment={},
             options={"permission_mode": "auto"},
         ),

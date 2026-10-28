@@ -61,7 +61,7 @@ def driver_for(
     settings = AgentSettings(
         provider,
         (command,),
-        {"sonnet": "fixture-model", "opus": "fixture-model"},
+        {"standard": "fixture-model", "deep": "fixture-model"},
         environment,
         options,
     )
@@ -287,7 +287,7 @@ def configure_project(root: Path, provider: str, command: str, overlay: Path) ->
     (root / "ovcaq.toml").write_text(
         f"agent = {json.dumps(provider)}\n[agents.{provider}]\n"
         f"command = {json.dumps([command])}\n"
-        'tiers = { sonnet = "fixture-model", opus = "fixture-model" }\n'
+        'tiers = { standard = "fixture-model", deep = "fixture-model" }\n'
         f"environment = {{ PATH = {json.dumps(str(overlay))} }}\n"
         f"{options}[workflow]\nruntime_root = 'runtime'\n",
         encoding="utf-8",

@@ -28,6 +28,10 @@ if TYPE_CHECKING:
 Effort = Literal["low", "medium", "high", "xhigh"]
 _PHASES = frozenset({"build", "review", "done"})
 
+# Neutral tier keys every driver maps to its own models.
+DEFAULT_PHASE_TIERS = {"build": "standard", "review": "deep", "done": "standard"}
+NEUTRAL_TIERS = frozenset(DEFAULT_PHASE_TIERS.values())
+
 
 class ConfigurationError(ValueError):
     """Raised when a workflow configuration input has an invalid shape."""
@@ -307,7 +311,9 @@ def workflow_settings(
         prds,
         runtime,
         state,
-        frozenset(tiers if available_tiers is None else available_tiers),
+        frozenset(
+            NEUTRAL_TIERS.union(tiers) if available_tiers is None else available_tiers
+        ),
         argv,
         bundle,
         actor,
@@ -577,8 +583,6 @@ def _supervisor_phases(
                 "phases must map every routable phase to PhaseSettings"
             )
     else:
-        from ovcaq.drivers import DEFAULT_PHASE_TIERS
-
         user_phases = _phase_tables(user)
         project_phases = _phase_tables(project)
         configured_phases: dict[str, PhaseSettings] = {}
@@ -625,6 +629,7 @@ def resolve_phase_route(
     *,
     agent: str | None = None,
     phase_settings: PhaseSettings | None = None,
+    default_tiers: Mapping[str, str] | None = None,
 ) -> ResolvedPhaseRoute:
     """Resolve a phase tier and literal prompt for the selected agent."""
     if phase not in _PHASES:
@@ -649,13 +654,18 @@ def resolve_phase_route(
         cast(Effort, overrides.get("effort", neutral.effort)),
         neutral.timeout_seconds,
     )
-    if resolved.tier not in selected.tiers:
+    tiers = (
+        dict(selected.tiers)
+        if default_tiers is None
+        else {**default_tiers, **selected.tiers}
+    )
+    if resolved.tier not in tiers:
         raise ConfigurationError(f"Unknown agent tier: {resolved.tier}")
     return ResolvedPhaseRoute(
         selected.name,
         phase,
         resolved.tier,
-        selected.tiers[resolved.tier],
+        tiers[resolved.tier],
         resolved.effort,
         resolved.timeout_seconds,
         selected.prompts.get(phase),

@@ -238,7 +238,7 @@ def _project(
     (root / "ovcaq.toml").write_text(
         'agent = "claude"\n[agents.claude]\n'
         f'command = [{json.dumps(str(fake))}, "literal ; $HOME argument"]\n'
-        'tiers = { sonnet = "model-s", opus = "model-o" }\n'
+        'tiers = { standard = "model-s", deep = "model-o" }\n'
         '[agents.claude.options]\npermission_mode = "auto"\n'
         + "".join(
             f"[phases.{phase}]\ntimeout_seconds = 5\n"

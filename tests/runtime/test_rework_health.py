@@ -40,7 +40,7 @@ def _configured_agent(
     (root / "ovcaq.toml").write_text(
         'agent = "codex"\n[agents.codex]\n'
         f"command = {json.dumps([sys.executable, str(script)])}\n"
-        'tiers = { sonnet = "model-s", opus = "model-o" }\n'
+        'tiers = { standard = "model-s", deep = "model-o" }\n'
         "[supervisor]\ndied_retries = 0\n"
         "[phases.build]\ntimeout_seconds = 3\n"
     )

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import os
+from collections.abc import Mapping
 from dataclasses import replace
 from pathlib import Path
 from uuid import uuid4
@@ -16,7 +17,7 @@ from ovcaq.runtime.registry import FleetEntry, FleetRegistry, process_identity
 from ovcaq.runtime.session import require_no_emergency_failure
 from ovcaq.state.schema import State, new_state
 
-HEALTHY_TIERS = {"build": "sonnet", "review": "opus", "done": "sonnet"}
+HEALTHY_TIERS = {"build": "standard", "review": "deep", "done": "standard"}
 
 
 def unstarted(h: Harness) -> State:
@@ -209,7 +210,7 @@ def test_preflight_resolves_routes_for_the_driver_agent(
 
     error = caught.value
     assert error.code is ErrorCode.USAGE and error.exit_code == 1
-    assert str(error) == "Unknown agent tier: sonnet"
+    assert str(error) == "Unknown agent tier: standard"
     assert_no_state_change(h, before)
 
 
@@ -219,7 +220,7 @@ def test_preflight_accepts_a_tier_only_the_agent_override_supplies(
     h = harness(tmp_path, monkeypatch)
     (h.root / "ovcaq.toml").write_text(
         'agent = "local"\n[agents.local]\ncommand = ["runner"]\n'
-        'tiers = { sonnet = "model-s", opus = "model-o", custom = "model-c" }\n'
+        'tiers = { standard = "model-s", deep = "model-o", custom = "model-c" }\n'
         '[agents.local.phases.review]\ntier = "custom"\n'
     )
     before = unstarted(h)
@@ -241,7 +242,7 @@ def test_preflight_reports_the_override_tier_not_the_neutral_one(
         config.read_text() + '[agents.local.phases.done]\ntier = "ghost"\n'
     )
     before = unstarted(h)
-    assert h.settings.phases["done"].tier == "sonnet"
+    assert h.settings.phases["done"].tier == "standard"
 
     with pytest.raises(CommandError) as caught:
         h.supervisor().preflight()
@@ -538,13 +539,22 @@ def fail_route_on_the_nth_call(
     calls: list[int] = []
 
     def route(
-        root: Path, phase: str, *, agent: str, phase_settings: PhaseSettings
+        root: Path,
+        phase: str,
+        *,
+        agent: str,
+        phase_settings: PhaseSettings,
+        default_tiers: Mapping[str, str] | None = None,
     ) -> object:
         calls.append(len(calls) + 1)
         if len(calls) == fail_at_call:
             raise error
         return resolve_phase_route(
-            root, phase, agent=agent, phase_settings=phase_settings
+            root,
+            phase,
+            agent=agent,
+            phase_settings=phase_settings,
+            default_tiers=default_tiers,
         )
 
     monkeypatch.setattr("ovcaq.runtime.supervisor.resolve_phase_route", route)

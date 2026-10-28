@@ -26,7 +26,7 @@ from ovcaq.runtime.decision import SupervisorPolicy
 
 AGENT = (
     'agent = "local"\n[agents.local]\ncommand = ["runner"]\n'
-    'tiers = { sonnet = "model-s", opus = "model-o", custom = "model-c" }\n'
+    'tiers = { standard = "model-s", deep = "model-o", custom = "model-c" }\n'
 )
 
 
@@ -44,9 +44,9 @@ def test_default_supervisor_settings_need_no_agent(config_root: Path) -> None:
     assert isinstance(settings, SupervisorSettings)
     assert isinstance(settings.runtime, RuntimeSettings)
     assert settings.phases == {
-        "build": PhaseSettings("sonnet", "high", 7200),
-        "review": PhaseSettings("opus", "high", 10800),
-        "done": PhaseSettings("sonnet", "high", 7200),
+        "build": PhaseSettings("standard", "high", 7200),
+        "review": PhaseSettings("deep", "high", 10800),
+        "done": PhaseSettings("standard", "high", 7200),
     }
     assert settings.policy == SupervisorPolicy(
         died_retries=1,
@@ -66,9 +66,9 @@ def test_effort_lists_exactly_the_supported_values() -> None:
 @pytest.mark.parametrize(
     "phase,tier,model,timeout",
     (
-        ("build", "sonnet", "model-s", 7200),
-        ("review", "opus", "model-o", 10800),
-        ("done", "sonnet", "model-s", 7200),
+        ("build", "standard", "model-s", 7200),
+        ("review", "deep", "model-o", 10800),
+        ("done", "standard", "model-s", 7200),
     ),
 )
 def test_routes_resolve_neutral_defaults_to_selected_agent_models(
@@ -100,7 +100,7 @@ def test_project_fields_override_user_fields_and_preserve_other_defaults(
     settings = supervisor_settings(config_root)
 
     assert settings.phases["build"] == PhaseSettings("custom", "xhigh", 70)
-    assert settings.phases["review"] == PhaseSettings("opus", "high", 10800)
+    assert settings.phases["review"] == PhaseSettings("deep", "high", 10800)
     assert settings.policy.died_retries == 2
     assert settings.policy.connectivity_retries == 8
     assert settings.policy.rate_limit_retries == 3
@@ -120,7 +120,7 @@ def test_agent_phase_overrides_merge_over_neutral_settings(config_root: Path) ->
         "local", "review", "custom", "model-c", "low", 83, None
     )
     assert resolve_phase_route(config_root, "build").model == "model-c"
-    assert supervisor_settings(config_root).phases["review"].tier == "opus"
+    assert supervisor_settings(config_root).phases["review"].tier == "deep"
 
 
 def test_done_route_uses_the_configured_tier_model(config_root: Path) -> None:
@@ -133,12 +133,12 @@ def test_explicit_agent_selection_controls_models_and_phase_overrides(
 ) -> None:
     (config_root / "ovcaq.toml").write_text(
         AGENT + '[agents.other]\ncommand = ["other"]\n'
-        'tiers = { sonnet = "other-s", opus = "other-o" }\n'
+        'tiers = { standard = "other-s", deep = "other-o" }\n'
         '[agents.other.phases.build]\neffort = "low"\n'
     )
 
     assert resolve_phase_route(config_root, "build", agent="other") == (
-        ResolvedPhaseRoute("other", "build", "sonnet", "other-s", "low", 7200, None)
+        ResolvedPhaseRoute("other", "build", "standard", "other-s", "low", 7200, None)
     )
 
 
@@ -204,14 +204,14 @@ def test_explicit_phase_mapping_rejects_extra_nonroutable_keys(
     config_root: Path, extra: str
 ) -> None:
     phases = dict(supervisor_settings(config_root).phases)
-    phases[extra] = PhaseSettings("sonnet", "high", 1)
+    phases[extra] = PhaseSettings("standard", "high", 1)
     with pytest.raises(ConfigurationError):
         supervisor_settings(config_root, phases=phases)
 
 
 def test_explicit_phase_mapping_rejects_untyped_values(config_root: Path) -> None:
     phases = dict(supervisor_settings(config_root).phases)
-    phases["build"] = {"tier": "sonnet", "effort": "high", "timeout_seconds": 1}
+    phases["build"] = {"tier": "standard", "effort": "high", "timeout_seconds": 1}
     with pytest.raises(ConfigurationError):
         supervisor_settings(config_root, phases=phases)
 
@@ -228,7 +228,7 @@ def test_routes_reject_nonroutable_phases(config_root: Path, phase: str) -> None
     ('phases."paused"', 'phases.""', "phases.unknown", "agents.local.phases.paused"),
 )
 def test_config_rejects_nonroutable_phase_tables(config_root: Path, table: str) -> None:
-    (config_root / "ovcaq.toml").write_text(AGENT + f'[{table}]\ntier = "sonnet"\n')
+    (config_root / "ovcaq.toml").write_text(AGENT + f'[{table}]\ntier = "standard"\n')
     with pytest.raises(ConfigurationError):
         resolve_phase_route(config_root, "build")
 
@@ -433,14 +433,14 @@ def test_prompt_precedence_preserves_unoverridden_user_phase(config_root: Path) 
 
 def test_phase_records_are_frozen_and_slotted(config_root: Path) -> None:
     (config_root / "ovcaq.toml").write_text(AGENT)
-    phase = PhaseSettings("sonnet", "high", 7200)
+    phase = PhaseSettings("standard", "high", 7200)
     route = resolve_phase_route(config_root, "build")
     settings = supervisor_settings(config_root)
     assert not hasattr(phase, "__dict__")
     assert not hasattr(route, "__dict__")
     assert not hasattr(settings, "__dict__")
     with pytest.raises(FrozenInstanceError):
-        phase.tier = "opus"
+        phase.tier = "deep"
     with pytest.raises(FrozenInstanceError):
         route.model = "other"
     with pytest.raises(FrozenInstanceError):
