@@ -52,6 +52,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **runtime**: a failed start no longer crashes when cleaning up its own ownership records: the fleet-entry removal is best-effort against a rejected run id as well as an I/O error, so the batch still returns to idle and the run still exits 1.
+- **runtime**: a failure after the supervisor has opened a session keeps the batch `running` with an attention notice instead of returning it to idle; only whether a session actually opened decides this, never the session counter, which also moves for the reverting cases.
 - **cli**: `ovcaq capability retry NAME` with a name not in `batch.capabilities` is a `usage` error (`unknown capability: NAME`, exit 1) instead of a traceback.
 - **workflow**: refuse missing or conflicting PRD artifacts before recovery intent, and verify source identity throughout intent publication so rejected stall/park requests preserve state and backups.
 - **state**: allow explicit backup restoration of an older unbound recovery intent while keeping bound or advanced recovery fenced.

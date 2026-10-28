@@ -141,6 +141,7 @@ class Supervisor:
         self._retries = RetryState()
         self._last_failure: FailureClass | None = None
         self._sessions = 0
+        self._session_opened = False
         self._state_halt: SupervisorDecision | None = None
 
     def preflight(self) -> None:
@@ -170,6 +171,7 @@ class Supervisor:
 
     def run(self) -> SupervisorOutcome:
         self._sessions = 0
+        self._session_opened = False
         self._state_halt = None
         self._metadata = None
         self._fleet_entry = None
@@ -249,10 +251,20 @@ class Supervisor:
         """The first attempt can fail before a session ever opens (a bad
         phase route, or a process-identity probe error in _open_session); a
         fresh batch must revert like any other pre-loop failure instead of
-        leaving batch.status running with no supervisor."""
-        if self._sessions <= 1:
+        leaving batch.status running with no supervisor. Only whether a
+        session opened decides this, never the session counter (which moves
+        for the reverting cases too) and never the class of the failure:
+        once a session exists the batch keeps the identity the run minted
+        and carries an attention notice instead."""
+        detail = f"attempt failed: {error}"
+        if not self._session_opened:
             self._revert_fresh_start(started)
-        return SupervisorDecision(DecisionKind.HALT, f"attempt failed: {error}")
+        else:
+            try:
+                self._attention_notice("startup", detail)
+            except _STATE_ERRORS:
+                self._state_failure("startup")
+        return SupervisorDecision(DecisionKind.HALT, detail)
 
     def _revert_fresh_start(self, started: State | None) -> None:
         if started is None:
@@ -274,7 +286,8 @@ class Supervisor:
         # only one ever reached disk) and rather than one shared try (which
         # would let a metadata failure skip the fleet removal). Each removal
         # is best-effort: a cleanup failure must never block the batch
-        # revert that follows.
+        # revert that follows, and the registry rejects a run id with
+        # ValueError, not only with OSError.
         if self._metadata is not None:
             try:
                 self._paths.run_metadata.unlink(missing_ok=True)
@@ -285,25 +298,27 @@ class Supervisor:
                 FleetRegistry(self._paths.fleet_root).remove(
                     self._fleet_entry.run_id, expected=self._fleet_entry
                 )
-            except OSError:
+            except (OSError, ValueError):
                 pass
+
+    def _attention_notice(self, site: str, detail: str) -> None:
+        def mutate(state: State) -> None:
+            if state["control"]["attention"] is None:
+                state["control"]["attention"] = {
+                    "site": site,
+                    "detail": detail,
+                    "created_at": _timestamp(self._clock.now()),
+                }
+
+        self._store.transaction(mutate)
 
     def _state_failure(self, site: str) -> SupervisorDecision:
         detail = "Supervisor state operation failed; inspect state before restarting."
-
-        def write_notice(site: str, detail: str) -> None:
-            def mutate(state: State) -> None:
-                if state["control"]["attention"] is None:
-                    state["control"]["attention"] = {
-                        "site": site,
-                        "detail": detail,
-                        "created_at": _timestamp(self._clock.now()),
-                    }
-
-            self._store.transaction(mutate)
-
         record_state_failure(
-            self._paths, site=site, detail=detail, write_state_notice=write_notice
+            self._paths,
+            site=site,
+            detail=detail,
+            write_state_notice=self._attention_notice,
         )
         self._state_halt = SupervisorDecision(DecisionKind.HALT, detail)
         return self._state_halt
@@ -511,6 +526,7 @@ class Supervisor:
                 _timestamp(started_at),
             ),
         )
+        self._session_opened = True
         metric = SessionMetric(
             1,
             "phase",
