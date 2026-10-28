@@ -403,8 +403,35 @@ class ControllerClient:
         """
         return _LONG_TOKEN.sub(REDACTED_MARKER, text)
 
+    def _can_mask_credential(self) -> bool:
+        """Whether token-length masking can reach the actor file's credential.
+
+        Settled from a stat alone, never a read: the actor file's contents
+        stay unknown here by design, so the only evidence available is its
+        size. A file of at least MIN_SECRET_CHARS bytes may hold a token
+        long enough for _redact to mask, which is what today's legible
+        diagnostics rest on. A smaller file necessarily holds a shorter
+        credential, which masking can never reach, and a file that cannot be
+        stat'ed at all proves nothing. Both cases are treated as unsafe.
+        """
+        actor_file = self._config.actor_file
+        if actor_file is None:
+            return True
+        try:
+            return actor_file.stat().st_size >= MIN_SECRET_CHARS
+        except OSError:
+            return False
+
     def _bounded(self, text: str) -> str:
-        """Controller text, redacted and then bounded to a tail."""
+        """Controller text, redacted and then bounded to a tail.
+
+        Dropped wholesale, down to the marker alone, when masking cannot
+        reach the credential: the controller's own bytes may then be the
+        credential itself, and no inspection here can tell. The client's own
+        wording is what remains, so the diagnostic still names what failed.
+        """
+        if not self._can_mask_credential():
+            return REDACTED_MARKER
         return _truncated(self._redact(text))
 
     def _detail(self, stderr: bytes) -> str:
@@ -495,7 +522,7 @@ class ControllerClient:
         if live == pinned or (live.startswith(prefix) and len(live) > len(prefix)):
             return
         raise IncompatibleContractError(
-            f"controller package_version {_truncated(live)!r} "
+            f"controller package_version {self._bounded(live)!r} "
             f"does not match pinned {pinned!r}"
         )
 
@@ -528,7 +555,7 @@ class ControllerClient:
         for field in ("schema_digest", "fixture_digest"):
             if live.get(field) != pinned.get(field):
                 raise IncompatibleContractError(
-                    f"controller {field} {_truncated(live[field])!r} does not match "
+                    f"controller {field} {self._bounded(live[field])!r} does not match "
                     f"pinned {pinned.get(field)!r}"
                 )
         version = live["package_version"]

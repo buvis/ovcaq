@@ -199,8 +199,15 @@ def test_contract_rejects_live_package_version_other_than_the_pinned_one(
     with pytest.raises(IncompatibleContractError) as caught:
         make_client(fake, project_root).contract()
 
-    assert FIXTURE["package_version"] in str(caught.value)
-    assert live_version in str(caught.value)
+    message = str(caught.value)
+    assert FIXTURE["package_version"] in message
+    # The live version is controller output: a token long enough to hide a
+    # credential is masked, a shorter one stays legible.
+    if len(live_version) >= MIN_SECRET_CHARS:
+        assert live_version not in message
+        assert REDACTED_MARKER in message
+    else:
+        assert live_version in message
 
 
 # 3. Required fields are validated before they are compared
