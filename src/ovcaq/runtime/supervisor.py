@@ -206,20 +206,24 @@ class Supervisor:
                     1, self._abandon_attempt(started, error), self._sessions
                 )
             finally:
-                self._run_id = None
-                try:
-                    publish_terminal_evidence(
-                        self._paths,
-                        run_id=entry.run_id,
-                        process=ProcessIdentity(entry.pid, entry.process_start),
-                        state=self._store.read(),
-                    )
-                except _STATE_ERRORS:
-                    pass
-                finally:
-                    cleanup_run_records(self._paths, self._metadata or metadata, entry)
+                self._release_run(metadata, entry)
         terminal_ok = decision.kind in (DecisionKind.PAUSE, DecisionKind.COMPLETE)
         return SupervisorOutcome(0 if terminal_ok else 1, decision, self._sessions)
+
+    def _release_run(self, metadata: SessionMetadata, entry: FleetEntry) -> None:
+        """Drop run ownership: terminal evidence first, records after."""
+        self._run_id = None
+        try:
+            publish_terminal_evidence(
+                self._paths,
+                run_id=entry.run_id,
+                process=ProcessIdentity(entry.pid, entry.process_start),
+                state=self._store.read(),
+            )
+        except _STATE_ERRORS:
+            pass
+        finally:
+            cleanup_run_records(self._paths, self._metadata or metadata, entry)
 
     def _start_batch(self) -> State | None:
         """Start a batch when none is active; return it only if newly started."""
