@@ -14,7 +14,8 @@ from tests.runtime.test_supervisor_adapters import (
     write_workflow_fixture,
 )
 
-from ovcaq.config import resolve_phase_route, supervisor_settings
+from ovcaq.config import AgentSettings, resolve_phase_route, supervisor_settings
+from ovcaq.drivers.base import LaunchRequest
 from ovcaq.drivers.claude import ClaudeDriver
 from ovcaq.drivers.codex import CodexDriver
 from ovcaq.drivers.edge import build_driver
@@ -154,15 +155,46 @@ def test_configured_supervisor_launches_each_selected_literal_model_and_effort(
         )
 
 
+def launch_argv_for_tier(
+    driver_class: type[ClaudeDriver | CodexDriver],
+    provider: str,
+    root: Path,
+    tier: str,
+) -> tuple[str, ...]:
+    settings = AgentSettings(
+        name=provider,
+        command=("fixture-runner",),
+        tiers={},
+        environment={},
+        options={"permission_mode": "auto"} if provider == "claude" else {},
+    )
+    request = LaunchRequest(
+        root=root,
+        phase="build",
+        prompt="fixture routed prompt",
+        model=tier,
+        effort="high",
+        timeout_seconds=3,
+        session_dir=root / "session",
+    )
+    driver = driver_class(settings, run_id="default-tier-route")
+    argv: tuple[str, ...] = driver.build_launch(request).argv
+    return argv
+
+
 @pytest.mark.parametrize(
-    ("provider", "driver_class"),
-    (("claude", ClaudeDriver), ("codex", CodexDriver)),
+    ("provider", "driver_class", "expected_defaults"),
+    (
+        ("claude", ClaudeDriver, {"standard": "sonnet", "deep": "opus"}),
+        ("codex", CodexDriver, {"standard": "default", "deep": "default"}),
+    ),
 )
 def test_unconfigured_project_routes_through_driver_default_tiers(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     provider: str,
     driver_class: type[ClaudeDriver | CodexDriver],
+    expected_defaults: dict[str, str],
 ) -> None:
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "user-config"))
     unconfigured = write_agent_config(tmp_path / "unconfigured", provider, "")
@@ -172,11 +204,9 @@ def test_unconfigured_project_routes_through_driver_default_tiers(
         'tiers = { standard = "fixture-configured-standard" }\n',
     )
     defaults = driver_class.default_tiers
-    sentinel = {
-        "standard": "fixture-sentinel-standard",
-        "deep": "fixture-sentinel-deep",
-    }
+    sentinel = {"standard": "sentinel-standard", "deep": "sentinel-deep"}
     phases = ("build", "review", "done")
+    expected_tiers = ("standard", "deep", "standard")
 
     routes = [
         resolve_phase_route(unconfigured, phase, default_tiers=defaults)
@@ -187,24 +217,22 @@ def test_unconfigured_project_routes_through_driver_default_tiers(
         for phase in phases
     ]
 
+    assert dict(defaults) == expected_defaults
     assert [route.agent for route in routes] == [provider] * 3
-    assert [route.tier for route in routes] == ["standard", "deep", "standard"]
+    assert [route.tier for route in routes] == list(expected_tiers)
     assert [route.model for route in routes] == [
-        defaults["standard"],
-        defaults["deep"],
-        defaults["standard"],
+        expected_defaults[tier] for tier in expected_tiers
     ]
-    assert {route.model for route in routes} <= set(defaults.values())
     assert [route.model for route in sentinels] == [
-        sentinel["standard"],
-        sentinel["deep"],
-        sentinel["standard"],
+        sentinel[tier] for tier in expected_tiers
     ]
-    assert (
-        resolve_phase_route(configured, "build", default_tiers=defaults).model
-        == "fixture-configured-standard"
-    )
-    assert (
-        resolve_phase_route(configured, "build", default_tiers=sentinel).model
-        == "fixture-configured-standard"
-    )
+    for route in routes:
+        argv = launch_argv_for_tier(driver_class, provider, unconfigured, route.tier)
+        if provider == "claude":
+            assert argv.count("--model") == 1
+            assert argv[argv.index("--model") + 1] == route.model
+        else:
+            assert "-m" not in argv
+    for table in (defaults, sentinel):
+        route = resolve_phase_route(configured, "build", default_tiers=table)
+        assert route.model == "fixture-configured-standard"

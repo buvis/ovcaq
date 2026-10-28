@@ -264,6 +264,27 @@ def test_explicit_model_opt_in_preserves_tier_resolution(
     assert spec.argv[spec.argv.index("--model") + 1] == resolved
 
 
+def claude_argv(
+    settings: AgentSettings, request: LaunchRequest, model: str, effort: str
+) -> tuple[str, ...]:
+    return (
+        *settings.command,
+        "-p",
+        "--permission-mode",
+        "auto",
+        "--model",
+        model,
+        "--effort",
+        effort,
+        "--output-format",
+        "stream-json",
+        "--verbose",
+        request.prompt,
+    )
+
+
+@pytest.mark.parametrize("phase", ("build", "review", "done"))
+@pytest.mark.parametrize("unrelated", ({}, {"unrelated": "unrelated-model"}))
 @pytest.mark.parametrize(
     ("tier", "default_model", "configured_model"),
     (
@@ -277,22 +298,55 @@ def test_claude_default_tiers_map_standard_and_deep(
     tier: str,
     default_model: str,
     configured_model: str,
+    unrelated: dict[str, str],
+    phase: str,
 ) -> None:
-    request = replace(launch_request, model=tier)
-    defaulted = ClaudeDriver(replace(settings, tiers={}), run_id="run-6").build_launch(
-        request
-    )
+    environment = {
+        "WARDEN_UNATTENDED": "1",
+        "CLAUDE_UNATTENDED": "1",
+        "CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS": "0",
+    }
+    settings = replace(settings, environment=environment)
+    request = replace(launch_request, model=tier, phase=phase, effort="high")
+    defaulted = ClaudeDriver(
+        replace(settings, tiers=unrelated), run_id="run-6"
+    ).build_launch(request)
     configured = ClaudeDriver(
-        replace(settings, tiers={tier: configured_model}), run_id="run-6"
+        replace(settings, tiers={**unrelated, tier: configured_model}), run_id="run-6"
     ).build_launch(request)
 
     assert ClaudeDriver.default_tiers[tier] == default_model
-    assert defaulted.argv.count("--model") == 1
-    assert defaulted.argv[defaulted.argv.index("--model") + 1] == default_model
-    assert configured.argv.count("--model") == 1
-    assert configured.argv[configured.argv.index("--model") + 1] == configured_model
+    assert defaulted.argv == claude_argv(settings, request, default_model, "high")
+    assert configured.argv == claude_argv(settings, request, configured_model, "high")
+    assert dict(defaulted.env) == environment
+    assert dict(configured.env) == environment
     assert defaulted.cwd == launch_request.root
-    assert dict(defaulted.env)["WARDEN_UNATTENDED"] == "1"
+
+
+@pytest.mark.parametrize(
+    ("model", "effort", "options"),
+    (
+        ("unknown-tier", "high", {"permission_mode": "auto"}),
+        (None, "high", {"permission_mode": "auto"}),
+        ("standard", None, {"permission_mode": "auto"}),
+        ("standard", " ", {"permission_mode": "auto"}),
+        (
+            "standard",
+            "high",
+            {"permission_mode": "auto", "fallback_model": "unknown-tier"},
+        ),
+    ),
+)
+def test_claude_default_tiers_do_not_bypass_launch_validation(
+    settings: AgentSettings,
+    launch_request: LaunchRequest,
+    model: str | None,
+    effort: str | None,
+    options: dict[str, object],
+) -> None:
+    driver = ClaudeDriver(replace(settings, tiers={}, options=options), run_id="run-6")
+    with pytest.raises(ValueError):
+        driver.build_launch(replace(launch_request, model=model, effort=effort))
 
 
 @pytest.mark.parametrize("effort", (None, " ", "\t"))

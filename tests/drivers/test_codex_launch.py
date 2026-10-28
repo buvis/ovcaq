@@ -196,6 +196,26 @@ def test_tier_key_resolves_before_a_matching_configured_model_value(
     assert argv[-4:] == ("-m", resolved, "--", launch_request.prompt)
 
 
+def codex_argv(
+    settings: AgentSettings, request: LaunchRequest, model_segment: tuple[str, ...]
+) -> tuple[str, ...]:
+    return (
+        *settings.command,
+        "--ask-for-approval",
+        "never",
+        "exec",
+        "--json",
+        "--sandbox",
+        "workspace-write",
+        "-C",
+        str(request.root),
+        *model_segment,
+        "--",
+        request.prompt,
+    )
+
+
+@pytest.mark.parametrize("unrelated", ({}, {"premium": "fixture-unrelated"}))
 @pytest.mark.parametrize(
     ("tier", "configured_model"),
     (("standard", "fixture-standard-model"), ("deep", "default-fixture-model")),
@@ -205,24 +225,25 @@ def test_codex_default_tier_omits_model_segment(
     launch_request: LaunchRequest,
     tier: str,
     configured_model: str,
+    unrelated: dict[str, str],
 ) -> None:
     request = replace(launch_request, model=tier)
     defaulted = CodexDriver(
-        replace(settings, tiers={}), run_id="default-tiers"
+        replace(settings, tiers=unrelated), run_id="default-tiers"
     ).build_launch(request)
     configured = CodexDriver(
-        replace(settings, tiers={tier: configured_model}), run_id="configured-tiers"
+        replace(settings, tiers={**unrelated, tier: configured_model}),
+        run_id="configured-tiers",
     ).build_launch(request)
     reserved = CodexDriver(
         replace(settings, tiers={}, options={"allow_explicit_model": False}),
         run_id="reserved-tier",
-    ).build_launch(replace(launch_request, model="default"))
+    ).build_launch(replace(launch_request, model=CodexDriver.default_tiers[tier]))
 
-    assert "-m" not in defaulted.argv
-    assert defaulted.argv[-2:] == ("--", launch_request.prompt)
-    assert configured.argv[-4:] == ("-m", configured_model, "--", launch_request.prompt)
-    assert "-m" not in reserved.argv
-    assert reserved.argv[-2:] == ("--", launch_request.prompt)
+    assert set(CodexDriver.default_tiers.values()) == {"default"}
+    assert defaulted.argv == codex_argv(settings, request, ())
+    assert configured.argv == codex_argv(settings, request, ("-m", configured_model))
+    assert reserved.argv == codex_argv(settings, launch_request, ())
     assert defaulted.cwd == launch_request.root
     assert dict(defaulted.env) == dict(settings.environment)
 

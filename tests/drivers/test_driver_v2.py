@@ -33,23 +33,41 @@ def test_api_two_declares_the_default_prompt_protocol() -> None:
 
 
 @pytest.mark.parametrize(
-    "driver_class", (ClaudeDriver, CodexDriver), ids=("claude", "codex")
+    ("driver_class", "expected"),
+    (
+        (ClaudeDriver, {"standard": "sonnet", "deep": "opus"}),
+        (CodexDriver, {"standard": "default", "deep": "default"}),
+    ),
+    ids=("claude", "codex"),
 )
 def test_api_two_declares_default_tiers(
     driver_class: type[ClaudeDriver | CodexDriver],
+    expected: dict[str, str],
 ) -> None:
     table = driver_class.default_tiers
+    mutable = cast("MutableMapping[str, str]", table)
 
     assert type(DRIVER_API_VERSION) is int
     assert DRIVER_API_VERSION == 2
     assert isinstance(table, Mapping)
-    assert {"standard", "deep"} <= set(table)
+    assert dict(table) == expected
     assert all(type(key) is str and type(value) is str for key, value in table.items())
+    assert all(value.strip() == value and value for value in table.values())
     assert table.get("standar") is None
     assert table.get("deeper") is None
     with pytest.raises(TypeError):
-        cast("MutableMapping[str, str]", table)["standard"] = "mutated-model"
-    assert driver_class.default_tiers == table
+        mutable["standard"] = "mutated-model"
+    with pytest.raises((TypeError, AttributeError)):
+        mutable.update({"standard": "mutated-model"})
+    with pytest.raises((TypeError, AttributeError)):
+        mutable.setdefault("standard", "mutated-model")
+    with pytest.raises((TypeError, AttributeError)):
+        mutable.setdefault("extra-tier", "mutated-model")
+    with pytest.raises((TypeError, AttributeError)):
+        mutable.pop("standard")
+    with pytest.raises((TypeError, AttributeError)):
+        del mutable["standard"]
+    assert dict(driver_class.default_tiers) == expected
 
 
 @pytest.mark.parametrize("phase", ("build", "review", "done"))
