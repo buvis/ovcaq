@@ -48,7 +48,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- **config** (breaking): the default phase tiers are now the neutral keys `standard` (build, done) and `deep` (review) instead of the model names `sonnet` and `opus`. A project whose `[agents.<agent>.tiers]` table only names models no longer resolves the default routes; add `standard` and `deep` keys to that table, or drop it and take the driver's own `default_tiers`. A PRD frontmatter tier floor must also name a key the table defines.
+- **config** (breaking): the default phase tiers are now the neutral keys `standard` (build, done) and `deep` (review) instead of the model names `sonnet` and `opus`. A project whose `[agents.<agent>.tiers]` table does not define these two built-in neutral keys now resolves silently to the driver's own models instead of the operator's configured ones; add `standard` and `deep` to that table to keep the operator's models in force. Custom keys in the same table are unaffected. A PRD frontmatter tier floor must also name a key the table defines.
 - **runtime**: process identity reads libproc through ctypes; OVCAQ no longer spawns `ps`.
 - **runtime**: process start tokens are `"<sec>.<usec>"` instead of the `ps lstart` string; a supervisor running across the upgrade reads as dead once and its records are cleaned up, without migration.
 

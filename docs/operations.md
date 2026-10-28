@@ -79,14 +79,16 @@ Runtime roots remain inside the project and reject symlink components.
 the workflow state file independently of the runtime root.
 Frontmatter receives the neutral tier keys `standard` and `deep` unioned with
 the keys from `[agents.<agent>.tiers]` for the configured top-level `agent`.
-An `[agents.<agent>.tiers]` table must now define `standard` and `deep`, because
-the phase routes ask for those keys; a table that defines neither neutral key
-silently falls through to the driver's own models instead of failing.
-A driver may reserve a tier value that keeps its own CLI on the model that
-CLI is configured with; see the driver protocol reference for which values a
-driver reserves. Model values stay opaque. Repeated `--available-tier KEY`
-flags supply the available keys explicitly; an unavailable hint warns and
-applies no floor. This input reader does not launch or route agents.
+A table that defines neither neutral key silently falls through to the
+driver's own models instead of failing; add `standard` and/or `deep` to that
+table to keep the operator's own models in force for those phases. A PRD
+frontmatter tier floor applies only when its value names a key the resulting
+table defines; an unavailable hint warns and applies no floor. A driver may
+reserve a tier value, such as the literal `default`, that keeps its own CLI
+on the model that CLI is configured with; see the driver protocol reference
+for which values a driver reserves. Model values stay opaque. Repeated
+`--available-tier KEY` flags supply the available keys explicitly. This
+input reader does not launch or route agents.
 
 Phase transitions require a running batch and an active PRD; only an empty
 build-phase drain may omit the PRD. Batch finalization remains supervisor-owned.
