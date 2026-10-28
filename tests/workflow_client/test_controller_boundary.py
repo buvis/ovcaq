@@ -34,6 +34,7 @@ from tests.workflow_client.conftest import (
 
 from ovcaq.workflow_client import (
     MAX_STDERR_TAIL_CHARS,
+    MIN_SECRET_CHARS,
     ApplyOutcomeUnknownError,
     ControllerClient,
     ControllerConfig,
@@ -151,13 +152,16 @@ def test_snapshot_accepts_a_large_payload_under_the_configured_output_bound(
 
 
 @EVERY_VERB
-def test_nonzero_exit_message_keeps_only_a_marked_tail_of_long_stderr(
+def test_nonzero_exit_message_keeps_only_a_marked_tail_of_long_prose_stderr(
     fake: FakeController, project_root: Path, tmp_path: Path, verb: str
 ) -> None:
+    # Every token here is short enough to survive redaction, so truncation
+    # alone bounds the message.
     assert isinstance(MAX_STDERR_TAIL_CHARS, int)
     assert MAX_STDERR_TAIL_CHARS > 0
-    head = "EARLIEST-LINE-AAAA"
-    stderr = f"{head}\n{'f' * (MAX_STDERR_TAIL_CHARS * 2)}\nLATEST-LINE-ZZZZ\n"
+    head = "AAAA BBBB CCCC"
+    stderr = f"{head}\n{'ffff ' * MAX_STDERR_TAIL_CHARS}\nZZZZ YYYY XXXX\n"
+    assert max(len(token) for token in stderr.split()) < MIN_SECRET_CHARS
     limit = len(stderr.encode()) + 1024
     fake.respond(json.dumps(live_contract()), verb="contract")
     fake.respond(stderr=stderr, exit_code=5, verb=verb)
@@ -176,6 +180,36 @@ def test_nonzero_exit_message_keeps_only_a_marked_tail_of_long_stderr(
     assert head not in message
     assert len(message) <= 4 * MAX_STDERR_TAIL_CHARS + 500
     assert marks_truncation(message)
+
+
+@EVERY_VERB
+def test_nonzero_exit_message_masks_long_stderr_tokens_instead_of_quoting_them(
+    fake: FakeController, project_root: Path, tmp_path: Path, verb: str
+) -> None:
+    # Every token here is long enough to be a credential, so none of the raw
+    # controller output may reach the message verbatim.
+    head = "EARLIEST-LINE-AAAA"
+    stderr = f"{head}\n{'f' * (MAX_STDERR_TAIL_CHARS * 2)}\nLATEST-LINE-ZZZZ\n"
+    assert min(len(token) for token in stderr.split()) >= MIN_SECRET_CHARS
+    limit = len(stderr.encode()) + 1024
+    fake.respond(json.dumps(live_contract()), verb="contract")
+    fake.respond(stderr=stderr, exit_code=5, verb=verb)
+    client = make_client(
+        fake,
+        project_root,
+        actor_file=write_actor_file(tmp_path, f"actor-long-{verb}.json"),
+        max_output_bytes=limit,
+    )
+
+    with pytest.raises(ControllerError) as caught:
+        CALL_BY_VERB[verb](client)
+
+    message = str(caught.value)
+    for token in stderr.split():
+        assert token not in message
+    assert head not in message
+    assert "redact" in message.lower()
+    assert len(message) <= 4 * MAX_STDERR_TAIL_CHARS + 500
 
 
 def test_nonzero_exit_message_keeps_short_stderr_whole_and_unmarked(
