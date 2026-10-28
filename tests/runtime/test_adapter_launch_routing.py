@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from tests.runtime.test_supervisor import Harness, rows
+from tests.runtime.test_supervisor import Driver, Harness, Step, harness, rows
 from tests.runtime.test_supervisor_adapters import (
     adapter_harness,
     prepare_workflow,
@@ -236,3 +236,25 @@ def test_unconfigured_project_routes_through_driver_default_tiers(
     for table in (defaults, sentinel):
         route = resolve_phase_route(configured, "build", default_tiers=table)
         assert route.model == "fixture-configured-standard"
+
+
+def test_supervisor_passes_driver_default_tiers_to_resolve_phase_route(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    h = harness(tmp_path, monkeypatch)
+    (h.root / "ovcaq.toml").write_text(
+        'agent = "local"\n[agents.local]\ncommand = ["runner"]\n'
+    )
+    tiers = {"standard": "fallback-standard", "deep": "fallback-deep"}
+    h.driver = Driver(h.clock, [], default_tiers=tiers)
+    h.driver.steps = [
+        Step(effect=lambda: h.change(next_phase="review")),
+        Step(effect=lambda: h.change(next_phase="paused")),
+    ]
+    assert h.supervisor().preflight() is None
+    outcome = h.supervisor().run()
+    assert outcome.exit_code == 0 and outcome.sessions_attempted == 2
+    assert [r.model for r in h.driver.requests] == [
+        "fallback-standard",
+        "fallback-deep",
+    ]
