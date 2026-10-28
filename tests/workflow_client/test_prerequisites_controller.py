@@ -7,12 +7,19 @@ import json
 from pathlib import Path
 
 import pytest
+from tests.workflow_client.conftest import (
+    FakeController,
+    live_contract,
+    load_json,
+    make_client,
+)
 from tests.workflow_client.prerequisites_support import (
     BUNDLE_KEY,
     BUNDLE_PATH,
     CLOSURE,
     DIRECT,
     GATES,
+    TOOL,
     UNMET_GATE_CASES,
     VALID_BUNDLE,
     assert_refused,
@@ -31,6 +38,8 @@ from tests.workflow_client.prerequisites_support import (
     write_config,
     write_valid_bundle,
 )
+
+from ovcaq.workflow_client import IncompatibleContractError, controller_bundle_digest
 
 TABLE, KEY, TOKENS = GATES["58"]
 ARTIFACT = f"artifacts/{KEY}.json"
@@ -376,3 +385,187 @@ def test_missing_lists_predecessors_then_the_artifact_then_the_bundle(
     assert KEY in missing[1]
     assert BUNDLE_KEY in missing[2]
     assert not any(padded("62") in entry for entry in missing)
+
+
+# One definition of a valid pinned bundle: the tool's PRD 58 gate and the
+# controller client must accept and refuse the very same configured value.
+
+
+def bundle_text(*extra: str, override: dict[str, str] | None = None) -> str:
+    """The valid bundle as raw JSON text, plus `extra` entries verbatim.
+
+    Every required field is present, so a file built here can only be refused
+    for the defect the caller injected.
+    """
+    replaced = {} if override is None else override
+    entries = [
+        f"{json.dumps(name)}: {replaced.get(name, json.dumps(value))}"
+        for name, value in VALID_BUNDLE.items()
+    ]
+    return "{" + ", ".join([*entries, *extra]) + "}"
+
+
+def stage_bundle(root: Path, body: bytes, pin: str) -> Path:
+    """PRD 58 with predecessors done, its artifact met and `body` pinned."""
+    root.mkdir(parents=True, exist_ok=True)
+    mark_done(root, *CLOSURE["58"])
+    digest = write_artifact(root / ARTIFACT, {"evidence": list(TOKENS)})
+    bundle = root / BUNDLE_PATH
+    write_artifact(bundle, body)
+    write_config(
+        root / "ovcaq.toml",
+        gate_config("58", ARTIFACT, digest, bundle=BUNDLE_PATH, bundle_digest=pin),
+    )
+    return bundle
+
+
+def hex_case(digest: str, case: str) -> str:
+    if case == "upper":
+        return digest.upper()
+    if case == "mixed":
+        return "".join(
+            char.upper() if index % 2 else char for index, char in enumerate(digest)
+        )
+    return digest
+
+
+@pytest.mark.parametrize("case", ["lower", "upper", "mixed"])
+def test_one_pin_in_any_hex_case_is_accepted_by_the_tool_and_the_client(
+    tmp_path: Path, fake: FakeController, project_root: Path, case: str
+) -> None:
+    """The pin an operator configures once is read the same way by both."""
+    root = tmp_path / "project"
+    body = json.dumps({**VALID_BUNDLE, "package_version": "1.4.2"}).encode("utf-8")
+    pin = hex_case(hashlib.sha256(body).hexdigest(), case)
+    bundle = stage_bundle(root, body, pin)
+    # The pinned value is the sha256 of the bundle file's raw bytes.
+    assert pin.lower() == hashlib.sha256(bundle.read_bytes()).hexdigest()
+    fake.respond(
+        json.dumps(live_contract(load_json(bundle), package_version="1.4.2+live")),
+        verb="contract",
+    )
+
+    assert report(run_tool(root, "58"), 0) == {"ready": True, "prd": "58"}
+
+    contract = make_client(
+        fake, project_root, bundle=bundle, bundle_digest=pin
+    ).contract()
+
+    assert contract.package_version == "1.4.2+live"
+    assert controller_bundle_digest(bundle, pin).lower() == pin.lower()
+    # The configured controller argv reached the process the client spawned.
+    assert len(fake.calls()) == 1
+    assert fake.call_for("contract")["argv"][:2] == fake.child_argv
+
+
+@pytest.mark.parametrize("case", ["prefix", "extended", "surrounded", "other-bundle"])
+def test_a_pin_that_is_not_the_whole_digest_is_refused_by_both(
+    tmp_path: Path, case: str
+) -> None:
+    """Hex case is all that is forgiven: a near miss still refuses the bundle."""
+    root = tmp_path / "project"
+    body = json.dumps(VALID_BUNDLE).encode("utf-8")
+    digest = hashlib.sha256(body).hexdigest()
+    pin = {
+        "prefix": digest.upper()[:32],
+        "extended": digest.upper() + "0",
+        "surrounded": f" {digest.upper()} ",
+        "other-bundle": hashlib.sha256(b"other bundle").hexdigest().upper(),
+    }[case]
+    assert pin.lower() != digest
+    bundle = stage_bundle(root, body, pin)
+
+    missing = missing_of(run_tool(root, "58"), "58")
+
+    assert len(missing) == 1
+    assert BUNDLE_KEY in missing[0]
+    assert KEY not in missing[0]
+    with pytest.raises(IncompatibleContractError) as caught:
+        controller_bundle_digest(bundle, pin)
+    assert digest in str(caught.value)
+
+
+def test_the_client_refuses_an_uppercase_prefix_pin_before_spawning(
+    tmp_path: Path, fake: FakeController, project_root: Path
+) -> None:
+    """The refusal is loud and closed: no controller runs on a bad pin."""
+    body = json.dumps(VALID_BUNDLE).encode("utf-8")
+    digest = hashlib.sha256(body).hexdigest()
+    pin = digest.upper()[:32]
+    bundle = stage_bundle(tmp_path / "project", body, pin)
+    fake.respond(json.dumps(live_contract(load_json(bundle))), verb="contract")
+
+    with pytest.raises(IncompatibleContractError) as caught:
+        make_client(fake, project_root, bundle=bundle, bundle_digest=pin).contract()
+
+    assert digest in str(caught.value)
+    assert fake.calls() == []
+
+
+@pytest.mark.parametrize(
+    "case", ["duplicate-key", "nested-duplicate-key", "nan", "infinity"]
+)
+def test_a_bundle_that_is_not_strict_json_is_refused_by_both(
+    tmp_path: Path, fake: FakeController, project_root: Path, case: str
+) -> None:
+    """The gate never passes a bundle the client refuses at start-up."""
+    root = tmp_path / "project"
+    text = {
+        "duplicate-key": bundle_text(
+            f'"operations": {json.dumps(VALID_BUNDLE["operations"])}'
+        ),
+        "nested-duplicate-key": bundle_text('"extra": {"a": 1, "a": 2}'),
+        "nan": bundle_text(override={"protocol_major": "NaN"}),
+        "infinity": bundle_text(override={"protocol_major": "Infinity"}),
+    }[case]
+    body = text.encode("utf-8")
+    # A lenient parser sees a complete bundle, so only strictness can refuse it.
+    assert set(json.loads(body)) >= set(VALID_BUNDLE)
+    pin = hashlib.sha256(body).hexdigest()
+    bundle = stage_bundle(root, body, pin)
+    fake.respond(json.dumps(live_contract()), verb="contract")
+
+    missing = missing_of(run_tool(root, "58"), "58")
+
+    assert len(missing) == 1
+    assert BUNDLE_KEY in missing[0]
+    assert KEY not in missing[0]
+    with pytest.raises(IncompatibleContractError):
+        controller_bundle_digest(bundle)
+    with pytest.raises(IncompatibleContractError):
+        make_client(fake, project_root, bundle=bundle, bundle_digest=pin).contract()
+    assert fake.calls() == []
+
+
+def test_a_strict_bundle_written_the_same_way_is_accepted_by_both(
+    tmp_path: Path, fake: FakeController, project_root: Path
+) -> None:
+    """Same construction without the defect: the accept side of the same shape."""
+    root = tmp_path / "project"
+    body = bundle_text().encode("utf-8")
+    pin = hashlib.sha256(body).hexdigest()
+    bundle = stage_bundle(root, body, pin)
+    assert json.loads(body) == VALID_BUNDLE
+    fake.respond(json.dumps(live_contract(load_json(bundle))), verb="contract")
+
+    assert report(run_tool(root, "58"), 0) == {"ready": True, "prd": "58"}
+
+    contract = make_client(
+        fake, project_root, bundle=bundle, bundle_digest=pin
+    ).contract()
+
+    assert contract.package_version == VALID_BUNDLE["package_version"]
+    assert controller_bundle_digest(bundle, pin) == pin
+
+
+def test_the_tool_imports_nothing_from_ovcaq() -> None:
+    """The tool copies the strict parse; it never imports the client package."""
+    lines = [
+        line.strip()
+        for line in TOOL.read_text(encoding="utf-8").splitlines()
+        if line.strip().startswith(("import ", "from "))
+    ]
+
+    # Control: the extraction really found the tool's stdlib imports.
+    assert any(line.startswith("import json") for line in lines)
+    assert not [line for line in lines if "ovcaq" in line]

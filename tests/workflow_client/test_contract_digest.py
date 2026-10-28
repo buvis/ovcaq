@@ -369,3 +369,69 @@ def test_bundle_digest_wraps_parse_failures(tmp_path: Path, content: bytes) -> N
 def test_bundle_digest_wraps_missing_file(tmp_path: Path) -> None:
     with pytest.raises(IncompatibleContractError):
         controller_bundle_digest(tmp_path / "absent.json")
+
+
+# Hex letter case is not part of a pin's identity: the operator who pastes
+# `sha256sum` output in capitals names the same bundle the tool accepts.
+MIXED_CASE_DIGEST = "".join(
+    char.upper() if index % 2 else char for index, char in enumerate(FIXTURE_DIGEST)
+)
+
+
+@pytest.mark.parametrize(
+    "pin",
+    [FIXTURE_DIGEST, FIXTURE_DIGEST.upper(), MIXED_CASE_DIGEST],
+    ids=["lower", "upper", "mixed"],
+)
+def test_bundle_digest_accepts_a_pin_differing_only_in_hex_letter_case(
+    pin: str,
+) -> None:
+    """One configured value: the same digest in any letter case is one pin."""
+    # The fixture digest holds hex letters, so the capitalised variants differ.
+    assert any(char.isalpha() for char in FIXTURE_DIGEST)
+    assert FIXTURE_DIGEST.upper() != FIXTURE_DIGEST
+    assert pin.lower() == FIXTURE_DIGEST
+
+    accepted = controller_bundle_digest(BUNDLE, expected_digest=pin)
+
+    assert accepted.lower() == FIXTURE_DIGEST
+
+
+@pytest.mark.parametrize(
+    "pin",
+    [
+        FIXTURE_DIGEST.upper()[:32],
+        FIXTURE_DIGEST.upper() + "0",
+        f" {FIXTURE_DIGEST.upper()} ",
+        hashlib.sha256(b"other bundle").hexdigest().upper(),
+    ],
+    ids=["half", "extended", "surrounded", "other-bundle"],
+)
+def test_bundle_digest_rejects_an_uppercase_pin_that_is_not_the_whole_digest(
+    pin: str,
+) -> None:
+    """Letter case is all that is forgiven: prefixes and junk still fail."""
+    assert pin.lower() != FIXTURE_DIGEST
+
+    with pytest.raises(IncompatibleContractError) as caught:
+        controller_bundle_digest(BUNDLE, expected_digest=pin)
+
+    assert FIXTURE_DIGEST in str(caught.value)
+
+
+def test_bundle_digest_rejects_an_uppercase_pin_taken_from_another_bundle(
+    tmp_path: Path,
+) -> None:
+    """An uppercase pin is still compared against this file's own bytes."""
+    other = write_bundle(
+        tmp_path / "other.json", {**load_bundle(), "package_version": "9.9.9"}
+    )
+    assert raw_sha256(other) != FIXTURE_DIGEST
+
+    with pytest.raises(IncompatibleContractError) as caught:
+        controller_bundle_digest(other, expected_digest=FIXTURE_DIGEST.upper())
+
+    assert raw_sha256(other) in str(caught.value)
+    # The same call for the same file, pinned by its own digest in capitals.
+    accepted = controller_bundle_digest(other, raw_sha256(other).upper())
+    assert accepted.lower() == raw_sha256(other)
