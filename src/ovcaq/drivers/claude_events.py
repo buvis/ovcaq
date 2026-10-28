@@ -222,7 +222,21 @@ def banner_reset(text: str, anchor: datetime, now: datetime) -> str | None:
 
 _FAILURE_MARKERS = (
     ("permission", ("permission denied", "operation not permitted")),
-    ("authentication", ("authentication", "unauthorized", "invalid api key")),
+    (
+        "authentication",
+        (
+            "authentication",
+            "unauthorized",
+            "invalid api key",
+            "oauth",
+            "token has expired",
+            "token expired",
+            "expired token",
+            "not logged in",
+            "http 401",
+            "status 401",
+        ),
+    ),
     (
         "rate_limit",
         (
@@ -230,6 +244,12 @@ _FAILURE_MARKERS = (
             "hit your usage limit",
             "hit your weekly limit",
             "usage limit reached",
+            "rate limit",
+            "rate-limit",
+            "rate_limit",
+            "too many requests",
+            "http 429",
+            "status 429",
         ),
     ),
     (
@@ -241,6 +261,11 @@ _FAILURE_MARKERS = (
             "connection refused",
             "connection reset",
             "api unavailable",
+            "econnreset",
+            "econnrefused",
+            "etimedout",
+            "eai_again",
+            "getaddrinfo",
         ),
     ),
     ("timeout", ("timed out", "timeout")),
