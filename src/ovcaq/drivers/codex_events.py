@@ -306,7 +306,8 @@ def classify_failure(detail: str) -> FailureClass:
             FailureClass.AUTHENTICATION,
             (
                 rf"{status}401|unauthorized|not logged in|"
-                r"(?:invalid|expired) credentials?"
+                r"(?:invalid|expired) credentials?|"
+                r"oauth|token (?:has )?expired|expired token"
             ),
         ),
         (
@@ -325,7 +326,9 @@ def classify_failure(detail: str) -> FailureClass:
             (
                 rf"{status}(?:502|503)|connection reset|connection refused|"
                 r"connection failed|dns|network unreachable|server unavailable|"
-                r"stream disconnected|model is at capacity"
+                r"stream disconnected|model is at capacity|"
+                r"econnreset|etimedout|econnrefused|enotfound|getaddrinfo|"
+                r"eai_again"
             ),
         ),
         (FailureClass.TIMEOUT, r"timeouts?|timed out"),
