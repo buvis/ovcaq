@@ -259,7 +259,8 @@ def _validated_bundle(
 
     The digest is the sha256 of the file's raw bytes, so it is what
     `sha256sum <file>` and tools/autopilot-prerequisites both compute. The
-    whole digest is compared: a prefix of it pins nothing.
+    whole digest is compared, with hex letter case normalised as the tool
+    normalises it: a prefix of it pins nothing.
     """
     data = _read_bundle(path)
     digest = hashlib.sha256(data).hexdigest()
@@ -267,7 +268,7 @@ def _validated_bundle(
     for field in REQUIRED_BUNDLE_FIELDS:
         if field not in parsed:
             raise IncompatibleContractError(f"contract bundle {path} has no {field}")
-    if expected_digest is not None and expected_digest != digest:
+    if expected_digest is not None and expected_digest.lower() != digest:
         raise IncompatibleContractError(
             f"contract bundle digest mismatch for {path}: "
             f"expected {expected_digest}, computed {digest}"

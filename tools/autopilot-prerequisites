@@ -135,6 +135,20 @@ def check_artifact(prd: int, section: dict[str, object]) -> str | None:
     return None
 
 
+def reject_duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Strict JSON, as the client parses a bundle: a repeated key is a defect."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate key: {key!r}")
+        result[key] = value
+    return result
+
+
+def reject_constant(name: str) -> NoReturn:
+    raise ValueError(f"non-finite number: {name}")
+
+
 def check_bundle(prd: int, section: dict[str, object]) -> str | None:
     """Return a missing-precondition message, or None when the bundle is usable."""
     table, _, _ = GATES[prd]
@@ -156,7 +170,11 @@ def check_bundle(prd: int, section: dict[str, object]) -> str | None:
     if hashlib.sha256(data).hexdigest() != digest.lower():
         return f"{name}: {path} sha256 does not match {name}_sha256"
     try:
-        payload = json.loads(data)
+        payload = json.loads(
+            data,
+            object_pairs_hook=reject_duplicate_keys,
+            parse_constant=reject_constant,
+        )
     except (ValueError, RecursionError):
         return f"{name}: {path} is not valid JSON"
     if not isinstance(payload, dict):
