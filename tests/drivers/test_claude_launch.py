@@ -264,6 +264,37 @@ def test_explicit_model_opt_in_preserves_tier_resolution(
     assert spec.argv[spec.argv.index("--model") + 1] == resolved
 
 
+@pytest.mark.parametrize(
+    ("tier", "default_model", "configured_model"),
+    (
+        ("standard", "sonnet", "sonnet-fixture-alternate"),
+        ("deep", "opus", "opus-fixture-alternate"),
+    ),
+)
+def test_claude_default_tiers_map_standard_and_deep(
+    settings: AgentSettings,
+    launch_request: LaunchRequest,
+    tier: str,
+    default_model: str,
+    configured_model: str,
+) -> None:
+    request = replace(launch_request, model=tier)
+    defaulted = ClaudeDriver(replace(settings, tiers={}), run_id="run-6").build_launch(
+        request
+    )
+    configured = ClaudeDriver(
+        replace(settings, tiers={tier: configured_model}), run_id="run-6"
+    ).build_launch(request)
+
+    assert ClaudeDriver.default_tiers[tier] == default_model
+    assert defaulted.argv.count("--model") == 1
+    assert defaulted.argv[defaulted.argv.index("--model") + 1] == default_model
+    assert configured.argv.count("--model") == 1
+    assert configured.argv[configured.argv.index("--model") + 1] == configured_model
+    assert defaulted.cwd == launch_request.root
+    assert dict(defaulted.env)["WARDEN_UNATTENDED"] == "1"
+
+
 @pytest.mark.parametrize("effort", (None, " ", "\t"))
 def test_launch_rejects_missing_or_blank_effort(
     settings: AgentSettings, launch_request: LaunchRequest, effort: str | None

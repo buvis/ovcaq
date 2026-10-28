@@ -196,6 +196,37 @@ def test_tier_key_resolves_before_a_matching_configured_model_value(
     assert argv[-4:] == ("-m", resolved, "--", launch_request.prompt)
 
 
+@pytest.mark.parametrize(
+    ("tier", "configured_model"),
+    (("standard", "fixture-standard-model"), ("deep", "default-fixture-model")),
+)
+def test_codex_default_tier_omits_model_segment(
+    settings: AgentSettings,
+    launch_request: LaunchRequest,
+    tier: str,
+    configured_model: str,
+) -> None:
+    request = replace(launch_request, model=tier)
+    defaulted = CodexDriver(
+        replace(settings, tiers={}), run_id="default-tiers"
+    ).build_launch(request)
+    configured = CodexDriver(
+        replace(settings, tiers={tier: configured_model}), run_id="configured-tiers"
+    ).build_launch(request)
+    reserved = CodexDriver(
+        replace(settings, tiers={}, options={"allow_explicit_model": False}),
+        run_id="reserved-tier",
+    ).build_launch(replace(launch_request, model="default"))
+
+    assert "-m" not in defaulted.argv
+    assert defaulted.argv[-2:] == ("--", launch_request.prompt)
+    assert configured.argv[-4:] == ("-m", configured_model, "--", launch_request.prompt)
+    assert "-m" not in reserved.argv
+    assert reserved.argv[-2:] == ("--", launch_request.prompt)
+    assert defaulted.cwd == launch_request.root
+    assert dict(defaulted.env) == dict(settings.environment)
+
+
 @pytest.mark.parametrize("allow", (None, False, True))
 @pytest.mark.parametrize("use_factory", (False, True), ids=("direct", "configured"))
 def test_arbitrary_explicit_models_require_the_opt_in(

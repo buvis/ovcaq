@@ -14,7 +14,9 @@ from tests.runtime.test_supervisor_adapters import (
     write_workflow_fixture,
 )
 
-from ovcaq.config import supervisor_settings
+from ovcaq.config import resolve_phase_route, supervisor_settings
+from ovcaq.drivers.claude import ClaudeDriver
+from ovcaq.drivers.codex import CodexDriver
 from ovcaq.drivers.edge import build_driver
 from ovcaq.runtime.decision import DecisionKind
 from ovcaq.runtime.session import reconcile_metrics
@@ -56,6 +58,15 @@ def configure_workflow(
     )
     prepare_workflow(h)
     return h
+
+
+def write_agent_config(root: Path, provider: str, tiers: str) -> Path:
+    root.mkdir()
+    (root / "ovcaq.toml").write_text(
+        f"agent = {json.dumps(provider)}\n[agents.{provider}]\n"
+        'command = ["fixture-runner"]\n' + tiers
+    )
+    return root
 
 
 @pytest.mark.parametrize("provider", ["codex", "claude"])
@@ -141,3 +152,59 @@ def test_configured_supervisor_launches_each_selected_literal_model_and_effort(
             invocation["environment"]["OVCAQ_FAKE_MARKER"]
             == "ordinary value with spaces"
         )
+
+
+@pytest.mark.parametrize(
+    ("provider", "driver_class"),
+    (("claude", ClaudeDriver), ("codex", CodexDriver)),
+)
+def test_unconfigured_project_routes_through_driver_default_tiers(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    provider: str,
+    driver_class: type[ClaudeDriver | CodexDriver],
+) -> None:
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "user-config"))
+    unconfigured = write_agent_config(tmp_path / "unconfigured", provider, "")
+    configured = write_agent_config(
+        tmp_path / "configured",
+        provider,
+        'tiers = { standard = "fixture-configured-standard" }\n',
+    )
+    defaults = driver_class.default_tiers
+    sentinel = {
+        "standard": "fixture-sentinel-standard",
+        "deep": "fixture-sentinel-deep",
+    }
+    phases = ("build", "review", "done")
+
+    routes = [
+        resolve_phase_route(unconfigured, phase, default_tiers=defaults)
+        for phase in phases
+    ]
+    sentinels = [
+        resolve_phase_route(unconfigured, phase, default_tiers=sentinel)
+        for phase in phases
+    ]
+
+    assert [route.agent for route in routes] == [provider] * 3
+    assert [route.tier for route in routes] == ["standard", "deep", "standard"]
+    assert [route.model for route in routes] == [
+        defaults["standard"],
+        defaults["deep"],
+        defaults["standard"],
+    ]
+    assert {route.model for route in routes} <= set(defaults.values())
+    assert [route.model for route in sentinels] == [
+        sentinel["standard"],
+        sentinel["deep"],
+        sentinel["standard"],
+    ]
+    assert (
+        resolve_phase_route(configured, "build", default_tiers=defaults).model
+        == "fixture-configured-standard"
+    )
+    assert (
+        resolve_phase_route(configured, "build", default_tiers=sentinel).model
+        == "fixture-configured-standard"
+    )
