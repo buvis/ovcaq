@@ -1,6 +1,7 @@
 import json
 import subprocess
 import sys
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -276,6 +277,14 @@ def test_model_capacity_uses_connectivity_wait_until_exact_retry_bound(
     )
 
 
+_CODEX_BANNER = (
+    "the codex wrapper captured this stderr stream from the child process "
+    "before the terminal turn event arrived, so a wrapper banner, the node "
+    "build line and two stack frames precede the real diagnostic and the "
+    "classifier has to scan the whole string and not just its leading bytes: "
+)
+
+
 _CODEX_DIAGNOSTIC_ROWS: list[tuple[str, FailureClass]] = [
     # One row per authentication marker new to this change.
     (
@@ -308,12 +317,45 @@ _CODEX_DIAGNOSTIC_ROWS: list[tuple[str, FailureClass]] = [
     ("job server-429-id failed", FailureClass.UNKNOWN),
     ("unexpected status 4290", FailureClass.UNKNOWN),
     ("the econnreset_handler module raised", FailureClass.UNKNOWN),
+    ("the enotfound_handler module raised", FailureClass.UNKNOWN),
+    ("the econnrefused_probe retried twice", FailureClass.UNKNOWN),
+    ("etimedout_retries exhausted", FailureClass.UNKNOWN),
+    ("getaddrinfoqueue drained", FailureClass.UNKNOWN),
+    ("eai_again_counter rose", FailureClass.UNKNOWN),
+    ("oauth_login_flow_v2 started", FailureClass.UNKNOWN),
+    ("the tokenizer config is missing", FailureClass.UNKNOWN),
+    # An authentication word outside an authentication context stays unknown.
+    ("the cached prompt expired", FailureClass.UNKNOWN),
+    ("the credentials file lives under the home directory", FailureClass.UNKNOWN),
+    # A multi-word marker needs its single spaces; other whitespace does not
+    # match, so the widened forms stay unknown.
+    ("not\tlogged in", FailureClass.UNKNOWN),
+    ("permission\ndenied", FailureClass.UNKNOWN),
+    ("the stored token\nexpired", FailureClass.UNKNOWN),
+    ("the connection\treset mid-stream", FailureClass.UNKNOWN),
+    ("the request timed\nout", FailureClass.UNKNOWN),
+    ("the agent\nloop died", FailureClass.UNKNOWN),
+    # The later classes stay reachable from a native diagnostic.
+    ("the request timed out", FailureClass.TIMEOUT),
+    ("agent loop died", FailureClass.AGENT),
+    # A marker trailing a long preamble, a stack frame or a second line still
+    # classifies, so leading bytes alone cannot decide.
+    (_CODEX_BANNER + "read ECONNRESET", FailureClass.CONNECTIVITY),
+    (_CODEX_BANNER + "the stored token expired", FailureClass.AUTHENTICATION),
+    (
+        "npm ERR! boom\n  caused by: OAuth token has expired",
+        FailureClass.AUTHENTICATION,
+    ),
     # Earlier classes win over later ones when both markers are present.
     (
         "OAuth token has expired after HTTP 429 Too Many Requests",
         FailureClass.AUTHENTICATION,
     ),
     ("unexpected status 403 Forbidden after read ECONNRESET", FailureClass.PERMISSION),
+    (
+        "unexpected status 403 Forbidden after HTTP 429 Too Many Requests",
+        FailureClass.PERMISSION,
+    ),
     (
         "status: 429 Too Many Requests after the lookup returned ENOTFOUND",
         FailureClass.RATE_LIMIT,
@@ -328,6 +370,87 @@ _CODEX_DIAGNOSTIC_ROWS: list[tuple[str, FailureClass]] = [
 
 @pytest.mark.parametrize(("detail", "expected"), _CODEX_DIAGNOSTIC_ROWS)
 def test_codex_diagnostics_classify_by_table(
+    detail: str, expected: FailureClass
+) -> None:
+    assert classify_failure(detail) is expected
+
+
+def test_codex_diagnostic_table_reaches_every_failure_class() -> None:
+    reached = {expected for _, expected in _CODEX_DIAGNOSTIC_ROWS}
+    assert reached >= {
+        FailureClass.AUTHENTICATION,
+        FailureClass.PERMISSION,
+        FailureClass.RATE_LIMIT,
+        FailureClass.CONNECTIVITY,
+        FailureClass.TIMEOUT,
+        FailureClass.AGENT,
+        FailureClass.UNKNOWN,
+    }
+
+
+_CODEX_MARKERS: list[tuple[str, FailureClass]] = [
+    ("OAuth login", FailureClass.AUTHENTICATION),
+    ("token has expired", FailureClass.AUTHENTICATION),
+    ("token expired", FailureClass.AUTHENTICATION),
+    ("expired token", FailureClass.AUTHENTICATION),
+    ("unauthorized", FailureClass.AUTHENTICATION),
+    ("not logged in", FailureClass.AUTHENTICATION),
+    ("permission denied", FailureClass.PERMISSION),
+    ("rate limit", FailureClass.RATE_LIMIT),
+    ("read ECONNRESET", FailureClass.CONNECTIVITY),
+    ("connect ETIMEDOUT", FailureClass.CONNECTIVITY),
+    ("connect ECONNREFUSED", FailureClass.CONNECTIVITY),
+    ("ENOTFOUND", FailureClass.CONNECTIVITY),
+    ("getaddrinfo", FailureClass.CONNECTIVITY),
+    ("EAI_AGAIN", FailureClass.CONNECTIVITY),
+    ("timed out", FailureClass.TIMEOUT),
+    ("agent loop died", FailureClass.AGENT),
+]
+
+
+@pytest.mark.parametrize(
+    "carrier",
+    [
+        "the wrapper reported {marker} while the turn was active",
+        "turn 3 stopped; {marker}; the supervisor recorded the attempt",
+    ],
+)
+@pytest.mark.parametrize(("marker", "expected"), _CODEX_MARKERS)
+def test_codex_markers_classify_inside_unrelated_carrier_sentences(
+    carrier: str, marker: str, expected: FailureClass
+) -> None:
+    assert classify_failure(carrier.format(marker=marker)) is expected
+
+
+@pytest.mark.parametrize("fold", [str.upper, str.lower, str.swapcase])
+@pytest.mark.parametrize(("marker", "expected"), _CODEX_MARKERS)
+def test_codex_markers_classify_in_whatever_casing_a_provider_emits(
+    fold: Callable[[str], str], marker: str, expected: FailureClass
+) -> None:
+    detail = f"the wrapper reported {marker} during the turn"
+    assert classify_failure(fold(detail)) is expected
+
+
+_CODEX_CLASS_ORDER: list[tuple[FailureClass, str]] = [
+    (FailureClass.AUTHENTICATION, "OAuth token has expired"),
+    (FailureClass.PERMISSION, "permission denied"),
+    (FailureClass.RATE_LIMIT, "HTTP 429 Too Many Requests"),
+    (FailureClass.CONNECTIVITY, "read ECONNRESET"),
+    (FailureClass.TIMEOUT, "the request timed out"),
+    (FailureClass.AGENT, "agent loop died"),
+]
+
+
+_CODEX_PRECEDENCE_PAIRS: list[tuple[str, FailureClass]] = [
+    (detail, winner)
+    for index, (winner, earlier) in enumerate(_CODEX_CLASS_ORDER)
+    for _, later in _CODEX_CLASS_ORDER[index + 1 :]
+    for detail in (f"{earlier}; {later}", f"{later}; {earlier}")
+]
+
+
+@pytest.mark.parametrize(("detail", "expected"), _CODEX_PRECEDENCE_PAIRS)
+def test_codex_earlier_failure_class_wins_over_every_later_class(
     detail: str, expected: FailureClass
 ) -> None:
     assert classify_failure(detail) is expected
