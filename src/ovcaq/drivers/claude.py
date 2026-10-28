@@ -6,9 +6,10 @@ import math
 import os
 import shutil
 from collections import OrderedDict
-from collections.abc import Iterable
-from dataclasses import asdict
+from collections.abc import Iterable, Mapping
+from dataclasses import asdict, replace
 from datetime import UTC, datetime
+from types import MappingProxyType
 from typing import Any
 
 from ovcaq.config import AgentSettings
@@ -36,6 +37,9 @@ from ovcaq.events.model import JSONValue
 
 class ClaudeDriver:
     name = "claude"
+    default_tiers: Mapping[str, str] = MappingProxyType(
+        {"standard": "sonnet", "deep": "opus"}
+    )
 
     def __init__(self, settings: AgentSettings, *, run_id: str) -> None:
         options = settings.options
@@ -61,7 +65,9 @@ class ClaudeDriver:
         for key, value in settings.environment.items():
             if key in defaults and value != defaults[key]:
                 raise ValueError(f"Cannot override fixed Claude environment key: {key}")
-        self._settings = settings
+        self._settings = replace(
+            settings, tiers={**self.default_tiers, **settings.tiers}
+        )
         self._run_id = run_id
         self._environment = defaults | dict(settings.environment)
         self._session_id: str | None = None

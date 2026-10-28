@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **drivers**: every driver publishes a `default_tiers` table, so a project that configures no tier table still resolves the `standard` and `deep` phase tiers. Configured tiers always win. The Codex driver maps both tiers to the reserved value `default`, which emits no `-m` argument and leaves the Codex CLI on its own configured model.
 - **runtime**: `ovcaq doctor` reports a sixth capability fact, `process_identity`: `supported` with the start token as detail, or `degraded` with the error text, which makes `doctor --json` report `ok: false`.
 - **runtime**: add the `process_probe` error code (exit 12) for a libproc process-identity probe that cannot run; its message names the platform and points to `ovcaq doctor`.
 - **runtime**: `ovcaq run` validates the process identity probe and the build, review and done phase routes before any state write, so a failure leaves `state.json` at the same revision.

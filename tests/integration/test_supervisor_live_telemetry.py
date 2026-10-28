@@ -6,7 +6,7 @@ import secrets
 import sys
 import threading
 import time
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -52,6 +52,7 @@ class LiveDriver:
     nonces: list[str] = field(default_factory=list)
     receipts: list[tuple[int, str]] = field(default_factory=list)
     observer: ProjectObserver | None = None
+    default_tiers: Mapping[str, str] = field(default_factory=dict)
 
     def default_prompt(self, phase: str) -> str:
         return f"observe {phase}"

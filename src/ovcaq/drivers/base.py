@@ -84,6 +84,7 @@ class DriverHealth:
 
 class AgentDriver(Protocol):
     name: str
+    default_tiers: Mapping[str, str]
 
     def default_prompt(self, phase: str) -> str: ...
 

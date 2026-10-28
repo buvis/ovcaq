@@ -170,6 +170,7 @@ class Supervisor:
                     phase,
                     agent=self._driver.name,
                     phase_settings=self._settings.phases[phase],
+                    default_tiers=self._driver.default_tiers,
                 )
             except ConfigurationError as error:
                 raise CommandError(ErrorCode.USAGE, str(error)) from error
@@ -478,6 +479,7 @@ class Supervisor:
             phase,
             agent=driver.name,
             phase_settings=self._settings.phases[phase],
+            default_tiers=driver.default_tiers,
         )
         prompt = (
             route.prompt if route.prompt is not None else driver.default_prompt(phase)

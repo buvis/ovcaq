@@ -6,7 +6,7 @@ import stat
 import sys
 import threading
 import time
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -91,6 +91,7 @@ class Driver:
     raw_present_before_decode: list[bool] = field(default_factory=list)
     on_line: Callable[[str], None] | None = None
     launch_error: Exception | None = None
+    default_tiers: Mapping[str, str] = field(default_factory=dict)
 
     def default_prompt(self, phase: str) -> str:
         return f"default {phase}"

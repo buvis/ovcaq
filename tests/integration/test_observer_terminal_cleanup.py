@@ -10,7 +10,7 @@ import subprocess
 import sys
 import threading
 import time
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -158,6 +158,7 @@ class Driver:
     telemetry: bool = False
     name: str = "local"
     requests: list[LaunchRequest] = field(default_factory=list)
+    default_tiers: Mapping[str, str] = field(default_factory=dict)
 
     def default_prompt(self, phase: str) -> str:
         return phase

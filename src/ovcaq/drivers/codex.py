@@ -6,10 +6,11 @@ import logging
 import os
 import selectors
 import subprocess
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import asdict, replace
 from datetime import UTC, datetime
 from time import monotonic
+from types import MappingProxyType
 
 from ovcaq.config import AgentSettings
 from ovcaq.drivers.base import DriverHealth, LaunchRequest, LaunchSpec
@@ -37,6 +38,8 @@ logger = logging.getLogger(__name__)
 
 _PINNED_VERSION = "0.160.0"
 _PROBE_OUTPUT_LIMIT = 16 * 1024
+# Reserved literal: keep the provider's own configured model by omitting -m.
+_PROVIDER_DEFAULT_MODEL = "default"
 
 
 def _run_probe_command(
@@ -112,6 +115,9 @@ plugins or marketplace content."""
 
 class CodexDriver:
     name = "codex"
+    default_tiers: Mapping[str, str] = MappingProxyType(
+        {"standard": _PROVIDER_DEFAULT_MODEL, "deep": _PROVIDER_DEFAULT_MODEL}
+    )
 
     def __init__(self, settings: AgentSettings, *, run_id: str) -> None:
         options = settings.options
@@ -124,7 +130,9 @@ class CodexDriver:
             raise ValueError("Codex approval must be never")
         if type(options.get("allow_explicit_model", False)) is not bool:
             raise ValueError("Codex allow_explicit_model must be a boolean")
-        self._settings = settings
+        self._settings = replace(
+            settings, tiers={**self.default_tiers, **settings.tiers}
+        )
         self._run_id = run_id
         self._session_id: str | None = None
         self._usage = Usage()
@@ -141,6 +149,8 @@ class CodexDriver:
                 "allow_explicit_model", False
             ):
                 raise ValueError(f"Unknown Codex model: {model}")
+            if model == _PROVIDER_DEFAULT_MODEL:
+                model = None
         effort_arguments: tuple[str, ...] = ()
         effort = request.effort
         if effort is not None:
