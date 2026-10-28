@@ -77,6 +77,20 @@ def tiny_actor_file(tmp_path: Path) -> Path:
     return path
 
 
+def unmaskable_actor_file(tmp_path: Path, state: str) -> Path:
+    """An actor file whose credential token-length masking cannot reach."""
+    if state == "tiny-credential":
+        return tiny_actor_file(tmp_path)
+    if state == "ordinary-name":
+        # Nothing but this file's size says the credential is unmaskable.
+        path = write_actor_file(tmp_path, "actor.json", secret="zq7", flavor="plain")
+        assert path.stat().st_size < MIN_SECRET_CHARS
+        return path
+    path = tmp_path / "absent-actor.json"
+    assert not path.exists()
+    return path
+
+
 def controller_stderr(secret: str) -> str:
     """Controller output that frames a secret with words of its own."""
     return f"{CONTROLLER_PROSE[0]} {secret} {CONTROLLER_PROSE[1]}"
@@ -86,7 +100,8 @@ def test_the_published_redaction_constants_keep_their_values() -> None:
     """The thresholds and markers are the contract, not free variables."""
     assert MIN_SECRET_CHARS == 8
     assert REDACTED_MARKER == "<redacted>"
-    assert MAX_STDERR_TAIL_CHARS <= 4096
+    assert MAX_STDERR_TAIL_CHARS == 512
+    assert TRUNCATION_MARKER == "...(truncated) "
     assert marks_truncation(TRUNCATION_MARKER)
 
 
@@ -382,16 +397,12 @@ def test_apply_diagnostic_drops_controller_text_when_the_actor_file_cannot_be_st
     assert REDACTED_MARKER in message
 
 
-@pytest.mark.parametrize("state", ["tiny-credential", "missing-actor"])
+@pytest.mark.parametrize("state", ["tiny-credential", "ordinary-name", "missing-actor"])
 def test_contract_drops_controller_text_when_the_credential_may_be_unmaskable(
     fake: FakeController, project_root: Path, tmp_path: Path, state: str
 ) -> None:
     """A mismatching live field is controller output, exactly as stderr is."""
-    if state == "tiny-credential":
-        actor_path = tiny_actor_file(tmp_path)
-    else:
-        actor_path = tmp_path / "absent-actor.json"
-        assert not actor_path.exists()
+    actor_path = unmaskable_actor_file(tmp_path, state)
     minted = fresh_secret()
     live_value = f"{CONTROLLER_PROSE[0]} {TINY_SECRET} {minted} {CONTROLLER_PROSE[1]}"
     fake.respond(json.dumps(live_contract(schema_digest=live_value)), verb="contract")

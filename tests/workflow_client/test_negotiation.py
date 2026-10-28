@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import secrets
 from pathlib import Path
@@ -30,6 +31,7 @@ from ovcaq.workflow_client import (
     PROTOCOL_MAJOR,
     REDACTED_MARKER,
     TRUNCATION_MARKER,
+    ApplyOutcomeUnknownError,
     ApplyResult,
     ControllerClient,
     ControllerConfig,
@@ -51,7 +53,12 @@ def test_contract_rejects_live_controller_missing_a_pinned_operation(
     with pytest.raises(IncompatibleContractError) as caught:
         make_client(fake, project_root).contract()
 
-    assert operation in str(caught.value)
+    message = str(caught.value)
+    # The message identifies what is missing, so a catalogue of every pinned
+    # name is not an answer: the names the controller does advertise must not
+    # appear beside it.
+    assert operation in message
+    assert all(kept_name not in message for kept_name in kept)
     assert len(fake.calls()) == 1
 
 
@@ -65,7 +72,9 @@ def test_contract_rejects_live_controller_missing_a_pinned_capability(
     with pytest.raises(IncompatibleContractError) as caught:
         make_client(fake, project_root).contract()
 
-    assert capability in str(caught.value)
+    message = str(caught.value)
+    assert capability in message
+    assert all(kept_name not in message for kept_name in kept)
     assert len(fake.calls()) == 1
 
 
@@ -82,7 +91,11 @@ def test_contract_rejects_live_operation_that_only_extends_a_pinned_name(
     with pytest.raises(IncompatibleContractError) as caught:
         make_client(fake, project_root).contract()
 
-    assert pinned in str(caught.value)
+    message = str(caught.value)
+    assert pinned in message
+    assert all(
+        other not in message for other in FIXTURE["operations"] if other != pinned
+    )
     assert len(fake.calls()) == 1
 
 
@@ -90,16 +103,17 @@ def test_contract_rejects_a_capability_advertised_only_as_an_operation(
     fake: FakeController, project_root: Path
 ) -> None:
     capability = "idempotent-request-id"
-    live = live_contract(
-        capabilities=[name for name in FIXTURE["capabilities"] if name != capability]
-    )
+    kept = [name for name in FIXTURE["capabilities"] if name != capability]
+    live = live_contract(capabilities=kept)
     live["operations"] = [*live["operations"], capability]
     fake.respond(json.dumps(live), verb="contract")
 
     with pytest.raises(IncompatibleContractError) as caught:
         make_client(fake, project_root).contract()
 
-    assert capability in str(caught.value)
+    message = str(caught.value)
+    assert capability in message
+    assert all(kept_name not in message for kept_name in kept)
 
 
 def test_contract_rejects_a_pinned_name_present_only_in_an_unrelated_field(
@@ -115,7 +129,9 @@ def test_contract_rejects_a_pinned_name_present_only_in_an_unrelated_field(
     with pytest.raises(IncompatibleContractError) as caught:
         make_client(fake, project_root, bundle=bundle).contract()
 
-    assert capability in str(caught.value)
+    message = str(caught.value)
+    assert capability in message
+    assert all(kept_name not in message for kept_name in kept)
 
 
 @pytest.mark.parametrize(
@@ -190,10 +206,14 @@ def test_contract_rejects_live_package_version_other_than_the_pinned_one(
 # 3. Required fields are validated before they are compared
 
 PINNED_FIELDS = ["package_version", "schema_digest", "fixture_digest"]
-UNUSABLE_LIVE = {
+UNUSABLE_LIVE: dict[str, list[Any]] = {
     "package_version": [100, None, ["1.0.0"], {"v": "1.0.0"}],
     "schema_digest": [OMIT, "", 7, None],
     "fixture_digest": [OMIT, "", 7, None],
+    # A bare string is a run of characters, never a list of names, and one
+    # non-string entry spoils the list it sits in.
+    "operations": ["workflow.open", 7, None, ["workflow.open", 7]],
+    "capabilities": ["lease-epoch", 7, None, ["lease-epoch", None]],
 }
 UNUSABLE_LIVE_CASES = [
     (name, value) for name, values in UNUSABLE_LIVE.items() for value in values
@@ -217,8 +237,11 @@ def test_contract_rejects_pinned_bundle_with_an_unusable_required_string(
     with pytest.raises(IncompatibleContractError) as caught:
         make_client(fake, project_root, bundle=bundle).contract()
 
-    # The pinned document is at fault, not the controller's output.
-    assert field_name in str(caught.value)
+    # The pinned document is at fault, not the controller's output, and the
+    # message names the one field at fault rather than listing all three.
+    message = str(caught.value)
+    assert field_name in message
+    assert all(other not in message for other in PINNED_FIELDS if other != field_name)
     assert not isinstance(caught.value, ControllerOutputError)
 
 
@@ -265,7 +288,9 @@ def test_contract_refuses_required_strings_that_are_unusable_in_both_documents(
     with pytest.raises(IncompatibleContractError) as caught:
         make_client(fake, project_root, bundle=bundle).contract()
 
-    assert field_name in str(caught.value)
+    message = str(caught.value)
+    assert field_name in message
+    assert all(other not in message for other in PINNED_FIELDS if other != field_name)
     assert not isinstance(caught.value, ControllerOutputError)
 
 
@@ -336,12 +361,19 @@ def test_contract_accepts_bundle_whose_content_digest_matches_the_pin(
     bundle = write_bundle(tmp_path, package_version="1.4.2")
     live = live_contract(load_json(bundle), package_version="1.4.2+live")
     fake.respond(json.dumps(live), verb="contract")
+    pin = controller_bundle_digest(bundle)
+    # The pin is what sha256sum of the file prints, so an operator and the
+    # client can agree on it.
+    assert pin == hashlib.sha256(bundle.read_bytes()).hexdigest()
+    # The same JSON in different bytes is a different pin: whoever reformats
+    # the bundle has to re-pin it.
+    reindented = tmp_path / "reindented.json"
+    reindented.write_text(json.dumps(load_json(bundle), indent=2), encoding="utf-8")
+    assert load_json(reindented) == load_json(bundle)
+    assert controller_bundle_digest(reindented) != pin
 
     contract = make_client(
-        fake,
-        project_root,
-        bundle=bundle,
-        bundle_digest=controller_bundle_digest(bundle),
+        fake, project_root, bundle=bundle, bundle_digest=pin
     ).contract()
 
     assert contract.package_version == "1.4.2+live"
@@ -372,6 +404,24 @@ def test_contract_rejects_tampered_bundle_before_spawning_the_controller(
 
     assert pin in str(caught.value)
     assert controller_bundle_digest(tampered) in str(caught.value)
+    assert fake.calls() == []
+
+
+@pytest.mark.parametrize("shape", ["prefix", "one-character"])
+def test_contract_rejects_a_pin_that_is_not_the_whole_bundle_digest(
+    fake: FakeController, project_root: Path, tmp_path: Path, shape: str
+) -> None:
+    """A prefix of the digest pins nothing, so it is refused like a mismatch."""
+    bundle = write_bundle(tmp_path)
+    digest = controller_bundle_digest(bundle)
+    pin = digest[:16] if shape == "prefix" else "0"
+    fake.respond(json.dumps(live_contract()), verb="contract")
+
+    with pytest.raises(IncompatibleContractError) as caught:
+        make_client(fake, project_root, bundle=bundle, bundle_digest=pin).contract()
+
+    # The bundle itself is untouched, so the message reports its whole digest.
+    assert digest in str(caught.value)
     assert fake.calls() == []
 
 
@@ -441,6 +491,48 @@ def test_apply_negotiates_the_contract_before_issuing_its_verb(
     assert json.loads(call["request"]) == envelope_as_json(envelope)
     assert call["request_mode"] == 0o600
     assert not request_path(call).exists()
+
+
+def test_snapshot_refuses_an_empty_workflow_id_without_spawning_the_controller(
+    fake: FakeController, project_root: Path
+) -> None:
+    """An empty workflow id is the caller's mistake, not a controller call."""
+    fake.respond(json.dumps(live_contract()), verb="contract")
+    fake.respond(json.dumps({"revision": 2}), verb="snapshot")
+
+    with pytest.raises(ValueError):
+        make_client(fake, project_root).snapshot(workflow_id="")
+
+    assert fake.calls() == []
+
+
+# One field at a time carries a type the ApplyResult contract forbids, so a
+# surviving check for one field cannot cover for a missing check on another.
+WRONG_TYPED_APPLY_FIELDS = {
+    "ok": "yes",
+    "revision": "later",
+    "result": [],
+    "error_code": 7,
+    "retryable": "maybe",
+}
+
+
+@pytest.mark.parametrize("field_name", list(WRONG_TYPED_APPLY_FIELDS))
+def test_apply_reports_an_unknown_outcome_when_a_response_field_has_a_wrong_type(
+    fake: FakeController, project_root: Path, actor_file: Path, field_name: str
+) -> None:
+    """A malformed answer is not a result: the mutation's fate is unknown."""
+    response = {**ACCEPTED_APPLY, field_name: WRONG_TYPED_APPLY_FIELDS[field_name]}
+    fake.respond(json.dumps(live_contract()), verb="contract")
+    fake.respond(json.dumps(response), verb="apply")
+    client = make_client(fake, project_root, actor_file=actor_file)
+
+    with pytest.raises(ApplyOutcomeUnknownError):
+        client.apply(make_envelope(request_id="req-0202"))
+
+    assert fake.verbs() == ["contract", "apply"]
+    # The request file is still cleaned up on this path.
+    assert not request_path(fake.call_for("apply")).exists()
 
 
 def failing_negotiation(
@@ -593,6 +685,29 @@ def test_contract_redacts_a_secret_echoed_into_a_mismatching_live_field(
     assert REDACTED_MARKER in message
     # Short words stay legible, and the pinned side comes from the local bundle.
     assert LEGIBLE_WORD in message
+    assert FIXTURE[field_name] in message
+    assert fake.verbs() == ["contract"]
+
+
+@pytest.mark.parametrize("field_name", PINNED_FIELDS)
+def test_contract_redacts_a_whitespace_free_secret_echoed_into_a_live_field(
+    fake: FakeController, project_root: Path, field_name: str
+) -> None:
+    """A credential needs no words around it to be a credential."""
+    minted = minted_secret()
+    assert not any(character.isspace() for character in minted)
+    assert minted != FIXTURE[field_name]
+    live: dict[str, Any] = {field_name: minted}
+    fake.respond(json.dumps(live_contract(**live)), verb="contract")
+
+    with pytest.raises(IncompatibleContractError) as caught:
+        make_client(fake, project_root, actor_file=None).contract()
+
+    message = str(caught.value)
+    assert minted not in message
+    assert not any(piece in message for piece in secret_fragments(minted))
+    assert REDACTED_MARKER in message
+    # The pinned side comes from the local bundle, so it is still reportable.
     assert FIXTURE[field_name] in message
     assert fake.verbs() == ["contract"]
 
