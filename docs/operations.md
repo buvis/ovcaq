@@ -77,8 +77,16 @@ Workflow inputs use CLI flags, project `ovcaq.toml`, user
 Runtime roots remain inside the project and reject symlink components.
 `--prd-root` and `--runtime-root` override those inputs; `--state` overrides
 the workflow state file independently of the runtime root.
-Frontmatter receives keys from `[agents.<agent>.tiers]` for the configured
-top-level `agent`. Model values stay opaque. Repeated `--available-tier KEY`
+Frontmatter receives the neutral tier keys `standard` and `deep` unioned with
+the keys from `[agents.<agent>.tiers]` for the configured top-level `agent`.
+An `[agents.<agent>.tiers]` table must now define `standard` and `deep`,
+because the phase routes ask for those keys; a table that defines neither
+neutral key silently falls through to the driver's own models instead of
+failing. A PRD frontmatter floor applies only when its value is a tier key in
+that table, so a floor whose value is a provider model name (`<model>`) warns
+and applies no floor unless the table defines `<model>` as a key.
+Codex reserves the tier value `default`, which keeps the Codex CLI on its own
+configured model. Model values stay opaque. Repeated `--available-tier KEY`
 flags supply the available keys explicitly; an unavailable hint warns and
 applies no floor. This input reader does not launch or route agents.
 

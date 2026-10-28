@@ -9,6 +9,8 @@ observations. The public contracts described here are the implemented exports of
 `AgentDriver` implementations provide:
 
 - `name`, the advertised driver name;
+- `default_tiers`, a read-only `Mapping[str, str]` from neutral tier key to
+  provider model, required at `DRIVER_API_VERSION` 2;
 - `default_prompt(phase)`, the driver's native phase prompt;
 - `probe()`, which reports `DriverHealth`;
 - `build_launch(request)`, which converts a `LaunchRequest` into a `LaunchSpec`;
@@ -20,6 +22,29 @@ observations. The public contracts described here are the implemented exports of
 directory, and the raw-output format. The later supervisor deliberately merges
 that overlay into its prepared host environment. OVCAQ executes argv directly;
 configured commands are never shell-evaluated.
+
+`default_tiers` publishes the models a driver uses for the neutral tier keys
+the default phase routes ask for (`ovcaq.config.DEFAULT_PHASE_TIERS` maps
+build and done to `standard`, review to `deep`). `ClaudeDriver.default_tiers` maps
+`standard` to `sonnet` and `deep` to `opus`. `CodexDriver.default_tiers` maps
+both keys to the reserved literal `default`, and `build_launch` omits the `-m`
+segment whenever the resolved model equals that literal, which leaves the Codex
+CLI on its own configured model. The suppression keys on the exact literal, not
+on the value's origin: a configured tier value is always emitted verbatim.
+Both drivers merge as `{**default_tiers, **settings.tiers}`, so a configured
+tier always wins and a table that omits a neutral key inherits the driver's
+model for it. The mapping is read-only (`MappingProxyType`); callers must not
+mutate it.
+
+A configured table therefore needs only the two neutral keys, plus any
+model-name key that a PRD frontmatter floor uses (here `opus`):
+
+```toml
+[agents.claude.tiers]
+standard = "sonnet"
+deep = "opus"
+opus = "opus"
+```
 
 Extensions expose a `DriverPlugin(api_version, factory)`, where `factory`
 implements `DriverFactory`. `discover_drivers` combines built-in drivers with
@@ -98,6 +123,29 @@ has passed) and resolves to no reset when the date is invalid in that year.
 `authentication`, `timeout`, `agent`, and `unknown`. `Usage` represents usage
 reported by observations. `session_failure_observation` constructs the public
 failure observation form.
+
+Each adapter classifies its own terminal prose, and the two matchers differ.
+Claude's `_FAILURE_MARKERS` is an ordered table of lowercased substrings,
+tried as permission, authentication, rate limit, connectivity, then timeout;
+the first class with any matching substring wins, a string detail that matches
+nothing is `agent`, and a non-string detail is `unknown`. It now also carries
+`oauth`, `token has expired`, `token expired`, `expired token`,
+`not logged in`, `http 401` and `status 401` for `authentication`; `rate limit`,
+`rate-limit`, `rate_limit`, `too many requests`, `http 429` and `status 429`
+for `rate_limit`; and `econnreset`, `econnrefused`, `etimedout`, `eai_again`
+and `getaddrinfo` for `connectivity`. Because the match is a plain substring,
+`HTTP 4290` classifies as `rate_limit`.
+
+Codex's `classify_failure` instead wraps each class alternation in `\b(?:...)\b`
+and searches case-insensitively, trying authentication, permission, rate limit,
+connectivity, timeout, then agent, and returning `unknown` when none matches.
+Its authentication alternatives now include `oauth`, `token (?:has )?expired`
+and `expired token`, and its connectivity alternatives now include `econnreset`,
+`etimedout`, `econnrefused`, `enotfound`, `getaddrinfo` and `eai_again`.
+Because of the word-boundary wrapper, `HTTP 4290` stays `unknown` (the digit
+breaks no boundary after `429`), and a marker glued into a longer identifier
+such as `econnreset_handler` stays `unknown` too. Numeric codes still need
+their HTTP, status or error context word in both adapters.
 
 Use `observation_record` and `observation_from_record` for the serialized
 observation representation. `sanitize_text` and `sanitize_json` redact
@@ -181,7 +229,9 @@ argv = (
 )
 ```
 
-An absent model omits its segment. The supervisor resolves the selected model
+An absent model omits its segment, and so does the reserved literal `default`
+that `CodexDriver.default_tiers` maps both neutral tier keys to. The supervisor
+resolves the selected model
 once, and the driver built by `build_driver` preserves that resolved value even
 when it also matches a configured tier key. Direct `build_launch` requests retain
 tier-key precedence: a configured tier resolves through `settings.tiers`; an
