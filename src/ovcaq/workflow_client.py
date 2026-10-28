@@ -411,6 +411,12 @@ class ControllerClient:
         size. A file of at least MIN_SECRET_CHARS bytes may hold a token
         long enough for _redact to mask; a smaller file, or one that cannot
         be stat'ed at all, is unsafe.
+
+        Known residual: size bounds the credential only from above, so a
+        short credential wrapped in a larger file (a JSON actor document, or
+        a trailing newline) still reads as safe and survives masking in a
+        diagnostic. Closing that needs the credential's length declared in
+        configuration, since reading the actor file here is forbidden.
         """
         actor_file = self._config.actor_file
         if actor_file is None:
