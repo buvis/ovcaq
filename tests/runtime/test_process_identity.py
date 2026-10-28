@@ -208,8 +208,6 @@ def test_non_positive_pid_is_gone_without_touching_the_kernel(
 @pytest.mark.parametrize(
     "errno_value",
     [
-        errno.EPERM,
-        errno.EACCES,
         errno.EINVAL,
         errno.ENOMEM,
         errno.EFAULT,
@@ -220,11 +218,31 @@ def test_non_positive_pid_is_gone_without_touching_the_kernel(
 def test_absent_pid_is_simply_gone_whatever_errno_the_kernel_leaves(
     monkeypatch: pytest.MonkeyPatch, errno_value: int
 ) -> None:
-    """A zero-byte answer means gone, regardless of errno (spec: size 0 or 136)."""
+    """A zero-byte answer means gone for every errno except a denial (spec:
+    size 0 or 136) - EPERM/EACCES are the one case that means "denied", not
+    "dead", and are covered separately below."""
     pid = os.getpid()
     record = _bsdinfo(pid)
     calls = _kernel_answers(monkeypatch, record, written=0, errno_value=errno_value)
     assert process_identity(pid) is None
+    assert calls == [(pid, _FLAVOR, 0, _RECORD_SIZE)]
+
+
+@pytest.mark.parametrize("errno_value", [errno.EPERM, errno.EACCES])
+def test_zero_byte_answer_with_denied_errno_raises_instead_of_going_absent(
+    monkeypatch: pytest.MonkeyPatch, errno_value: int
+) -> None:
+    """A zero-byte answer with EPERM or EACCES means the kernel refused the
+    probe for a live process, not that it is gone; treating it as absent lets
+    a denied-but-alive process be pruned as dead."""
+    pid = os.getpid()
+    record = _bsdinfo(pid)
+    calls = _kernel_answers(monkeypatch, record, written=0, errno_value=errno_value)
+    with pytest.raises(CommandError) as error:
+        process_identity(pid)
+    assert error.value.code is ErrorCode.PROCESS_PROBE
+    assert str(pid) in str(error.value)
+    assert errno.errorcode[errno_value] in str(error.value)
     assert calls == [(pid, _FLAVOR, 0, _RECORD_SIZE)]
 
 

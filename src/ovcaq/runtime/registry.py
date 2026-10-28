@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ctypes
 import ctypes.util
+import errno
 import fcntl
 import json
 import os
@@ -175,8 +176,16 @@ def process_identity(pid: int) -> ProcessIdentity | None:
         return None
     library = _libproc()
     buffer = ctypes.create_string_buffer(PROC_BSDINFO_SIZE)
+    ctypes.set_errno(0)
     written = library.proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, buffer, PROC_BSDINFO_SIZE)
     if written == 0:
+        denied = ctypes.get_errno()
+        if denied in (errno.EPERM, errno.EACCES):
+            raise CommandError(
+                ErrorCode.PROCESS_PROBE,
+                f"Process probe for pid {pid} on {sys.platform} was denied "
+                f"({errno.errorcode.get(denied, denied)}); run ovcaq doctor",
+            )
         return None
     if written != PROC_BSDINFO_SIZE:
         raise CommandError(
