@@ -29,12 +29,10 @@ build and done to `standard`, review to `deep`). `ClaudeDriver.default_tiers` ma
 `standard` to `sonnet` and `deep` to `opus`. `CodexDriver.default_tiers` maps
 both keys to the reserved literal `default`, and `build_launch` omits the `-m`
 segment whenever the resolved model equals that literal, which leaves the Codex
-CLI on its own configured model. The suppression keys on the exact literal, not
-on the value's origin: a configured tier value is always emitted verbatim.
+CLI on its own configured model.
 Both drivers merge as `{**default_tiers, **settings.tiers}`, so a configured
 tier always wins and a table that omits a neutral key inherits the driver's
-model for it. The mapping is read-only (`MappingProxyType`); callers must not
-mutate it.
+model for it.
 
 A configured table therefore needs only the two neutral keys, plus any
 model-name key that a PRD frontmatter floor uses (here `opus`):
@@ -144,8 +142,7 @@ and `expired token`, and its connectivity alternatives now include `econnreset`,
 `etimedout`, `econnrefused`, `enotfound`, `getaddrinfo` and `eai_again`.
 Because of the word-boundary wrapper, `HTTP 4290` stays `unknown` (the digit
 breaks no boundary after `429`), and a marker glued into a longer identifier
-such as `econnreset_handler` stays `unknown` too. Numeric codes still need
-their HTTP, status or error context word in both adapters.
+such as `econnreset_handler` stays `unknown` too.
 
 Use `observation_record` and `observation_from_record` for the serialized
 observation representation. `sanitize_text` and `sanitize_json` redact
@@ -229,9 +226,7 @@ argv = (
 )
 ```
 
-An absent model omits its segment, and so does the reserved literal `default`
-that `CodexDriver.default_tiers` maps both neutral tier keys to. The supervisor
-resolves the selected model
+An absent model omits its segment. The supervisor resolves the selected model
 once, and the driver built by `build_driver` preserves that resolved value even
 when it also matches a configured tier key. Direct `build_launch` requests retain
 tier-key precedence: a configured tier resolves through `settings.tiers`; an

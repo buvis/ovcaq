@@ -82,9 +82,7 @@ the keys from `[agents.<agent>.tiers]` for the configured top-level `agent`.
 An `[agents.<agent>.tiers]` table must now define `standard` and `deep`,
 because the phase routes ask for those keys; a table that defines neither
 neutral key silently falls through to the driver's own models instead of
-failing. A PRD frontmatter floor applies only when its value is a tier key in
-that table, so a floor whose value is a provider model name (`<model>`) warns
-and applies no floor unless the table defines `<model>` as a key.
+failing.
 Codex reserves the tier value `default`, which keeps the Codex CLI on its own
 configured model. Model values stay opaque. Repeated `--available-tier KEY`
 flags supply the available keys explicitly; an unavailable hint warns and
