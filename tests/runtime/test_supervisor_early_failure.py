@@ -16,7 +16,7 @@ from tests.runtime.test_supervisor_preflight import (
 
 from ovcaq.errors import CommandError, ErrorCode
 from ovcaq.runtime.decision import DecisionKind
-from ovcaq.runtime.registry import FleetEntry, FleetRegistry
+from ovcaq.runtime.registry import FleetEntry, FleetRegistry, process_identity
 from ovcaq.runtime.session import require_no_emergency_failure
 from ovcaq.state.schema import State
 
@@ -231,6 +231,71 @@ def test_failure_after_session_opened_never_reverts(
     expected["revision"] = after["revision"]
     expected["control"]["attention"] = attention
     assert after == expected
+
+
+def test_create_session_os_error_before_session_opens_reverts_a_fresh_batch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An `OSError` from `create_session`, inside the first `_open_session`
+    before `_session_opened` is ever set, must revert the freshly started
+    batch exactly like the `CommandError` sibling above - the loop's own
+    `_STATE_ERRORS` catch must not strand it `running` with no supervisor."""
+    h = harness(tmp_path, monkeypatch)
+    before = unstarted(h)
+    h.driver.steps = [Step()]
+
+    def fail_create_session(*args: object, **kwargs: object) -> object:
+        raise OSError("synthetic session directory creation failure")
+
+    monkeypatch.setattr(
+        "ovcaq.runtime.supervisor.create_session", fail_create_session
+    )
+
+    outcome = h.supervisor().run()
+
+    after = h.store.read()
+    assert outcome.exit_code == 1 and outcome.sessions_attempted == 1
+    assert outcome.decision.kind is DecisionKind.HALT
+    assert after["batch"]["status"] == "idle"
+    assert after["batch"]["id"] == ""
+    assert after["batch"]["started_at"] is None
+    assert after["control"]["attention"] is None
+    assert after["revision"] > before["revision"]
+    assert h.driver.requests == []
+
+
+def test_open_session_assertion_error_before_session_opens_reverts_a_fresh_batch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A bare `AssertionError` from `_open_session`'s `assert identity is not
+    None` - preflight's own probe must keep working, only the attempt probe
+    fails - escapes `_STATE_ERRORS` and `_PUBLISH_ERRORS` alike; it must still
+    revert the fresh batch rather than leave it `running`."""
+    h = harness(tmp_path, monkeypatch)
+    before = unstarted(h)
+    h.driver.steps = [Step()]
+    calls: list[int] = []
+
+    def probe(pid: int) -> object:
+        calls.append(pid)
+        if len(calls) <= 2:
+            return process_identity(pid)
+        return None
+
+    monkeypatch.setattr("ovcaq.runtime.supervisor.process_identity", probe)
+
+    outcome = h.supervisor().run()
+
+    after = h.store.read()
+    assert len(calls) == 3
+    assert outcome.exit_code == 1 and outcome.sessions_attempted == 1
+    assert outcome.decision.kind is DecisionKind.HALT
+    assert after["batch"]["status"] == "idle"
+    assert after["batch"]["id"] == ""
+    assert after["batch"]["started_at"] is None
+    assert after["control"]["attention"] is None
+    assert after["revision"] > before["revision"]
+    assert h.driver.requests == []
 
 
 def seed_earlier_run_evidence(h: Harness) -> dict[Path, bytes]:
