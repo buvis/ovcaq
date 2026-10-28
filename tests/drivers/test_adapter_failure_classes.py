@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from ovcaq.config import AgentSettings
-from ovcaq.drivers.claude_events import failure_payload
+from ovcaq.drivers.claude_events import failure_payload, sanitize_text
 from ovcaq.drivers.codex import CodexDriver
 from ovcaq.drivers.codex_events import classify_failure
 from ovcaq.events.model import FailureClass
@@ -276,6 +276,14 @@ def test_model_capacity_uses_connectivity_wait_until_exact_retry_bound(
     )
 
 
+_CLAUDE_BANNER = (
+    "Claude Code wrapper captured the following stderr stream from the child "
+    "process before the terminal event was emitted. A version banner, the node "
+    "build line and two stack frames all precede the real diagnostic, so the "
+    "classifier has to scan the whole string and not just its leading bytes: "
+)
+
+
 _CLAUDE_DIAGNOSTIC_ROWS: list[tuple[object, FailureClass]] = [
     # One row per authentication marker.
     ("Claude could not complete the OAuth login flow", FailureClass.AUTHENTICATION),
@@ -309,6 +317,44 @@ _CLAUDE_DIAGNOSTIC_ROWS: list[tuple[object, FailureClass]] = [
     # marker ("connection") still lands in timeout.
     ("Claude CLI exited: operation not permitted", FailureClass.PERMISSION),
     ("The connection timeout stopped the stream read", FailureClass.TIMEOUT),
+    # Each marker group reaches its class in whatever casing a provider emits.
+    ("oauth login is required before the next turn", FailureClass.AUTHENTICATION),
+    ("NOT LOGGED IN; run /login to continue", FailureClass.AUTHENTICATION),
+    ("the api answered http 401 unauthorized", FailureClass.AUTHENTICATION),
+    ("ToKeN HaS ExPiReD for this workspace", FailureClass.AUTHENTICATION),
+    ("the gateway answered http 429 too many requests", FailureClass.RATE_LIMIT),
+    ("RATE LIMIT REACHED for this organization", FailureClass.RATE_LIMIT),
+    ("StAtUs 429 returned by the upstream gateway", FailureClass.RATE_LIMIT),
+    ("read econnreset while streaming the turn", FailureClass.CONNECTIVITY),
+    ("GetAddrInfo EAI_AGAIN api.example.test", FailureClass.CONNECTIVITY),
+    ("connect EtImEdOuT to the API host", FailureClass.CONNECTIVITY),
+    ("OPERATION NOT PERMITTED while writing the transcript", FailureClass.PERMISSION),
+    ("The stream read TIMED OUT after 600 seconds", FailureClass.TIMEOUT),
+    # A marker buried in real CLI prose, JSON or a stack frame still classifies.
+    (
+        (
+            "npm ERR! read ECONNRESET\n"
+            "  at TLSWrap.onStreamRead (node:internal/stream_base_commons:218:20)"
+        ),
+        FailureClass.CONNECTIVITY,
+    ),
+    (
+        (
+            "TypeError: Cannot read properties of undefined\n"
+            "  caused by: OAuth token has expired"
+        ),
+        FailureClass.AUTHENTICATION,
+    ),
+    (
+        'retry 3/3 abandoned; body: {"error":{"type":"rate_limit_error"}}',
+        FailureClass.RATE_LIMIT,
+    ),
+    # A long diagnostic keeps its class when the marker trails the preamble.
+    (_CLAUDE_BANNER + "operation not permitted", FailureClass.PERMISSION),
+    (_CLAUDE_BANNER + "the stored token expired", FailureClass.AUTHENTICATION),
+    (_CLAUDE_BANNER + "rate limit reached", FailureClass.RATE_LIMIT),
+    (_CLAUDE_BANNER + "read ECONNRESET", FailureClass.CONNECTIVITY),
+    (_CLAUDE_BANNER + "the request timed out", FailureClass.TIMEOUT),
     # Earlier classes win over later ones when both markers are present.
     ("connect ETIMEDOUT after the request timed out", FailureClass.CONNECTIVITY),
     (
@@ -316,11 +362,18 @@ _CLAUDE_DIAGNOSTIC_ROWS: list[tuple[object, FailureClass]] = [
         FailureClass.AUTHENTICATION,
     ),
     ("permission denied and you are not logged in", FailureClass.PERMISSION),
+    ("not logged in after read ECONNRESET", FailureClass.AUTHENTICATION),
+    ("the host lookup hit EAI_AGAIN while not logged in", FailureClass.AUTHENTICATION),
+    ("rate limit reached; request timed out", FailureClass.RATE_LIMIT),
+    ("status 429 raised after getaddrinfo failed", FailureClass.RATE_LIMIT),
+    ("operation not permitted after connect ETIMEDOUT", FailureClass.PERMISSION),
+    ("connection refused while the request timed out", FailureClass.CONNECTIVITY),
     # Unmatched text, including bare numbers and no text at all.
     ("exit code 401", FailureClass.AGENT),
     ("processed 429 rows", FailureClass.AGENT),
     ("provider execution failed", FailureClass.AGENT),
     ("", FailureClass.AGENT),
+    ("Authorization: Bearer sk-ant-api03-live-secret-value", FailureClass.AGENT),
     # Accepted asymmetry: plain containment makes "HTTP 4290" a rate limit.
     ("HTTP 4290", FailureClass.RATE_LIMIT),
     # Evidence that is not text at all.
@@ -329,12 +382,45 @@ _CLAUDE_DIAGNOSTIC_ROWS: list[tuple[object, FailureClass]] = [
 ]
 
 
+_CLAUDE_MALFORMED_EVIDENCE: list[object] = [
+    True,
+    3.5,
+    {"message": "boom"},
+    ["boom"],
+    b"boom",
+]
+
+
 @pytest.mark.parametrize(("detail", "expected"), _CLAUDE_DIAGNOSTIC_ROWS)
 def test_claude_diagnostics_classify_by_table(
     detail: object, expected: FailureClass
 ) -> None:
-    payload = failure_payload(detail)
-    assert set(payload) == {"failure_class", "detail"}
-    assert payload["failure_class"] == expected
-    if not isinstance(detail, str):
+    # Serializing first forces real JSON values and shows every stored key,
+    # so a sentinel or a key-hiding mapping cannot satisfy the assertions.
+    payload = json.loads(json.dumps(failure_payload(detail)))
+    assert sorted(payload) == ["detail", "failure_class"]
+    failure_class = payload["failure_class"]
+    assert isinstance(failure_class, str)
+    assert failure_class == failure_class.lower()
+    assert failure_class == expected.value
+    if isinstance(detail, str):
+        assert payload["detail"] == sanitize_text(detail)[:4096]
+    else:
         assert payload["detail"] == "Malformed terminal error evidence"
+
+
+def test_claude_diagnostic_detail_redacts_credentials_and_bounds_length() -> None:
+    detail = "Authorization: Bearer sk-ant-api03-live-secret-value " + "overflow " * 900
+    payload = json.loads(json.dumps(failure_payload(detail)))
+    assert "sk-ant-api03-live-secret-value" not in payload["detail"]
+    assert "[REDACTED]" in payload["detail"]
+    assert len(payload["detail"]) == 4096
+
+
+@pytest.mark.parametrize("detail", _CLAUDE_MALFORMED_EVIDENCE)
+def test_malformed_claude_error_evidence_degrades_to_unknown(detail: object) -> None:
+    payload = json.loads(json.dumps(failure_payload(detail)))
+    assert payload == {
+        "failure_class": "unknown",
+        "detail": "Malformed terminal error evidence",
+    }
