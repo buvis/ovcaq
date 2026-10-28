@@ -28,7 +28,9 @@ from tests.workflow_client.conftest import (
 )
 
 from ovcaq.workflow_client import (
+    MIN_SECRET_CHARS,
     PROTOCOL_MAJOR,
+    REDACTED_MARKER,
     ApplyOutcomeUnknownError,
     ApplyResult,
     ControllerClient,
@@ -132,8 +134,13 @@ def test_contract_rejects_digest_not_pinned_by_bundle(
     with pytest.raises(IncompatibleContractError) as caught:
         make_client(fake, project_root).contract()
 
-    assert reported in str(caught.value)
-    assert pinned in str(caught.value)
+    message = str(caught.value)
+    # Every variant here is one token of at least MIN_SECRET_CHARS characters,
+    # and the reported value is controller output, so the slot it would occupy
+    # carries the mask instead. The pinned side comes from the local bundle.
+    assert all(len(token) >= MIN_SECRET_CHARS for token in reported.split())
+    assert f"{field} '{REDACTED_MARKER}'" in message
+    assert pinned in message
 
 
 def test_contract_compares_against_configured_bundle(
