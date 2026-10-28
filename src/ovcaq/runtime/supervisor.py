@@ -94,6 +94,10 @@ _STATE_ERRORS = (StateError, SchemaError, OSError)
 # Ownership publication can fail on the filesystem, in state, in the process probe
 # or in the registry; KeyboardInterrupt and other BaseExceptions still propagate.
 _PUBLISH_ERRORS = (*_STATE_ERRORS, CommandError, RuntimeError, ValueError)
+# The first attempt's _open_session can also fail with a bare process-identity
+# AssertionError, so the loop's own catch must cover it alongside _STATE_ERRORS
+# to reach the same session-opened-aware revert as _abandon_attempt.
+_ATTEMPT_ERRORS = (*_STATE_ERRORS, AssertionError, RuntimeError, ValueError)
 
 
 class Clock(WatchdogClock, Protocol):
@@ -143,6 +147,7 @@ class Supervisor:
         self._sessions = 0
         self._session_opened = False
         self._state_halt: SupervisorDecision | None = None
+        self._started: State | None = None
 
     def preflight(self) -> None:
         """Validate identity, then every route unless the workflow cannot launch."""
@@ -175,6 +180,7 @@ class Supervisor:
         self._state_halt = None
         self._metadata = None
         self._fleet_entry = None
+        self._started = None
         with RunLock.acquire(self._paths.run_lock):
             publish_terminal_evidence(self._paths)
             require_no_emergency_failure(self._paths)
@@ -187,6 +193,7 @@ class Supervisor:
                 started = self._start_batch()
             except _STATE_ERRORS:
                 return SupervisorOutcome(1, self._state_failure("startup"), 0)
+            self._started = started
             try:
                 metadata, entry = self._publish_ownership()
             except _PUBLISH_ERRORS as error:
@@ -267,6 +274,10 @@ class Supervisor:
             try:
                 self._attention_notice("startup", detail)
             except _STATE_ERRORS:
+                # The generic _state_failure text would mislabel this as a
+                # state-store failure when it is really the original probe or
+                # route error from `error` above; only the attention write
+                # itself failed.
                 self._state_failure("startup")
         return SupervisorDecision(DecisionKind.HALT, detail)
 
@@ -384,7 +395,9 @@ class Supervisor:
                     _, decision = self._attempt()
                 if not self.apply(decision):
                     return self._state_halt or decision
-            except _STATE_ERRORS:
+            except _ATTEMPT_ERRORS as error:
+                if not self._session_opened:
+                    return self._abandon_attempt(self._started, error)
                 return self._state_failure("supervisor.loop")
 
     def run_once(self) -> AttemptResult:
@@ -530,6 +543,9 @@ class Supervisor:
                 _timestamp(started_at),
             ),
         )
+        # Set as soon as create_session returns, not only once _open_session
+        # itself returns: the session directory already exists on disk at
+        # this point, so a later failure in this function must never revert.
         self._session_opened = True
         metric = SessionMetric(
             1,
