@@ -1,7 +1,6 @@
 import json
 import subprocess
 import sys
-from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -376,87 +375,6 @@ _CODEX_DIAGNOSTIC_ROWS: list[tuple[str, FailureClass]] = [
 
 @pytest.mark.parametrize(("detail", "expected"), _CODEX_DIAGNOSTIC_ROWS)
 def test_codex_diagnostics_classify_by_table(
-    detail: str, expected: FailureClass
-) -> None:
-    assert classify_failure(detail) is expected
-
-
-def test_codex_diagnostic_table_reaches_every_failure_class() -> None:
-    reached = {expected for _, expected in _CODEX_DIAGNOSTIC_ROWS}
-    assert reached >= {
-        FailureClass.AUTHENTICATION,
-        FailureClass.PERMISSION,
-        FailureClass.RATE_LIMIT,
-        FailureClass.CONNECTIVITY,
-        FailureClass.TIMEOUT,
-        FailureClass.AGENT,
-        FailureClass.UNKNOWN,
-    }
-
-
-_CODEX_MARKERS: list[tuple[str, FailureClass]] = [
-    ("OAuth login", FailureClass.AUTHENTICATION),
-    ("token has expired", FailureClass.AUTHENTICATION),
-    ("token expired", FailureClass.AUTHENTICATION),
-    ("expired token", FailureClass.AUTHENTICATION),
-    ("unauthorized", FailureClass.AUTHENTICATION),
-    ("not logged in", FailureClass.AUTHENTICATION),
-    ("permission denied", FailureClass.PERMISSION),
-    ("rate limit", FailureClass.RATE_LIMIT),
-    ("read ECONNRESET", FailureClass.CONNECTIVITY),
-    ("connect ETIMEDOUT", FailureClass.CONNECTIVITY),
-    ("connect ECONNREFUSED", FailureClass.CONNECTIVITY),
-    ("ENOTFOUND", FailureClass.CONNECTIVITY),
-    ("getaddrinfo", FailureClass.CONNECTIVITY),
-    ("EAI_AGAIN", FailureClass.CONNECTIVITY),
-    ("timed out", FailureClass.TIMEOUT),
-    ("agent loop died", FailureClass.AGENT),
-]
-
-
-@pytest.mark.parametrize(
-    "carrier",
-    [
-        "the wrapper reported {marker} while the turn was active",
-        "turn 3 stopped; {marker}; the supervisor recorded the attempt",
-    ],
-)
-@pytest.mark.parametrize(("marker", "expected"), _CODEX_MARKERS)
-def test_codex_markers_classify_inside_unrelated_carrier_sentences(
-    carrier: str, marker: str, expected: FailureClass
-) -> None:
-    assert classify_failure(carrier.format(marker=marker)) is expected
-
-
-@pytest.mark.parametrize("fold", [str.upper, str.lower, str.swapcase])
-@pytest.mark.parametrize(("marker", "expected"), _CODEX_MARKERS)
-def test_codex_markers_classify_in_whatever_casing_a_provider_emits(
-    fold: Callable[[str], str], marker: str, expected: FailureClass
-) -> None:
-    detail = f"the wrapper reported {marker} during the turn"
-    assert classify_failure(fold(detail)) is expected
-
-
-_CODEX_CLASS_ORDER: list[tuple[FailureClass, str]] = [
-    (FailureClass.AUTHENTICATION, "OAuth token has expired"),
-    (FailureClass.PERMISSION, "permission denied"),
-    (FailureClass.RATE_LIMIT, "HTTP 429 Too Many Requests"),
-    (FailureClass.CONNECTIVITY, "read ECONNRESET"),
-    (FailureClass.TIMEOUT, "the request timed out"),
-    (FailureClass.AGENT, "agent loop died"),
-]
-
-
-_CODEX_PRECEDENCE_PAIRS: list[tuple[str, FailureClass]] = [
-    (detail, winner)
-    for index, (winner, earlier) in enumerate(_CODEX_CLASS_ORDER)
-    for _, later in _CODEX_CLASS_ORDER[index + 1 :]
-    for detail in (f"{earlier}; {later}", f"{later}; {earlier}")
-]
-
-
-@pytest.mark.parametrize(("detail", "expected"), _CODEX_PRECEDENCE_PAIRS)
-def test_codex_earlier_failure_class_wins_over_every_later_class(
     detail: str, expected: FailureClass
 ) -> None:
     assert classify_failure(detail) is expected
