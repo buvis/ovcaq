@@ -84,7 +84,7 @@ def settings_for(base: Path) -> SupervisorSettings:
         RuntimeSettings(paths, 0.05, 1_000_000, 10_000_000, 0),
         SupervisorPolicy(1, 2, 2, 0.01, 1.0, 3),
         {
-            phase: PhaseSettings("sonnet", "high", 20)
+            phase: PhaseSettings("standard", "high", 20)
             for phase in ("build", "review", "done")
         },
     )
@@ -345,7 +345,7 @@ def prepare(
     root.mkdir(exist_ok=True)
     (root / "ovcaq.toml").write_text(
         'agent = "local"\n[agents.local]\ncommand = ["runner"]\n'
-        'tiers = { sonnet = "model-s", opus = "model-o" }\n'
+        'tiers = { standard = "model-s", deep = "model-o" }\n'
     )
     settings = settings_for(base)
     store = StateStore(settings.runtime.paths.state_file)

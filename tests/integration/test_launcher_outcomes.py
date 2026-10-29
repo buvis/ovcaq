@@ -54,7 +54,7 @@ def project(tmp_path: Path, layout: str = "default") -> Path:
     configuration = (
         'agent = "claude"\n[agents.claude]\n'
         f"command = {json.dumps([sys.executable, '-c', 'raise SystemExit(91)'])}\n"
-        'tiers = { sonnet = "model-s", opus = "model-o" }\n'
+        'tiers = { standard = "model-s", deep = "model-o" }\n'
         '[agents.claude.options]\npermission_mode = "auto"\n'
     )
     if layout == "contained":
@@ -472,7 +472,7 @@ def test_live_handshake_returns_exact_published_child_identity(
     config.write_text(
         config.read_text() + "[agents.alternate]\n"
         f"command = {json.dumps([sys.executable, '-c', 'raise SystemExit(92)'])}\n"
-        'tiers = { sonnet = "model-s", opus = "model-o" }\n'
+        'tiers = { standard = "model-s", deep = "model-o" }\n'
     )
     boundary.replacement, boundary.wait_before_return = OWNER, False
     launched = launch_supervisor(root, agent=agent, timeout_seconds=2)

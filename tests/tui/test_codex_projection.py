@@ -63,7 +63,7 @@ def _driver(scenario: str = "healthy") -> CodexDriver:
         AgentSettings(
             "codex",
             (sys.executable, str(FIXTURES / "fake_codex.py")),
-            {"sonnet": "model-s", "opus": "model-o"},
+            {"standard": "model-s", "deep": "model-o"},
             {
                 "OVCAQ_FAKE_SCENARIO": scenario,
                 "OVCAQ_FAKE_CLI": str(Path(sys.executable).with_name("ovcaq")),
@@ -162,7 +162,7 @@ def _supervisor(root: Path, monkeypatch: pytest.MonkeyPatch, scenario: str):
     (root / "ovcaq.toml").write_text(
         'agent = "codex"\n[agents.codex]\n'
         f"command = {json.dumps([sys.executable, str(FIXTURES / 'fake_codex.py')])}\n"
-        'tiers = { sonnet = "model-s", opus = "model-o" }\n'
+        'tiers = { standard = "model-s", deep = "model-o" }\n'
     )
     paths = ensure_runtime_layout(
         resolve_runtime_paths(root, xdg_state_home=root / "xdg")
@@ -180,7 +180,7 @@ def _supervisor(root: Path, monkeypatch: pytest.MonkeyPatch, scenario: str):
         RuntimeSettings(paths, 0.05, 1_000_000, 10_000_000, 0),
         SupervisorPolicy(0, 0, 0, 0.01, 0.01, 3),
         {
-            phase: PhaseSettings("sonnet", "medium", 10)
+            phase: PhaseSettings("standard", "medium", 10)
             for phase in ("build", "review", "done")
         },
     )

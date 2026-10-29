@@ -66,7 +66,7 @@ def _emitter(root: Path, thread: str, exit_code: int) -> tuple[tuple[str, str], 
     (root / "ovcaq.toml").write_text(
         'agent = "codex"\n[agents.codex]\n'
         f"command = {json.dumps(command)}\n"
-        'tiers = { sonnet = "model-s", opus = "model-o" }\n'
+        'tiers = { standard = "model-s", deep = "model-o" }\n'
     )
     return command, raw
 
@@ -97,7 +97,7 @@ def _supervisor(
         RuntimeSettings(paths, 0.05, 1_000_000, 10_000_000, 0),
         SupervisorPolicy(0, 0, 0, 0.01, 0.01, 3),
         {
-            phase: PhaseSettings("sonnet", "medium", 10)
+            phase: PhaseSettings("standard", "medium", 10)
             for phase in ("build", "review", "done")
         },
     )
@@ -107,7 +107,7 @@ def _supervisor(
             store=store,
             driver=CodexDriver(
                 AgentSettings(
-                    "codex", command, {"sonnet": "model-s", "opus": "model-o"}, {}, {}
+                    "codex", command, {"standard": "model-s", "deep": "model-o"}, {}, {}
                 ),
                 run_id="run-1",
             ),

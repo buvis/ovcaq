@@ -185,7 +185,7 @@ def live_settings(
     root.mkdir()
     (root / "ovcaq.toml").write_text(
         'agent = "local"\n[agents.local]\ncommand = ["runner"]\n'
-        'tiers = { sonnet = "model-s", opus = "model-o" }\n'
+        'tiers = { standard = "model-s", deep = "model-o" }\n'
     )
     paths = ensure_runtime_layout(
         resolve_runtime_paths(
@@ -204,7 +204,7 @@ def live_settings(
         runtime,
         SupervisorPolicy(1, 2, 2, 0.25, 5.0, 3),
         {
-            phase: PhaseSettings("sonnet", "high", 10)
+            phase: PhaseSettings("standard", "high", 10)
             for phase in ("build", "review", "done")
         },
     )

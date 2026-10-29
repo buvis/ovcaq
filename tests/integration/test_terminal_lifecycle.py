@@ -233,7 +233,7 @@ class World:
         )
         (root / "ovcaq.toml").write_text(
             f'agent = "claude"\n[agents.claude]\ncommand = [{json.dumps(str(agent))}]\n'
-            'tiers = { sonnet = "model-s", opus = "model-o" }\n'
+            'tiers = { standard = "model-s", deep = "model-o" }\n'
             f'[agents.claude.options]\npermission_mode = "auto"\n{phases}',
             encoding="utf-8",
         )

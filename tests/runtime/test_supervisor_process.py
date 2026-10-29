@@ -72,8 +72,8 @@ class ProcessDriver:
                 name=self.name,
                 command=(sys.executable, "-c", code),
                 tiers={
-                    "sonnet": "model-s",
-                    "opus": "model-o",
+                    "standard": "model-s",
+                    "deep": "model-o",
                     "model-s": "model-s",
                     "model-o": "model-o",
                 },
@@ -158,7 +158,7 @@ def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, adapter: str) -> Ha
     root.mkdir()
     (root / "ovcaq.toml").write_text(
         f'agent = "{adapter}"\n[agents.{adapter}]\ncommand = ["runner"]\n'
-        'tiers = { sonnet = "model-s", opus = "model-o" }\n'
+        'tiers = { standard = "model-s", deep = "model-o" }\n'
         "[phases.build]\ntimeout_seconds = 3\n"
     )
     paths = ensure_runtime_layout(
@@ -177,9 +177,9 @@ def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, adapter: str) -> Ha
         {
             phase: PhaseSettings(tier, "high", 3)
             for phase, tier in (
-                ("build", "sonnet"),
-                ("review", "opus"),
-                ("done", "sonnet"),
+                ("build", "standard"),
+                ("review", "deep"),
+                ("done", "standard"),
             )
         },
     )
