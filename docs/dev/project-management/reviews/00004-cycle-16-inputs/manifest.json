@@ -1,0 +1,216 @@
+{
+  "cycle": 16,
+  "reason": "Preserve completed dispatch inputs and clean this session's scratch files.",
+  "files": [
+    {
+      "original": "dev/local/tmp/alice-output-00004-16-20260914.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/alice-output-00004-16-20260914.txt",
+      "bytes": 1323,
+      "sha256": "1458a056726d555a9c81398d5151f089e7c3686b3c1514de822c2fb8b397b2a0"
+    },
+    {
+      "original": "dev/local/tmp/alice-prompt-00004-16-20260914.md",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/alice-prompt-00004-16-20260914.md",
+      "bytes": 31635,
+      "sha256": "26d55152882249a49a08e6df4e4b629a9c9a5ea4f7fc36cea854b037938f81db"
+    },
+    {
+      "original": "dev/local/tmp/attempt-task-11-r16-final.json",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/attempt-task-11-r16-final.json",
+      "bytes": 295,
+      "sha256": "0774969be52962971720c610bf4bc42883f8dbe4ef89a3c966fed2ea21b09da0"
+    },
+    {
+      "original": "dev/local/tmp/blake-output-00004-16-20260914.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/blake-output-00004-16-20260914.txt",
+      "bytes": 1500,
+      "sha256": "ec19feaafd59358c959fd0440ce3cc57337ecabff37e685d2760fa09b987af1a"
+    },
+    {
+      "original": "dev/local/tmp/blake-prompt-00004-16-20260914.md",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/blake-prompt-00004-16-20260914.md",
+      "bytes": 12707,
+      "sha256": "bbb17b4dc9e0b3155240675d67c0c88598dd6e32680d7a172e78ddf3d42ebe18"
+    },
+    {
+      "original": "dev/local/tmp/bob-prompt-00004-16-20260914.md",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/bob-prompt-00004-16-20260914.md",
+      "bytes": 42000,
+      "sha256": "e8539809872095480f365a510c2a1bc062080a266fbdb0997b97725c4316b6a0"
+    },
+    {
+      "original": "dev/local/tmp/carl-prompt-00004-16-20260914.md",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/carl-prompt-00004-16-20260914.md",
+      "bytes": 31991,
+      "sha256": "ef0ae167dfb75ec40a2ec5c716b569574ddb7be95191f2e58f7e6ebd8e6f9cb3"
+    },
+    {
+      "original": "dev/local/tmp/contract-card-r16-tail.md",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/contract-card-r16-tail.md",
+      "bytes": 771,
+      "sha256": "38a768055e078ee0390ca4ccf756ecd4681e41d9fdee5af16b2c1e070d5874df"
+    },
+    {
+      "original": "dev/local/tmp/dispatch-deslop-11-r16.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/dispatch-deslop-11-r16.txt",
+      "bytes": 13256,
+      "sha256": "2eb82f0e499219977b5bb7c766ec6104348c7e029dfbeb8f15dd1be0444f914b"
+    },
+    {
+      "original": "dev/local/tmp/dispatch-ivan-11-r16.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/dispatch-ivan-11-r16.txt",
+      "bytes": 25517,
+      "sha256": "65ee10bee3740fbee91679e5fda35c17ad5d0892d8f8ac158f0d9d12510e9c9a"
+    },
+    {
+      "original": "dev/local/tmp/dispatch-tess-11-r16-retry-1.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/dispatch-tess-11-r16-retry-1.txt",
+      "bytes": 5543,
+      "sha256": "5a7f6ff62e4d255185ec34e1c7ba042868036e74a4b26d6b4b4abc3f77ee069c"
+    },
+    {
+      "original": "dev/local/tmp/dispatch-tess-11-r16-retry-2.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/dispatch-tess-11-r16-retry-2.txt",
+      "bytes": 5186,
+      "sha256": "1f95ffc18b839e76d331fadbad645db20529f4a167b0ffca51c175887f08755c"
+    },
+    {
+      "original": "dev/local/tmp/dispatch-tess-11-r16.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/dispatch-tess-11-r16.txt",
+      "bytes": 15299,
+      "sha256": "2fe09254df50d7bdfc18afd89d1201f526ac382034e48e3d4c051484bf6a9094"
+    },
+    {
+      "original": "dev/local/tmp/ivan-11-architecture-r16.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/ivan-11-architecture-r16.txt",
+      "bytes": 6260,
+      "sha256": "7a39c7f26dc1f3e7bf6a24802b0772d69fad9c1a2d10c8ab469ae37e1b284fc0"
+    },
+    {
+      "original": "dev/local/tmp/ivan-11-checks-r16.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/ivan-11-checks-r16.txt",
+      "bytes": 15960,
+      "sha256": "fe167d6e13d025257dced3f90b115e2e4355a58a9258e4f973213d52edf38aba"
+    },
+    {
+      "original": "dev/local/tmp/ivan-11-files-r16.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/ivan-11-files-r16.txt",
+      "bytes": 202,
+      "sha256": "0a3f8db02f4378b61f823ce4330d72a792296d0d79cbd79175781b3f397205bb"
+    },
+    {
+      "original": "dev/local/tmp/review-context-00004-16-20260914.md",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/review-context-00004-16-20260914.md",
+      "bytes": 47029,
+      "sha256": "b17d227fe44f49e9f610cf5ea1df5c7b2c91f459b6fd05dcd0f9586729b6c495"
+    },
+    {
+      "original": "dev/local/tmp/review-diff-00004-16-20260914.diff",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/review-diff-00004-16-20260914.diff",
+      "bytes": 22594,
+      "sha256": "4f1ea2c0f1e336c4703aabbf88ee1326897ce8f623708e4492c99d5c192adbb1"
+    },
+    {
+      "original": "dev/local/tmp/review-prd-00004-16-20260914.md",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/review-prd-00004-16-20260914.md",
+      "bytes": 12122,
+      "sha256": "0d926b628e1b8bbff8b93ddbfb5aa81e3c3d857a5a92119df94ca039b2413679"
+    },
+    {
+      "original": "dev/local/tmp/review-task-11-r16-acceptance.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/review-task-11-r16-acceptance.txt",
+      "bytes": 902,
+      "sha256": "41efb421d56321368a014c5e3dbf64554ec2ca1e29cca3eae4102848eb366cca"
+    },
+    {
+      "original": "dev/local/tmp/review-task-11-r16-description.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/review-task-11-r16-description.txt",
+      "bytes": 4262,
+      "sha256": "ab6887e5954c58e93d810704e09795607b59625b20b3af20b6c6dab5371b8d9b"
+    },
+    {
+      "original": "dev/local/tmp/review-task-11-r16-prompt.md",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/review-task-11-r16-prompt.md",
+      "bytes": 26802,
+      "sha256": "2aab7f2b6efb7e70d83e2980c71d7a8c45f13fdacf0be25f3fb8bb873279bfdb"
+    },
+    {
+      "original": "dev/local/tmp/review-task-11-r16-retry-prompt.md",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/review-task-11-r16-retry-prompt.md",
+      "bytes": 27406,
+      "sha256": "5e7f4858a3a61e134fe53c68eb2a481ee0a10c3874f94aca9b4735fff3a052d8"
+    },
+    {
+      "original": "dev/local/tmp/review-task-11-r16-retry-verification.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/review-task-11-r16-retry-verification.txt",
+      "bytes": 2871,
+      "sha256": "e1dc6ef3eebc99a3e6b1bd4d79c7b69fdbb2ffa46353d8192bda836557b70fc7"
+    },
+    {
+      "original": "dev/local/tmp/review-task-11-r16-subject.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/review-task-11-r16-subject.txt",
+      "bytes": 64,
+      "sha256": "60f56d2279bed0e03744445af67effdad91f6b1e479eda7aa25d97a76e557e8a"
+    },
+    {
+      "original": "dev/local/tmp/review-task-11-r16-verification.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/review-task-11-r16-verification.txt",
+      "bytes": 2303,
+      "sha256": "427beefcc9db5873d38b000874e778b361f80a3baf9092ceb0072da13ee3ef95"
+    },
+    {
+      "original": "dev/local/tmp/review-tasks-00004-16-20260914.md",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/review-tasks-00004-16-20260914.md",
+      "bytes": 28074,
+      "sha256": "96e1cdb0c0e8e79562dc74e4127315478a3c45b6c135c893d6eaccde97e32da6"
+    },
+    {
+      "original": "dev/local/tmp/task-diff-11-r16-corrected.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/task-diff-11-r16-corrected.txt",
+      "bytes": 15744,
+      "sha256": "12dc2ef1775099b5ebdcca11a061eef5a917741070f11583699a9ab09085de18"
+    },
+    {
+      "original": "dev/local/tmp/task-diff-11-r16.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/task-diff-11-r16.txt",
+      "bytes": 15708,
+      "sha256": "4a4ef352dacc411cf66413a49bb8d9f0c6c81f26679edfe66c09134442f9a2a9"
+    },
+    {
+      "original": "dev/local/tmp/tess-11-acceptance.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/tess-11-acceptance.txt",
+      "bytes": 999,
+      "sha256": "3f439c8cd3e6ae775c18af3d487b7af0b377b0106732277cd72d63d3fc822e5b"
+    },
+    {
+      "original": "dev/local/tmp/tess-11-description.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/tess-11-description.txt",
+      "bytes": 1233,
+      "sha256": "3e4e403c6c4e288aa69e2bc4c17c1f8524cd6dc08b3b62fac712b4cecde17b97"
+    },
+    {
+      "original": "dev/local/tmp/tess-11-gate-1.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/tess-11-gate-1.txt",
+      "bytes": 1098,
+      "sha256": "59b50744e3fd8ddc03e8758803bf59c9b3136540a72c41eafce3b4e3b7b9f865"
+    },
+    {
+      "original": "dev/local/tmp/tess-11-gate-2-r16.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/tess-11-gate-2-r16.txt",
+      "bytes": 741,
+      "sha256": "0903b3682a9b812853324848b2a5feb0b17f19e0038c17d404fc562af2f8106d"
+    },
+    {
+      "original": "dev/local/tmp/tess-11-interfaces.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/tess-11-interfaces.txt",
+      "bytes": 888,
+      "sha256": "6c912f747c61f286766eeea662984974615cbd6e578840a8d241774a0aa08e17"
+    },
+    {
+      "original": "dev/local/tmp/tess-11-subject.txt",
+      "archive": "dev/local/reviews/00004-cycle-16-inputs/tess-11-subject.txt",
+      "bytes": 56,
+      "sha256": "0b33476f9cf08efd5c9d563dad32b4b9e6961c54c2dce68faf64503f20b64f1c"
+    }
+  ]
+}

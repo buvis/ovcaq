@@ -1,0 +1,20 @@
+{
+  "attempt": 1,
+  "model": "sonnet",
+  "outcome": "completed",
+  "review_cycle": 4,
+  "cause": null,
+  "implementor": "codex",
+  "actual_model": "gpt-6.1-sol",
+  "actual_provider": "openai",
+  "preflight_outcome": null,
+  "pipeline": "lean",
+  "red_check": "n/a:micro-lane",
+  "self_deslop": "skipped:trivial",
+  "style_gate": "clean",
+  "split_hygiene": "skipped:no-tests",
+  "commit": "ca59071c06d971684e618e0686654cdb0579ac97",
+  "verification": "140 passed in 0.22s; exit 0",
+  "review": "Pat: resolved R2, NO FINDINGS; parsed output valid",
+  "host_adaptation": "Eligible micro repair delegated to native Ivan at logical sonnet, gpt-6.1-sol/medium; coordinator did not edit production."
+}

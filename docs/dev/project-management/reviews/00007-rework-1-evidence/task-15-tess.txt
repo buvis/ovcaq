@@ -1,0 +1,30 @@
+TASK: 00007-15 Tess test-strengthening and relocation
+
+CHANGED FILES:
+- tests/runtime/test_supervisor_cli.py
+- tests/state/test_cli.py
+- docs/dev/tmp/00007-15-tess-report.txt
+
+FOCUSED NODES:
+- tests/runtime/test_supervisor_cli.py::test_parser_exposes_init_state_and_workflow_command_inventory (relocated from tests/state/test_cli.py; assertions preserved byte-for-byte)
+- tests/runtime/test_supervisor_cli.py::test_incomplete_lifecycle_commands_fail_with_json_usage_errors[run-requires-no-tui]
+- tests/runtime/test_supervisor_cli.py::test_incomplete_lifecycle_commands_fail_with_json_usage_errors[capability-retry-requires-name]
+- tests/state/test_cli.py::test_init_rejects_project_config_path_collisions_before_state_publication[directory] (unchanged regression verification)
+- tests/state/test_cli.py::test_init_rejects_project_config_path_collisions_before_state_publication[broken-symlink] (unchanged regression verification)
+
+ASSERTIONS PROVING THE DISTINCTION:
+- Both incomplete recognized commands must retain the JSON failure envelope validated by _failure, including code == "usage", nonempty message, no traceback, and no stdout.
+- `run` without its required opt-in must name `--no-tui` in the diagnostic message.
+- `capability retry` without its positional argument must name `NAME` case-insensitively in the diagnostic message.
+- State must remain byte-equivalent at the decoded object level after either rejected command.
+- A generic unknown-command usage message cannot pass either missing-argument assertion because it does not name `--no-tui` or `NAME` as the omitted requirement.
+
+CURRENT RESULT:
+- `UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache uv run pytest tests/runtime/test_supervisor_cli.py::test_parser_exposes_init_state_and_workflow_command_inventory tests/runtime/test_supervisor_cli.py::test_incomplete_lifecycle_commands_fail_with_json_usage_errors --tb=short`: 3 passed.
+- `UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache uv run pytest tests/runtime/test_supervisor_cli.py tests/state/test_cli.py::test_init_rejects_project_config_path_collisions_before_state_publication --tb=short`: 9 passed.
+- Both runs emitted only pytest temporary-directory cleanup warnings unrelated to these tests.
+- tests/runtime/test_supervisor_cli.py: 169 lines.
+- tests/state/test_cli.py: 786 lines.
+
+abort_reason: none
+ASSUMPTIONS: none

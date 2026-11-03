@@ -1,0 +1,14 @@
+{
+  "provider": "claude",
+  "model": "opus",
+  "started": 1790938718.980911,
+  "completed": 1790939107.375565,
+  "output": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/bob-output-00006-c5-20261002.txt",
+  "sha256": "c0589d5307edc152ea263c5691d5b4947aa054e48bf2e4f96555b7fb8d2fe72e",
+  "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/bob-output-00006-c5-20261002-8a317d5e6b0f44dcad7e79c6e4990400.jsonl",
+  "raw_sha256": "1f197660f470a568ce95e168c79a33b1548c1b77ca46382bc924f267c413ca99",
+  "thread_id": "17499c7e-f8f9-4b5e-aee0-e08653e8976c",
+  "root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+  "prd": "00006-events-claude-adapter-v1.md",
+  "cycle": 5
+}

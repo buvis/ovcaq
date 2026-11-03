@@ -1,0 +1,77 @@
+[
+  {
+    "cycle": 12,
+    "finding": "V1: Cannot statically verify: suite, ruff, format, mypy, and build gates at the reviewed head",
+    "file": null,
+    "command": "uv run pytest --basetemp /private/tmp/ovcaq-review-12-pytest",
+    "requested_command": "mise exec -- uv run pytest",
+    "source": "bob",
+    "result": {
+      "exit": 0,
+      "sha": "be5e385bd9714952b4803ee30f7c72e661c278f2",
+      "evidence": "dev/local/reviews/00004-cycle-12-rework-verification.json",
+      "command_run": "mise exec -- uv run pytest --basetemp /private/tmp/ovcaq-r12-full",
+      "note": "Satisfied once at settled repair HEAD by the matching project gate through mise; task-owned pytest basetemp. No duplicate suite run."
+    }
+  },
+  {
+    "cycle": 12,
+    "finding": "V1: Cannot statically verify: suite, ruff, format, mypy, and build gates at the reviewed head",
+    "file": null,
+    "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-review-12-uv-cache uv run ruff check .",
+    "requested_command": "mise exec -- uv run ruff check .",
+    "source": "bob",
+    "result": {
+      "exit": 0,
+      "sha": "be5e385bd9714952b4803ee30f7c72e661c278f2",
+      "evidence": "dev/local/reviews/00004-cycle-12-rework-verification.json",
+      "command_run": "mise exec -- uv run ruff check .",
+      "note": "Satisfied once at settled repair HEAD by the matching project gate through mise; task-owned pytest basetemp. No duplicate suite run."
+    }
+  },
+  {
+    "cycle": 12,
+    "finding": "V1: Cannot statically verify: suite, ruff, format, mypy, and build gates at the reviewed head",
+    "file": null,
+    "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-review-12-uv-cache uv run ruff format --check .",
+    "requested_command": "mise exec -- uv run ruff format --check .",
+    "source": "bob",
+    "result": {
+      "exit": 0,
+      "sha": "be5e385bd9714952b4803ee30f7c72e661c278f2",
+      "evidence": "dev/local/reviews/00004-cycle-12-rework-verification.json",
+      "command_run": "mise exec -- uv run ruff format --check .",
+      "note": "Satisfied once at settled repair HEAD by the matching project gate through mise; task-owned pytest basetemp. No duplicate suite run."
+    }
+  },
+  {
+    "cycle": 12,
+    "finding": "V1: Cannot statically verify: suite, ruff, format, mypy, and build gates at the reviewed head",
+    "file": null,
+    "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-review-12-uv-cache uv run mypy src/ovcaq",
+    "requested_command": "mise exec -- uv run mypy src/ovcaq",
+    "source": "bob",
+    "result": {
+      "exit": 0,
+      "sha": "be5e385bd9714952b4803ee30f7c72e661c278f2",
+      "evidence": "dev/local/reviews/00004-cycle-12-rework-verification.json",
+      "command_run": "mise exec -- uv run mypy src/ovcaq",
+      "note": "Satisfied once at settled repair HEAD by the matching project gate through mise; task-owned pytest basetemp. No duplicate suite run."
+    }
+  },
+  {
+    "cycle": 12,
+    "finding": "V1: Cannot statically verify: suite, ruff, format, mypy, and build gates at the reviewed head",
+    "file": null,
+    "command": "uv build",
+    "requested_command": "mise exec -- uv build",
+    "source": "bob",
+    "result": {
+      "exit": 0,
+      "sha": "be5e385bd9714952b4803ee30f7c72e661c278f2",
+      "evidence": "dev/local/reviews/00004-cycle-12-rework-verification.json",
+      "command_run": "mise exec -- uv build",
+      "note": "Satisfied once at settled repair HEAD by the matching project gate through mise; task-owned pytest basetemp. No duplicate suite run."
+    }
+  }
+]

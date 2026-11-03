@@ -1,0 +1,178 @@
+Abort and report if you read more than 100K of total input. Return the partial result and an abort_reason: context_overrun field.
+A diff has been written to satisfy this task. The implementation passed its
+tests. Your job: prune slop from the diff while keeping every test green.
+This is best-effort cleanup, not a correctness rework — do not change
+behavior, do not modify tests, do not refactor.
+
+Task: [D1] Repair configuration and redaction contracts (M)
+
+Description:
+What: Repair configuration and redaction contracts (M)
+
+Source review: dev/local/reviews/00006-events-claude-adapter-v1-review-1.md (HEAD 24fcec3bed6a41044c3d149d1f42bd678864e7e0)
+
+Location:
+- src/ovcaq/config.py
+- src/ovcaq/events/model.py
+- tests/workflow/test_configuration.py
+- tests/events/test_model.py
+- tests/drivers/test_claude.py
+
+Details:
+Restore the accepted configuration contract: an omitted command defaults to (selected_name,), while explicitly invalid arrays still fail. Reuse one agent-table/tier reader from workflow_settings without forcing unrelated workflow-only commands to configure a launcher. Reject all credential-shaped environment/options keys including authorization, cookie, credential and pinned credential values. Extend normalized free-text sanitization for bare Bearer credentials and recognizable likely-secret token forms, using synthetic samples only and provider-neutral patterns; preserve harmless prose and typed numeric usage fields. Ensure direct AgentSettings construction cannot bypass credential safeguards consumed by the driver. Keep ordinary environment control values allowed. Add behavioral tests that fail before these fixes.
+
+### Findings (verbatim)
+- 🟠 High Credential rejection omits `authorization`, `cookie`, and `credential`, so secret-bearing environment/options keys and values can enter agent settings and the launch overlay despite the PRD’s closed sensitive-key contract | File: src/ovcaq/config.py:43 | Consensus: 1/3 | Found by: ALICE
+- 🟡 Medium `agent_settings()` rejects configurations without an explicit command instead of applying the required `(name,)` default | File: src/ovcaq/config.py:156 | Consensus: 1/3 | Found by: ALICE
+- 🟡 Medium `workflow_settings()` duplicates agent-tier merging instead of delegating to `agent_settings()`, allowing workflow callers to accept agent configurations that the launch configuration rejects | File: src/ovcaq/config.py:221 | Consensus: 1/3 | Found by: ALICE
+- 🟠 Normalized-event redaction only catches credential-shaped keys and assignment syntax; bare likely secrets such as provider API tokens embedded in activity or tool text are persisted unchanged, violating the requirement to redact likely secrets from normalized evidence | File: src/ovcaq/events/model.py:22 | Consensus: 1/3 | Found by: BLAKE
+
+Acceptance criteria:
+- Every quoted finding no longer reproduces.
+- Preserve raw evidence, provider-neutral shared models, state authority and shell-free command construction.
+- Run focused regression tests and the work skill's mandatory final verification; do not perform completion review in the implementation session.
+
+
+Acceptance criteria:
+- Every quoted finding no longer reproduces.
+- Preserve raw evidence, provider-neutral shared models, state authority and shell-free command construction.
+- Run focused regression tests and the work skill's mandatory final verification; do not perform completion review in the implementation session.
+
+
+Tests that the diff made pass (do NOT modify):
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/workflow/test_configuration.py, /Users/bob/git/src/github.com/buvis/ovcaq/tests/workflow/test_configuration_rework.py, /Users/bob/git/src/github.com/buvis/ovcaq/tests/events/test_model_rework.py
+
+Files in the diff:
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/config.py, /Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/events/model.py, /Users/bob/git/src/github.com/buvis/ovcaq/CHANGELOG.md
+
+Procedure:
+
+1. Read the diff for each file in scope (`git diff HEAD~1..HEAD <file>` or
+   equivalent in your environment).
+2. For each line, block, helper, comment or docstring added in the
+   diff, ask:
+     "Does this trace to a failing test, an acceptance criterion, or
+     existing-behavior preservation?"
+   If the answer is no, mark the construct for removal.
+3. Apply removals one at a time. After each individual removal, re-run the
+   tests listed above (the narrow set Tess wrote). If any test fails,
+   restore that single removal and move on to the next candidate. Never
+   delete the test that fails — the test is authoritative.
+4. If no removal survived its test re-run, exit WITHOUT committing. Return
+   the literal string "no slop found" so the caller can record a noop.
+5. If at least one removal survived, commit with message:
+     chore: prune slop from [D1] Repair configuration and redaction contracts (M)
+   No CHANGELOG entry. No HEREDOC. No Co-Authored-By trailer. One commit
+   only — do not split into multiple cleanup commits.
+
+Rules:
+
+- **Do not modify tests.** If a test reads as weak, that is the per-task
+  reviewer's call (step 5.7), not yours. Leave it. Dead bindings a split left
+  behind in a test file are not yours either: `check_split_hygiene.py` answers
+  that mechanically at the task boundary (step 5.65), with `ast` rather than
+  judgment, so you never have to guess which test binding is safe to drop.
+- **Do not change behavior.** Tests prove behavior; if you cannot satisfy
+  the tests, the deletion is wrong. Restore.
+- **Do not refactor.** This pass deletes; it does not move code around,
+  rename symbols, or extract helpers. If a slop pattern would only resolve
+  through restructuring, note it in the return message instead of acting.
+- **Do not touch files outside the diff.** The cleanup is scoped to what
+  the implementor just produced. Adjacent slop in untouched files is out
+  of scope here — the post-session codex pass catches it separately.
+
+Slop patterns to look for (catalog inlined from `prompts/de-sloppify.md`):
+
+
+### 1. Language/framework verification tests
+
+Tests that only prove the runtime or framework works, not the project's behavior.
+
+### 2. Weak or tautological tests
+
+Replace existence checks, mock-confirming tests, self-referential assertions, and unexplained magic assertions with behavior-focused assertions. If an important boundary or failure case is missing, add the smallest useful test.
+
+### 3. Redundant type checks
+
+Remove runtime checks that duplicate compile-time guarantees, except at system boundaries.
+
+### 4. Impossible-state error handling
+
+Remove defensive handling for states that cannot occur from the current control flow. Keep validation and error handling at boundaries.
+
+### 5. Swallowed errors and empty catch blocks
+
+Do not hide failures. Re-throw, surface, or handle them meaningfully.
+
+### 6. Debug statements
+
+Remove development-only prints and logs.
+
+### 7. Commented-out code
+
+Delete dead code kept in comments.
+
+### 8. Obvious comments
+
+Remove comments that restate the code. Keep comments that explain intent, constraints, workarounds, or why.
+
+### 9. Over-abstraction and unnecessary indirection
+
+Inline abstractions that have only one consumer and no current testability or architectural value.
+
+### 10. Duplicate code
+
+Reuse existing code or standard library helpers instead of introducing parallel logic.
+
+### 11. Suspicious dependencies
+
+Verify any newly added dependency exists, is used, and is justified. Remove hallucinated, unused, or speculative dependencies.
+
+### 12. Hardcoded secrets and placeholder credentials
+
+Replace with environment variables, secret storage, or project-approved configuration.
+
+### 13. Deprecated APIs and outdated patterns
+
+Modernize only when the newer approach is already supported by the project and the change stays in scope.
+
+### 14. Naive performance patterns
+
+Fix only if the code is on a hot path or clearly scales poorly with input size.
+
+### 15. Leftover artifacts
+
+Remove temp files, scratch scripts, backup files, unrelated lockfile churn, and agent-generated planning docs.
+
+### 16. AI-style docstrings
+
+Remove multi-paragraph docstrings on trivial functions. Remove docstrings that paraphrase the function name or restate its arguments — when the function is well-named, the docstring is noise. Remove "this function does X by calling Y" preambles that describe implementation rather than contract. Keep docstrings that capture non-obvious intent, invariants, or constraints.
+
+### 17. Trivial-type validation
+
+Remove runtime type guards, JSON schemas, or pydantic models that duplicate compile-time guarantees in a fully-typed file. Examples: `isinstance(x, int)` inside a function whose signature is `x: int`; a pydantic model declared for a function-internal dict whose shape is already pinned by the caller's types. Keep validation at real system boundaries (request bodies, file inputs, external API responses).
+
+### 18. Single-instantiation factories
+
+Inline factory functions, builders, or wrapper classes called from exactly one place where direct construction reads more clearly. A factory pattern only earns its complexity when multiple call sites benefit; before there are multiple call sites, the abstraction is speculative.
+
+### 19. Speculative configuration
+
+Remove config flags, env vars, options parameters that have exactly one used value across the codebase. Configuration is a contract with future readers — exposing one without a current consumer adds maintenance burden for no benefit.
+
+### 20. Restating comments
+
+Remove comments that say what the next line of code already says. Examples: `// increment counter` above `counter += 1`; `# parse the response` above `data = json.loads(raw)`. Keep comments that explain non-obvious why (invariants, workarounds, constraints).
+
+### 21. Framework-verification tests
+
+A more explicit subsection of #2. Remove tests asserting only "import works", "function exists", "method returns truthy" without exercising business logic. Remove mock-confirming tests (the only assertion is `mock.assert_called_with(...)`). Remove snapshot tests where the shape itself is not the contract — they catch any change, including correct ones. Keep behavior assertions that fail when business logic changes.
+
+
+Return one of:
+  - "no slop found" — exited without commit, nothing to clean.
+  - "committed {sha}" — committed `chore: prune slop from ...` at {sha},
+    test suite green.
+  - "errored: {short reason}" — dispatch problem; do not commit, just
+    explain so the caller can record the failure.
+Host: native Codex. Before first shell call explain task and command purpose. Use UV_CACHE_DIR=/private/tmp/ovcaq-autocodex-uv-cache for uv. Do not change state or launch other agents. Reading budget: only the named diff (config credential helper and AgentSettings/agent_settings/workflow_settings; model redaction helpers). A commit is authorized only for a surviving deletion as the template requires.

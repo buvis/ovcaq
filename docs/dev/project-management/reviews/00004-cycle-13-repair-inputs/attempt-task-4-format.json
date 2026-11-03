@@ -1,0 +1,13 @@
+{
+  "attempt": 2,
+  "model": "opus",
+  "outcome": "completed",
+  "review_cycle": 13,
+  "cause": null,
+  "implementor": "codex",
+  "preflight_outcome": null,
+  "pipeline": "full",
+  "self_deslop": "skipped:trivial",
+  "style_gate": "clean",
+  "split_hygiene": "skipped:no-tests"
+}

@@ -1,0 +1,6 @@
+{
+  "command": "UV_CACHE_DIR=/private/tmp/ovcaq-final-cache mise exec -- uv run pytest",
+  "exit": 0,
+  "budget_seconds": 600,
+  "log": "docs/dev/tmp/00007-rework-final-pytest.txt"
+}

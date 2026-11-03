@@ -1,0 +1,97 @@
+{
+  "head": "22d9193a0d00486b09ebea169e7a38a9f858799d",
+  "platform": "Darwin / Python 3.13.13 / pytest 9.1.1",
+  "full_suite": {
+    "command": "mise exec -- uv run pytest",
+    "chunks": [
+      {
+        "chunk_id": "f2e569",
+        "wall_time_seconds": 1.002000875,
+        "session_id": 59315,
+        "original_token_count": 111,
+        "output": "============================= test session starts ==============================\nplatform darwin -- Python 3.13.13, pytest-9.1.1, pluggy-1.6.0\nrootdir: /Users/bob/git/src/github.com/buvis/ovcaq\nconfigfile: pyproject.toml\ncollected 1339 items\n\ntests/characterization/test_migration_contract.py ......                 [  0%]\ntests/packaging/test_distribution.py ........                            [  1%]\ntests/packaging/test_input_integrity.py "
+      },
+      {
+        "chunk_id": "83b6f5",
+        "wall_time_seconds": 5.000886625,
+        "session_id": 59315,
+        "original_token_count": 630,
+        "output": "............                     [  1%]\ntests/packaging/test_installed_cli.py ...........                        [  2%]\ntests/packaging/test_installed_reports.py .............                  [  3%]\ntests/packaging/test_installed_sagas.py .................                [  5%]\ntests/packaging/test_report_updates.py .                                 [  5%]\ntests/packaging/test_workflow_inputs.py ................                 [  6%]\ntests/state/test_cli.py ................................................ [  9%]\n......                                                                   [ 10%]\ntests/state/test_cli_limits.py ...............................           [ 12%]\ntests/state/test_commands.py ..........................                  [ 14%]\ntests/state/test_crosswalk.py .......                                    [ 15%]\ntests/state/test_durability.py ..............                            [ 16%]\ntests/state/test_installed_state.py ...                                  [ 16%]\ntests/state/test_paths.py .............................................. [ 19%]\n........................................................................ [ 25%]\n..........................                                               [ 27%]\ntests/state/test_recovery_mutations.py .............                     [ 28%]\ntests/state/test_schema.py ......                                        [ 28%]\ntests/state/test_schema_constraints.py ................................. [ 30%]\n........................................................................ [ 36%]\n........................................................................ [ 41%]\n...........................                                              [ 43%]\ntests/state/test_schema_invariants.py .................................. [ 46%]\n.......................                                                  [ 48%]\ntests/state/test_schema_limits.py ...................................... [ 50%]\n.....................................                                    [ 53%]\ntests/state/test_service_commands.py ................................... [ 56%]\n........................                                                 [ 58%]\ntests/state/test_service_contracts.py ..                                 [ 58%]\ntests/state/test_store.py .............................................  [ 61%]\ntests/state/test_store_concurrency.py .......................            [ 63%]\ntests/state/test_store_transactions.py ................................. [ 65%]\n"
+      },
+      {
+        "chunk_id": "02a843",
+        "wall_time_seconds": 0.000001125,
+        "exit_code": 0,
+        "original_token_count": 561,
+        "output": ".............................                                            [ 67%]\ntests/test_package_baseline.py ......................................... [ 70%]\n............                                                             [ 71%]\ntests/test_packaging.py ....                                             [ 72%]\ntests/workflow/test_applications.py ..........                           [ 72%]\ntests/workflow/test_blank_decisions.py ................                  [ 74%]\ntests/workflow/test_boundaries.py ...                                    [ 74%]\ntests/workflow/test_characterized_fixtures.py ...                        [ 74%]\ntests/workflow/test_configuration.py ........                            [ 75%]\ntests/workflow/test_deferred_ledger.py ...................               [ 76%]\ntests/workflow/test_frontmatter.py ...........................           [ 78%]\ntests/workflow/test_ledger_integrity.py ............                     [ 79%]\ntests/workflow/test_ledger_publication.py ...                            [ 79%]\ntests/workflow/test_policy.py ............                               [ 80%]\ntests/workflow/test_records.py ............                              [ 81%]\ntests/workflow/test_report_identity.py ................                  [ 82%]\ntests/workflow/test_report_recovery.py ..........                        [ 83%]\ntests/workflow/test_reports.py ..................................        [ 85%]\ntests/workflow/test_resume.py .............                              [ 86%]\ntests/workflow/test_saga_artifacts.py ..........                         [ 87%]\ntests/workflow/test_saga_identity.py ...............                     [ 88%]\ntests/workflow/test_saga_publication.py ................................ [ 91%]\n................                                                         [ 92%]\ntests/workflow/test_sagas.py ................................            [ 94%]\ntests/workflow/test_selection.py .........................               [ 96%]\ntests/workflow/test_transitions.py ..................................    [ 99%]\ntests/workflow/test_workflow_cli.py ...........                          [100%]\n\n============================ 1339 passed in 23.83s =============================\n"
+      }
+    ],
+    "passed": 1339,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 23.83
+  },
+  "sync": {
+    "command": "mise exec -- uv sync --all-groups",
+    "exit": 0,
+    "output": "Resolved 25 packages in 4ms\nChecked 24 packages in 0.61ms\n"
+  },
+  "quality": [
+    {
+      "cmd": "mise exec -- uv run ruff check .",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "94debe",
+          "wall_time_seconds": 0.000001,
+          "exit_code": 0,
+          "original_token_count": 5,
+          "output": "All checks passed!\n"
+        }
+      }
+    },
+    {
+      "cmd": "mise exec -- uv run ruff format --check .",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "620cdf",
+          "wall_time_seconds": 0.000002208,
+          "exit_code": 0,
+          "original_token_count": 7,
+          "output": "117 files already formatted\n"
+        }
+      }
+    },
+    {
+      "cmd": "mise exec -- uv run mypy src/ovcaq",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "adadf3",
+          "wall_time_seconds": 0.039323041,
+          "exit_code": 0,
+          "original_token_count": 11,
+          "output": "Success: no issues found in 51 source files\n"
+        }
+      }
+    }
+  ],
+  "whitespace": {
+    "command": "git diff --check b43bf2c94d5eb0fddafca55542ef2570b45e8d52..HEAD",
+    "exit": 0,
+    "output": ""
+  },
+  "build": {
+    "command": "mise exec -- uv build",
+    "exit": 0,
+    "output": "Building source distribution...\nBuilding wheel from source distribution...\nSuccessfully built dist/ovcaq-0.1.0.dev0.tar.gz\nSuccessfully built dist/ovcaq-0.1.0.dev0-py3-none-any.whl\n"
+  },
+  "alice_overlap": {
+    "passed": 102,
+    "seconds": 3.88,
+    "exit": 0,
+    "source": "Alice raw returned review; not additive to full suite"
+  },
+  "gates": "fact-forcing hook initially rejected three quality calls; all succeeded on retry after facts. Source-join uv cache permission failure retried with escalation; no gate waived."
+}

@@ -1,0 +1,15 @@
+{
+  "blocked_by": [
+    23,
+    24,
+    25,
+    26
+  ],
+  "split_task_ids": [
+    "23",
+    "24",
+    "25",
+    "26"
+  ],
+  "split_reason": "Tess context_overrun; gate-failure context-exceeded mandates task splitting; no edits"
+}

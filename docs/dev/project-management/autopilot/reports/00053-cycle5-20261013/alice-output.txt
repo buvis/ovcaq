@@ -1,0 +1,29 @@
+[ALICE] ⚪ The task-28 and task-19 edits left the prose wrapping uneven. docs/driver-protocol.md:274 is 103 characters long, the only long line in the file that is not a link or a table row. Line 272 also runs past the file's ~80-column wrap. Lines 186-191 break after "tier-key precedence:", which makes the next sentence look like the start of a list, and line 191 stops at "`low`,". Fix: reflow both paragraphs to ~80 columns without changing any words | File: docs/driver-protocol.md | Task: 28
+
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+**Done.** I found one low doc-formatting issue and no medium or higher issues.
+
+**Changed:** nothing, review only. What I checked:
+- **Task 27:** the regex simplification behaves the same as before. "HTTP status 429", "HTTP error 503", the reqwest forms and the HTTP/2 forms all still classify correctly.
+- **Long input:** 200k-character whitespace runs after every prefix take about 5 ms. "status " repeated 100k times takes 51 ms.
+- **Task 28:** the doc and the CHANGELOG now agree on the "HTTP, status or error" wording.
+- **Other claims I checked:** only `build_driver` constructs drivers in `src/`. The settings parser rejects an empty configured PATH. The probe and the supervisor spawn both merge `os.environ` with the overlay.
+
+```
+467 passed, 2 warnings (PRD-scoped files; same pytest temp-dir cleanup warnings already settled)
+ruff check: All checks passed! | ruff format --check: 229 files already formatted | mypy: no issues in 61 source files
+```
+
+**Next:** Task complete. Suggested next: route the doc reflow into the minutes as a low, then run the decision gate for cycle 5.

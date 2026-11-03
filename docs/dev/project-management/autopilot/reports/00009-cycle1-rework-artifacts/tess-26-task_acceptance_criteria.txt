@@ -1,0 +1,1 @@
+Real CLI health check blocks wrong pinned version and failed auth with actionable error before agent execution; healthy checks allow execution. Shared TUI activity shows normalized tool and message/plan details for both providers without provider-native parsing, bounded and literal text.

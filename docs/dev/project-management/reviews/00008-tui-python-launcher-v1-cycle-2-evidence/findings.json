@@ -1,0 +1,134 @@
+[
+  {
+    "id": "F01",
+    "issue": "If the selected supervisor completes during evidence reads, exit revalidation discards even valid selected-owner final state and sets ended=True; ProjectObserver permanently caches unknown, so both viewers return failed/1 for normal completion. Reobserve the attested final selection before caching a terminal result.",
+    "severity": "high",
+    "file": "src/ovcaq/runtime/_run_observation.py:141",
+    "consensus": "1/3",
+    "found_by": [
+      "ALICE"
+    ],
+    "task": "2",
+    "decision": "cap-overflow: deferred to batch end"
+  },
+  {
+    "id": "F02",
+    "issue": "Active observation no longer checks the exact live registry entry; removing or replacing that entry while metadata, PID and run lock remain valid still exposes state and telemetry as running. Restore shared registry validation before and after evidence reads.",
+    "severity": "medium",
+    "file": "src/ovcaq/runtime/_run_observation.py:116",
+    "consensus": "1/3",
+    "found_by": [
+      "ALICE"
+    ],
+    "task": "2",
+    "decision": "cap-overflow: deferred to batch end"
+  },
+  {
+    "id": "F03",
+    "issue": "Three copies of the byte-at-a-time subprocess barrier reader appear in test_control_commit_identity, test_guarded_run_mutation and test_launcher_outcomes; extract one integration helper preserving their deadlines and EOF checks.",
+    "severity": "medium",
+    "file": "tests/integration/test_control_commit_identity.py:99",
+    "consensus": "1/3",
+    "found_by": [
+      "ALICE"
+    ],
+    "task": "general",
+    "decision": "cap-overflow: deferred to batch end"
+  },
+  {
+    "id": "F04",
+    "issue": "Raw fallback shows only a telemetry label: RAW_UNKNOWN previews are discarded, raw.jsonl is never tailed for presentation, and neither viewer displays raw output when normalization is unavailable.",
+    "severity": "medium",
+    "file": "src/ovcaq/tui/model.py:539",
+    "consensus": "1/3",
+    "found_by": [
+      "BLAKE"
+    ],
+    "task": "P06-T07",
+    "decision": "cap-overflow: deferred to batch end"
+  },
+  {
+    "id": "F05",
+    "issue": "Capability failure and retry guidance are inaccessible through keyboard navigation at 80×24: the stacked Static frame overflows, but Tab, Down, PageDown and End leave scroll_y at zero; an in-memory Textual probe exposed the retry command only after programmatic scrolling.",
+    "severity": "medium",
+    "file": "src/ovcaq/tui/app.py:345",
+    "consensus": "1/3",
+    "found_by": [
+      "BLAKE"
+    ],
+    "task": "P06-T04",
+    "decision": "cap-overflow: deferred to batch end"
+  },
+  {
+    "id": "F06",
+    "issue": "F20 is only partly fixed: a supervisor that exits 0 with a PAUSE decision is reported as a failed launch. This happens on an interactive `ovcaq run` while a pause request is pending, and every confirmed `s` stop leaves one (`_record_stop` sets `pause_requested`). `_completed_launch` accepts only batch status `completed`, so `_launch_failure` prints \"supervisor pid N exited with code 0: {raw SessionMetadata JSON}\" and the command exits nonzero. If the parent wins the handshake race instead, `cli.py:513` re-raises `MissingRunError`. Both outcomes contradict the pinned rule that paused maps to detached/0.",
+    "severity": "medium",
+    "file": "src/ovcaq/supervisor_cli.py:396",
+    "consensus": "1/3",
+    "found_by": [
+      "BOB"
+    ],
+    "task": "7",
+    "decision": "cap-overflow: deferred to batch end"
+  },
+  {
+    "id": "F07",
+    "issue": "`ProjectObserver.__init__` builds a `JsonlFollower` on the runtime `events.jsonl` that is never read. `_apply` always replaces it before the first read, because `_session_id` starts as None. It also points readers at the file F01 proved wrong.",
+    "severity": "medium",
+    "file": "src/ovcaq/tui/model.py:291",
+    "consensus": "1/3",
+    "found_by": [
+      "BOB"
+    ],
+    "task": "11",
+    "decision": "cap-overflow: deferred to batch end"
+  },
+  {
+    "id": "F08",
+    "issue": "The per-session usage machinery is now dead. The observer follows one session's file, drops records from other run/session pairs (line 536), and calls `_clear()` on every session change. So `self._usage` never holds more than one entry, and the pop/reinsert step plus the `MAX_USAGE_SESSIONS` eviction can never run. No test references the cap.",
+    "severity": "medium",
+    "file": "src/ovcaq/tui/model.py:548",
+    "consensus": "1/3",
+    "found_by": [
+      "BOB"
+    ],
+    "task": "11",
+    "decision": "cap-overflow: deferred to batch end"
+  },
+  {
+    "id": "F09",
+    "issue": "`_run` reads the private `supervisor._metadata` from another module to build the completion proof.",
+    "severity": "low",
+    "file": "src/ovcaq/supervisor_cli.py:177",
+    "consensus": "1/3",
+    "found_by": [
+      "BOB"
+    ],
+    "task": "7",
+    "decision": "cap-overflow: deferred to batch end"
+  },
+  {
+    "id": "F10",
+    "issue": "`except _STATE_ERRORS: pass` silently drops a failed final-state read or attestation write. The viewer then reports \"final state does not belong to the selected run\", which blames an I/O fault on an ownership mismatch. Impact is limited because it fails closed, and the viewer reports its own read error when the state is unreadable.",
+    "severity": "low",
+    "file": "src/ovcaq/runtime/supervisor.py:180",
+    "consensus": "1/3",
+    "found_by": [
+      "BOB"
+    ],
+    "task": "2",
+    "decision": "cap-overflow: deferred to batch end"
+  },
+  {
+    "id": "F11",
+    "issue": "Dropping `or None` from `next_phase` makes an empty committed `next_phase` render blank (`phase: build -> `) instead of a label. The change was made to satisfy a test fixture, not a requirement.",
+    "severity": "low",
+    "file": "src/ovcaq/tui/model.py:396",
+    "consensus": "1/3",
+    "found_by": [
+      "BOB"
+    ],
+    "task": "12",
+    "decision": "cap-overflow: deferred to batch end"
+  }
+]

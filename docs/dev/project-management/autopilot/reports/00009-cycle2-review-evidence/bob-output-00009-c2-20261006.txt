@@ -1,0 +1,63 @@
+**Prior cycle status (BOB):** These findings are fixed in code: R1, R2, R3, R4, R5, R7, R9, R12, R13, R14, R17, R18, R19, R20, R24, R25 and R26. R26 is a net-zero diff of tests/runtime/test_supervisor.py against the PRD base, checked with a control path. Four were fixed only in part or caused a new problem: R21's fix lets a finished lane flip to failed (finding 1), R11's capacity mapping halts the batch (finding 2), R16's activity view has gaps (findings 3 and 4), and R10 got a fixture oracle for connectivity only (finding 7). R6 is mostly fixed (finding 12). The settled items (R8, R15, R22, R23, R27) were not re-raised.
+
+[BOB] 🟡 A finished receiver lane can flip to failed. The R21 fix passes every remembered lane ID to `item_lanes`, including lanes already marked done. So a receiver that completed and is later reported `shutdown`, `interrupted` or `not_found` (for example by a later `close_agent` or `wait` record) emits `lane.failed`. `_observe_lane` (src/ovcaq/tui/model.py:616) then overwrites "completed" with "failed". The design says a completed receiver completes its lane, and the new test only covers running then interrupted. | File: src/ovcaq/drivers/codex.py:372 | Task: 23
+[BOB] 🟡 The R11 rework maps "Selected model is at capacity" to rate_limit. That text has no reset, so `failure_reset` returns None and the decision policy halts the whole batch at once (src/ovcaq/runtime/decision.py:211). Before this change the text was unknown and got one retry. A short-lived server overload should wait and retry like connectivity (3 tries, 1800 s), not stop the run. | File: src/ovcaq/drivers/codex_events.py:309 | Task: 23
+[BOB] 🟡 The Activity panel drops the detail of messages that have no `message_id`. `_observe_activity` reads only `text`, but the Codex top-level `error` activity and Claude `rate_limit_warning` carry `detail`, so they show as a bare "error" or "rate_limit_warning" with no message. All such messages, including every Codex `turn` marker, share the key ("message", "") and overwrite each other. No test covers a message without an ID. | File: src/ovcaq/tui/model.py:575 | Task: 26
+[BOB] 🟡 `activity_panel` prints all kept activity (up to 256 items) oldest first, after the lanes. In a busy session the newest tool call sits at the bottom of a frame that can pass 500 lines, below what the terminal shows. Plain mode reprints that whole frame on every change. | File: src/ovcaq/tui/panels.py:92 | Task: 26
+[BOB] 🟡 The fixture docs are stale after the rework. The family table has no `lanes-matched.jsonl` row. Line 45 still says edge tests build matched variants in place, but that in-place rewrite was removed. Lines 72-73 still say activity panels render lanes only. docs/driver-protocol.md:217 also names only `lanes.jsonl`. | File: tests/fixtures/README.md:45 | Task: general
+[BOB] 🟡 `bounded_detail` redacts secrets before it strips terminal controls. `_LIKELY_SECRET` needs 20 token characters after `sk-`, so a token split by an ANSI or NUL byte (`sk-abc\x1b[0mdef...`) is not redacted, and the strip then joins it back whole. Confirmed by reading the regex. A real trigger is unlikely. The test puts the control bytes after the token, so it cannot catch this. | File: src/ovcaq/drivers/codex_events.py:57 | Task: 23
+[BOB] 🟡 The root cause of R10 is still there for three of the four failure fixtures. `test_fixture_error_then_identical_failure_has_one_terminal_and_rate_start` still builds its expected class by calling `classify_failure(detail)`. If the rate-limited, authentication or permission fixture fell back to unknown, the test would still pass. Only connectivity got an independent expected value. | File: tests/drivers/test_codex_decode_terminals.py:120 | Task: 23
+[BOB] 🟡 Six new test files are named after the review loop (`test_codex_rework_*`, `test_rework_*`), not after the behavior they guard. `test_codex_rework_placement.py` also re-tests text, reasoning, error and plan items, sanitizing, and rejection of malformed items, which tests/drivers/test_codex_decode.py:80-231 already covers through `decode`. It also pins which module holds the helper. | File: tests/drivers/test_codex_rework_placement.py:1 | Task: general
+[BOB] 🟡 Simplify: `"; ".join(reason for reason in (gap, X) if reason)` appears three times (here, at :102, and at src/ovcaq/drivers/codex.py:312). In `turn_usage`, collect the reasons in a list and return `"; ".join(reasons) or None`. In `_usage_observations`, use `gap = f"{gap}; Conflicting thread identity" if gap else "Conflicting thread identity"`. | File: src/ovcaq/drivers/codex_events.py:93 | Task: 23
+[BOB] 🟡 Simplify: `_report_runtime_error` is typed `-> Exception` and returns the error in one branch, but its only caller ignores the result and re-raises. It raises in the other two branches, and its name hides that. Make it `-> None` with a bare `return`, or rename it `_raise_runtime_error`. | File: src/ovcaq/supervisor_cli.py:144 | Task: 26
+[BOB] 🟡 Simplify: `_bind_observations` hides a conditional dict merge (`dict(...) | {...} if A and B else payload`) inside a `replace()` keyword, inside a generator. Reading it right depends on operator precedence. A plain loop that sets `payload` with one `if` and then calls `replace` does the same and is easy to read. | File: src/ovcaq/events/tail.py:153 | Task: 20
+[BOB] ⚪ The CHANGELOG Fixed lines 43-44 repeat the new Added lines 11-12 (launch health gate, activity display). Both are new behavior, and no version has been released. A blank line (45) still splits the Fixed list, as R6 noted. | File: CHANGELOG.md:43 | Task: 20
+[BOB] ⚪ The launch health gate now runs for every adapter, but test_rework_health.py configures only Codex. The decision gate asked for both adapters, and no test shows `ovcaq run --agent claude` stopping before spawn when `ClaudeDriver.probe` fails. | File: tests/runtime/test_rework_health.py:86 | Task: 26
+[BOB] 🟡 Simplify: `assert_prd_completion` recomputes `handoff_revision`, which its caller already computed (:385), and uses it only in the done branch. Pass it in, or write `before["revision"] + 1` inline there. | File: tests/drivers/test_codex_fake.py:323 | Task: 22
+[BOB] ⚪ `ClaudeDriver.probe` now gates every launch, but it calls `shutil.which(command)` with the supervisor's PATH, not the PATH from the configured environment overlay that the agent spawn uses. A Claude command found only through an overlay PATH may now be rejected. Suspected, not confirmed. | File: src/ovcaq/drivers/claude.py:81 | Task: 26
+[BOB] ⚪ Cannot statically verify: the full test suite passes at the review HEAD (the gate reused 5591 passed at b95bcaf). | File: N/A | Task: general
+[BOB] ⚪ The probe now reads from pipes until end-of-file, so a wrapper's background child that keeps stdout open turns a healthy probe into a 5 s timeout. | File: src/ovcaq/drivers/codex.py:66 | Task: 24
+[BOB] ⚪ An existing test, `test_fake_build_review_done_drain_capability_failure_and_independent_retry`, is 52 lines. This diff does not touch it: test_supervisor.py has no net change against the PRD base. | File: tests/runtime/test_supervisor.py:700 | Task: general
+
+R1: fail
+R2: pass
+R3: pass
+R4: fail
+R6: pass
+R7: fail
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+FIX:
+- A finished receiver lane flips to failed on a later shutdown/interrupted/not_found — src/ovcaq/drivers/codex.py:372 — pass only lanes still running: `{lane_id for (category, lane_id), done in self._identities.items() if category == "lane" and not done}`. Make `started_lanes` a required `set[str]` (one caller) and drop the `is not None` guard at codex_events.py:231. Add a test: running, then completed, then shutdown gives no `lane.failed`.
+- Capacity text halts the batch as a rate limit with no reset — src/ovcaq/drivers/codex_events.py:309 — move `model is at capacity` into the CONNECTIVITY pattern and change its test case at tests/drivers/test_codex_rework_decode.py:94 to "connectivity".
+- Activity drops `detail` and merges messages without an ID — src/ovcaq/tui/model.py:575 — use `detail = payload.get("text", payload.get("detail"))`, skip kind `turn` (or key messages without an ID by kind), and add a test with a Codex top-level error and a Claude `rate_limit_warning`.
+- Activity panel shows up to 256 items oldest first — src/ovcaq/tui/panels.py:92 — render only the newest items, newest first, e.g. `for item in reversed(view.activity[-20:])`, and pin that order in tests/tui/test_rework_activity.py.
+- Stale fixture docs — tests/fixtures/README.md:45 — add a `lanes-matched.jsonl` row to the table, replace the "edge tests construct matched variants" sentence with the checked-in fixture, change lines 72-73 to say panels show tool/message/plan activity, and mention `lanes-matched.jsonl` at docs/driver-protocol.md:217.
+- Redaction runs before control stripping — src/ovcaq/drivers/codex_events.py:57 — swap the order: `sanitize_text(re.sub(<pattern>, "", detail))[:4096]`. Add a test with `\x1b[0m` inside an `sk-` token.
+- Expected class is computed by the code under test — tests/drivers/test_codex_decode_terminals.py:120 — parametrize with literal pairs (`rate-limited`/`rate_limit`, `authentication-failed`/`authentication`, `connectivity-failed`/`connectivity`, `permission-failed`/`permission`) and assert against those values.
+- Test files named after the review loop, plus a duplicate placement file — tests/drivers/test_codex_rework_placement.py:1 — delete the placement file after moving its 4095/4096/4097 boundary case into tests/drivers/test_codex_decode.py. Rename the rest to domain names, e.g. test_codex_decode_hardening.py, test_codex_probe_capture.py, runtime/test_launch_health_gate.py, runtime/test_thread_identity.py, tui/test_activity_panel.py.
+- Gap-join idiom appears three times — src/ovcaq/drivers/codex_events.py:93 — use a `reasons` list in `turn_usage` and a one-line f-string ternary at codex.py:312.
+- Unused return value and misleading helper name — src/ovcaq/supervisor_cli.py:144 — change the return type to `-> None` and `return error` to `return`, or rename the helper `_raise_runtime_error`.
+- Hard-to-read binding generator — src/ovcaq/events/tail.py:153 — use an explicit loop that builds `payload` with one `if`, then `replace(...)`.
+- CHANGELOG Fixed entries repeat Added entries — CHANGELOG.md:43 — delete lines 43-44 (fold "rejects unhealthy adapters before launch" into line 11 if wanted) and the blank line 45.
+- No Claude case for the launch health gate — tests/runtime/test_rework_health.py:86 — add a parametrized Claude case with a missing command. Assert a nonzero exit, a JSON error naming the command, and no spawn marker.
+- `handoff_revision` computed twice — tests/drivers/test_codex_fake.py:323 — pass `handoff_revision` in from `assert_workflow_handoff`, or inline `before["revision"] + 1` in the done branch.
+VERIFY:
+- Claude probe PATH differs from the spawn PATH — configure `[agents.claude] command = ["claude-fixture"]` and `environment = { PATH = "<tmp>/bin" }`, with the fake script only in `<tmp>/bin`, then run `uv run python -m ovcaq --root <tmp> --json run --no-tui --agent claude`. If it fails with "Command is missing or not executable", pass the overlay PATH to `shutil.which(command, path=...)`.
+- Full suite at the review HEAD — run `mise exec -- uv run pytest` and confirm 0 failed and 0 skipped.
+KNOWN:
+- A probe pipe held open by a descendant turns into a 5 s timeout — descendant ownership during the probe belongs to the settled R27 deferral (probe process-group policy decided at batch end), and the timeout path still fails closed.
+- 52-line function at tests/runtime/test_supervisor.py:700 — this cycle left the function unchanged (net-zero diff against the PRD base), so splitting it is outside this rework; listed so it is not silently ignored.
+
+```
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```

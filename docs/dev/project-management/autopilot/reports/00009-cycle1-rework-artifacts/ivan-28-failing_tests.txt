@@ -1,0 +1,1 @@
+Acceptance: distribution module inventory reflects the deleted codex_activity module; codex_events retained. Preserve all other entries and tests. Verify: uv --cache-dir /private/tmp/ovcaq-rework-uv run pytest tests/packaging/test_distribution.py -q --tb=line

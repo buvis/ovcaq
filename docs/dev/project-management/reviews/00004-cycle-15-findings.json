@@ -1,0 +1,110 @@
+[
+  {
+    "id": "R15-01",
+    "issue": "Replacing an already confirmed ancestor and reparenting the same runtime inode beneath its replacement before ledger open is accepted by direct append and exact replay, without any later fsync of the ancestor's parent or the replacement ancestor. Runtime-only identity checks do not preserve the confirmed ancestry through successful publication.",
+    "file": "src/ovcaq/workflow/_files.py:306",
+    "severity": "high",
+    "consensus": "1/3 (Alice adjudication of coordinator evidence)",
+    "disposition": "FIX",
+    "found": "Coordinator; Alice after initial report"
+  },
+  {
+    "id": "R15-02",
+    "issue": "F1: per-result installed-origin verification dropped from test_rework_12 `_invoke`/`_await_event`/`_finish` and test_rework_13 `_invoke`; actor results still carry `origins` but nothing asserts them, contrary to task 6 (\"on every subprocess result and event\") and task 7/8 (\"preserve installed-wheel origin coverage\")",
+    "file": "tests/packaging/test_rework_13.py:71",
+    "severity": "high",
+    "consensus": "2/3",
+    "disposition": "FIX",
+    "found": "Alice, Bob"
+  },
+  {
+    "id": "R15-03",
+    "issue": "F2: `_open_deferred_ledger` opens `deferred` via dir_fd with no wrapping, so a symlink/regular-file `deferred` (ELOOP/ENOTDIR) or a vanished dir on the second open surfaces raw errno text with the bare name 'deferred'; pre-change `_open_lifecycle_directory` reported \"deferred directory is not a real directory: <full path>\"",
+    "file": "src/ovcaq/workflow/_files.py:325",
+    "severity": "medium",
+    "consensus": "1/3",
+    "disposition": "FIX",
+    "found": "Bob"
+  },
+  {
+    "id": "R15-04",
+    "issue": "F3: `test_installed_defer_refuses_runtime_replacement_before_deferred_creation` and `..._during_ledger_publication` are ~50-line near-duplicates (only mode string and assertion helper differ), both at the 50-line ceiling",
+    "file": "tests/packaging/test_rework_13.py:242",
+    "severity": "medium",
+    "consensus": "1/3",
+    "disposition": "FIX",
+    "found": "Bob"
+  },
+  {
+    "id": "R15-05",
+    "issue": "F4: B6 unresolved: `opened` reused for parent fstat then level fstat despite \"keep parent and child identities legible\" acceptance",
+    "file": "src/ovcaq/workflow/_files.py:277",
+    "severity": "low",
+    "consensus": "1/3",
+    "disposition": "FIX",
+    "found": "Bob"
+  },
+  {
+    "id": "R15-06",
+    "issue": "F5: distance-1 (runtime.parent) replacement coverage removed when parametrize moved to (3, 5)",
+    "file": "tests/packaging/test_rework_13.py:192",
+    "severity": "low",
+    "consensus": "1/3",
+    "disposition": "FIX",
+    "found": "Bob"
+  },
+  {
+    "id": "R15-07",
+    "issue": "F6: `search_capability()` still returns `euid`, `read_denied`, `search_fsync` constants no test reads",
+    "file": "tests/packaging/rework_13_scripts.py:172",
+    "severity": "low",
+    "consensus": "1/3",
+    "disposition": "FIX",
+    "found": "Bob"
+  },
+  {
+    "id": "R15-08",
+    "issue": "F7: `_O_SEARCH` falls back to `os.O_EXEC`; on musl Linux O_EXEC == O_PATH, whose descriptors reject fsync, so every ancestor open in `_ensure_directory_chain` would fail even when readable (suspected, pre-existing via os.O_SEARCH there)",
+    "file": "src/ovcaq/workflow/_files.py:25",
+    "severity": "low",
+    "consensus": "1/3",
+    "disposition": "KNOWN",
+    "found": "Bob"
+  },
+  {
+    "id": "R15-09",
+    "issue": "F8: Cannot statically verify: suite/ruff/format/mypy/build and fail-first replay for packaging tests (base collection failed on missing packaging_support helpers); host reports 1364 passed / 0 skipped at 7b41798",
+    "file": "N/A",
+    "severity": "low",
+    "consensus": "1/3",
+    "disposition": "KNOWN",
+    "found": "Bob"
+  },
+  {
+    "id": "R15-10",
+    "issue": "Effective `catchup`, `design`, `design_gate`, and `pause_on_ambiguity` frontmatter values are returned to the caller but discarded from committed state; only the review cap and tier survive, so restart/resume cannot reproduce the declared workflow policy and `catchup: skip` still follows `batch.catchup`",
+    "file": "src/ovcaq/workflow/frontmatter.py",
+    "severity": "high",
+    "consensus": "1/3",
+    "disposition": "DISCARDED",
+    "found": "Blake (retracted)"
+  },
+  {
+    "id": "R15-11",
+    "issue": "PRD discovery converts missing, unreadable, symlinked, or non-directory lifecycle roots into empty candidate lists, allowing an inaccessible `wip` to fall through to backlog or an invalid tree to report `drained`; this can skip higher-priority work or prematurely terminate a batch instead of surfacing the invalid-directory error required by the selection test strategy",
+    "file": "src/ovcaq/workflow/selection.py",
+    "severity": "high",
+    "consensus": "1/3",
+    "disposition": "DISCARDED",
+    "found": "Blake (retracted)"
+  },
+  {
+    "id": "R15-12",
+    "issue": "`defer_record` validates active batch/PRD with an unlocked read and then publishes the external ledger independently, without revision CAS or durable recovery intent; a concurrent completion/reset can therefore leave a successfully written deferred record attributed from stale state",
+    "file": "src/ovcaq/workflow/records.py",
+    "severity": "high",
+    "consensus": "1/3",
+    "disposition": "DISCARDED",
+    "found": "Blake (retracted)"
+  }
+]

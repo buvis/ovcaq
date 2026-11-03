@@ -1,0 +1,15 @@
+diff --git a/tests/drivers/test_codex_rework_probe.py b/tests/drivers/test_codex_rework_probe.py
+index 1bec7bc..474f09c 100644
+--- a/tests/drivers/test_codex_rework_probe.py
++++ b/tests/drivers/test_codex_rework_probe.py
+@@ -118,9 +118,7 @@ def test_probe_preserves_actionable_sanitized_authentication_failures(
+     stream: str,
+     exit_code: int,
+ ) -> None:
+-    health = configured_probe(
+-        probe_project, stream=stream, exit_code=exit_code
+-    ).probe()
++    health = configured_probe(probe_project, stream=stream, exit_code=exit_code).probe()
+     captured = capfd.readouterr()
+     assert health.healthy is False
+     assert "expired credential" in health.detail.lower()

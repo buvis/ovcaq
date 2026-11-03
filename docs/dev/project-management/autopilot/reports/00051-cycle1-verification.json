@@ -1,0 +1,34 @@
+{
+  "sha": "4c84d4dbfca6b66226c656b7ae9006085ddd9ddc",
+  "cycle": 1,
+  "passed": 6884,
+  "failed": 0,
+  "skipped": 0,
+  "commands": [
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache mise exec -- uv sync --all-groups",
+      "exit": 0
+    },
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache mise exec -- uv run pytest -q --tb=line",
+      "exit": 0
+    },
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache mise exec -- uv run ruff check .",
+      "exit": 0
+    },
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache mise exec -- uv run ruff format --check .",
+      "exit": 0
+    },
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache mise exec -- uv run mypy src/ovcaq",
+      "exit": 0
+    },
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache mise exec -- uv build",
+      "exit": 0
+    }
+  ],
+  "pytest_evidence": "docs/dev/project-management/autopilot/reports/00051-cycle1-review-evidence/00051-review-pytest-approved.txt"
+}

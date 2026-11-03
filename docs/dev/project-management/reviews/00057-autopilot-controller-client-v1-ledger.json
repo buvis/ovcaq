@@ -1,0 +1,514 @@
+[
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "`RevisionConflictError` and `RejectedRequestError` are never raised anywhere in `src`. `apply()` always returns an `ApplyResult` for rejections, so both classes are dead and speculative. Either raise them from `apply()` when `ok` is false (`revision_conflict`, `invalid_request`, and so on), or delete them. Tests only exercise their constructors.",
+    "file": "src/ovcaq/workflow_client.py:39",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "`test_apply_never_returns_result_when_ack_precedes_timeout` uses `pytest.raises((ControllerTimeoutError, ControllerOutputError))`. This is an either-or hedge. Both parametrized cases (a partial line and a complete line, each followed by a sleep) should raise `ControllerTimeoutError` specifically, so the assertion should pin that.",
+    "file": "tests/workflow_client/test_transport.py:707",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "The `mkstemp` request file is written to the shared system tmp dir. It is removed in `finally`, but a crash before cleanup leaves the envelope on disk. The actor file's permissions are never checked.",
+    "file": "src/ovcaq/workflow_client.py:306",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "Artifact checking returns only one diagnostic, collapsing independently missing path and digest keys. Return a list containing one entry per unmet condition, preserving dependency-first ordering.",
+    "file": "tools/autopilot-prerequisites:57",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "The five-character limit rejects valid zero-prefixed IDs such as `000058`. Normalize leading zeros before graph lookup while preserving the original argument in JSON.",
+    "file": "tools/autopilot-prerequisites:112",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "The runtime import guard misses plugin caches such as `.codex/plugins/cache`. Check plugin-cache path components rather than only the two hardcoded path fragments.",
+    "file": "tests/workflow_client/test_contract_conformance.py:102",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "The supplied MECH gate flags the `or` whitelist assertion. Replace it with membership in one explicit allowed-root set to preserve behavior and satisfy the mandated shape check.",
+    "file": "tests/workflow_client/test_contract_conformance.py:84",
+    "reason": "mech false positive refuted by ALICE: `top in sys.stdlib_module_names or top == \"ovcaq\"` is an allow-list guard that fails for any other top-level module, so the assertion can fail and the test is not tautological; the tautology detector flags the bare `or` shape without reading the operands"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "The `[MECH]` flag at `tests/workflow_client/test_contract_conformance.py:84` looks like a false positive. `top in sys.stdlib_module_names or top == \"ovcaq\"` is an allow-list guard that fails for any other top-level module. The test is not tautological.",
+    "file": "tests/workflow_client/test_contract_conformance.py:84",
+    "reason": "accepted as the refutation of the mech-check row rather than as a defect of its own; no code change follows from it"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "`contract()` reads the pinned bundle twice. `controller_bundle_digest` validates it, then `json.loads(read_text())` reads it again. This duplicates work and leaves a small window in which the file can change between the two reads. Have a helper return the parsed data.",
+    "file": "src/ovcaq/workflow_client.py:258",
+    "reason": "single-voice; the double read is also addressed in passing by the R8 bundle-content verification fix"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "`snapshot(*, workflow_id)` validates `workflow_id` but never sends it to the controller. If the design's signature is intentionally speculative, add a comment saying so.",
+    "file": "src/ovcaq/workflow_client.py:285",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "The artifact symlink check, `os.path.realpath(artifact) != os.path.abspath(artifact)`, rejects any absolute artifact path under a symlinked ancestor, such as `/var` or `/tmp` on macOS. The spec only requires the file itself to be a non-symlink. This is stricter than the spec, and the docs do say \"no symlinked path component\".",
+    "file": "tools/autopilot-prerequisites:81",
+    "reason": "single-voice; stricter-than-spec is the safe direction for a read-only security gate, and docs/operations.md already documents the stricter rule"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "`ControllerConfig` and `config.py` add `timeout_seconds` and `max_output_bytes` fields. They are reasonable, but the PRD does not list them. ",
+    "file": "src/ovcaq/workflow_client.py:72",
+    "reason": "single-voice; the PRD's Behavior text mandates \"Bound subprocess output and timeout\", so these two fields are the named requirement rather than scope creep"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "This test file has 818 lines, exceeding the 800-line limit. Move the bundle-digest tests into a separate focused module.",
+    "file": "tests/workflow_client/test_contract.py:628",
+    "reason": "single-voice, enforced mechanically by review-close (refused: single_voice_fix). The claim itself is VERIFIED: `wc -l tests/workflow_client/test_contract.py` is 818 against the project's 800-line limit. Recorded here rather than fixed so the verified violation is not lost; a later cycle with a second voice, or a hygiene pass, should split the bundle-digest tests out."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "The exit codes differ from the spec. The spec says exit 0 ready or 1 unavailable. Unknown PRD IDs (argparse) and a missing explicit config both exit 2. This is arguably \"fail\", but it is outside the 0/1 contract.",
+    "file": "tools/autopilot-prerequisites:38",
+    "reason": "single-voice; exit 2 for a usage error is the argparse convention and the PRD's own Behavior text says unknown IDs and missing config must \"fail\", which exit 2 satisfies. The R1/R19 fix keeps exit 2 for usage errors deliberately."
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "The test hedges between two outcomes with `try/except ControllerError: pass`, and its comment calls the outcome a race. It is not one. The grandchild holds both pipes for `SLOW_SECONDS*3`, which is longer than the 1 s timeout, so neither reader reaches EOF and `contract()` deterministically raises `ControllerTimeoutError`. A successful parse or any other `ControllerError` would pass unnoticed. Pin it with `pytest.raises(ControllerTimeoutError)`.",
+    "file": "tests/workflow_client/test_controller_boundary.py:335",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "`snapshot(*, workflow_id)` validates workflow_id and then ignores it. The controller call is \"snapshot --project-root <root>\" only, and test_negotiation.py:511-512 shows two different workflow_ids returning the same payload. A caller cannot select a workflow, and the parameter is misleading.",
+    "file": "src/ovcaq/workflow_client.py:513",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "The spec asks for \"typed\" snapshots, but snapshot() returns the raw dict[str, Any] unmodified. Only ApplyResult and ControllerContract are typed.",
+    "file": "src/ovcaq/workflow_client.py:513",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "The spec requires validating \"producer identity/digests\". The client checks protocol_major, package_version (the pinned version, or the pinned version plus a \"+build\" tag), schema_digest and fixture_digest, plus the advertised operations and capabilities. There is no producer or name field in the bundle or in the check. I could not find the canonical design doc in the repo (docs/dev/designs/autopilot-optional-supervision.md is absent), so I could not confirm that nothing else is required.",
+    "file": "src/ovcaq/workflow_client.py:477",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "Overflow tests use finite responses and do not establish enforcement before process completion. Add oversized stdout/stderr followed by a long sleep; require prompt `ControllerOutputError` and process termination before the timeout.",
+    "file": "tests/workflow_client/test_controller_boundary.py:95",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "The pinned bundle's `protocol_major` is never compared with the live value. Only the `PROTOCOL_MAJOR` constant is checked at line 489, so a bundle pinned at another major is accepted silently. This is harmless today but weakens \"validate protocol-major\".",
+    "file": "src/ovcaq/workflow_client.py:488",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "The controller_contract_fixtures test serves the pinned bundle file back as the fake controller's contract response. It is a self-echo, not an independent producer fixture. The scenario is satisfied only formally, which the spec's \"real-host support requires separate probe evidence\" note acknowledges.",
+    "file": "tests/workflow_client/test_contract_conformance.py:41",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "The prerequisites tool checks for a symlink with realpath and then opens the path in a separate step, so there is a small check-then-act window. A path that changes in between could pass.",
+    "file": "tools/autopilot-prerequisites:90",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "The docs example uses a bare name, controller_argv = [\"autopilot-controller\"]. config.py:232-242 accepts any nonempty string array, and Popen resolves a bare name through PATH. This is arguably \"explicit argv\", but the \"no executable auto-discovery\" requirement is not enforced, for example by requiring an absolute path.",
+    "file": "src/ovcaq/config.py:232",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "Gate state is unverified. The supplied test gate shows the full suite exiting 1 with no summary line. I ran `uv run pytest tests/workflow_client` narrowly and got 757 passed. I did not run ./tools/check, and I cannot confirm the Phase 2 exit criterion that it passes.",
+    "file": "N/A",
+    "reason": "single-voice; and answered by this cycle's own Test gate section: the full suite ran at this HEAD (7217 passed, 561 failed, 198 errors) and every failure is a sandbox `ps` denial outside tests/workflow_client"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "test_no_plugin_import hedges with `or`: either outcome satisfies it",
+    "file": "tests/workflow_client/test_contract_conformance.py:84",
+    "reason": "settled in cycle 1: mech false positive refuted by ALICE - `top in sys.stdlib_module_names or top == \"ovcaq\"` is an allow-list guard that fails for any other top-level module, so the test is not tautological"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "40 touched test(s) pass against the pre-change code: test_contract_accepts_live_controller_advertising_more_than_pinned, test_contract_accepts_live_package_version_equal_or_build_tagged +34 more",
+    "file": "tests/workflow_client/test_negotiation.py",
+    "reason": "behaviour-preserving/pre-existing case the replay block documents: 76 of the 154 touched tests DO fail against base `e78015922aba`, so the rework is pinned; the 78 passers are pre-existing tests inside the same touched files"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "38 touched test(s) pass against the pre-change code: test_contract_runs_contract_verb_in_project_root_and_maps_bundle, test_contract_rejects_digest_not_pinned_by_bundle +32 more",
+    "file": "tests/workflow_client/test_transport.py",
+    "reason": "behaviour-preserving/pre-existing case the replay block documents: 76 of the 154 touched tests DO fail against base `e78015922aba`, so the rework is pinned; the 78 passers are pre-existing tests inside the same touched files"
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "docs/operations.md does not document the client-side `contract_bundle_sha256` key; the [workflow] TOML example lists only controller_argv, contract_bundle and actor_file.",
+    "file": "docs/operations.md:104",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "ControllerClient.snapshot(workflow_id=...) validates workflow_id and then drops it; the argv is only `snapshot --project-root <root>` and a mismatched snapshot is silently accepted.",
+    "file": "src/ovcaq/workflow_client.py:522",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "Bundle digest pinning is optional: contract_bundle_sha256 may be absent and bundle_digest=None skips the integrity check completely, which is fail-open for 'validate producer identity/digests'.",
+    "file": "src/ovcaq/config.py:326",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "No producer provenance is frozen or checked; tests/fixtures/workflow/controller-v1.json has no producer name, identity or provenance record, so package_version is the only identity check.",
+    "file": "tests/fixtures/workflow/controller-v1.json",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "docs/operations.md changed without updating the generator's CONTROLLER_CLIENT_NOTES; regenerate and check parity with render_command_reference().",
+    "file": "docs/operations.md:109",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "In test_capture_completes_within_bounded_time_when_a_pipe_stays_open, `process` is referenced in finally but is unbound if os.fdopen or the process construction raises.",
+    "file": "tests/workflow_client/test_kill_group_bounded.py:624",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "The done-bucket path (DONE) is resolved relative to the current directory, not the project root, so running the tool from a subdirectory reports every predecessor as missing.",
+    "file": "tools/autopilot-prerequisites:20",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "Evidence for PRD 58/61/65 is a self-declared evidence list pinned only by a sha from the same config; the tokens are AP00017 and Lantern00003 while the spec says AP17 and Lantern03.",
+    "file": "tools/autopilot-prerequisites:30",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "1 touched test passes against the pre-change code: test_redact_with_unreadable_actor_file_does_not_raise",
+    "file": "tests/workflow_client/test_actor_secret_redaction.py",
+    "reason": "single-voice; a mech-check replay row states a computed fact. These passers are pre-existing tests inside touched files; the rework's own new tests do pin the change (16 of 34 touched tests fail against base)."
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "4 touched tests pass against the pre-change code: test_apply_raises_outcome_unknown_on_timeout, test_snapshot_raises_plain_output_error_on_output_bound_overrun, test_snapshot_raises_plain_output_error_on_non_json_stdout, test_snapshot_raises_plain_output_error_on_non_dict_response",
+    "file": "tests/workflow_client/test_apply_outcome_unknown.py",
+    "reason": "single-voice; a mech-check replay row states a computed fact. These passers are pre-existing tests inside touched files; the rework's own new tests do pin the change (16 of 34 touched tests fail against base)."
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "5 touched tests pass against the pre-change code: test_controller_settings_rejects_unusable_contract_bundle, test_controller_settings_omits_bundle_digest_without_the_key",
+    "file": "tests/workflow_client/test_config.py",
+    "reason": "single-voice; a mech-check replay row states a computed fact. These passers are pre-existing tests inside touched files; the rework's own new tests do pin the change (16 of 34 touched tests fail against base)."
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "8 touched tests pass against the pre-change code: test_call_rejects_stdout_over_output_bound, test_call_rejects_unparseable_stdout_on_zero_exit +2 more",
+    "file": "tests/workflow_client/test_transport.py",
+    "reason": "single-voice; a mech-check replay row states a computed fact. These passers are pre-existing tests inside touched files; the rework's own new tests do pin the change (16 of 34 touched tests fail against base)."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "`test_apply_launch_failure_is_plain_controller_error` asserts `isinstance(caught.value, ControllerError)` right after `pytest.raises(ControllerError)`, which cannot fail. The new public `ControllerLaunchError` is never asserted, and `launch_failure_stays_plain_controller_error` is satisfied by any `ControllerError` subclass. Assert `isinstance(..., ControllerLaunchError)` or drop the redundant line.",
+    "file": "tests/workflow_client/test_apply_outcome_unknown.py:1038",
+    "reason": "single-voice. The claim itself is VERIFIED and is a real tautological assertion: the isinstance line sits inside a pytest.raises(ControllerError) block, so it cannot fail. Recorded here rather than fixed so the verified finding is not lost; a later cycle with a second voice, or a hygiene pass, should tighten it to ControllerLaunchError."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "The spec says a launch failure \"stays a plain ControllerError\". The code raises the ControllerLaunchError subclass for any OSError from Popen, which is broader than FileNotFoundError and PermissionError. It is still catchable as ControllerError, so the intent holds. The subclass is an extra symbol.",
+    "file": "src/ovcaq/workflow_client.py:468",
+    "reason": "single-voice; and the reporter concedes the intent holds. The PRD asks that a launch failure stay catchable as a plain ControllerError, which a ControllerError subclass satisfies, and catching every OSError from Popen is the safer direction for a pre-spawn failure."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "After a timeout the abandoned daemon reader threads live until the detached descendant releases the pipe (8 s in the test). The caller's bound holds, but threads and fds can linger.",
+    "file": "src/ovcaq/workflow_client.py:328",
+    "reason": "single-voice; and this is the deliberate construction R2 asked for. The PRD's task-1 acceptance names the caller-visible bound ('raises ControllerTimeoutError in under 3 s') and explicitly prescribes 'close the pipes without joining the readers', so a daemon reader outliving the call is the chosen mechanism, not a defect."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "2 touched test(s) pass against the pre-change code: test_the_published_redaction_constants_keep_their_values, test_detail_keeps_secret_free_and_multibyte_stderr_whole",
+    "file": "tests/workflow_client/test_actor_secret_redaction.py",
+    "reason": "single-voice mech-check replay row stating a computed fact. The replay block itself refutes it as a defect: 41 of 104 touched tests fail against base d440d982566c, so the rework IS pinned; these passers are pre-existing tests living inside touched files. Alice refuted the whole class independently, and the same class was settled on these grounds in the prior loop's cycles 2 and 3."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "17 touched test(s) pass against the pre-change code: test_apply_raises_outcome_unknown_on_output_bound_overrun, test_apply_raises_outcome_unknown_on_non_json_stdout_after_zero_exit, test_apply_raises_outcome_unknown_on_malformed_response +11 more",
+    "file": "tests/workflow_client/test_apply_outcome_unknown.py",
+    "reason": "single-voice mech-check replay row stating a computed fact. The replay block itself refutes it as a defect: 41 of 104 touched tests fail against base d440d982566c, so the rework IS pinned; these passers are pre-existing tests living inside touched files. Alice refuted the whole class independently, and the same class was settled on these grounds in the prior loop's cycles 2 and 3."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "3 touched test(s) pass against the pre-change code: test_envelope_rejects_missing_request_or_project_id_on_initial_open",
+    "file": "tests/workflow_client/test_contract.py",
+    "reason": "single-voice mech-check replay row stating a computed fact. The replay block itself refutes it as a defect: 41 of 104 touched tests fail against base d440d982566c, so the rework IS pinned; these passers are pre-existing tests living inside touched files. Alice refuted the whole class independently, and the same class was settled on these grounds in the prior loop's cycles 2 and 3."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "27 touched test(s) pass against the pre-change code: test_bundle_digest_is_stable_for_the_fixture, test_bundle_digest_matches_byte_copy_at_another_path, test_bundle_digest_detects_single_byte_value_change, test_bundle_digest_rejects_mismatched_artifact +21 more",
+    "file": "tests/workflow_client/test_contract_digest.py",
+    "reason": "single-voice mech-check replay row stating a computed fact. The replay block itself refutes it as a defect: 41 of 104 touched tests fail against base d440d982566c, so the rework IS pinned; these passers are pre-existing tests living inside touched files. Alice refuted the whole class independently, and the same class was settled on these grounds in the prior loop's cycles 2 and 3."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "3 touched test(s) pass against the pre-change code: test_nonzero_exit_message_keeps_only_a_marked_tail_of_long_prose_stderr",
+    "file": "tests/workflow_client/test_controller_boundary.py",
+    "reason": "single-voice mech-check replay row stating a computed fact. The replay block itself refutes it as a defect: 41 of 104 touched tests fail against base d440d982566c, so the rework IS pinned; these passers are pre-existing tests living inside touched files. Alice refuted the whole class independently, and the same class was settled on these grounds in the prior loop's cycles 2 and 3."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "5 touched test(s) pass against the pre-change code: test_kill_group_completes_within_bounded_time_when_signal_is_denied, test_kill_group_reports_a_signal_failure_that_is_not_a_denial, test_kill_group_ends_a_grandchild_sharing_the_controller_group, test_capture_completes_within_bounded_time_when_a_pipe_stays_open",
+    "file": "tests/workflow_client/test_kill_group_bounded.py",
+    "reason": "single-voice mech-check replay row stating a computed fact. The replay block itself refutes it as a defect: 41 of 104 touched tests fail against base d440d982566c, so the rework IS pinned; these passers are pre-existing tests living inside touched files. Alice refuted the whole class independently, and the same class was settled on these grounds in the prior loop's cycles 2 and 3."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "1 touched test(s) pass against the pre-change code: test_contract_rejects_pinned_bundle_without_operations_or_capabilities",
+    "file": "tests/workflow_client/test_negotiation.py",
+    "reason": "single-voice mech-check replay row stating a computed fact. The replay block itself refutes it as a defect: 41 of 104 touched tests fail against base d440d982566c, so the rework IS pinned; these passers are pre-existing tests living inside touched files. Alice refuted the whole class independently, and the same class was settled on these grounds in the prior loop's cycles 2 and 3."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "5 touched test(s) pass against the pre-change code: test_call_raises_timeout_when_controller_outlives_timeout, test_apply_never_returns_result_when_ack_precedes_timeout",
+    "file": "tests/workflow_client/test_transport.py",
+    "reason": "single-voice mech-check replay row stating a computed fact. The replay block itself refutes it as a defect: 41 of 104 touched tests fail against base d440d982566c, so the rework IS pinned; these passers are pre-existing tests living inside touched files. Alice refuted the whole class independently, and the same class was settled on these grounds in the prior loop's cycles 2 and 3."
+  },
+  {
+    "cycle": 2,
+    "disposition": "settled-deferral",
+    "severity": "high",
+    "issue": "Short-secret redaction does not meet the task-3 criterion. `_can_mask_credential` judges safety from the actor file's stat size alone (size >= 8 means \"safe\"). A short credential inside a larger file, such as a JSON `actor.json` (the PRD's own example name), is reported as maskable. It then passes through `_redact` unmasked, because only tokens of 8 or more characters are masked.",
+    "file": "src/ovcaq/workflow_client.py:407",
+    "reason": "settled deferral: the cycle-1 decision gate deferred this exact residual to batch end (batch 202610272211 deferred JSON, type residual-finding, owner \"review gate\"). Closing it needs the credential length or a redaction token declared in configuration; reading the actor file is forbidden by R5. Recorded in the _can_mask_credential docstring and the CHANGELOG."
+  },
+  {
+    "cycle": 2,
+    "disposition": "settled-deferral",
+    "severity": "high",
+    "issue": "Prior R3 remains partially unresolved: actor-file size cannot establish credential length. A file containing `abc` plus padding passes `_can_mask_credential`, allowing an echoed `abc` into diagnostics. Negotiation now uses the redaction pipeline, but inherits this limitation. This residual was explicitly deferred by the cycle-1 decision gate, placing it outside the current rework scope.",
+    "file": "src/ovcaq/workflow_client.py:407",
+    "reason": "settled deferral: same defect as the row above, raised independently by the doubt lens, which itself names the cycle-1 deferral. Deferred to batch end in the batch 202610272211 deferred JSON."
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "R1 is fixed for the pin case and for duplicate keys and NaN/Infinity, but the client and the tool still differ on other parse failures. `_parse_bundle` catches only `JSONDecodeError` and `UnicodeDecodeError`. A bundle nested deeply enough to raise `RecursionError`, or holding an integer past the int-digit limit (a plain `ValueError`), escapes `contract()` as a raw non-`ControllerError` exception.",
+    "file": "src/ovcaq/workflow_client.py:244",
+    "reason": "single-voice; and both consumers refuse the bundle either way, so this is an exception-type difference on an already-refused input, not a gate bypass. The reporter says so themselves."
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "docs/operations.md and the generator's `CONTROLLER_CLIENT_NOTES` (src/ovcaq/cli.py:296) still say only that the bundle \"parses as a JSON object\". They do not say that a duplicate key or a non-finite number is refused, or that hex letter case in `contract_bundle_sha256` is ignored.",
+    "file": "docs/operations.md:128",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "`RevisionConflictError` and `RejectedRequestError` are defined but never raised. Any non-zero apply exit becomes `ApplyOutcomeUnknownError`, so a structured controller rejection cannot surface as a typed error. These are dead typed errors against the \"typed errors\" requirement",
+    "file": "src/ovcaq/workflow_client.py:77",
+    "reason": "single-voice; and already discarded in cycle 1 for the same reason (same unraised-error pair at workflow_client.py:39)."
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "`os.unlink(name)` in the `finally` block of `apply` can itself raise and mask the real error, for example if the temp file was removed externally. Minor",
+    "file": "src/ovcaq/workflow_client.py:613",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "2 touched tests pass against the pre-change code: test_the_published_redaction_constants_keep_their_values, test_a_diagnostic_is_built_without_reading_the_actor_file",
+    "file": "tests/workflow_client/test_actor_secret_redaction.py",
+    "reason": "single-voice; mech-check replay row. The passers are pre-existing tests and deliberate regression guards in files this cycle also touched, the same class the cycle-1 and prior-loop rows were discarded as. 38 of 118 touched tests do fail against base."
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "17 touched tests pass against the pre-change code: test_bundle_digest_rejects_a_pin_that_is_not_the_whole_digest +11 more",
+    "file": "tests/workflow_client/test_contract_digest.py",
+    "reason": "single-voice; mech-check replay row. The passers are pre-existing tests and deliberate regression guards in files this cycle also touched, the same class the cycle-1 and prior-loop rows were discarded as. 38 of 118 touched tests do fail against base."
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "44 touched tests pass against the pre-change code: test_contract_rejects_live_controller_missing_a_pinned_operation, test_contract_rejects_live_controller_missing_a_pinned_capability +38 more",
+    "file": "tests/workflow_client/test_negotiation.py",
+    "reason": "single-voice; mech-check replay row. The passers are pre-existing tests and deliberate regression guards in files this cycle also touched, the same class the cycle-1 and prior-loop rows were discarded as. 38 of 118 touched tests do fail against base."
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "17 touched tests pass against the pre-change code: test_one_pin_in_any_hex_case_is_accepted_by_the_tool_and_the_client, test_a_pin_that_is_not_the_whole_digest_is_refused_by_both +11 more",
+    "file": "tests/workflow_client/test_prerequisites_controller.py",
+    "reason": "single-voice; mech-check replay row. The passers are pre-existing tests and deliberate regression guards in files this cycle also touched, the same class the cycle-1 and prior-loop rows were discarded as. 38 of 118 touched tests do fail against base."
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "Config source split. `controller_settings` merges the user and project `[workflow]` tables. `tools/autopilot-prerequisites` reads only the project `ovcaq.toml`, or the `--config` path. A bundle or digest set only in the user config makes the tool report unavailable while the client accepts it. The two readers therefore do not share one definition of the pin.",
+    "file": "tools/autopilot-prerequisites:200",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "Evidence tokens. The spec says \"AP17 evidence\" and \"Lantern03 evidence\". The tool requires the literal tokens `AP00017` and `Lantern00003`. This is probably a shorthand reading, but a producer that writes `AP17` is rejected. The docs state the long forms.",
+    "file": "tools/autopilot-prerequisites:32",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "Unused argument. `snapshot(workflow_id=...)` validates `workflow_id` and then never passes it to the controller. I could not check this against Contract A, because the design document is not in the tree I inspected.",
+    "file": "src/ovcaq/workflow_client.py:583",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "Zombie risk. If `_kill_group` times out reaping after SIGKILL, the child may stay a zombie. The code comments this as an accepted bound. Daemon reader threads are abandoned by design. This is acceptable and noted only.",
+    "file": "src/ovcaq/workflow_client.py:348",
+    "reason": "single-voice"
+  }
+]

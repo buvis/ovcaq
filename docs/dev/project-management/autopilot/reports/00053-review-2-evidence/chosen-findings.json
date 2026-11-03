@@ -1,0 +1,161 @@
+[
+  {
+    "ref": "R1",
+    "consensus": "[3/3]",
+    "severity": "\ud83d\udfe1",
+    "issue": "Codex's HTTP client (reqwest) reports status errors as \"HTTP status client error (429 Too Many Requests) for url (...)\". The new numeric check still returns `unknown` for that form. I ran `classify_failure` on that string, on \"HTTP status server error (503 Service Unavailable) for url (...)\", on \"HTTP status client error (403 Forbidden) ...\" and on \"HTTP/1.1 503 Service Unavailable\", and all four give `unknown`. The pre-change code returned rate_limit, connectivity and permission for them. Both \"HTTP status client error\" and \"HTTP status server error\" are present as strings in the installed codex-cli 0.162.1 binary (confirmed with `rg -a`). Whether they ever reach a `turn.failed` message is my guess, not something I checked. If they do, a real 429 skips the rate-limit wait and a real 502/503 skips the bounded connectivity WAIT, just like the cycle-1 HIGH. This also contradicts docs/driver-protocol.md:271 (\"require HTTP, status or error-code context\"). Fix: also accept the code when the standard reason phrase follows it (e.g. `(?:403 forbidden | 429 too many requests | 502 bad gateway | 503 service unavailable)`). Add the reqwest and HTTP/1.1 forms as literal positives in tests/drivers/test_adapter_failure_classes.py:63, and keep the ordinary-count negatives",
+    "file": "src/ovcaq/drivers/codex_events.py:301",
+    "task": "7",
+    "found_by": [
+      "ALICE",
+      "BLAKE",
+      "BOB"
+    ],
+    "classification": "fix",
+    "reason": "Explicit HTTP status-line and reqwest contexts are bounded in-scope diagnostic coverage; preserve ordinary numeric counts and existing precedence."
+  },
+  {
+    "ref": "R2",
+    "consensus": "[2/3]",
+    "severity": "\u26aa",
+    "issue": "`INVALID_OPTIONS` was moved up to module level so the now-deleted factory test could share it. It has a single user again (`test_constructor_rejects_unknown_or_invalid_options`). Inline it back into that test's `@pytest.mark.parametrize`, so the only change left in that test is the `raised.type is ValueError` line",
+    "file": "tests/drivers/test_codex_launch.py:140",
+    "task": "8",
+    "found_by": [
+      "ALICE",
+      "BOB"
+    ],
+    "classification": "fix",
+    "reason": "Remove single-use test indirection after deletion of its second consumer."
+  },
+  {
+    "ref": "R3",
+    "consensus": "[1/3]",
+    "severity": "\ud83d\udfe1",
+    "issue": "The `continue` at codex.py:383 drops every native update for a lane that has already finished. codex-cli 0.162.1 ships a `resume_agent` tool (\"Resume a previously closed agent by id so it can receive send_input\"; I confirmed the string in the binary). So a lane can legitimately go completed \u2192 close \u2192 resume \u2192 running \u2192 errored. With the `continue`, the resumed run's running and errored updates disappear with no trace, and a later interrupt or shutdown of the resumed run becomes raw unknown instead of `lane.failed`. The pre-change code reported these. The TUI already handles a restart, because the last write wins (src/ovcaq/tui/model.py:607). The PRD only requires that close statuses do not fail a completed lane, and the unfinished-only filter at src/ovcaq/drivers/codex.py:372 already does that on its own. Fix: delete lines 383-384. Then flip `test_finished_lane_late_update_retains_only_non_lane_observations` (tests/drivers/test_adapter_outcomes.py:266) so it expects running \u2192 `lane.progress` and errored \u2192 `lane.failed`, and reword docs/driver-protocol.md:243. Confidence: the tool is confirmed; the exact `agents_states` sequence after a resume is my guess",
+    "file": "src/ovcaq/drivers/codex.py:383",
+    "task": "7",
+    "found_by": [
+      "ALICE"
+    ],
+    "classification": "defer",
+    "reason": "Requirements ambiguity: resume/restart generation semantics are not specified by this PRD. The existing contract deliberately freezes completed/failed identities and pins late updates. A binary tool name does not prove a native status sequence; changing this would undo reviewed stability without a fixture. Preserve for separately specified adapter lifecycle work."
+  },
+  {
+    "ref": "R4",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "The CHANGELOG PATH entry says the change checks \"both native adapters' executables\" and preserves \"standard missing/empty host PATH lookup\". In fact only the Claude probe changed (Codex already used the merged environment). With an empty host PATH, the Claude probe is unhealthy while the Codex probe searches the current directory, which docs/driver-protocol.md:37 now says correctly. Reword the entry to say the fix is for Claude and to name that split",
+    "file": "CHANGELOG.md:43",
+    "task": "9",
+    "found_by": [
+      "ALICE"
+    ],
+    "classification": "fix",
+    "reason": "Correct user-facing PATH changelog wording."
+  },
+  {
+    "ref": "R5",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "`classify_failure` now collapses whitespace (`\" \".join(detail.split())`), so \"Rate\\tlimit reached\" becomes rate_limit. The pre-change code returned unknown for it. That widens matching beyond \"retain existing word diagnostics\", and neither the CHANGELOG nor the protocol doc mentions it. The test `test_native_word_diagnostics_retain_case_and_whitespace_variants` calls it \"retain\" even though the whitespace case is new behavior. Either document the widening and rename the test, or drop line 300 and the tab case",
+    "file": "src/ovcaq/drivers/codex_events.py:300",
+    "task": "6",
+    "found_by": [
+      "ALICE"
+    ],
+    "classification": "fix",
+    "reason": "Document whitespace normalization and name its regression honestly; preserve intentional classification behavior."
+  },
+  {
+    "ref": "R6",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "The normal Codex sequence (`wait` reports completed, then `close_agent` reports shutdown) emits `raw.unknown` on every close of a completed lane. The tests pin this at tests/drivers/test_adapter_outcomes.py:89. The lane result is right, but routine flows now show recurring normalization gaps.",
+    "file": "src/ovcaq/drivers/codex_events.py:233",
+    "task": "P0-T1",
+    "found_by": [
+      "BLAKE"
+    ],
+    "classification": "discard",
+    "reason": "Intentional documented raw-evidence rule: unsupported terminal close statuses on finished lanes retain RAW_UNKNOWN while preserving terminal identity. Exact tests and protocol document it. UI gap-noise redesign is outside this PRD; deleting evidence would contradict the reviewed contract."
+  },
+  {
+    "ref": "R7",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "No supervisor-level regression covers the Claude model-collision path. The Claude edge wrapper behaves correctly: I checked directly that `{default: o3, o3: o3-pro, x: o3}` launches `o3` and `o3-pro`. But tests/runtime/test_adapter_launch_routing.py runs only the Codex fake through the supervisor, so a regression in `_ResolvedModelClaudeDriver` would go unnoticed.",
+    "file": "src/ovcaq/drivers/edge.py:23",
+    "task": "P1-T1",
+    "found_by": [
+      "BLAKE"
+    ],
+    "classification": "fix",
+    "reason": "Add a fake-supervisor regression for the existing Claude edge caller affected by the shared helper; no live inference."
+  },
+  {
+    "ref": "R8",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "`assert retries.rate_limit == 0` can never fail. It checks the frozen `RetryState` the test built with `rate_limit=0`, and `decide` cannot change it (src/ovcaq/runtime/decision.py:84). Lines 200-201 already pin the non-rate-limit path",
+    "file": "tests/drivers/test_adapter_failure_classes.py:225",
+    "task": "6",
+    "found_by": [
+      "BOB"
+    ],
+    "classification": "fix",
+    "reason": "Delete an assertion of an unchanged frozen input; decision-output assertions already bind the non-quota path."
+  },
+  {
+    "ref": "R9",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "CHANGELOG says \"preserving standard missing ... host PATH lookup\", but the Claude probe changed. With no host PATH it now falls back to `os.defpath` (`/bin:/usr/bin`, src/ovcaq/drivers/claude.py:82). The old `shutil.which(command)` used `CS_PATH` (`/usr/bin:/bin:/usr/sbin:/sbin` here, confirmed with `getconf PATH` and the stdlib source). The new value matches the subprocess spawn, as the design asks, so only the wording is wrong",
+    "file": "CHANGELOG.md:43",
+    "task": "4",
+    "found_by": [
+      "BOB"
+    ],
+    "classification": "fix",
+    "reason": "Same PATH changelog edit as R4, retaining both exact source findings in one group."
+  },
+  {
+    "ref": "R10",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "The test for an absent host PATH probes `sh`, which is in both `os.defpath` and `CS_PATH`. It cannot tell the design's spawn-matching `os.defpath` fallback from the old `CS_PATH` one, so going back to `shutil.which(command, path=None)` would still pass (found by reading, not run)",
+    "file": "tests/runtime/test_adapter_health.py:250",
+    "task": "3",
+    "found_by": [
+      "BOB"
+    ],
+    "classification": "fix",
+    "reason": "Make the absent-PATH fixture distinguish os.defpath from CS_PATH; no production behavior change."
+  },
+  {
+    "ref": "R11",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "A status prefix followed by an ordinary count still classifies. `status: 401 tests passed` returns `authentication` and `error code: 503 records` returns `connectivity` (confirmed by probe). The negative tests only cover counts with no status word in front.",
+    "file": "src/ovcaq/drivers/codex_events.py:301",
+    "task": "P0-T1",
+    "found_by": [
+      "BLAKE"
+    ],
+    "classification": "defer",
+    "reason": "Requirements ambiguity: mixed diagnostic-prefix/ordinary-count messages need an explicit precedence contract. Existing scope requires diagnostic status contexts and ordinary count negatives; do not invent a broader prose grammar or silently change precedence. Keep the confirmed counterexamples for later specified work."
+  },
+  {
+    "ref": "R12",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "Suspected, not confirmed: a Codex `turn.failed` reading \"Authentication failed\" classifies as `unknown` (pinned at tests/drivers/test_adapter_failure_classes.py:129). That means a retry or park instead of the operator-access halt. The Claude classifier treats \"authentication\" as authentication, so the two adapters disagree. I could not check whether this was already the behavior before this change.",
+    "file": "src/ovcaq/drivers/codex_events.py:306",
+    "task": "P0-T1",
+    "found_by": [
+      "BLAKE"
+    ],
+    "classification": "discard",
+    "reason": "The old classifier did not match authentication failed; cycle1 deliberately removed that added pattern to retain existing word diagnostics. This is known original behavior, not a lost required diagnostic. Existing authentication fixtures use literal invalid-credentials/unauthorized oracles."
+  }
+]

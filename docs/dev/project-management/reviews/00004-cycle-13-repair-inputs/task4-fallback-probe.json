@@ -1,0 +1,18 @@
+{
+  "platform": "darwin",
+  "euid": 501,
+  "native_linux_execution": false,
+  "forced_descriptor_access": "O_RDONLY",
+  "ancestor_mode": "0o111",
+  "denied_open": {
+    "exception": "PermissionError",
+    "errno": 13,
+    "message": "[Errno 13] runtime directory requires read access for durable ancestry confirmation on this platform: PosixPath('/private/tmp/ovcaq-task4-fallback-v_zpreqb/ancestor')",
+    "cause": "PermissionError",
+    "cause_errno": 13
+  },
+  "denied_open_created_no_deferred_directory": true,
+  "readable_fallback_publication_passed": true,
+  "temporary_directory_cleaned": true,
+  "result": "passed"
+}

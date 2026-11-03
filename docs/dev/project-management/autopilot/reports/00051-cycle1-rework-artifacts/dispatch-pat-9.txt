@@ -1,0 +1,144 @@
+
+You are Pat, the per-task code reviewer. Review the single task's committed
+diff below. This review is READ-ONLY: report findings, change nothing.
+
+## Task
+
+Subject: [D1] prose
+
+Description:
+Source review: docs/dev/project-management/reviews/00051-triage-a-single-valid-codex-record-can-crash-th-v1-review-1.md
+
+Disposition and bounded acceptance:
+Narrow diagnostic-cleanup prose to the existing recognized ANSI/control forms and reflect task 6's reviewed redaction correction. Fold duplicated runtime continuation/publication wording into the events changelog entry. Keep source R7/R2 historical evidence, synthetic-token scope and genuine fatal-writer semantics. Broader TUI display-time reconstruction is already durably recorded in review-1, its settled ledger and deferred_decisions; do not implement it or widen PRD 00054 here. Acceptance: both quoted in-scope prose findings no longer reproduce; docs match actual behavior and no version/publication/provisioning changes occur.
+
+### Findings (verbatim)
+- ⚪ docs/driver-protocol.md:224: The same strip-after-redaction pattern survives outside `bounded_detail`. TUI `display_text` drops Cc/Cf characters after the sanitizer has already run. I checked that a NUL-split token in a Codex agent message (`codex_events.py:32`, where controls are never stripped) shows the full token on screen. So do ZWSP- and soft-hyphen-split tokens even in `bounded_detail` output, because format characters are not in its control regex. This is outside this PRD's scope ("no speculative control forms"), but the new doc sentence "prevents controls inside a credential from hiding it from redaction" claims more than the code delivers. Fix: narrow the wording to the recognized C0/DEL/CSI forms and file a follow-up PRD to re-sanitize at the display layer (found by: ALICE)
+- ⚪ CHANGELOG.md:43: The `**runtime**` changelog entry claims a runtime fix, but no runtime production code changed (Task 4 added tests only). It repeats the `**events**` gap entry. Fix: fold the continuation and propagation wording into the events entry (found by: ALICE)
+
+
+Acceptance criteria:
+Every in-scope quoted finding no longer reproduces; preserve settled deferrals and existing contracts.
+
+## Diff under review
+
+```diff
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 16a5250..b6d25be 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -42,9 +42,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+ 
+ - **drivers**: redact diagnostic credentials both before and after terminal control removal, preserving original token boundaries and hiding reconstructed tokens before truncation.
+ - **events**: speed up surrogate detection while preserving original-container validation and tolerant native preflight handling.
+-- **runtime**: continue supervised sessions after native Unicode gaps while propagating normalized gap publication failures and cleaning up the live child.
+ - **drivers**: remove terminal controls before redacting and bounding Codex diagnostic details so split credentials cannot survive normalization.
+-- **events**: retain native JSON frames containing invalid Unicode scalars as raw gaps before adapter state can change.
++- **events**: retain native JSON frames containing invalid Unicode scalars as raw gaps before adapter state can change, allowing supervised sessions to continue while genuine normalized publication failures still propagate and trigger owned-child cleanup.
+ - **events**: reject surrogate code points in shared observation and summary text before redaction or truncation while preserving valid Unicode scalars.
+ - **cli**: reject unhealthy adapters before foreground agent execution using sanitized health diagnostics.
+ - **tui**: show bounded normalized tool, message and plan activity alongside selected-session lanes with literal markup.
+diff --git a/docs/driver-protocol.md b/docs/driver-protocol.md
+index fd4fcb5..b4e99f9 100644
+--- a/docs/driver-protocol.md
++++ b/docs/driver-protocol.md
+@@ -221,10 +221,13 @@ Tool failure requires native failure/decline status, explicit native error or
+ nonzero command exit. Ordinary command output is not provider-health evidence.
+ File detail summarizes paths and change kinds; MCP and web detail is sanitized
+ and bounded to 4096 characters, rather than retained as wholesale results.
+-Codex diagnostic details processed by `bounded_detail` remove terminal controls
+-before credential redaction and the 4096-character bound. This order prevents
+-controls inside a credential from hiding it from redaction or exposing a secret
+-prefix at the truncation boundary.
++Codex diagnostic details processed by `bounded_detail` redact credentials before
++and after removing recognized C0 controls (except tab, LF and CR), DEL and 7-bit
++CSI sequences, then apply the 4096-character bound. Lone ESC is masked as a
++removable control before redaction so a new redaction marker cannot become CSI.
++This preserves original credential boundaries and redacts tokens reconstructed
++by those recognized forms before truncation. Broader display-time character
++removal is outside this diagnostic-helper contract.
+ 
+ Collaboration requires `agents_states` keys matching native receiver thread
+ IDs. Pending/running receivers start or progress a lane, completed receivers
+
+```
+
+## Recorded verification
+
+The task's tests were run before this review. This is what they reported:
+
+Command: mise exec -- uv run --no-sync pytest tests/drivers/test_codex_detail_safety.py -q --tb=line
+Environment: UV_CACHE_DIR=/private/tmp/ovcaq-rework-uv-cache
+Exit: 0
+180 passed, 2 warnings in 0.14s
+Micro lane: two noncritical findings, named files clean at claim, two-file diff +8/-6, net 2. Documentation manually compared against bounded_detail and publication boundary.
+
+
+Judge only from this prompt: the diff above, the task text, and this recorded
+result. Do not read other files, run commands, or re-run the tests. What is not
+in this prompt is not evidence, and a finding you cannot ground in what is here
+is one you should not report.
+
+# Simplification Mandate (step 5.7 reviewer-prompt appendix)
+
+Append this block **verbatim** to every per-task code-reviewer prompt (see
+`SKILL.md` step 5.7). It ships inside the prompt, so it must stay
+self-contained.
+
+> Beyond bugs, actively hunt for simplification in the diff under review. For
+> every added or changed file, ask "what would make this simpler to read
+> without changing what it does?" and flag concrete behavior-preserving
+> opportunities to: reduce complexity (needless indirection, dead branches,
+> single-caller abstractions, nesting deeper than 4 levels, functions over 50
+> lines); eliminate redundancy (logic duplicated within the diff or against
+> existing code, a helper that reimplements a stdlib or existing utility);
+> improve naming (names that state intent, no opaque abbreviations); and
+> remove dead code. Follow CLAUDE.md / AGENTS.md conventions and the
+> surrounding code's style.
+>
+> Report each concrete behavior-preserving simplification as a LOW finding,
+> with file:line, the current shape, and the simpler replacement. LOW findings
+> are carried to the PRD-level review, never retried here.
+>
+> Do not over-simplify: never propose a change that trades clarity for
+> brevity, drops error handling, collapses a deliberate boundary, or removes a
+> documented invariant. Simpler means easier to read and maintain, not shorter
+> at any cost. If a change would alter behavior, it is out of scope — do not
+> flag it.
+
+
+## Reporting contract
+
+Report one finding per line, in exactly this shape:
+
+SEVERITY | file:line | issue | fix
+
+Severities are CRITICAL, HIGH, MEDIUM, LOW.
+
+Severity has a fixed meaning here, and it decides what happens next. MEDIUM is
+reserved for a correctness or security defect this diff introduces that its own
+tests do not catch: a wrong result, an unhandled error path, data loss,
+injection, secret exposure, or a missing authorization check. Style, naming,
+duplication, structure and maintainability are LOW, and so is every
+behavior-preserving simplification, whatever its size. A LOW is noted and
+carried to the PRD-level review; it is never retried in this loop.
+
+If the diff has no findings, emit the literal line:
+
+NO FINDINGS
+
+## Closure verdicts (only when the description carries a findings block)
+
+When the Description above contains a `### Findings (verbatim)` block, this is
+a rework task and each quoted finding is a claim to check. Before your findings
+lines, emit one verdict per quoted finding, in this shape:
+
+CLOSURE | resolved|unresolved | <the finding, quoted> | <one line of evidence from the diff>
+
+Judge each finding against the diff, not against the commit message and not
+against how clean the code reads. A diff that improves the file while leaving
+the quoted defect reachable is `unresolved`. Quote the line that resolves it,
+or say what still reaches the defect. Emit a verdict for every quoted finding,
+including ones you judge already fixed elsewhere.
+
+

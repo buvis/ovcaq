@@ -1,0 +1,23 @@
+diff --git a/tests/runtime/test_adapter_health.py b/tests/runtime/test_adapter_health.py
+index 3f99d16..b9801be 100644
+--- a/tests/runtime/test_adapter_health.py
++++ b/tests/runtime/test_adapter_health.py
+@@ -87,17 +87,13 @@ def assert_probe_evidence(
+ 
+ 
+ @pytest.mark.parametrize("provider", ("claude", "codex"))
+-@pytest.mark.parametrize(
+-    "command_name", ("fixture-agent-health", "overlay-runner", "queue-worker")
+-)
+ def test_probe_finds_executable_available_only_on_overlay_path(
+     tmp_path: Path,
+     monkeypatch: pytest.MonkeyPatch,
+     provider: str,
+-    command_name: str,
+ ) -> None:
+     log, marker = tmp_path / "probe.jsonl", tmp_path / "phase-exec"
+-    executable = fake_executable(tmp_path / "overlay", log, marker, command_name)
++    executable = fake_executable(tmp_path / "overlay", log, marker)
+     host = tmp_path / "host"
+     host.mkdir()
+     empty = tmp_path / "empty"

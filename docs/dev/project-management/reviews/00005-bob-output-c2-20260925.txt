@@ -1,0 +1,88 @@
+# Bob: incremental review of 00005 cycle 2 (e34547e..666776a)
+
+## Prior findings
+
+- **Resolved:** F01, F02, F03, F04, F06, F07, F08, F12, F13, F14, F15, F16, F17, F19, F20, F21 (`session.py` is now 702 lines), F22, F23, F24, F28, F29, F32, F34, F36, F37, F39, F41, F42, F44, F50.
+- **Resolved, but the fix caused a new problem:** F05 (see #2), F09 (containment is in, but external-root semantics are not; see #1), F35 (all functions are 50 lines or fewer, but a test file now breaks the size limit; see #6).
+- **Present but not wired in:** F11. `cleanup_run_records` exists but nothing calls it yet. That is expected for a substrate PRD.
+- **Partly resolved:** F25 (#11), F38 (#10).
+- **Still open:** F31 (#7).
+- **Settled rows, not re-raised:** F18/F48, F27, F40, F43, F45, F46, F49.
+
+## Issues
+
+```
+[BOB] 🟠 Three code paths now pick the state file differently. `workflow_settings` reads a new, undocumented `[workflow] state_file` key (config.py:117) and ignores `[runtime] external_state_root`. `status`, `doctor` and `--acknowledge-emergency` use `runtime_settings`, which honors the external root and ignores `state_file`. `init` and `state` use `state_path(root)` (cli.py:426). With either key set, doctor reports state "missing", and acknowledgement can accept a different file than the one workflow commands write (confirmed by reading). The PRD's explicit external-root behavior is still not met. | File: src/ovcaq/config.py:117 | Task: 15
+[BOB] 🟡 `doctor` reports `ok: false` on every newly initialized project. `_directory_health` stats `paths.sessions`, but `init` creates only `dev/local/ovcaq`, and only `create_session` creates `sessions`. The resulting FileNotFoundError fills both the `permissions` and `writability` checks with the error text. Every ok=True test runs `ensure_runtime_layout` first, so none catches this (confirmed by reading). | File: src/ovcaq/runtime_cli.py:201 | Task: 17
+[BOB] 🟡 The F14 fix landed on `_runtime_timestamp`, which after the refactor only parses `logs purge --before`. Cutoffs with an offset (valid RFC3339, the metavar) are now rejected as usage errors. No test covers this, and the validator label says `metadata.started_at` (metadata already goes through `parse_session_metadata`). | File: src/ovcaq/cli_io.py:84 | Task: 16
+[BOB] 🟡 `cleanup_run_records` turns every OSError, ValueError and TypeError into `False`. A caller cannot tell "record belongs to another run" from "unlink or fsync failed", and the cause is lost. | File: src/ovcaq/runtime/session.py:370 | Task: 19
+[BOB] 🟡 `_acquire_purge_locks` re-implements `RunLock.acquire`: O_NOFOLLOW open, S_ISREG check, LOCK_NB flock, samestat recheck, fchmod. Simpler: add `directory: int | None = None` to `RunLock.acquire` (as `run_lock_held` already has) and map DuplicateRunError to ActiveSessionError for run.lock. | File: src/ovcaq/runtime/_retention.py:343 | Task: 12
+[BOB] 🟡 `tests/runtime/test_runtime_cli.py` grew by 594 lines this cycle to 1234, over the 800-line file limit. | File: tests/runtime/test_runtime_cli.py | Task: 21
+[BOB] 🟡 F31 is still open. `ensure_runtime_layout` has no production caller (only the test `_session` helper uses it), and it duplicates `_private_directory` and `ensure_runtime_directory`. Calling it from `init` would also fix the doctor-after-init bug above. | File: src/ovcaq/paths.py:239 | Task: 16
+[BOB] ⚪ `cleanup_run_records` removes the fleet entry before `run.json`. If that unlink fails, or the entry is already gone, `remove()` returns False on every retry. `run.json` is then stranded and `status` stays inconsistent until the next run overwrites it. | File: src/ovcaq/runtime/session.py:361 | Task: 19
+[BOB] ⚪ A second concurrent `logs purge --apply` is refused with "cannot purge while a run is active", because run.lock is taken first. That message is wrong for this case. retention.lock can never be the contended lock, since its only taker already holds run.lock. If it ever were contended, its DuplicateRunError (a RuntimeError) would escape `_dispatch_logs` and `main` as a traceback. | File: src/ovcaq/runtime/_retention.py:363 | Task: 12
+[BOB] ⚪ F38 is only partly fixed. `_state_attention` still catches `EmergencyStateFailure`, which `acknowledge_emergency_failure` never raises. | File: src/ovcaq/runtime_cli.py:142 | Task: 18
+[BOB] ⚪ F25 is only partly fixed. `RuntimePaths._identities` is hidden from output but still takes part in `==` and hashing, because the field has no `compare=False`. | File: src/ovcaq/paths.py:169 | Task: 18
+[BOB] ⚪ The `command` field means opposite things in two outputs. In `status` and `doctor`, `purge_preview.command` removes `--apply` with `plan.command[:-1]`. In `logs purge` output, `command` keeps `--apply`. The slice also silently depends on `--apply` being the last argument. | File: src/ovcaq/runtime_cli.py:305 | Task: 18
+[BOB] ⚪ `Watchdog.join` signals "worker still running" with the builtin `TimeoutError`, which is a subclass of `OSError`. Broad `except OSError` handlers, such as the one in `cli.main`, would report it as an I/O failure. | File: src/ovcaq/runtime/watchdog.py:75 | Task: 14
+[BOB] ⚪ `workflow_settings` validates the PRD root and the state file with `runtime_directory`. Rejections therefore say "derived runtime path escapes project root" even when the path is a PRD root or a state file. | File: src/ovcaq/config.py:106 | Task: 15
+[BOB] ⚪ The rewritten CHANGELOG Added bullets list implementation details ("identity-pinned fleet records behind inode-stable run locks without launch contention") rather than what the user sees. | File: CHANGELOG.md:20 | Task: 21
+[BOB] ⚪ In the fail-first replay, 154 touched tests pass against the pre-change code. Most are expected, because they cover code that was only moved or refactored. It is not confirmed that this cycle's new-behavior tests fail at the base. | File: N/A | Task: general
+[BOB] ⚪ Emergency acknowledgement publishes and fsyncs a full archive copy (`_archive_emergency_evidence`), then deletes it on success at session.py:582. The rename plus link-back already keeps the evidence reachable. | File: src/ovcaq/runtime/session.py:582 | Task: 20
+[BOB] ⚪ On normal exit, surviving descendants get an immediate SIGKILL with no TERM grace, so they cannot flush. The PRD describes TERM, then grace, then KILL. | File: src/ovcaq/runtime/process.py:154 | Task: 14
+[BOB] ⚪ `run_lock_held` raises on any platform other than darwin. On Linux, `status` and `doctor` will report `inconsistent` whenever run.lock exists. | File: src/ovcaq/runtime/registry.py:40 | Task: general
+[BOB] ⚪ `_read_config` refuses a symlinked user `~/.config/ovcaq` directory or `config.toml` file below the trusted anchor. That breaks stow-style dotfile setups. | File: src/ovcaq/config.py:44 | Task: 15
+```
+
+## Buckets
+
+FIX:
+- State-file resolution split: src/ovcaq/config.py:117. Drop the `[workflow] state_file` key (F09 asked for containment, not a new key). Resolve the workflow state file from the same `RuntimePaths` (including `external_state_root`) that `runtime_settings` builds, and use it in `init`/`state` too.
+- Doctor fails after init: src/ovcaq/runtime_cli.py:201. Call `ensure_runtime_layout` from `init`, or treat a missing `sessions` directory as healthy. Add a test that runs doctor right after init.
+- `--before` rejects offsets: src/ovcaq/cli_io.py:84. Accept any timezone-aware RFC3339 cutoff again (the metadata path is already strict), or document UTC-only with a test. Fix the label either way.
+- `cleanup_run_records` hides errors: src/ovcaq/runtime/session.py:370. Return False only for an ownership mismatch and let I/O errors raise.
+- Duplicate lock code: src/ovcaq/runtime/_retention.py:343. Add a `directory` parameter to `RunLock.acquire` and reuse it.
+- Test file over 800 lines: tests/runtime/test_runtime_cli.py. Split the doctor/emergency tests and the logs/purge tests into their own modules.
+- F31: src/ovcaq/paths.py:239. Give `ensure_runtime_layout` a production caller (`init`) or move it into test support.
+- Cleanup cannot be retried: src/ovcaq/runtime/session.py:361. Treat an already-absent matching fleet entry as removed.
+- Concurrent purge: src/ovcaq/runtime/_retention.py:363. Catch DuplicateRunError in `_dispatch_logs` and say "run or purge in progress", or drop the redundant retention lock.
+- F38 leftover: src/ovcaq/runtime_cli.py:142. Remove `EmergencyStateFailure` from the except tuple.
+- F25 leftover: src/ovcaq/paths.py:169. Add `compare=False` to the `_identities` field.
+- Preview command: src/ovcaq/runtime_cli.py:305. Build the preview command explicitly (`_purge_payload(plan, applied=..., preview=True)`) instead of slicing.
+- Watchdog timeout: src/ovcaq/runtime/watchdog.py:75. Raise a dedicated exception that is not an OSError (a RuntimeError subclass).
+- Error messages: src/ovcaq/config.py:106. Pass a label so PRD-root and state-file rejections name the right thing.
+- Changelog: CHANGELOG.md:20. Rewrite the bullets as short statements of what the user sees.
+
+VERIFY:
+- Fail-first replay. In a worktree at e34547e with HEAD's tests overlaid, run `mise exec -- uv run pytest tests/runtime/test_session_emergency.py::test_failed_acknowledgement_preserves_or_restores_canonical_blocking_evidence tests/runtime/test_session_emergency.py::test_marker_replacement_during_acknowledgement_preserves_new_failure_and_gate tests/runtime/test_retention.py::test_purge_retains_oversized_newline_free_evidence_using_bounded_reads tests/runtime/test_retention.py::test_runtime_root_swap_cannot_bypass_the_original_live_run_lock tests/runtime/test_watchdog.py::test_join_times_out_during_pending_signal_and_returns_only_after_last_delivery`. Each one must fail.
+
+KNOWN:
+- Redundant archive copy: the failure-path tests deliberately expect both archives to remain. Removing the copy changes which files exist, so it is a design change, not a repair.
+- SIGKILL without grace on normal exit: this was the chosen F02 direction. `term_grace_seconds` is not passed into `OwnedProcess`, and grace for orphans is a policy decision outside this rework.
+- `run_lock_held` is macOS-only: the PRD makes macOS the personal-cutover target and Linux a later release gate.
+- User-config symlink refusal: this is a deliberate, tested posture (`test_configuration_refuses_symlink_*`). Relaxing it is a security-policy decision, not a defect fix.
+
+## Rubric verdicts
+
+R1: fail
+R2: pass
+R3: pass
+R4: fail
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: fail
+R11: pass
+R12: pass
+R13: fail
+
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+
+---
+**Status:** Done. This review found 20 issues: 1 🟠, 6 🟡, 13 ⚪. They split into 15 FIX, 1 VERIFY and 4 KNOWN. Every point was checked by reading the code only; nothing was executed.
+**Next:** the coordinator merges these into the cycle-2 table and sends the 🟠 state-file split and the 🟡 doctor-after-init bug to rework first.

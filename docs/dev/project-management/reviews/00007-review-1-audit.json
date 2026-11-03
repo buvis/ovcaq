@@ -1,0 +1,82 @@
+{
+  "schema": "pass",
+  "counts": {
+    "completed": 8,
+    "total": 15
+  },
+  "phase": "review",
+  "next_phase": "review",
+  "cycle": 1,
+  "rework_task_ids": [
+    "9",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15"
+  ],
+  "coverage": {
+    "findings": 32,
+    "fixed_in_queued_tasks": 21,
+    "deferred": 3,
+    "discarded": 7,
+    "routed_to_verification": 1
+  },
+  "raw_rubrics": {
+    "alice": {
+      "1": "fail",
+      "2": "pass",
+      "3": "pass",
+      "4": "pass",
+      "6": "pass",
+      "7": "pass",
+      "8": "pass",
+      "9": "fail",
+      "10": "pass",
+      "11": "pass",
+      "12": "fail",
+      "13": "pass"
+    },
+    "blake": {
+      "1": "fail",
+      "2": "pass",
+      "3": "fail",
+      "4": "pass",
+      "5": "fail",
+      "6": "pass",
+      "7": "pass",
+      "8": "pass",
+      "9": "pass",
+      "10": "pass",
+      "11": "pass",
+      "12": "pass",
+      "13": "pass",
+      "14": "pass",
+      "15": "pass",
+      "16": "pass",
+      "17": "fail",
+      "18": "pass",
+      "19": "pass"
+    },
+    "bob": {
+      "1": "pass",
+      "2": "pass",
+      "3": "pass",
+      "4": "pass",
+      "5": "pass"
+    }
+  },
+  "bob_receipt_hashes": "pass",
+  "hook_results": {
+    "validate_state_json_hook.py": {
+      "exit": 0,
+      "stderr": ""
+    },
+    "review_coverage_hook.py": {
+      "exit": 0,
+      "stderr": ""
+    }
+  },
+  "note": "Task dependency payload initially used string IDs; schema rejected it without mutating state. Corrected blocked_by to integers. No production source changed."
+}

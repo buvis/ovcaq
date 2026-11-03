@@ -1,0 +1,9 @@
+{
+  "name": "[C2] Resolve signal cleanup ownership at the substrate boundary (M)",
+  "description": "Resolve the P03-T10 versus future supervisor composition question against the accepted source plan before changing the public runtime API.\n\nDisposition: deferred at cycle/cap 2/2. Review evidence only; no automatic repair dispatch is authorized by this task record. Keep it unstarted for operator/batch-end triage.\nSource review: dev/local/reviews/00005-runtime-substrate-v1-review-02.md\n\n### Findings (verbatim)\n[BLAKE] 🟠 Signal handling only raises an exception; no production runtime path composes group termination, outcome recording, registry cleanup, and lock release, leaving P03-T10’s centralized cleanup contract unimplemented | File: src/ovcaq/runtime/process.py:50 | Task: general\n\nAcceptance criteria:\n- [ ] Resolve every linked finding against PRD 00005 and its accepted source contracts.\n- [ ] Preserve single state writer, provider-neutral boundaries, owned-process signaling, and retained evidence.\n- [ ] Add only meaningful regression coverage and run the applicable quality gates when repair is authorized.\n\nFinding IDs: C2F06",
+  "review_cycle": 2,
+  "finding_ids": [
+    "C2F06"
+  ],
+  "deferred_at_cap": true
+}

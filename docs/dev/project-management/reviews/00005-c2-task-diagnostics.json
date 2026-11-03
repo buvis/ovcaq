@@ -1,0 +1,11 @@
+{
+  "name": "[C2] Correct initial and deterministic runtime diagnostics (M)",
+  "description": "Make doctor useful immediately after init, retain actionable inconsistent-run detail, and keep status deterministic for unchanged observations.\n\nDisposition: deferred at cycle/cap 2/2. Review evidence only; no automatic repair dispatch is authorized by this task record. Keep it unstarted for operator/batch-end triage.\nSource review: dev/local/reviews/00005-runtime-substrate-v1-review-02.md\n\n### Findings (verbatim)\n[ALICE] 🟡 `status` still emits only `run.status`, so the concrete failure retained in `RunObservation.detail` is unavailable when status reports `inconsistent`; F28 remains observable even though doctor exposes the reason | File: src/ovcaq/runtime_cli.py:312 | Task: 17\n[BLAKE] 🟡 `status` embeds `datetime.now()` in its purge preview, so unchanged runtime/state data produces different output despite the required deterministic status contract | File: src/ovcaq/runtime_cli.py:303 | Task: general\n[BOB] 🟡 `doctor` reports `ok: false` on every newly initialized project. `_directory_health` stats `paths.sessions`, but `init` creates only `dev/local/ovcaq`, and only `create_session` creates `sessions`. The resulting FileNotFoundError fills both the `permissions` and `writability` checks with the error text. Every ok=True test runs `ensure_runtime_layout` first, so none catches this (confirmed by reading). | File: src/ovcaq/runtime_cli.py:201 | Task: 17\n\nAcceptance criteria:\n- [ ] Resolve every linked finding against PRD 00005 and its accepted source contracts.\n- [ ] Preserve single state writer, provider-neutral boundaries, owned-process signaling, and retained evidence.\n- [ ] Add only meaningful regression coverage and run the applicable quality gates when repair is authorized.\n\nFinding IDs: C2F08, C2F13, C2F14",
+  "review_cycle": 2,
+  "finding_ids": [
+    "C2F08",
+    "C2F13",
+    "C2F14"
+  ],
+  "deferred_at_cap": true
+}

@@ -1,0 +1,11 @@
+# PRD 00006: cap-3 resume handoff
+
+The operator explicitly chose to resume PRD 00006 with `rework_cap=3`. The installed autopilot 0.5.6 Cap-Pause Resume Handler was followed in this recovery session. The authoritative state is `dev/local/autopilot/state.json`; the autocodex host dry run still prints the stale `docs/dev/project-management/autopilot/state.json` path.
+
+Before the change, the installed state CLI confirmed `phase=paused`, `next_phase=paused`, cycle 2/cap 2, 15/15 completed tasks, an empty `rework_task_ids` list, and a `cap_pause_reason` holding 11 unresolved findings. `autopilot resume-target` selected the cap-pause resume handler. The CLI then deleted `cap_pause_reason` and set `phase=review`, `next_phase=review`, and `rework_cap=3`. A state comparison confirmed those were the only changes; cycle, tasks, and every other field were preserved. The PRD remains in `dev/local/prds/wip/`.
+
+The cycle-2 review file is `dev/local/reviews/00006-events-claude-adapter-v1-review-2.md`. Alice, Blake, and Bob already completed that cycle's lenses. Four HIGH findings remain: an allowed warning clears a rejected limit; API-key variants escape normalized redaction; a terminal banner erases a credible event reset; and real clock-and-zone reset banners are not parsed. Seven further findings remain open, including the final-HEAD `uv run pytest` exit 1 (2,850 passed, one packaging failure). Only the focused packaging test passed afterward. Cycle-2 `uv run pytest` and `uv build` remain queued but unrun.
+
+The working tree has untracked migration placeholders under `docs/dev/project-management/`, including the root `.migration-placeholder`. The root file contains a newline; the other paths were listed. They were left untouched. Treat the sdist input and full suite as unverified until checked in the rework session. HEAD remains `b5ee110cc0c78ef0f886c49d433721e6e3d8f325`.
+
+Next session: invoke the installed `/autopilot:run-autopilot` review gate. The cycle-2 review file exists and no rework task is queued, so reuse the completed review and continue at the cycle-2 decision gate, then dispatch the authorized rework. Do not rerun the cycle-2 reviewer roster or cycle-1 tasks. This recovery session performed no repair, new review lens, or verification rerun.

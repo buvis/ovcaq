@@ -1,0 +1,19 @@
+{
+  "name": "[D1] Use the supplied supervisor phase settings during routing (M)",
+  "description": "Use the supplied supervisor phase settings during routing\n\nLocation: src/ovcaq/config.py; src/ovcaq/runtime/supervisor.py; tests/workflow/test_supervisor_configuration.py; tests/runtime/test_supervisor.py\n\nReuse: existing StateStore/StateService, pure decisions, shared runtime ownership and test fixtures.\n\nContract (source requirement/design excerpts):\n`supervisor_settings(..., **explicit)` accepts exactly `runtime` as a\n`RuntimeSettings`, `policy` as a `SupervisorPolicy`, and `phases` as a complete\nbuild/review/done mapping of `PhaseSettings`; each replaces the corresponding\nresolved section.\n\nDetails:\nEnsure a validated SupervisorSettings.phases override supplied to Supervisor actually controls tier, effort and timeout used in LaunchRequest. Reuse resolved settings rather than re-reading configuration twice for each phase. Preserve agent-specific tier/effort precedence, prompt literals, supported public configuration inputs and provider-neutral resolved concrete model values. Prefer a small internal resolver/helper over an unnecessary public signature redesign. F14/F15 were discarded: do not pass a tier in the concrete-model field or change the accepted logical tier defaults.\n\n### Findings (verbatim)\n- 🟡 Nothing in `src/` reads `SupervisorSettings.phases`. The supervisor routes through `resolve_phase_route(root, …)`, which rebuilds settings from disk (parsing both TOML files twice per call). So the validated `phases=` override and the `**explicit: object` runtime type checks in `supervisor_settings` only matter to tests | File: src/ovcaq/config.py:512 | Consensus: [1/3]\n\nAcceptance criteria:\n- Every quoted finding no longer reproduces.\n- Every decision is explainable from committed state plus summary.\n- Metrics, pause, stop, retry, park, and halt contracts pass.\n- Required post-drain capability lifecycle and independent retry pass.\n\nVerify: tests fail for the quoted regression before implementation and pass after; run applicable focused tests, source quality gates, and the work skill's mandatory final verification. Do not read live launcher homes in tests.\n",
+  "files": [
+    "src/ovcaq/config.py",
+    "src/ovcaq/runtime/supervisor.py",
+    "tests/workflow/test_supervisor_configuration.py",
+    "tests/runtime/test_supervisor.py"
+  ],
+  "blocked_by": [
+    13
+  ],
+  "model": "sonnet",
+  "tier_reason": "default",
+  "estimated_tokens": 83915,
+  "est_context_peak": 103915,
+  "qwen_eligible": false,
+  "qwen_excluded_reason": "files"
+}

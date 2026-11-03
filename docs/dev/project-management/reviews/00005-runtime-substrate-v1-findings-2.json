@@ -1,0 +1,718 @@
+[
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "`RuntimePaths._identities` remains a comparison field, so two objects with identical public contract fields compare unequal when their private filesystem snapshots differ; declare it with `compare=False`",
+    "file": "src/ovcaq/paths.py:169",
+    "task": "18",
+    "finders": [
+      "ALICE",
+      "BOB"
+    ],
+    "raw": [
+      "[ALICE] 🟡 `RuntimePaths._identities` remains a comparison field, so two objects with identical public contract fields compare unequal when their private filesystem snapshots differ; declare it with `compare=False` | File: src/ovcaq/paths.py:169 | Task: 18",
+      "[BOB] ⚪ F25 is only partly fixed. `RuntimePaths._identities` is hidden from output but still takes part in `==` and hashing, because the field has no `compare=False`. | File: src/ovcaq/paths.py:169 | Task: 18"
+    ],
+    "aliases": [
+      "F25 is only partly fixed. `RuntimePaths._identities` is hidden from output but still takes part in `==` and hashing, because the field has no `compare=False`."
+    ],
+    "related_files": [
+      "src/ovcaq/paths.py:169"
+    ],
+    "id": "C2F01",
+    "consensus": "[2/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved",
+    "group": "quality"
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "F31 remains: `_private_directory` still duplicates the two path-layout creators and creates every missing ancestor with mode `0700`; consolidate the descriptor-walk primitive so intermediate project directories retain the established layout policy",
+    "file": "src/ovcaq/runtime/session.py:193",
+    "task": "16",
+    "finders": [
+      "ALICE",
+      "BOB"
+    ],
+    "raw": [
+      "[ALICE] 🟡 F31 remains: `_private_directory` still duplicates the two path-layout creators and creates every missing ancestor with mode `0700`; consolidate the descriptor-walk primitive so intermediate project directories retain the established layout policy | File: src/ovcaq/runtime/session.py:193 | Task: 16",
+      "[BOB] 🟡 F31 is still open. `ensure_runtime_layout` has no production caller (only the test `_session` helper uses it), and it duplicates `_private_directory` and `ensure_runtime_directory`. Calling it from `init` would also fix the doctor-after-init bug above. | File: src/ovcaq/paths.py:239 | Task: 16"
+    ],
+    "aliases": [
+      "F31 is still open. `ensure_runtime_layout` has no production caller (only the test `_session` helper uses it), and it duplicates `_private_directory` and `ensure_runtime_directory`. Calling it from `init` would also fix the doctor-after-init bug above."
+    ],
+    "related_files": [
+      "src/ovcaq/paths.py:239"
+    ],
+    "id": "C2F02",
+    "consensus": "[2/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved",
+    "group": "quality"
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "`_state_attention` still catches `EmergencyStateFailure`, which `acknowledge_emergency_failure` cannot raise, leaving the dead exception branch and import identified by F38",
+    "file": "src/ovcaq/runtime_cli.py:142",
+    "task": "18",
+    "finders": [
+      "ALICE",
+      "BOB"
+    ],
+    "raw": [
+      "[ALICE] 🟡 `_state_attention` still catches `EmergencyStateFailure`, which `acknowledge_emergency_failure` cannot raise, leaving the dead exception branch and import identified by F38 | File: src/ovcaq/runtime_cli.py:142 | Task: 18",
+      "[BOB] ⚪ F38 is only partly fixed. `_state_attention` still catches `EmergencyStateFailure`, which `acknowledge_emergency_failure` never raises. | File: src/ovcaq/runtime_cli.py:142 | Task: 18"
+    ],
+    "aliases": [
+      "F38 is only partly fixed. `_state_attention` still catches `EmergencyStateFailure`, which `acknowledge_emergency_failure` never raises."
+    ],
+    "related_files": [
+      "src/ovcaq/runtime_cli.py:142"
+    ],
+    "id": "C2F03",
+    "consensus": "[2/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved",
+    "group": "quality"
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "The rework expanded `test_runtime_cli.py` from 666 to 1234 lines, violating the 800-line limit; split status/doctor, log, purge, and emergency command tests into focused modules",
+    "file": "tests/runtime/test_runtime_cli.py:1",
+    "task": "21",
+    "finders": [
+      "ALICE",
+      "BOB"
+    ],
+    "raw": [
+      "[ALICE] 🟡 The rework expanded `test_runtime_cli.py` from 666 to 1234 lines, violating the 800-line limit; split status/doctor, log, purge, and emergency command tests into focused modules | File: tests/runtime/test_runtime_cli.py:1 | Task: 21",
+      "[BOB] 🟡 `tests/runtime/test_runtime_cli.py` grew by 594 lines this cycle to 1234, over the 800-line file limit. | File: tests/runtime/test_runtime_cli.py | Task: 21"
+    ],
+    "aliases": [
+      "`tests/runtime/test_runtime_cli.py` grew by 594 lines this cycle to 1234, over the 800-line file limit."
+    ],
+    "related_files": [
+      "tests/runtime/test_runtime_cli.py"
+    ],
+    "id": "C2F04",
+    "consensus": "[2/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved",
+    "group": "quality"
+  },
+  {
+    "severity": "high",
+    "emoji": "🟠",
+    "issue": "Fleet entry reads are not identity-bound to deletion: `_scan` records a pre-open inode without comparing it to the opened descriptor, while `remove` validates contents and then unlinks the pathname without rechecking its inode; a replacement during either gap can make prune delete a live record or remove delete a new owner’s record",
+    "file": "src/ovcaq/runtime/registry.py:317",
+    "task": "13",
+    "finders": [
+      "ALICE"
+    ],
+    "raw": [
+      "[ALICE] 🟠 Fleet entry reads are not identity-bound to deletion: `_scan` records a pre-open inode without comparing it to the opened descriptor, while `remove` validates contents and then unlinks the pathname without rechecking its inode; a replacement during either gap can make prune delete a live record or remove delete a new owner’s record | File: src/ovcaq/runtime/registry.py:317 | Task: 13"
+    ],
+    "id": "C2F05",
+    "consensus": "[1/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved; replacement live-entry deletion reproduced with synthetic data in 00005_fleet_remove_race_proof_2.py. This loses discovery metadata; the authoritative run lock and retained session evidence remain intact.",
+    "group": "registry"
+  },
+  {
+    "severity": "high",
+    "emoji": "🟠",
+    "issue": "Signal handling only raises an exception; no production runtime path composes group termination, outcome recording, registry cleanup, and lock release, leaving P03-T10’s centralized cleanup contract unimplemented",
+    "file": "src/ovcaq/runtime/process.py:50",
+    "task": "general",
+    "finders": [
+      "BLAKE"
+    ],
+    "raw": [
+      "[BLAKE] 🟠 Signal handling only raises an exception; no production runtime path composes group termination, outcome recording, registry cleanup, and lock release, leaving P03-T10’s centralized cleanup contract unimplemented | File: src/ovcaq/runtime/process.py:50 | Task: general"
+    ],
+    "id": "C2F06",
+    "consensus": "[1/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved; the source plan section 12.2 requires composed cleanup, while this PRD/design expose primitives and delegate composition to their caller. Preserve the scope ambiguity for operator triage; do not opportunistically implement the later supervisor.",
+    "group": "signal_contract"
+  },
+  {
+    "severity": "high",
+    "emoji": "🟠",
+    "issue": "Three code paths now pick the state file differently. `workflow_settings` reads a new, undocumented `[workflow] state_file` key (config.py:117) and ignores `[runtime] external_state_root`. `status`, `doctor` and `--acknowledge-emergency` use `runtime_settings`, which honors the external root and ignores `state_file`. `init` and `state` use `state_path(root)` (cli.py:426). With either key set, doctor reports state \"missing\", and acknowledgement can accept a different file than the one workflow commands write (confirmed by reading). The PRD's explicit external-root behavior is still not met.",
+    "file": "src/ovcaq/config.py:117",
+    "task": "15",
+    "finders": [
+      "BOB"
+    ],
+    "raw": [
+      "[BOB] 🟠 Three code paths now pick the state file differently. `workflow_settings` reads a new, undocumented `[workflow] state_file` key (config.py:117) and ignores `[runtime] external_state_root`. `status`, `doctor` and `--acknowledge-emergency` use `runtime_settings`, which honors the external root and ignores `state_file`. `init` and `state` use `state_path(root)` (cli.py:426). With either key set, doctor reports state \"missing\", and acknowledgement can accept a different file than the one workflow commands write (confirmed by reading). The PRD's explicit external-root behavior is still not met. | File: src/ovcaq/config.py:117 | Task: 15"
+    ],
+    "id": "C2F07",
+    "consensus": "[1/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved; 00005_runtime_resolution_proof_2.py confirms runtime diagnostics select external/state.json while workflow/state defaults remain project-local.",
+    "group": "configuration"
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "`status` still emits only `run.status`, so the concrete failure retained in `RunObservation.detail` is unavailable when status reports `inconsistent`; F28 remains observable even though doctor exposes the reason",
+    "file": "src/ovcaq/runtime_cli.py:312",
+    "task": "17",
+    "finders": [
+      "ALICE"
+    ],
+    "raw": [
+      "[ALICE] 🟡 `status` still emits only `run.status`, so the concrete failure retained in `RunObservation.detail` is unavailable when status reports `inconsistent`; F28 remains observable even though doctor exposes the reason | File: src/ovcaq/runtime_cli.py:312 | Task: 17"
+    ],
+    "id": "C2F08",
+    "consensus": "[1/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved",
+    "group": "diagnostics"
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "Emergency decoding still reimplements the shared bounded duplicate-key-safe JSON decoder with `json.loads` and `_emergency_fields`; use `decode_json` directly and remove the duplicate parser",
+    "file": "src/ovcaq/runtime/session.py:431",
+    "task": "20",
+    "finders": [
+      "ALICE"
+    ],
+    "raw": [
+      "[ALICE] 🟡 Emergency decoding still reimplements the shared bounded duplicate-key-safe JSON decoder with `json.loads` and `_emergency_fields`; use `decode_json` directly and remove the duplicate parser | File: src/ovcaq/runtime/session.py:431 | Task: 20"
+    ],
+    "id": "C2F09",
+    "consensus": "[1/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved",
+    "group": "quality"
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "Runtime-root precedence merges internal and external choices independently, so a lower-priority user external root conflicts with a higher-priority project or explicit internal root instead of being overridden",
+    "file": "src/ovcaq/config.py:214",
+    "task": "general",
+    "finders": [
+      "BLAKE"
+    ],
+    "raw": [
+      "[BLAKE] 🟡 Runtime-root precedence merges internal and external choices independently, so a lower-priority user external root conflicts with a higher-priority project or explicit internal root instead of being overridden | File: src/ovcaq/config.py:214 | Task: general"
+    ],
+    "id": "C2F10",
+    "consensus": "[1/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved; per-key merging and mutually exclusive root selectors conflict across layers. Preserve the exact precedence question for repair.",
+    "group": "configuration"
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "Process identity uses `ps lstart` with one-second precision, so a PID recycled within the same second can be misclassified as the original process and escape stale-entry pruning",
+    "file": "src/ovcaq/runtime/registry.py:109",
+    "task": "general",
+    "finders": [
+      "BLAKE"
+    ],
+    "raw": [
+      "[BLAKE] 🟡 Process identity uses `ps lstart` with one-second precision, so a PID recycled within the same second can be misclassified as the original process and escape stale-entry pruning | File: src/ovcaq/runtime/registry.py:109 | Task: general"
+    ],
+    "id": "C2F11",
+    "consensus": "[1/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved",
+    "group": "registry"
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "A `ps` timeout raises uncaught `subprocess.TimeoutExpired`, allowing registry discovery and `status`/`doctor` to traceback instead of producing degraded diagnostics",
+    "file": "src/ovcaq/runtime/registry.py:109",
+    "task": "general",
+    "finders": [
+      "BLAKE"
+    ],
+    "raw": [
+      "[BLAKE] 🟡 A `ps` timeout raises uncaught `subprocess.TimeoutExpired`, allowing registry discovery and `status`/`doctor` to traceback instead of producing degraded diagnostics | File: src/ovcaq/runtime/registry.py:109 | Task: general"
+    ],
+    "id": "C2F12",
+    "consensus": "[1/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved",
+    "group": "registry"
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "`status` embeds `datetime.now()` in its purge preview, so unchanged runtime/state data produces different output despite the required deterministic status contract",
+    "file": "src/ovcaq/runtime_cli.py:303",
+    "task": "general",
+    "finders": [
+      "BLAKE"
+    ],
+    "raw": [
+      "[BLAKE] 🟡 `status` embeds `datetime.now()` in its purge preview, so unchanged runtime/state data produces different output despite the required deterministic status contract | File: src/ovcaq/runtime_cli.py:303 | Task: general"
+    ],
+    "id": "C2F13",
+    "consensus": "[1/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved",
+    "group": "diagnostics"
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "`doctor` reports `ok: false` on every newly initialized project. `_directory_health` stats `paths.sessions`, but `init` creates only `dev/local/ovcaq`, and only `create_session` creates `sessions`. The resulting FileNotFoundError fills both the `permissions` and `writability` checks with the error text. Every ok=True test runs `ensure_runtime_layout` first, so none catches this (confirmed by reading).",
+    "file": "src/ovcaq/runtime_cli.py:201",
+    "task": "17",
+    "finders": [
+      "BOB"
+    ],
+    "raw": [
+      "[BOB] 🟡 `doctor` reports `ok: false` on every newly initialized project. `_directory_health` stats `paths.sessions`, but `init` creates only `dev/local/ovcaq`, and only `create_session` creates `sessions`. The resulting FileNotFoundError fills both the `permissions` and `writability` checks with the error text. Every ok=True test runs `ensure_runtime_layout` first, so none catches this (confirmed by reading). | File: src/ovcaq/runtime_cli.py:201 | Task: 17"
+    ],
+    "id": "C2F14",
+    "consensus": "[1/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved; isolated init-then-doctor reproduction confirms missing sessions directory makes permission/writability checks fail.",
+    "group": "diagnostics"
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "The F14 fix landed on `_runtime_timestamp`, which after the refactor only parses `logs purge --before`. Cutoffs with an offset (valid RFC3339, the metavar) are now rejected as usage errors. No test covers this, and the validator label says `metadata.started_at` (metadata already goes through `parse_session_metadata`).",
+    "file": "src/ovcaq/cli_io.py:84",
+    "task": "16",
+    "finders": [
+      "BOB"
+    ],
+    "raw": [
+      "[BOB] 🟡 The F14 fix landed on `_runtime_timestamp`, which after the refactor only parses `logs purge --before`. Cutoffs with an offset (valid RFC3339, the metavar) are now rejected as usage errors. No test covers this, and the validator label says `metadata.started_at` (metadata already goes through `parse_session_metadata`). | File: src/ovcaq/cli_io.py:84 | Task: 16"
+    ],
+    "id": "C2F15",
+    "consensus": "[1/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved; cutoff input uses the strict UTC metadata parser despite RFC3339 labeling. Preserve both the behavior and misleading label for API-contract triage.",
+    "group": "cutoff"
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "`cleanup_run_records` turns every OSError, ValueError and TypeError into `False`. A caller cannot tell \"record belongs to another run\" from \"unlink or fsync failed\", and the cause is lost.",
+    "file": "src/ovcaq/runtime/session.py:370",
+    "task": "19",
+    "finders": [
+      "BOB"
+    ],
+    "raw": [
+      "[BOB] 🟡 `cleanup_run_records` turns every OSError, ValueError and TypeError into `False`. A caller cannot tell \"record belongs to another run\" from \"unlink or fsync failed\", and the cause is lost. | File: src/ovcaq/runtime/session.py:370 | Task: 19"
+    ],
+    "id": "C2F16",
+    "consensus": "[1/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved",
+    "group": "cleanup"
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "`_acquire_purge_locks` re-implements `RunLock.acquire`: O_NOFOLLOW open, S_ISREG check, LOCK_NB flock, samestat recheck, fchmod. Simpler: add `directory: int | None = None` to `RunLock.acquire` (as `run_lock_held` already has) and map DuplicateRunError to ActiveSessionError for run.lock.",
+    "file": "src/ovcaq/runtime/_retention.py:343",
+    "task": "12",
+    "finders": [
+      "BOB"
+    ],
+    "raw": [
+      "[BOB] 🟡 `_acquire_purge_locks` re-implements `RunLock.acquire`: O_NOFOLLOW open, S_ISREG check, LOCK_NB flock, samestat recheck, fchmod. Simpler: add `directory: int | None = None` to `RunLock.acquire` (as `run_lock_held` already has) and map DuplicateRunError to ActiveSessionError for run.lock. | File: src/ovcaq/runtime/_retention.py:343 | Task: 12"
+    ],
+    "id": "C2F17",
+    "consensus": "[1/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved",
+    "group": "quality"
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "7 touched test(s) pass against the pre-change code: test_internal_resolution_refuses_existing_symlink_descendants, test_configuration_refuses_symlink_files_with_arbitrary_targets +1 more",
+    "file": "tests/runtime/test_paths.py",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "raw": [
+      "[MECH] 🟡 7 touched test(s) pass against the pre-change code: test_internal_resolution_refuses_existing_symlink_descendants, test_configuration_refuses_symlink_files_with_arbitrary_targets +1 more | File: tests/runtime/test_paths.py | Task: general"
+    ],
+    "id": "C2F18",
+    "consensus": "[1/3]",
+    "disposition": "discarded",
+    "reason": "Computed pass-at-base fact retained, then assessed against the diff: these are pre-existing rejection/containment/byte-preservation cases with narrower expected exceptions, helper refactors, varied inputs, or regression backfill. Correct pre-change behavior should still pass. The replay separately records 113 failing touched cases and three uncollectable files; a passing existing parametrization is not itself a missing behavioral fix.",
+    "group": null
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "11 touched test(s) pass against the pre-change code: test_spawn_rejects_invalid_argv_before_starting_any_process +5 more",
+    "file": "tests/runtime/test_process.py",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "raw": [
+      "[MECH] 🟡 11 touched test(s) pass against the pre-change code: test_spawn_rejects_invalid_argv_before_starting_any_process +5 more | File: tests/runtime/test_process.py | Task: general"
+    ],
+    "id": "C2F19",
+    "consensus": "[1/3]",
+    "disposition": "discarded",
+    "reason": "Computed pass-at-base fact retained, then assessed against the diff: these are pre-existing rejection/containment/byte-preservation cases with narrower expected exceptions, helper refactors, varied inputs, or regression backfill. Correct pre-change behavior should still pass. The replay separately records 113 failing touched cases and three uncollectable files; a passing existing parametrization is not itself a missing behavioral fix.",
+    "group": null
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "31 touched test(s) pass against the pre-change code: test_rejects_nonbytes_without_changing_evidence, test_rejects_invalid_limits +25 more",
+    "file": "tests/runtime/test_raw_session.py",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "raw": [
+      "[MECH] 🟡 31 touched test(s) pass against the pre-change code: test_rejects_nonbytes_without_changing_evidence, test_rejects_invalid_limits +25 more | File: tests/runtime/test_raw_session.py | Task: general"
+    ],
+    "id": "C2F20",
+    "consensus": "[1/3]",
+    "disposition": "discarded",
+    "reason": "Computed pass-at-base fact retained, then assessed against the diff: these are pre-existing rejection/containment/byte-preservation cases with narrower expected exceptions, helper refactors, varied inputs, or regression backfill. Correct pre-change behavior should still pass. The replay separately records 113 failing touched cases and three uncollectable files; a passing existing parametrization is not itself a missing behavioral fix.",
+    "group": null
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "1 touched test(s) pass against the pre-change code: test_inode_substitution_during_acquisition_fails_and_releases_old_inode",
+    "file": "tests/runtime/test_registry.py",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "raw": [
+      "[MECH] 🟡 1 touched test(s) pass against the pre-change code: test_inode_substitution_during_acquisition_fails_and_releases_old_inode | File: tests/runtime/test_registry.py | Task: general"
+    ],
+    "id": "C2F21",
+    "consensus": "[1/3]",
+    "disposition": "discarded",
+    "reason": "Computed pass-at-base fact retained, then assessed against the diff: these are pre-existing rejection/containment/byte-preservation cases with narrower expected exceptions, helper refactors, varied inputs, or regression backfill. Correct pre-change behavior should still pass. The replay separately records 113 failing touched cases and three uncollectable files; a passing existing parametrization is not itself a missing behavioral fix.",
+    "group": null
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "25 touched test(s) pass against the pre-change code: test_invalid_selectors_fail_without_mutating_evidence +19 more",
+    "file": "tests/runtime/test_retention.py",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "raw": [
+      "[MECH] 🟡 25 touched test(s) pass against the pre-change code: test_invalid_selectors_fail_without_mutating_evidence +19 more | File: tests/runtime/test_retention.py | Task: general"
+    ],
+    "id": "C2F22",
+    "consensus": "[1/3]",
+    "disposition": "discarded",
+    "reason": "Computed pass-at-base fact retained, then assessed against the diff: these are pre-existing rejection/containment/byte-preservation cases with narrower expected exceptions, helper refactors, varied inputs, or regression backfill. Correct pre-change behavior should still pass. The replay separately records 113 failing touched cases and three uncollectable files; a passing existing parametrization is not itself a missing behavioral fix.",
+    "group": null
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "25 touched test(s) pass against the pre-change code: test_purge_rejects_parent_log_options_without_removing_evidence, test_runtime_readers_reject_unsafe_ids_non_utc_times_and_empty_required_strings +19 more",
+    "file": "tests/runtime/test_runtime_cli.py",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "raw": [
+      "[MECH] 🟡 25 touched test(s) pass against the pre-change code: test_purge_rejects_parent_log_options_without_removing_evidence, test_runtime_readers_reject_unsafe_ids_non_utc_times_and_empty_required_strings +19 more | File: tests/runtime/test_runtime_cli.py | Task: general"
+    ],
+    "id": "C2F23",
+    "consensus": "[1/3]",
+    "disposition": "discarded",
+    "reason": "Computed pass-at-base fact retained, then assessed against the diff: these are pre-existing rejection/containment/byte-preservation cases with narrower expected exceptions, helper refactors, varied inputs, or regression backfill. Correct pre-change behavior should still pass. The replay separately records 113 failing touched cases and three uncollectable files; a passing existing parametrization is not itself a missing behavioral fix.",
+    "group": null
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "34 touched test(s) pass against the pre-change code: test_failed_state_notice_publishes_private_synced_marker_and_persistent_gate, test_invalid_failure_diagnostics_are_rejected_without_publishing_marker +28 more",
+    "file": "tests/runtime/test_session_emergency.py",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "raw": [
+      "[MECH] 🟡 34 touched test(s) pass against the pre-change code: test_failed_state_notice_publishes_private_synced_marker_and_persistent_gate, test_invalid_failure_diagnostics_are_rejected_without_publishing_marker +28 more | File: tests/runtime/test_session_emergency.py | Task: general"
+    ],
+    "id": "C2F24",
+    "consensus": "[1/3]",
+    "disposition": "discarded",
+    "reason": "Computed pass-at-base fact retained, then assessed against the diff: these are pre-existing rejection/containment/byte-preservation cases with narrower expected exceptions, helper refactors, varied inputs, or regression backfill. Correct pre-change behavior should still pass. The replay separately records 113 failing touched cases and three uncollectable files; a passing existing parametrization is not itself a missing behavioral fix.",
+    "group": null
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "16 touched test(s) pass against the pre-change code: test_rejects_invalid_durations_before_starting_a_worker +10 more",
+    "file": "tests/runtime/test_watchdog.py",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "raw": [
+      "[MECH] 🟡 16 touched test(s) pass against the pre-change code: test_rejects_invalid_durations_before_starting_a_worker +10 more | File: tests/runtime/test_watchdog.py | Task: general"
+    ],
+    "id": "C2F25",
+    "consensus": "[1/3]",
+    "disposition": "discarded",
+    "reason": "Computed pass-at-base fact retained, then assessed against the diff: these are pre-existing rejection/containment/byte-preservation cases with narrower expected exceptions, helper refactors, varied inputs, or regression backfill. Correct pre-change behavior should still pass. The replay separately records 113 failing touched cases and three uncollectable files; a passing existing parametrization is not itself a missing behavioral fix.",
+    "group": null
+  },
+  {
+    "severity": "medium",
+    "emoji": "🟡",
+    "issue": "4 touched test(s) pass against the pre-change code: test_configured_runtime_preserves_containment_and_symlink_refusal, test_workflow_paths_accept_contained_explicit_and_configured_values",
+    "file": "tests/workflow/test_configuration.py",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "raw": [
+      "[MECH] 🟡 4 touched test(s) pass against the pre-change code: test_configured_runtime_preserves_containment_and_symlink_refusal, test_workflow_paths_accept_contained_explicit_and_configured_values | File: tests/workflow/test_configuration.py | Task: general"
+    ],
+    "id": "C2F26",
+    "consensus": "[1/3]",
+    "disposition": "discarded",
+    "reason": "Computed pass-at-base fact retained, then assessed against the diff: these are pre-existing rejection/containment/byte-preservation cases with narrower expected exceptions, helper refactors, varied inputs, or regression backfill. Correct pre-change behavior should still pass. The replay separately records 113 failing touched cases and three uncollectable files; a passing existing parametrization is not itself a missing behavioral fix.",
+    "group": null
+  },
+  {
+    "severity": "low",
+    "emoji": "⚪",
+    "issue": "The CLI adds unlisted `doctor --acknowledge-emergency` and `logs purge --session` options, expanding both the interface and destructive purge behavior beyond the specified command surface",
+    "file": "src/ovcaq/cli.py:167",
+    "task": "general",
+    "finders": [
+      "BLAKE"
+    ],
+    "raw": [
+      "[BLAKE] ⚪ The CLI adds unlisted `doctor --acknowledge-emergency` and `logs purge --session` options, expanding both the interface and destructive purge behavior beyond the specified command surface | File: src/ovcaq/cli.py:167 | Task: general"
+    ],
+    "id": "C2F27",
+    "consensus": "[1/3]",
+    "disposition": "discarded",
+    "reason": "The accepted PRD design explicitly specifies both flags as refinements of explicit session purge and emergency recovery; no automatic destructive action or out-of-scope product capability was added. The source command table is not an exhaustive flag inventory.",
+    "group": null
+  },
+  {
+    "severity": "low",
+    "emoji": "⚪",
+    "issue": "`cleanup_run_records` removes the fleet entry before `run.json`. If that unlink fails, or the entry is already gone, `remove()` returns False on every retry. `run.json` is then stranded and `status` stays inconsistent until the next run overwrites it.",
+    "file": "src/ovcaq/runtime/session.py:361",
+    "task": "19",
+    "finders": [
+      "BOB"
+    ],
+    "raw": [
+      "[BOB] ⚪ `cleanup_run_records` removes the fleet entry before `run.json`. If that unlink fails, or the entry is already gone, `remove()` returns False on every retry. `run.json` is then stranded and `status` stays inconsistent until the next run overwrites it. | File: src/ovcaq/runtime/session.py:361 | Task: 19"
+    ],
+    "id": "C2F28",
+    "consensus": "[1/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved",
+    "group": "cleanup"
+  },
+  {
+    "severity": "low",
+    "emoji": "⚪",
+    "issue": "A second concurrent `logs purge --apply` is refused with \"cannot purge while a run is active\", because run.lock is taken first. That message is wrong for this case. retention.lock can never be the contended lock, since its only taker already holds run.lock. If it ever were contended, its DuplicateRunError (a RuntimeError) would escape `_dispatch_logs` and `main` as a traceback.",
+    "file": "src/ovcaq/runtime/_retention.py:363",
+    "task": "12",
+    "finders": [
+      "BOB"
+    ],
+    "raw": [
+      "[BOB] ⚪ A second concurrent `logs purge --apply` is refused with \"cannot purge while a run is active\", because run.lock is taken first. That message is wrong for this case. retention.lock can never be the contended lock, since its only taker already holds run.lock. If it ever were contended, its DuplicateRunError (a RuntimeError) would escape `_dispatch_logs` and `main` as a traceback. | File: src/ovcaq/runtime/_retention.py:363 | Task: 12"
+    ],
+    "id": "C2F29",
+    "consensus": "[1/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved; preserve the inaccurate contention diagnostic and uncaught retention-lock exception, but do not remove the retention lock required for future aggregate writers.",
+    "group": "retention"
+  },
+  {
+    "severity": "low",
+    "emoji": "⚪",
+    "issue": "The `command` field means opposite things in two outputs. In `status` and `doctor`, `purge_preview.command` removes `--apply` with `plan.command[:-1]`. In `logs purge` output, `command` keeps `--apply`. The slice also silently depends on `--apply` being the last argument.",
+    "file": "src/ovcaq/runtime_cli.py:305",
+    "task": "18",
+    "finders": [
+      "BOB"
+    ],
+    "raw": [
+      "[BOB] ⚪ The `command` field means opposite things in two outputs. In `status` and `doctor`, `purge_preview.command` removes `--apply` with `plan.command[:-1]`. In `logs purge` output, `command` keeps `--apply`. The slice also silently depends on `--apply` being the last argument. | File: src/ovcaq/runtime_cli.py:305 | Task: 18"
+    ],
+    "id": "C2F30",
+    "consensus": "[1/3]",
+    "disposition": "discarded",
+    "reason": "Status/doctor intentionally expose a safe preview command, while explicit purge outputs the documented apply argv. PurgePlan's accepted contract pins --apply last, so slicing that suffix is not an unverified assumption.",
+    "group": null
+  },
+  {
+    "severity": "low",
+    "emoji": "⚪",
+    "issue": "`Watchdog.join` signals \"worker still running\" with the builtin `TimeoutError`, which is a subclass of `OSError`. Broad `except OSError` handlers, such as the one in `cli.main`, would report it as an I/O failure.",
+    "file": "src/ovcaq/runtime/watchdog.py:75",
+    "task": "14",
+    "finders": [
+      "BOB"
+    ],
+    "raw": [
+      "[BOB] ⚪ `Watchdog.join` signals \"worker still running\" with the builtin `TimeoutError`, which is a subclass of `OSError`. Broad `except OSError` handlers, such as the one in `cli.main`, would report it as an I/O failure. | File: src/ovcaq/runtime/watchdog.py:75 | Task: 14"
+    ],
+    "id": "C2F31",
+    "consensus": "[1/3]",
+    "disposition": "discarded",
+    "reason": "TimeoutError correctly represents a timed wait; no current production CLI path invokes Watchdog.join. A possible future broad OSError handler is hypothetical and does not justify a new exception API here.",
+    "group": null
+  },
+  {
+    "severity": "low",
+    "emoji": "⚪",
+    "issue": "`workflow_settings` validates the PRD root and the state file with `runtime_directory`. Rejections therefore say \"derived runtime path escapes project root\" even when the path is a PRD root or a state file.",
+    "file": "src/ovcaq/config.py:106",
+    "task": "15",
+    "finders": [
+      "BOB"
+    ],
+    "raw": [
+      "[BOB] ⚪ `workflow_settings` validates the PRD root and the state file with `runtime_directory`. Rejections therefore say \"derived runtime path escapes project root\" even when the path is a PRD root or a state file. | File: src/ovcaq/config.py:106 | Task: 15"
+    ],
+    "id": "C2F32",
+    "consensus": "[1/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved",
+    "group": "configuration"
+  },
+  {
+    "severity": "low",
+    "emoji": "⚪",
+    "issue": "The rewritten CHANGELOG Added bullets list implementation details (\"identity-pinned fleet records behind inode-stable run locks without launch contention\") rather than what the user sees.",
+    "file": "CHANGELOG.md:20",
+    "task": "21",
+    "finders": [
+      "BOB"
+    ],
+    "raw": [
+      "[BOB] ⚪ The rewritten CHANGELOG Added bullets list implementation details (\"identity-pinned fleet records behind inode-stable run locks without launch contention\") rather than what the user sees. | File: CHANGELOG.md:20 | Task: 21"
+    ],
+    "id": "C2F33",
+    "consensus": "[1/3]",
+    "disposition": "cap-overflow",
+    "reason": "rework cap reached with this finding unresolved",
+    "group": "quality"
+  },
+  {
+    "severity": "low",
+    "emoji": "⚪",
+    "issue": "In the fail-first replay, 154 touched tests pass against the pre-change code. Most are expected, because they cover code that was only moved or refactored. It is not confirmed that this cycle's new-behavior tests fail at the base.",
+    "file": "N/A",
+    "task": "general",
+    "finders": [
+      "BOB"
+    ],
+    "raw": [
+      "[BOB] ⚪ In the fail-first replay, 154 touched tests pass against the pre-change code. Most are expected, because they cover code that was only moved or refactored. It is not confirmed that this cycle's new-behavior tests fail at the base. | File: N/A | Task: general"
+    ],
+    "id": "C2F34",
+    "consensus": "[1/3]",
+    "disposition": "routed-verification",
+    "reason": "Routed to the exact named project verification command. No work pass runs on the cap-out path, so this check remains unrun. Bob's stated base-worktree and expected-failure interpretation is retained as context; ordinary current-HEAD exit zero alone would not establish that stronger claim.",
+    "group": null
+  },
+  {
+    "severity": "low",
+    "emoji": "⚪",
+    "issue": "Emergency acknowledgement publishes and fsyncs a full archive copy (`_archive_emergency_evidence`), then deletes it on success at session.py:582. The rename plus link-back already keeps the evidence reachable.",
+    "file": "src/ovcaq/runtime/session.py:582",
+    "task": "20",
+    "finders": [
+      "BOB"
+    ],
+    "raw": [
+      "[BOB] ⚪ Emergency acknowledgement publishes and fsyncs a full archive copy (`_archive_emergency_evidence`), then deletes it on success at session.py:582. The rename plus link-back already keeps the evidence reachable. | File: src/ovcaq/runtime/session.py:582 | Task: 20"
+    ],
+    "id": "C2F35",
+    "consensus": "[1/3]",
+    "disposition": "settled-deferral",
+    "reason": "The archive copy is deliberate recovery evidence used by failure-path tests. Removing it is a behavior/design change outside this repair; preserve Bob's KNOWN qualification.",
+    "group": null
+  },
+  {
+    "severity": "low",
+    "emoji": "⚪",
+    "issue": "On normal exit, surviving descendants get an immediate SIGKILL with no TERM grace, so they cannot flush. The PRD describes TERM, then grace, then KILL.",
+    "file": "src/ovcaq/runtime/process.py:154",
+    "task": "14",
+    "finders": [
+      "BOB"
+    ],
+    "raw": [
+      "[BOB] ⚪ On normal exit, surviving descendants get an immediate SIGKILL with no TERM grace, so they cannot flush. The PRD describes TERM, then grace, then KILL. | File: src/ovcaq/runtime/process.py:154 | Task: 14"
+    ],
+    "id": "C2F36",
+    "consensus": "[1/3]",
+    "disposition": "settled-deferral",
+    "reason": "The previous repair deliberately chose immediate owned-group cleanup after normal agent exit. Adding descendant TERM grace requires a policy/API decision; preserve this KNOWN limitation for later operator triage.",
+    "group": null
+  },
+  {
+    "severity": "low",
+    "emoji": "⚪",
+    "issue": "`run_lock_held` raises on any platform other than darwin. On Linux, `status` and `doctor` will report `inconsistent` whenever run.lock exists.",
+    "file": "src/ovcaq/runtime/registry.py:40",
+    "task": "general",
+    "finders": [
+      "BOB"
+    ],
+    "raw": [
+      "[BOB] ⚪ `run_lock_held` raises on any platform other than darwin. On Linux, `status` and `doctor` will report `inconsistent` whenever run.lock exists. | File: src/ovcaq/runtime/registry.py:40 | Task: general"
+    ],
+    "id": "C2F37",
+    "consensus": "[1/3]",
+    "disposition": "discarded",
+    "reason": "The PRD explicitly limits this milestone to macOS and assigns Linux support to a later release gate; reporting unsupported observation is expected.",
+    "group": null
+  },
+  {
+    "severity": "low",
+    "emoji": "⚪",
+    "issue": "`_read_config` refuses a symlinked user `~/.config/ovcaq` directory or `config.toml` file below the trusted anchor. That breaks stow-style dotfile setups.",
+    "file": "src/ovcaq/config.py:44",
+    "task": "15",
+    "finders": [
+      "BOB"
+    ],
+    "raw": [
+      "[BOB] ⚪ `_read_config` refuses a symlinked user `~/.config/ovcaq` directory or `config.toml` file below the trusted anchor. That breaks stow-style dotfile setups. | File: src/ovcaq/config.py:44 | Task: 15"
+    ],
+    "id": "C2F38",
+    "consensus": "[1/3]",
+    "disposition": "discarded",
+    "reason": "The accepted trust-boundary repair deliberately resolves the chosen XDG anchor while refusing symlink descendants and config files. Relaxing that tested safety contract is not an automatic fix.",
+    "group": null
+  }
+]

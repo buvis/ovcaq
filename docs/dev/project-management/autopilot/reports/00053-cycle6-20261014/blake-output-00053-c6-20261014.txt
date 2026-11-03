@@ -1,0 +1,24 @@
+[BLAKE] 🟡 Numeric codes in explicit status or error-code fields are not recognized: `status_code=429`, `error_code: 429`, `statusCode: 429` and JSON `"status": 429` all come back `unknown`. The prefix regex only accepts `status`/`error`, optionally followed by a space and `code`, so underscore, camelCase and quoted-key forms miss. Before this PRD the bare `\b429\b` matched these as rate_limit. A real 429 in these shapes now loses the bounded WAIT/retry path, and no positive test pins these shapes | File: src/ovcaq/drivers/codex_events.py:300 | Task: Phase 0
+[BLAKE] ⚪ A plain `error` label counts as a numeric code context because the ` code` part is optional (`error(?: code)?`). So `Error: 401 tests passed` comes back `authentication`. That is an ordinary count after a generic error label, not the "error-code" context the PRD describes | File: src/ovcaq/drivers/codex_events.py:302 | Task: Phase 0
+[BLAKE] ⚪ A routine `close_agent`/`wait` with status shutdown, interrupted or not_found on an already completed lane emits a `raw.unknown` observation every time. The TUI then flags the session as having raw evidence (`tui/model.py:548`) for normal protocol traffic. This is documented, but it adds noise | File: src/ovcaq/drivers/codex.py:378 | Task: Phase 0
+[BLAKE] ⚪ The health probe and the real launch resolve paths from different directories when the command is relative or the host `PATH` is empty. The Codex probe spawns without `cwd` and Claude's `shutil.which` checks against the process cwd, but launch uses `cwd=request.root`. The docs admit part of this (Codex searches the current directory, Claude reports unhealthy). It is still a corner where the probe and the spawn can disagree | File: src/ovcaq/drivers/codex.py:47 | Task: Phase 1
+[BLAKE] ⚪ The Claude probe checks only `command[0]` against the overlay `PATH`. With a wrapper argv (for example `env claude`), it never checks that the wrapped executable exists, while the Codex probe runs the full wrapper argv. This predates the PRD, but the PRD lists wrapper argv as a probe input | File: src/ovcaq/drivers/claude.py:81 | Task: Phase 1
+B1: pass
+B2: pass
+B3: pass
+B4: pass
+B5: pass
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: pass
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: pass
+B16: pass
+B17: pass
+B18: pass
+B19: pass

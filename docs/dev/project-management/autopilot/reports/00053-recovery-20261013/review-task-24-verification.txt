@@ -1,0 +1,3 @@
+RED at 7d03c21: new regression failed due to 5-second child timeout (1 failed in 5.05s).
+GREEN with c119229 code: mise exec -- uv run pytest -q --tb=line tests/drivers/test_adapter_failure_classes.py
+Exit 0: 89 passed (worker single narrow run).

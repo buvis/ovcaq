@@ -1,0 +1,122 @@
+{
+  "head": "22d9193a0d00486b09ebea169e7a38a9f858799d",
+  "branch": "master",
+  "status": "",
+  "stashes": "",
+  "worktrees": "/Users/bob/git/src/github.com/buvis/ovcaq 22d9193 [master]\n",
+  "tracked_tree_unchanged": true,
+  "prior_files_checked": 620,
+  "prior_changed": [],
+  "source_tasks": 10,
+  "inventory_items": 603,
+  "owned_rows": 55,
+  "plan_sha256": "43c75d3d94189351a0c0203c06563eced320889ae2d4cb7ae4e0300873e845a5",
+  "inventory_sha256": "d2a839b6c3b43c00c66114e0f20fe0d85b6169449562a72cf41ae30768eefdb9",
+  "review_sha256": "8aeadf3a2794d2ae24bee76e261cb2d308cba5252e22e15284f19b3d2e276610",
+  "raw_outputs_sha256": {
+    "alice": "3455c7ba3b0ccab5c965b766c244f5fb2251bec49f01a596aee4447a395f30b1",
+    "blake": "4c24442268fe049a78dfd74f2d61cebc609838fab02e437fc17e23f64d71c1a4",
+    "bob": "34ef4733cdebb91ff1f8936f5533e77e25274a465b57eda72d6eaba1b5c5c3c7"
+  },
+  "rubrics": {
+    "alice": {
+      "R1": "pass",
+      "R2": "fail",
+      "R3": "pass",
+      "R4": "pass",
+      "R6": "pass",
+      "R7": "pass",
+      "R8": "pass",
+      "R9": "pass",
+      "R10": "pass",
+      "R11": "pass",
+      "R12": "fail",
+      "R13": "fail"
+    },
+    "blake": {
+      "B1": "fail",
+      "B2": "pass",
+      "B3": "fail",
+      "B4": "pass",
+      "B5": "fail",
+      "B6": "pass",
+      "B7": "pass",
+      "B8": "pass",
+      "B9": "pass",
+      "B10": "fail",
+      "B11": "pass",
+      "B12": "fail",
+      "B13": "pass",
+      "B14": "fail",
+      "B15": "pass",
+      "B16": "fail",
+      "B17": "fail",
+      "B18": "pass",
+      "B19": "pass"
+    },
+    "bob": {
+      "R1": "fail",
+      "R2": "fail",
+      "R3": "pass",
+      "R4": "fail",
+      "R6": "pass",
+      "R7": "fail",
+      "R8": "pass",
+      "R9": "fail",
+      "R10": "pass",
+      "R11": "pass",
+      "R12": "fail",
+      "R13": "fail",
+      "D1": "pass",
+      "D2": "pass",
+      "D3": "pass",
+      "D4": "pass",
+      "D5": "pass"
+    }
+  },
+  "sizes": {
+    "src/ovcaq/workflow/_files.py": {
+      "lines": 403,
+      "max_function": 48
+    },
+    "src/ovcaq/workflow/records.py": {
+      "lines": 783,
+      "max_function": 50
+    },
+    "src/ovcaq/workflow/reports.py": {
+      "lines": 722,
+      "max_function": 45
+    },
+    "src/ovcaq/state/schema.py": {
+      "lines": 933,
+      "max_function": 47
+    },
+    "src/ovcaq/state/commands.py": {
+      "lines": 435,
+      "max_function": 53
+    }
+  },
+  "shape_gate": {
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "artifact_sha256": {
+    "dist/ovcaq-0.1.0.dev0-py3-none-any.whl": "8181a0ca7e3ff1dceb0577fd144347f73021451ca63cd049129a0c7a70739a6b",
+    "dist/ovcaq-0.1.0.dev0.tar.gz": "e869f5b37e43df1bdcd425a2be0897f2d69516e1cf04f32a0c203c8b035691ce"
+  },
+  "probe_root_removed": true,
+  "preparation_bundle_removed": true,
+  "historical_state": {
+    "prd": "00003-state-kernel-v1.md",
+    "attached": false,
+    "mtime_unchanged_from_initial_inspection": true,
+    "sha256": "ed37670c08931fe703e21a7730f7d29bd1e242ae29d273cefd4abe506a23162f"
+  },
+  "terminal_counts": {
+    "FIX": 3,
+    "VERIFY": 0,
+    "KNOWN": 4,
+    "total": 7
+  }
+}

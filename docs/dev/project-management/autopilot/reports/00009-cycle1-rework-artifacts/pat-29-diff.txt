@@ -1,0 +1,148 @@
+diff --git a/tests/drivers/test_codex_fixtures.py b/tests/drivers/test_codex_fixtures.py
+index f2a4afe..0393031 100644
+--- a/tests/drivers/test_codex_fixtures.py
++++ b/tests/drivers/test_codex_fixtures.py
+@@ -17,6 +17,7 @@ FAMILIES = (
+     "connectivity-failed.jsonl",
+     "permission-failed.jsonl",
+     "authentication-failed.jsonl",
++    "lanes-matched.jsonl",
+     "malformed.jsonl",
+ )
+ SOURCES = [
+diff --git a/tests/fixtures/codex/v1/fake_codex.py b/tests/fixtures/codex/v1/fake_codex.py
+index aeac8c2..b83e378 100755
+--- a/tests/fixtures/codex/v1/fake_codex.py
++++ b/tests/fixtures/codex/v1/fake_codex.py
+@@ -192,9 +192,7 @@ def native_rate_limit(scenario: str) -> int:
+     return 1
+ 
+ 
+-def main() -> int:
+-    argv = sys.argv[1:]
+-    scenario = os.environ.get("OVCAQ_FAKE_SCENARIO", "healthy")
++def emit_invocation(argv: list[str]) -> None:
+     emit(
+         {
+             "type": "fake_invocation",
+@@ -213,6 +211,12 @@ def main() -> int:
+             },
+         }
+     )
++
++
++def main() -> int:
++    argv = sys.argv[1:]
++    scenario = os.environ.get("OVCAQ_FAKE_SCENARIO", "healthy")
++    emit_invocation(argv)
+     if argv == ["--version"]:
+         return version(scenario)
+     if argv == ["login", "status"]:
+@@ -229,6 +233,7 @@ def main() -> int:
+     replay = {
+         "healthy",
+         "lanes",
++        "lanes-matched",
+         "malformed",
+         "tool-active",
+         "rate-limited",
+diff --git a/tests/fixtures/codex/v1/lanes-matched.jsonl b/tests/fixtures/codex/v1/lanes-matched.jsonl
+new file mode 100644
+index 0000000..6f4b533
+--- /dev/null
++++ b/tests/fixtures/codex/v1/lanes-matched.jsonl
+@@ -0,0 +1,5 @@
++{"type":"thread.started","thread_id":"example-lanes-matched"}
++{"type":"turn.started"}
++{"type":"item.started","item":{"id":"item_0","type":"collab_tool_call","tool":"spawn_agent","sender_thread_id":"example-parent","receiver_thread_ids":["example-child"],"prompt":"Inspect example","agents_states":{"example-child":{"status":"running","message":null}},"status":"in_progress"}}
++{"type":"item.completed","item":{"id":"item_0","type":"collab_tool_call","tool":"spawn_agent","sender_thread_id":"example-parent","receiver_thread_ids":["example-child"],"prompt":"Inspect example","agents_states":{"example-child":{"status":"running","message":null}},"status":"completed"}}
++{"type":"turn.completed","usage":{"input_tokens":0,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":0,"reasoning_output_tokens":0}}
+diff --git a/tests/fixtures/codex/v1/provenance.json b/tests/fixtures/codex/v1/provenance.json
+index c641d11..5899890 100644
+--- a/tests/fixtures/codex/v1/provenance.json
++++ b/tests/fixtures/codex/v1/provenance.json
+@@ -119,6 +119,22 @@
+       ],
+       "sha256": "2438a7e2dc2d216845ffe2f66bd7653060c5741e15313b330fd11e26924bfb99"
+     },
++    {
++      "file": "lanes-matched.jsonl",
++      "source_kind": "schema-synthetic",
++      "source": [
++        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/exec_events.rs",
++        "https://raw.githubusercontent.com/openai/codex/rust-v0.160.0/codex-rs/exec/src/event_processor_with_jsonl_output.rs"
++      ],
++      "sanitization": "Constructed with example identifiers and matching receiver_thread_ids/agents_states keys for native collaboration projection; no live transcript or personal data read.",
++      "unsupported_fields": [
++        "cost",
++        "lane",
++        "telemetry",
++        "live_capture"
++      ],
++      "sha256": "9c114894c52fb72bd6bb8f311cc0bac0be4c061c2b23d684c3ed5ce2a8fb0a13"
++    },
+     {
+       "file": "malformed.jsonl",
+       "source_kind": "schema-synthetic",
+@@ -154,6 +170,7 @@
+     "No safe controlled existing JSONL transcript was supplied; every JSONL family is schema-synthetic, including failure-message examples.",
+     "lanes.jsonl contains native collab_tool_call fields only; no authoritative lane assignment, cost, or rate-limit telemetry exists in this exec schema.",
+     "Zero usage in lanes.jsonl models producer Usage::default when token telemetry is absent; it is not measured zero consumption.",
++    "lanes-matched.jsonl is a separate schema-synthetic native collaboration example with consistent receiver/state identifiers and absent token telemetry represented by Usage::default; it is not a live capture or authoritative workflow lane assignment.",
+     "malformed.jsonl intentionally contains non-schema tolerance mutations, a legacy missing-usage-field shape, replay, depth 32, and a truncated final line. The unversioned seed remains unchanged.",
+     "Error followed by successful completion follows the producer running-on-error behavior. Failure pairs repeat the terminal message to model last_critical_error fallback.",
+     "file_change in_progress is schema-synthetic enum coverage on a completed item event, not a claim that the producer emits a started file patch."
+diff --git a/tests/tui/test_codex_projection.py b/tests/tui/test_codex_projection.py
+index 7289722..e775eea 100644
+--- a/tests/tui/test_codex_projection.py
++++ b/tests/tui/test_codex_projection.py
+@@ -81,17 +81,13 @@ def _feed(projection: Projection, records: tuple) -> model.ProjectView:
+     return projection.poll()
+ 
+ 
+-def _decode(name: str, *, exact: bool = False, matched: bool = False) -> tuple:
++def _decode(name: str, *, exact: bool = False) -> tuple:
+     driver = _driver()
+     observations = []
+     for line in (FIXTURES / f"{name}.jsonl").read_text().splitlines():
+         record = json.loads(line)
+         if exact and record.get("type") == "turn.completed":
+             record["usage"]["cache_write_input_tokens"] = 0
+-        if matched and isinstance(item := record.get("item"), dict):
+-            states = item.get("agents_states")
+-            if states is not None:
+-                item["agents_states"] = {"example-child": states["example-agent-1"]}
+         observations.extend(driver.decode(json.dumps(record)))
+     return tuple(observations)
+ 
+@@ -117,7 +113,7 @@ def test_adapter_usage_projection_labels_unknown_cost(
+ 
+ 
+ def test_adapter_matched_receiver_lane_is_visible(projection: Projection) -> None:
+-    records = _decode("lanes", matched=True)
++    records = _decode("lanes-matched")
+     assert any(event.type == ObservationType.LANE_STARTED for event in records)
+     view = _feed(projection, records)
+     assert view.provider == "codex"
+@@ -227,6 +223,7 @@ def _project_bundle(request: pytest.FixtureRequest, state, paths) -> tuple:
+         "noisy-success",
+         "tool-active",
+         "lanes",
++        "lanes-matched",
+         "malformed",
+     ],
+ )
+@@ -256,6 +253,13 @@ def test_fake_supervisor_evidence_drives_panels(
+     if scenario == "lanes":
+         assert view.lanes == () and view.usage.input_tokens is None
+         assert "no lanes observed" in rendered
++    if scenario == "lanes-matched":
++        assert any(event.type == ObservationType.LANE_STARTED for event in records)
++        assert [(lane.lane_id, lane.label, lane.status) for lane in view.lanes] == [
++            ("example-child", "Receiver", "running")
++        ]
++        assert "Receiver: running" in rendered
++        assert "Receiver: running" in _render(activity_panel(view))
+     if scenario == "noisy-success":
+         assert result.summary.success and view.usage.input_tokens == 80
+         assert not view.usage.estimated and "(estimated)" not in rendered

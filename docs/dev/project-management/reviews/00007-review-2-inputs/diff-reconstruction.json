@@ -1,0 +1,9 @@
+{
+  "argv": [
+    "git",
+    "diff",
+    "bbe7d521321428b670d15c4ede00e31792a61e1c..3f5a0bdd3e3268eb08bbef2240beb3f6733eda59"
+  ],
+  "sha256": "c63fe279651c55b9925779bf15691b90d1866e0573b660d5f36cca82f27e395d",
+  "reason": "The exact reviewed diff is reproducible from immutable committed objects; avoid recursively archiving prior review diffs."
+}

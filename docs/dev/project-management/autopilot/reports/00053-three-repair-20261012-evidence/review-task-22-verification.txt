@@ -1,0 +1,3 @@
+mise exec -- uv run pytest -q --tb=line tests/runtime/test_supervisor_adapters.py tests/runtime/test_adapter_launch_routing.py tests/drivers/test_codex_launch.py
+Exit 1. 8 failed, 73 passed, 2 warnings in 0.22s. All eight failures are PermissionError: Operation not permitted: ps. Worker initial and escalated runs and coordinator escalated retry confirm host restriction. Test counts and failures are retained, not green.
+Style limits and split hygiene exit 0.

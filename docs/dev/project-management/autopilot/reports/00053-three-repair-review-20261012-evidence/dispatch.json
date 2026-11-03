@@ -1,0 +1,74 @@
+{
+  "provider": "anthropic",
+  "requested_model": "opus",
+  "requested_effort": "xhigh",
+  "observed_model": "claude-opus-5-5",
+  "logical_lenses": [
+    "consensus",
+    "blind",
+    "doubt"
+  ],
+  "dispatch_rows": {
+    "alice": "2e133434",
+    "blake": "4b0dcb92",
+    "bob": "e834d5d0"
+  },
+  "late_telemetry_start": [
+    "alice",
+    "blake"
+  ],
+  "receipt_times_authoritative": true,
+  "outputs": {
+    "alice": {
+      "provider": "claude",
+      "model_provider": "anthropic",
+      "lens": "alice",
+      "model": "opus",
+      "started": 1791837810.2371972,
+      "completed": 1791838228.027133,
+      "output": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-three-repair-review-20261012-evidence/alice-output.txt",
+      "sha256": "0210c675af5c160382fa3c7e0b2fa4b7dfdc035590d432d6b0a2d036c1fd9447",
+      "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-three-repair-review-20261012-evidence/alice-output-5e275f8a6a1f41e2a9b20c14f1c72447.jsonl",
+      "raw_sha256": "3031c332969fb62b486d7ae5ff4ff4b59e872bce77d5f973ea5894ab151e795d",
+      "thread_id": "9158ddf2-fa0a-443c-accb-dac3853618e2",
+      "root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+      "prd": "00053-adapter-operational-corrections-v1.md",
+      "cycle": 2,
+      "implementation_fingerprint": "224988c1bf7002d797c23f74b43dd2b1aefcd8c56c8cac2c43ce101e0d6f1fcc"
+    },
+    "blake": {
+      "provider": "claude",
+      "model_provider": "anthropic",
+      "lens": "blake",
+      "model": "opus",
+      "started": 1791837814.866251,
+      "completed": 1791838338.54026,
+      "output": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-three-repair-review-20261012-evidence/blake-output.txt",
+      "sha256": "5a60ea7e463c407a1899b9b07a11e3c3a75b6e07089d5d2feee7927e3b608050",
+      "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-three-repair-review-20261012-evidence/blake-output-ce79abb9a7794712a664c10c2f5235f1.jsonl",
+      "raw_sha256": "95b0b4228991183738238f276f0919db420293876cb7c70fd834d490d941a90c",
+      "thread_id": "e4aba6fe-c1ef-4bb4-9330-a3c3ab9029bb",
+      "root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+      "prd": "00053-adapter-operational-corrections-v1.md",
+      "cycle": 2,
+      "implementation_fingerprint": "224988c1bf7002d797c23f74b43dd2b1aefcd8c56c8cac2c43ce101e0d6f1fcc"
+    },
+    "bob": {
+      "provider": "claude",
+      "model_provider": "anthropic",
+      "lens": "bob",
+      "model": "opus",
+      "started": 1791837810.762665,
+      "completed": 1791838253.639105,
+      "output": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-three-repair-review-20261012-evidence/bob-output.txt",
+      "sha256": "f90d7f1808fcccc4bf3bc9df45522848ba6e430feb41bf97802d70437cbaa323",
+      "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-three-repair-review-20261012-evidence/bob-output-b4b5adcb8e354abfaf24a0f4a40820bd.jsonl",
+      "raw_sha256": "c1fc9473e7cb2bb2d5850d78a1ea471de2ae20f19caf48ec75a00f1a685d68cf",
+      "thread_id": "f2e14e0b-51d5-4366-8947-1190eacb867a",
+      "root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+      "prd": "00053-adapter-operational-corrections-v1.md",
+      "cycle": 2,
+      "implementation_fingerprint": "224988c1bf7002d797c23f74b43dd2b1aefcd8c56c8cac2c43ce101e0d6f1fcc"
+    }
+  }
+}

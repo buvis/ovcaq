@@ -1,0 +1,1 @@
+classify_failure(detail: str) -> FailureClass; enum values CONNECTIVITY, RATE_LIMIT, UNKNOWN.

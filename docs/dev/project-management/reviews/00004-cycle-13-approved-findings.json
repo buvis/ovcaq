@@ -1,0 +1,121 @@
+[
+  {
+    "id": "R13-01",
+    "agent": "coordinator",
+    "issue": "An ancestor replaced after its confirmation is silently adopted as the next level's parent; defer returns success without fsyncing the replacement ancestor's parent",
+    "file": "src/ovcaq/workflow/_files.py:255",
+    "task": "P02-T06/P02-T09",
+    "severity": "high",
+    "consensus": "coordinator; Alice adjudication confirms",
+    "disposition": "FIX",
+    "reason": "Installed-wheel probe succeeds with no parent fsync after replacement. Detected data-loss risk requires pause before repairs."
+  },
+  {
+    "id": "R13-02",
+    "agent": "ALICE",
+    "emoji": "🟡",
+    "issue": "`_ensure_directory_chain` now opens every absolute ancestor with `O_RDONLY`, so a configured runtime below a search-only directory can be traversable and writable yet defer fails with `EACCES`; preserve crash confirmation while opening only directories OVCAQ must confirm or use a descriptor mode compatible with execute-only traversal",
+    "file": "src/ovcaq/workflow/_files.py:256",
+    "task": "P02-T06/P02-T09",
+    "severity": "medium",
+    "consensus": "2/3",
+    "disposition": "FIX",
+    "reason": "Alice and Bob B1 identify the same search-only ancestor access failure. Local O_SEARCH probe supplies a bounded alternative; preserve crash and identity confirmation."
+  },
+  {
+    "id": "R13-03",
+    "agent": "ALICE",
+    "emoji": "🟡",
+    "issue": "The ancestry loop treats the filesystem root as its own child, opening `/` twice, calling `mkdir(exist_ok=True)` on it, and fsyncing it even though OVCAQ can never create that anchor; exclude the root self-step while retaining parent confirmation for every potentially interrupted runtime ancestor",
+    "file": "src/ovcaq/workflow/_files.py:255",
+    "task": "P02-T06/P02-T09",
+    "severity": "medium",
+    "consensus": "2/3",
+    "disposition": "FIX",
+    "reason": "Alice and Bob B2 identify the same root self-step; retain the higher reported severity."
+  },
+  {
+    "id": "R13-04",
+    "agent": "BOB",
+    "emoji": "🟡",
+    "issue": "B3: _assert_retry_error hedges: the else branch (any nonzero code with \"retry\" anywhere in the JSON) is unreachable in the overlap scenario (REPORT_ACTOR pauses inside _publish_file while holding the flock, so B can only fail with the state_io busy error; cli.py:456 maps every OSError to state_io) and keeps the pre-fix loose assertion alive, so a changed code or message still passes",
+    "file": "tests/packaging/test_rework_11.py:317",
+    "task": "2",
+    "severity": "medium",
+    "consensus": "1/3",
+    "disposition": "FIX",
+    "reason": "Exact contention error assertions can replace the weak fallback in the controlled overlap scenario."
+  },
+  {
+    "id": "R13-05",
+    "agent": "BOB",
+    "emoji": "⚪",
+    "issue": "B4: ORIGIN_CHECK.installed_origins asserts in-child (sys.prefix, site-packages) what every consumer re-asserts test-side through _assert_installed against installed.root; the in-child asserts are redundant",
+    "file": "tests/packaging/rework_12_scripts.py:84",
+    "task": "1",
+    "severity": "low",
+    "consensus": "1/3",
+    "disposition": "FIX",
+    "reason": "The parent-side installed-origin check already validates the returned module origins; the duplicate child-side assertions are removable within these tests."
+  },
+  {
+    "id": "R13-06",
+    "agent": "BOB",
+    "emoji": "🟡",
+    "issue": "B5: Suspected sandbox break: defer/stall/park now issue mkdir and open(O_RDONLY|O_DIRECTORY) against `/`, `/Users`, `$HOME` from inside launcher sessions that run under `codex exec --sandbox workspace-write` (plan §10.4); Path.mkdir(exist_ok=True) swallows only FileExistsError, so a seatbelt EPERM ahead of the kernel EEXIST fails every ledger write",
+    "file": "src/ovcaq/workflow/_files.py:257",
+    "task": "1",
+    "severity": "medium",
+    "consensus": "1/3",
+    "disposition": "VERIFY",
+    "reason": "Not queued: suggested command uses placeholders and a nested Codex CLI; host prohibits nested Codex simulation. The source and installed probes succeeded in this host sandbox, refuting a universal failure here. Actual launcher sandbox coverage remains unverified."
+  },
+  {
+    "id": "R13-07",
+    "agent": "BOB",
+    "emoji": "⚪",
+    "issue": "B6: paths.ensure_runtime_directory (`ovcaq init`) creates the project root and runtime chain with mkdir(parents=True) and no directory fsync; the durability this diff adds does not cover init-created levels (today the unbounded walk confirms them incidentally on the first ledger write)",
+    "file": "src/ovcaq/paths.py:94",
+    "task": "general",
+    "severity": "low",
+    "consensus": "1/3",
+    "disposition": "KNOWN",
+    "reason": "Unchanged init ancestry provisioning belongs to P03-T01/PRD 00005. No init durability guarantee is newly asserted here; retain the limitation for its owning phase."
+  },
+  {
+    "id": "R13-08",
+    "agent": "BOB",
+    "emoji": "⚪",
+    "issue": "B7: level.mkdir(exist_ok=True) creates the runtime root with default umask mode while ensure_runtime_directory gives the runtime leaf 0o700 (plan §15 restrictive permissions)",
+    "file": "src/ovcaq/workflow/_files.py:257",
+    "task": "1",
+    "severity": "low",
+    "consensus": "1/3",
+    "disposition": "KNOWN",
+    "reason": "Inherited runtime-root mode behavior belongs to P03-T01 provisioning policy. Existing record/lock permissions remain checked; no new policy is introduced in this review."
+  },
+  {
+    "id": "R13-09",
+    "agent": "BOB",
+    "emoji": "⚪",
+    "issue": "B8: Cannot statically verify: suite/ruff/format/mypy/build and fail-first replay of the rework_12 crash/racer tests and the two exact-message asserts (replay skipped: worktree denied); recorded gates at HEAD be5e385 (1352 passed) taken from last-verification.json",
+    "file": "N/A",
+    "task": "general",
+    "severity": "low",
+    "consensus": "1/3",
+    "disposition": "KNOWN",
+    "reason": "Same-HEAD suite/lint/format/types/build are verified by last-verification.json. Residual full fail-first binding is the settled R9-K4 limitation. Not queued: archive/pipe/overlay instructions violate the single verification-command shape."
+  },
+  {
+    "id": "R13-10",
+    "agent": "BLAKE",
+    "emoji": "🟠",
+    "issue": "Frontmatter application silently discards the effective catchup, design, design-gate, and pause-on-ambiguity controls: `apply_to_store` parses and returns them but removes their extension keys and persists only rework cap and tier, violating CMD-014’s requirement to transactionally apply derived state fields",
+    "file": "src/ovcaq/workflow/frontmatter.py:191",
+    "task": "P02-T02",
+    "severity": "high",
+    "consensus": "1/3",
+    "disposition": "DISCARDED",
+    "reason": "The cycle-9 adjudication already settled returned-control/downstream ownership, repeated in cycle-10 and cycle-11 source evidence. The v1 state crosswalk derives controls rather than duplicating policy; tests/workflow/test_applications.py pins returned controls and durable cap/tier/CAS behavior. No new evidence invalidates that boundary."
+  }
+]

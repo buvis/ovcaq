@@ -1,0 +1,2122 @@
+[
+  {
+    "id": "ART-012",
+    "category": "artifact",
+    "name": "reports batch state final",
+    "source": "cli/loop.py:_act_done",
+    "summary": "Drained state archived as reports/{batch}-state-final.json before post-drain actions.",
+    "evidence": [
+      "cli/test_loop.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-012",
+        "ART-013",
+        "ART-014",
+        "ART-039",
+        "ART-040",
+        "ART-041",
+        "CMD-018",
+        "CMD-019",
+        "CMD-020",
+        "TEST-018",
+        "TEST-019",
+        "TEST-020",
+        "TEST-062"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/reports.py",
+      "rationale": "Audit, report, metrics, golden projections, and idempotent Markdown replacement consolidate as deterministic workflow reporting.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "ART-013",
+    "category": "artifact",
+    "name": "reports batch report",
+    "source": "cli/__main__.py:_run_render report",
+    "summary": "Durable batch Markdown report with replaceable per-PRD sections, stalled records, and final summary.",
+    "evidence": [
+      "cli/test_render.py",
+      "cli/test_render_replace_section.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-012",
+        "ART-013",
+        "ART-014",
+        "ART-039",
+        "ART-040",
+        "ART-041",
+        "CMD-018",
+        "CMD-019",
+        "CMD-020",
+        "TEST-018",
+        "TEST-019",
+        "TEST-020",
+        "TEST-062"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/reports.py",
+      "rationale": "Audit, report, metrics, golden projections, and idempotent Markdown replacement consolidate as deterministic workflow reporting.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "ART-014",
+    "category": "artifact",
+    "name": "per-PRD audit report",
+    "source": "cli/__main__.py:_run_render audit",
+    "summary": "Durable review-directory Markdown projection of autonomous, deferred, and doubt decision arrays.",
+    "evidence": [
+      "cli/test_render.py",
+      "cli/golden/expected/audit.md"
+    ],
+    "migration": {
+      "ids": [
+        "ART-012",
+        "ART-013",
+        "ART-014",
+        "ART-039",
+        "ART-040",
+        "ART-041",
+        "CMD-018",
+        "CMD-019",
+        "CMD-020",
+        "TEST-018",
+        "TEST-019",
+        "TEST-020",
+        "TEST-062"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/reports.py",
+      "rationale": "Audit, report, metrics, golden projections, and idempotent Markdown replacement consolidate as deterministic workflow reporting.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "ART-016",
+    "category": "artifact",
+    "name": "deferred batch ledger",
+    "source": "cli/records.py:record_defer",
+    "summary": "deferred/{batch}-deferred.json append ledger used for stalls and decisions carried to batch end.",
+    "evidence": [
+      "cli/test_records.py",
+      "cli/test_records_stall.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "ART-017",
+    "category": "artifact",
+    "name": "deferred batch ledger lock",
+    "source": "cli/records.py:record_defer",
+    "summary": "Independent sidecar advisory lock serializing deferred-ledger updates.",
+    "evidence": [
+      "cli/test_records.py",
+      "cli/test_records_failure_paths.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "ART-026",
+    "category": "artifact",
+    "name": "park-requested file",
+    "source": "cli/loop.py:_act_park",
+    "summary": "Verified JSON handoff from supervisor death/stall decision to the next workflow session.",
+    "evidence": [
+      "cli/test_loop.py",
+      "cli/test_records_park.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "ART-036",
+    "category": "artifact",
+    "name": "PRD lifecycle directories",
+    "source": "cli/selection.py:select and cli/records.py:do_stall",
+    "summary": "backlog, wip, hold, and done files provide selection and verified-move lifecycle evidence.",
+    "evidence": [
+      "cli/test_selection.py",
+      "cli/test_records_stall.py",
+      "scripts/test_autoclaude_fable_subcommands.sh"
+    ],
+    "migration": {
+      "ids": [
+        "ART-036",
+        "CMD-013",
+        "TEST-027"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/selection.py",
+      "rationale": "PRD sequence parsing, lifecycle directories, hold exclusion, work-in-progress priority, and drain selection move as pure workflow discovery.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "ART-039",
+    "category": "artifact",
+    "name": "CLI golden state and metrics inputs",
+    "source": "cli/golden/state-render.json and cli/golden/metrics-render.jsonl",
+    "summary": "Current sanitized rendering inputs, including legacy and rich nested state shapes.",
+    "evidence": [
+      "cli/test_render.py",
+      "cli/test_migration_map.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-012",
+        "ART-013",
+        "ART-014",
+        "ART-039",
+        "ART-040",
+        "ART-041",
+        "CMD-018",
+        "CMD-019",
+        "CMD-020",
+        "TEST-018",
+        "TEST-019",
+        "TEST-020",
+        "TEST-062"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/reports.py",
+      "rationale": "Audit, report, metrics, golden projections, and idempotent Markdown replacement consolidate as deterministic workflow reporting.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "ART-040",
+    "category": "artifact",
+    "name": "CLI archived batch golden",
+    "source": "cli/golden/state-batch-202608162223.json",
+    "summary": "Current archived batch-state contract with completed-PRD and decision history.",
+    "evidence": [
+      "cli/test_migration_map.py",
+      "cli/test_render.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-012",
+        "ART-013",
+        "ART-014",
+        "ART-039",
+        "ART-040",
+        "ART-041",
+        "CMD-018",
+        "CMD-019",
+        "CMD-020",
+        "TEST-018",
+        "TEST-019",
+        "TEST-020",
+        "TEST-062"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/reports.py",
+      "rationale": "Audit, report, metrics, golden projections, and idempotent Markdown replacement consolidate as deterministic workflow reporting.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "ART-041",
+    "category": "artifact",
+    "name": "CLI golden expected outputs",
+    "source": "cli/golden/expected/",
+    "summary": "Expected audit, metrics, report-section, report-summary, and status rendering contracts.",
+    "evidence": [
+      "cli/test_render.py",
+      "cli/test_render_replace_section.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-012",
+        "ART-013",
+        "ART-014",
+        "ART-039",
+        "ART-040",
+        "ART-041",
+        "CMD-018",
+        "CMD-019",
+        "CMD-020",
+        "TEST-018",
+        "TEST-019",
+        "TEST-020",
+        "TEST-062"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/reports.py",
+      "rationale": "Audit, report, metrics, golden projections, and idempotent Markdown replacement consolidate as deterministic workflow reporting.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "CMD-007",
+    "category": "command",
+    "name": "autopilot stall",
+    "source": "cli/__main__.py:_add_stall/_run_stall",
+    "summary": "Runs the durable stall saga for a PRD, including hold move, defer record, and reset.",
+    "evidence": [
+      "cli/test_records_stall.py",
+      "cli/test_lifecycle_cli.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "CMD-008",
+    "category": "command",
+    "name": "autopilot park",
+    "source": "cli/__main__.py:_add_park/_run_park",
+    "summary": "Consumes or reconciles a park request and applies the systemic-park breaker.",
+    "evidence": [
+      "cli/test_records_park.py",
+      "cli/test_lifecycle_cli.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "CMD-009",
+    "category": "command",
+    "name": "autopilot reset-prd",
+    "source": "cli/__main__.py:_add_reset_prd/_run_reset_prd",
+    "summary": "Atomically clears per-PRD state and restores build counters and phase markers.",
+    "evidence": [
+      "cli/test_lifecycle_cli.py",
+      "cli/test_records.py"
+    ],
+    "migration": {
+      "ids": [
+        "CMD-009",
+        "CMD-015",
+        "TEST-029"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/transitions.py",
+      "rationale": "Reset and phase-complete effects move with the closed transition table and compound lifecycle mutation.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "CMD-010",
+    "category": "command",
+    "name": "autopilot defer",
+    "source": "cli/__main__.py:_add_defer/_run_defer",
+    "summary": "Appends one JSON object to a batch deferred ledger with PRD attribution.",
+    "evidence": [
+      "cli/test_lifecycle_cli.py",
+      "cli/test_records.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "CMD-012",
+    "category": "command",
+    "name": "autopilot check-plan",
+    "source": "cli/__main__.py:_add_check_plan/_run_check_plan",
+    "summary": "Reads the task snapshot and returns a distinct failure when its count exceeds the loop ceiling.",
+    "evidence": [
+      "cli/test_policy.py",
+      "cli/test_cli.py"
+    ],
+    "migration": {
+      "ids": [
+        "CMD-012",
+        "DEC-071",
+        "TEST-012"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/policy.py",
+      "rationale": "The plan ceiling and check command are deterministic workflow policy, independent of runtime and providers.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "CMD-013",
+    "category": "command",
+    "name": "autopilot select",
+    "source": "cli/__main__.py:_add_select/_run_select",
+    "summary": "Selects deterministically from wip then backlog while excluding hold, returning JSON even when drained.",
+    "evidence": [
+      "cli/test_selection.py",
+      "cli/test_cli.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-036",
+        "CMD-013",
+        "TEST-027"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/selection.py",
+      "rationale": "PRD sequence parsing, lifecycle directories, hold exclusion, work-in-progress priority, and drain selection move as pure workflow discovery.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "CMD-014",
+    "category": "command",
+    "name": "autopilot frontmatter",
+    "source": "cli/__main__.py:_add_frontmatter/_run_frontmatter",
+    "summary": "Parses PRD controls, warns on defaults, and transactionally applies the derived state fields.",
+    "evidence": [
+      "cli/test_frontmatter.py",
+      "cli/test_cli.py"
+    ],
+    "migration": {
+      "ids": [
+        "CMD-014",
+        "TEST-006"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/frontmatter.py",
+      "rationale": "Frontmatter parsing, defaults, validation, and warnings are provider-neutral workflow input behavior.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "CMD-015",
+    "category": "command",
+    "name": "autopilot phase-done",
+    "source": "cli/__main__.py:_add_phase_done/_run_phase_done",
+    "summary": "Applies one named workflow outcome from the current phase as an atomic transition.",
+    "evidence": [
+      "cli/test_transitions.py",
+      "cli/test_cli.py"
+    ],
+    "migration": {
+      "ids": [
+        "CMD-009",
+        "CMD-015",
+        "TEST-029"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/transitions.py",
+      "rationale": "Reset and phase-complete effects move with the closed transition table and compound lifecycle mutation.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "CMD-016",
+    "category": "command",
+    "name": "autopilot resume-target",
+    "source": "cli/__main__.py:_add_resume_target/_run_resume_target",
+    "summary": "Returns the authoritative resume target after schema-version preflight.",
+    "evidence": [
+      "cli/test_resume.py",
+      "scripts/test_autopilot_resume.py"
+    ],
+    "migration": {
+      "ids": [
+        "CMD-016",
+        "TEST-021"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/resume.py",
+      "rationale": "Resume-target precedence is a pure workflow mapping over committed state and recovery intent.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "CMD-018",
+    "category": "command",
+    "name": "autopilot render audit",
+    "source": "cli/__main__.py:_run_render surface=audit",
+    "summary": "Renders the per-PRD decision audit from state arrays into the repository review directory.",
+    "evidence": [
+      "cli/test_render.py",
+      "cli/golden/expected/audit.md"
+    ],
+    "migration": {
+      "ids": [
+        "ART-012",
+        "ART-013",
+        "ART-014",
+        "ART-039",
+        "ART-040",
+        "ART-041",
+        "CMD-018",
+        "CMD-019",
+        "CMD-020",
+        "TEST-018",
+        "TEST-019",
+        "TEST-020",
+        "TEST-062"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/reports.py",
+      "rationale": "Audit, report, metrics, golden projections, and idempotent Markdown replacement consolidate as deterministic workflow reporting.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "CMD-019",
+    "category": "command",
+    "name": "autopilot render report",
+    "source": "cli/__main__.py:_run_render surface=report",
+    "summary": "Creates or updates batch report PRD, stalled, or summary sections from state and metrics.",
+    "evidence": [
+      "cli/test_render.py",
+      "cli/test_render_replace_section.py",
+      "cli/golden/expected/report-section.md"
+    ],
+    "migration": {
+      "ids": [
+        "ART-012",
+        "ART-013",
+        "ART-014",
+        "ART-039",
+        "ART-040",
+        "ART-041",
+        "CMD-018",
+        "CMD-019",
+        "CMD-020",
+        "TEST-018",
+        "TEST-019",
+        "TEST-020",
+        "TEST-062"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/reports.py",
+      "rationale": "Audit, report, metrics, golden projections, and idempotent Markdown replacement consolidate as deterministic workflow reporting.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "CMD-020",
+    "category": "command",
+    "name": "autopilot render metrics",
+    "source": "cli/__main__.py:_run_render surface=metrics",
+    "summary": "Prints a deterministic Markdown summary of loop metrics rows.",
+    "evidence": [
+      "cli/test_render.py",
+      "cli/golden/expected/metrics.md"
+    ],
+    "migration": {
+      "ids": [
+        "ART-012",
+        "ART-013",
+        "ART-014",
+        "ART-039",
+        "ART-040",
+        "ART-041",
+        "CMD-018",
+        "CMD-019",
+        "CMD-020",
+        "TEST-018",
+        "TEST-019",
+        "TEST-020",
+        "TEST-062"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/reports.py",
+      "rationale": "Audit, report, metrics, golden projections, and idempotent Markdown replacement consolidate as deterministic workflow reporting.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "CMD-036",
+    "category": "command",
+    "name": "statectl complete-prd",
+    "source": "cli/statectl.py:do_complete_prd",
+    "summary": "Appends a computed completed-PRD batch summary and resets consecutive parks.",
+    "evidence": [
+      "scripts/test_statectl_complete_prd.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "DEC-071",
+    "category": "loop_decision",
+    "name": "oversized plan policy",
+    "source": "cli/policy.py:plan_over_ceiling",
+    "summary": "A real task list longer than the ceiling is over-limit; missing or non-list tasks count as zero.",
+    "evidence": [
+      "cli/test_policy.py"
+    ],
+    "migration": {
+      "ids": [
+        "CMD-012",
+        "DEC-071",
+        "TEST-012"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/policy.py",
+      "rationale": "The plan ceiling and check command are deterministic workflow policy, independent of runtime and providers.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "DEC-076",
+    "category": "loop_decision",
+    "name": "stall saga preflight refusal",
+    "source": "cli/records.py:_stall_preflight",
+    "summary": "Malformed or conflicting stall intent, mismatched PRD, or missing batch identity refuses before filesystem effects.",
+    "evidence": [
+      "cli/test_records_stall.py",
+      "cli/test_records_failure_paths.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "DEC-077",
+    "category": "loop_decision",
+    "name": "stall saga recoverable failure",
+    "source": "cli/records.py:do_stall",
+    "summary": "Hold creation/move, deferred append, or state transaction failure returns its distinct code while durable intent preserves retryability.",
+    "evidence": [
+      "cli/test_records_stall.py",
+      "cli/test_records_failure_paths.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "DEC-078",
+    "category": "loop_decision",
+    "name": "stall saga successful commit",
+    "source": "cli/records.py:do_stall",
+    "summary": "Verified move plus deduplicated defer record commits PRD reset, park-breaker rule, and intent deletion atomically.",
+    "evidence": [
+      "cli/test_records_stall.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "DEC-079",
+    "category": "loop_decision",
+    "name": "park absent marker decision",
+    "source": "cli/records.py:_park_marker_absent",
+    "summary": "No marker returns no-work unless a pending stall intent exists, which is reconciled first.",
+    "evidence": [
+      "cli/test_records_park.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "DEC-080",
+    "category": "loop_decision",
+    "name": "park malformed or stale marker ignored",
+    "source": "cli/records.py:do_park/_park_marker_present",
+    "summary": "Malformed marker or PRD no longer in wip is deleted and returns ignored without moving another PRD.",
+    "evidence": [
+      "cli/test_records_park.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "DEC-081",
+    "category": "loop_decision",
+    "name": "park continues batch",
+    "source": "cli/records.py:_finish_park and cli/resume.py:park_decision",
+    "summary": "The first consecutive wrapper-death park moves and resets the PRD, increments the breaker, and continues.",
+    "evidence": [
+      "cli/test_records_park.py",
+      "cli/test_resume.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "DEC-082",
+    "category": "loop_decision",
+    "name": "park systemic batch halt",
+    "source": "cli/records.py:_finish_park and cli/resume.py:park_decision",
+    "summary": "The second consecutive wrapper-death park also writes paused/systemic_park state and returns the halt code.",
+    "evidence": [
+      "cli/test_records_park.py",
+      "cli/test_resume.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "ENV-025",
+    "category": "environment",
+    "name": "_AUTOPILOT_CLI_FAILPOINT",
+    "source": "cli/records.py:_trip",
+    "summary": "Test-only durable-saga interruption selector for named stall/park boundaries.",
+    "evidence": [
+      "cli/test_records_failure_paths.py",
+      "cli/test_records_stall.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "STATE-112",
+    "category": "state_field",
+    "name": "deferred ledger root",
+    "source": "cli/records.py:record_defer",
+    "summary": "Per-batch durable deferred object containing batch_id and ordered items.",
+    "evidence": [
+      "cli/test_records.py",
+      "cli/test_records_failure_paths.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "STATE-113",
+    "category": "state_field",
+    "name": "deferred ledger items[]",
+    "source": "cli/records.py:record_defer",
+    "summary": "Caller record copied with prd attribution; op_id deduplicates retrying stall appends.",
+    "evidence": [
+      "cli/test_records.py",
+      "cli/test_records_stall.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "STATE-121",
+    "category": "state_field",
+    "name": "park-requested marker",
+    "source": "cli/loop.py:_act_park",
+    "summary": "JSON handoff carrying prd and reason for the next session's durable park saga.",
+    "evidence": [
+      "cli/test_loop.py",
+      "cli/test_records_park.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-001",
+    "category": "test_file",
+    "name": "cli/test_cli.py",
+    "source": "cli/test_cli.py",
+    "summary": "Characterizes subprocess dispatch, stall and park outcomes, reset and restore behavior, deferred records, diagnostics, and exit codes.",
+    "evidence": [
+      "cli/test_cli.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-002",
+    "category": "test_file",
+    "name": "cli/test_cli_default_paths.py",
+    "source": "cli/test_cli_default_paths.py",
+    "summary": "Characterizes walk-up default path resolution and explicit state or PRD-directory override precedence for stall and park.",
+    "evidence": [
+      "cli/test_cli_default_paths.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-005",
+    "category": "test_file",
+    "name": "cli/test_doc_contract.py",
+    "source": "cli/test_doc_contract.py",
+    "summary": "Pins documentation coverage for every registered CLI subcommand.",
+    "evidence": [
+      "cli/test_doc_contract.py"
+    ],
+    "migration": {
+      "ids": [
+        "TEST-005"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "tests/workflow/",
+      "rationale": "The parser-to-documentation command coverage check follows the installed workflow command registry.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-006",
+    "category": "test_file",
+    "name": "cli/test_frontmatter.py",
+    "source": "cli/test_frontmatter.py",
+    "summary": "Characterizes PRD frontmatter parsing, defaults, enum and integer validation, malformed blocks, optional flags, and warnings.",
+    "evidence": [
+      "cli/test_frontmatter.py"
+    ],
+    "migration": {
+      "ids": [
+        "CMD-014",
+        "TEST-006"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/frontmatter.py",
+      "rationale": "Frontmatter parsing, defaults, validation, and warnings are provider-neutral workflow input behavior.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-008",
+    "category": "test_file",
+    "name": "cli/test_lifecycle_cli.py",
+    "source": "cli/test_lifecycle_cli.py",
+    "summary": "Characterizes selection, phase transitions, resume targets, convergence, rework, drain, frontmatter application, walk-up paths, and future-state refusal.",
+    "evidence": [
+      "cli/test_lifecycle_cli.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-012",
+    "category": "test_file",
+    "name": "cli/test_policy.py",
+    "source": "cli/test_policy.py",
+    "summary": "Characterizes the fifteen-task plan ceiling, override semantics, tolerant task counting, no mutation, CLI exposure, and missing-state failure.",
+    "evidence": [
+      "cli/test_policy.py"
+    ],
+    "migration": {
+      "ids": [
+        "CMD-012",
+        "DEC-071",
+        "TEST-012"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/policy.py",
+      "rationale": "The plan ceiling and check command are deterministic workflow policy, independent of runtime and providers.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-013",
+    "category": "test_file",
+    "name": "cli/test_records.py",
+    "source": "cli/test_records.py",
+    "summary": "Characterizes deferred-log append and deduplication plus the authoritative per-PRD reset field set and preservation rules.",
+    "evidence": [
+      "cli/test_records.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-014",
+    "category": "test_file",
+    "name": "cli/test_records_failure_paths.py",
+    "source": "cli/test_records_failure_paths.py",
+    "summary": "Characterizes record, stall, and park boundary failures, corrupt shapes, invalid identifiers, filesystem errors, idempotent retry, and no-effect guarantees.",
+    "evidence": [
+      "cli/test_records_failure_paths.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-015",
+    "category": "test_file",
+    "name": "cli/test_records_import_hygiene.py",
+    "source": "cli/test_records_import_hygiene.py",
+    "summary": "Pins that importing records through the CLI does not leak the scripts directory into the interpreter search path.",
+    "evidence": [
+      "cli/test_records_import_hygiene.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-016",
+    "category": "test_file",
+    "name": "cli/test_records_park.py",
+    "source": "cli/test_records_park.py",
+    "summary": "Characterizes park-marker reconciliation, crash recovery, conflicting stall intents, atomic reset and counter updates, and systemic second-park halt.",
+    "evidence": [
+      "cli/test_records_park.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-017",
+    "category": "test_file",
+    "name": "cli/test_records_stall.py",
+    "source": "cli/test_records_stall.py",
+    "summary": "Characterizes durable stall intent, verified PRD moves, deferred append, reset composition, crash-point retries, conflicts, and site-specific park-counter handling.",
+    "evidence": [
+      "cli/test_records_stall.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-018",
+    "category": "test_file",
+    "name": "cli/test_render.py",
+    "source": "cli/test_render.py",
+    "summary": "Characterizes status, audit, metrics, and report rendering against goldens, tolerant missing data, batch scoping, decision tables, flags, and rerender effects.",
+    "evidence": [
+      "cli/test_render.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-012",
+        "ART-013",
+        "ART-014",
+        "ART-039",
+        "ART-040",
+        "ART-041",
+        "CMD-018",
+        "CMD-019",
+        "CMD-020",
+        "TEST-018",
+        "TEST-019",
+        "TEST-020",
+        "TEST-062"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/reports.py",
+      "rationale": "Audit, report, metrics, golden projections, and idempotent Markdown replacement consolidate as deterministic workflow reporting.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-019",
+    "category": "test_file",
+    "name": "cli/test_render_autonomous_blank_rows.py",
+    "source": "cli/test_render_autonomous_blank_rows.py",
+    "summary": "Pins omission of wholly blank autonomous-decision rows while retaining zero and any populated renderable cell.",
+    "evidence": [
+      "cli/test_render_autonomous_blank_rows.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-012",
+        "ART-013",
+        "ART-014",
+        "ART-039",
+        "ART-040",
+        "ART-041",
+        "CMD-018",
+        "CMD-019",
+        "CMD-020",
+        "TEST-018",
+        "TEST-019",
+        "TEST-020",
+        "TEST-062"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/reports.py",
+      "rationale": "Audit, report, metrics, golden projections, and idempotent Markdown replacement consolidate as deterministic workflow reporting.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-020",
+    "category": "test_file",
+    "name": "cli/test_render_replace_section.py",
+    "source": "cli/test_render_replace_section.py",
+    "summary": "Characterizes exact Markdown section replacement, duplicate collapse, heading boundaries, unrelated-section preservation, and report idempotence.",
+    "evidence": [
+      "cli/test_render_replace_section.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-012",
+        "ART-013",
+        "ART-014",
+        "ART-039",
+        "ART-040",
+        "ART-041",
+        "CMD-018",
+        "CMD-019",
+        "CMD-020",
+        "TEST-018",
+        "TEST-019",
+        "TEST-020",
+        "TEST-062"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/reports.py",
+      "rationale": "Audit, report, metrics, golden projections, and idempotent Markdown replacement consolidate as deterministic workflow reporting.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-021",
+    "category": "test_file",
+    "name": "cli/test_resume.py",
+    "source": "cli/test_resume.py",
+    "summary": "Characterizes resume-target priority across stall intent, park marker, pause and stall state, phase routing, legacy phases, and systemic park halt without mutation.",
+    "evidence": [
+      "cli/test_resume.py"
+    ],
+    "migration": {
+      "ids": [
+        "CMD-016",
+        "TEST-021"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/resume.py",
+      "rationale": "Resume-target precedence is a pure workflow mapping over committed state and recovery intent.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-027",
+    "category": "test_file",
+    "name": "cli/test_selection.py",
+    "source": "cli/test_selection.py",
+    "summary": "Characterizes five-digit PRD sequence parsing, deterministic ordering, Markdown filtering, work-in-progress priority, backlog fallback, drain, and hold exclusion.",
+    "evidence": [
+      "cli/test_selection.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-036",
+        "CMD-013",
+        "TEST-027"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/selection.py",
+      "rationale": "PRD sequence parsing, lifecycle directories, hold exclusion, work-in-progress priority, and drain selection move as pure workflow discovery.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-029",
+    "category": "test_file",
+    "name": "cli/test_transitions.py",
+    "source": "cli/test_transitions.py",
+    "summary": "Characterizes the pure transition table for phase advancement, rework, convergence, per-PRD reset, drain, marker idempotence, and unknown input refusal.",
+    "evidence": [
+      "cli/test_transitions.py"
+    ],
+    "migration": {
+      "ids": [
+        "CMD-009",
+        "CMD-015",
+        "TEST-029"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/transitions.py",
+      "rationale": "Reset and phase-complete effects move with the closed transition table and compound lifecycle mutation.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-038",
+    "category": "test_file",
+    "name": "scripts/test_autopilot_phase2_stall.py",
+    "source": "scripts/test_autopilot_phase2_stall.py",
+    "summary": "Pins phase-two stall effects: PRD moves to hold, stall clearing, per-PRD reset, batch preservation, hold creation, and sequence retention.",
+    "evidence": [
+      "scripts/test_autopilot_phase2_stall.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-052",
+    "category": "test_file",
+    "name": "scripts/test_statectl_complete_prd.py",
+    "source": "scripts/test_statectl_complete_prd.py",
+    "summary": "Characterizes atomic completed-PRD record creation, task and cycle defaults, escalated and autonomous decision counts, blank-row filtering, PRD matching, reset, and sibling preservation.",
+    "evidence": [
+      "scripts/test_statectl_complete_prd.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-016",
+        "ART-017",
+        "ART-026",
+        "CMD-007",
+        "CMD-008",
+        "CMD-010",
+        "CMD-036",
+        "DEC-076",
+        "DEC-077",
+        "DEC-078",
+        "DEC-079",
+        "DEC-080",
+        "DEC-081",
+        "DEC-082",
+        "ENV-025",
+        "STATE-112",
+        "STATE-113",
+        "STATE-121",
+        "TEST-001",
+        "TEST-002",
+        "TEST-008",
+        "TEST-013",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017",
+        "TEST-038",
+        "TEST-052"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/records.py",
+      "rationale": "Defer, stall, park, completion, lifecycle path defaults, durable intent, and failpoint recovery move together as the workflow filesystem saga.",
+      "characterization": "inventory.evidence"
+    }
+  },
+  {
+    "id": "TEST-062",
+    "category": "test_file",
+    "name": "cli/test_render_batch_summary_nonzero_binding.py",
+    "source": "cli/test_render_batch_summary_nonzero_binding.py",
+    "summary": "Characterizes batch-summary binding of completed-PRD counts and cycle and decision totals: nonzero retained values, legitimate empty zeros, and unknown sums for legacy or mixed records.",
+    "evidence": [
+      "cli/test_render_batch_summary_nonzero_binding.py"
+    ],
+    "migration": {
+      "ids": [
+        "ART-012",
+        "ART-013",
+        "ART-014",
+        "ART-039",
+        "ART-040",
+        "ART-041",
+        "CMD-018",
+        "CMD-019",
+        "CMD-020",
+        "TEST-018",
+        "TEST-019",
+        "TEST-020",
+        "TEST-062"
+      ],
+      "owner_prd": "00004",
+      "owner_phase": 2,
+      "disposition": "migrate",
+      "target": "src/ovcaq/workflow/reports.py",
+      "rationale": "Audit, report, metrics, golden projections, and idempotent Markdown replacement consolidate as deterministic workflow reporting.",
+      "characterization": "inventory.evidence"
+    }
+  }
+]

@@ -1,0 +1,180 @@
+{
+  "at": "2026-09-05T18:27:08.474198+00:00",
+  "head": "78f916c366f74105b76e6f07d80a7a1aeb251e9f",
+  "branch": "master",
+  "status": "",
+  "stashes": "",
+  "worktrees": "worktree /Users/bob/git/src/github.com/buvis/ovcaq\nHEAD 78f916c366f74105b76e6f07d80a7a1aeb251e9f\nbranch refs/heads/master\n\n",
+  "ten_tasks": [
+    "P02-T01",
+    "P02-T02",
+    "P02-T03",
+    "P02-T04",
+    "P02-T05",
+    "P02-T06",
+    "P02-T07",
+    "P02-T08",
+    "P02-T09",
+    "P02-T10"
+  ],
+  "owned_row_count": 55,
+  "rubric_verdicts": {
+    "alice": {
+      "R1": "fail",
+      "R2": "pass",
+      "R3": "pass",
+      "R4": "pass",
+      "R6": "pass",
+      "R7": "fail",
+      "R8": "pass",
+      "R9": "fail",
+      "R10": "fail",
+      "R11": "pass",
+      "R12": "fail",
+      "R13": "pass"
+    },
+    "blake": {
+      "B1": "fail",
+      "B2": "pass",
+      "B3": "fail",
+      "B4": "pass",
+      "B5": "fail",
+      "B6": "pass",
+      "B7": "pass",
+      "B8": "pass",
+      "B9": "pass",
+      "B10": "pass",
+      "B11": "pass",
+      "B12": "pass",
+      "B13": "pass",
+      "B14": "pass",
+      "B15": "fail",
+      "B16": "pass",
+      "B17": "fail",
+      "B18": "pass",
+      "B19": "pass"
+    },
+    "bob": {
+      "R1": "fail",
+      "R2": "fail",
+      "R3": "pass",
+      "R4": "fail",
+      "R6": "pass",
+      "R7": "pass",
+      "R8": "pass",
+      "R9": "fail",
+      "R10": "fail",
+      "R11": "pass",
+      "R12": "fail",
+      "R13": "fail",
+      "D1": "pass",
+      "D2": "pass",
+      "D3": "pass",
+      "D4": "pass",
+      "D5": "pass"
+    }
+  },
+  "raw_outputs_retained": true,
+  "source_hashes": {
+    "dev/local/plans/implementation-plan.md": "43c75d3d94189351a0c0203c06563eced320889ae2d4cb7ae4e0300873e845a5",
+    "tests/characterization/current_system.toml": "d2a839b6c3b43c00c66114e0f20fe0d85b6169449562a72cf41ae30768eefdb9"
+  },
+  "missing_artifact_links": [],
+  "copied_source_links": [
+    {
+      "file": "dev/local/tmp/blake-prompt-00004-cycle-09.md",
+      "target": "../../plans/implementation-plan.md",
+      "original_prd_resolution": "dev/local/plans/implementation-plan.md"
+    },
+    {
+      "file": "dev/local/tmp/blake-prompt-00004-cycle-09.md",
+      "target": "../implementation-plan-coverage.md",
+      "original_prd_resolution": "dev/local/prds/implementation-plan-coverage.md"
+    },
+    {
+      "file": "dev/local/tmp/blake-prompt-00004-cycle-09.md",
+      "target": "../../discovery/00001-ovcaq-v1.md",
+      "original_prd_resolution": "dev/local/discovery/00001-ovcaq-v1.md"
+    },
+    {
+      "file": "dev/local/tmp/review-context-00004-cycle-09.md",
+      "target": "../../plans/implementation-plan.md",
+      "original_prd_resolution": "dev/local/plans/implementation-plan.md"
+    },
+    {
+      "file": "dev/local/tmp/review-context-00004-cycle-09.md",
+      "target": "../implementation-plan-coverage.md",
+      "original_prd_resolution": "dev/local/prds/implementation-plan-coverage.md"
+    },
+    {
+      "file": "dev/local/tmp/review-context-00004-cycle-09.md",
+      "target": "../../discovery/00001-ovcaq-v1.md",
+      "original_prd_resolution": "dev/local/discovery/00001-ovcaq-v1.md"
+    },
+    {
+      "file": "dev/local/tmp/review-prd-00004-cycle-09.md",
+      "target": "../../plans/implementation-plan.md",
+      "original_prd_resolution": "dev/local/plans/implementation-plan.md"
+    },
+    {
+      "file": "dev/local/tmp/review-prd-00004-cycle-09.md",
+      "target": "../implementation-plan-coverage.md",
+      "original_prd_resolution": "dev/local/prds/implementation-plan-coverage.md"
+    },
+    {
+      "file": "dev/local/tmp/review-prd-00004-cycle-09.md",
+      "target": "../../discovery/00001-ovcaq-v1.md",
+      "original_prd_resolution": "dev/local/discovery/00001-ovcaq-v1.md"
+    }
+  ],
+  "review_only": true,
+  "terminal": {
+    "fix": 5,
+    "verify": 0,
+    "known": 4,
+    "total": 9
+  },
+  "tracked_changes": "",
+  "artifact_sha256": {
+    "dev/local/plans/fast-track-handoffs/00004-workflow-core-v1/review-09.md": "2da69486771253f3169503cf84b30ff9121aa4398940f6103af23dd7ae50d2d2",
+    "dev/local/reviews/00004-cycle-09-adjudication-probes.json": "0daded49b3392e75af48bd18dcc1f469c631f0e5d6d82eb74ca1da94c75d383e",
+    "dev/local/reviews/00004-cycle-09-adjudication-probes.py": "8d7f4691ed8e8dfe118ab68d8610ae697acf86690a14123ba789ff672201bd05",
+    "dev/local/reviews/00004-cycle-09-audit.py": "01cb4cd04daaed1162240dc3fcbd9d91f04e98c98eb2751065bfc2cf45d7f2ed",
+    "dev/local/reviews/00004-cycle-09-consolidation-raw.md": "ce9981c5380195a935298c622fb56f18441c4ae086c2c3ef709b44796db0f2c0",
+    "dev/local/reviews/00004-cycle-09-contract-card.md": "00b49738fbb2f224a1f67dbac8153026c77f20f78b2d2a197740ceaf84857c4b",
+    "dev/local/reviews/00004-cycle-09-dispatch.json": "932aa9e2625c2cdfac89c64ba6a778ef0a4dc95208047aeea3cc73f65c44341b",
+    "dev/local/reviews/00004-cycle-09-installed-config.json": "4139c226f71787f8941082fd26bd42ecdb318da6b4339ed1287375a7e767e86c",
+    "dev/local/reviews/00004-cycle-09-owned-rows.json": "20e446d510bee9d59490690873d13282869efffc44b1d2c3db998e045b604b12",
+    "dev/local/reviews/00004-cycle-09-preflight.json": "04604d4cd10740f0d5c5733ec215e7b15ab820749a06147093151d7cda08a2e4",
+    "dev/local/reviews/00004-cycle-09-probes.json": "e1307ee31c5d630e06fb963ce2b817d5f099da744372fb4436130059a17c59f3",
+    "dev/local/reviews/00004-cycle-09-probes.py": "a5e2a2a0d9600f28e8113cd73bf715ca759090223c025de78382fba5aa3f66ce",
+    "dev/local/reviews/00004-cycle-09-publication-probes.json": "fb0f782e8ccec9218b81c41542b727c81a64ab572db1a139473edb1d97c12d98",
+    "dev/local/reviews/00004-cycle-09-publication-probes.py": "1e6aabda70df435e490a19761843164c82018dbfff54b98a17a5078b926cff3c",
+    "dev/local/reviews/00004-cycle-09-repair-replay-result.json": "d6560a4d7eb00c4b76912b285846cd3c67a6ec66a9ea30a6a01b304145e3573c",
+    "dev/local/reviews/00004-cycle-09-repair-replay.py": "53ea8570b7da1d15b1187f1e86c9c1449f7677848e4008b95b0f255e8c183bdd",
+    "dev/local/reviews/00004-cycle-09-size-measurements.json": "ed03aa0868b5e9761e548ac736eeb1c29f290018da8f61cd1da9c42b4716ecb8",
+    "dev/local/reviews/00004-cycle-09-verification.md": "3e40b052e234d8426dd76fd60516cc22b07e4e965ce0c33021f51aeddbd24254",
+    "dev/local/reviews/00004-workflow-core-v1-fast-review-09-evidence.md": "1f7d704aa489df183f29ac0669991cb465a3f078816bf993ff8f5db8ed60e2dc",
+    "dev/local/reviews/00004-workflow-core-v1-fast-review-09.md": "465dfed44c226329b7c5ef335522487e96911ad4eefee1210adaf301c7ed1a53",
+    "dev/local/tmp/alice-output-00004-cycle-09.txt": "aea97868f92af3a4b45840e3de163e12a796d8616e900c182bdfc53d9a87ba16",
+    "dev/local/tmp/alice-prompt-00004-cycle-09.md": "835248ace0941a3f87103359cef8cac018edde52334f8d851e95fe6374aa1022",
+    "dev/local/tmp/blake-output-00004-cycle-09.txt": "3b30dcaae097494d021b98ad31954121bb1c2927477a6ac256c890b618f25c73",
+    "dev/local/tmp/blake-prompt-00004-cycle-09.md": "5c11db13e4cc89a04b1f6d9b4cb4e0d1151f5ddeb0289f8e9bef5546da22c1e7",
+    "dev/local/tmp/bob-output-00004-cycle-09.txt": "d60c95dee0f9519086a07ac65c1d9e0fcfcb234abf3c48071802cf2750543263",
+    "dev/local/tmp/bob-prompt-00004-cycle-09.md": "53e7a3d6f004d4914980118558113e956723843710995c98b5fcceed8005f341",
+    "dev/local/tmp/review-context-00004-cycle-09.md": "e51205fcedc9f58f387240b891778181fe0d7cdc5da3f409ada44f59aa9562f3",
+    "dev/local/tmp/review-diff-00004-cycle-09.diff": "9bf9bb64ed01ea6a5a4562c08235c35c3d12fe649aad06fe49e7258f574171be",
+    "dev/local/tmp/review-prd-00004-cycle-09.md": "e161880ac1c8122c091c6a37457f77ca03fb2ac9adba69c661722de090be348d",
+    "dev/local/tmp/review-tasks-00004-cycle-09.md": "c1a31edbbf5c4eca4f332d41def48a8418ffd21c33c8cba8d9807816fd4ea822"
+  },
+  "audit_scope_adjustment": "Copied PRD links resolve against the canonical WIP PRD, preserving dispatched prompts. New review/handoff links resolve against each artifact.",
+  "audit_command": "mise exec -- uv run python dev/local/reviews/00004-cycle-09-audit.py",
+  "audit_exit": 0,
+  "saved_review_gate": {
+    "command": "mise exec -- uv run python /Users/bob/.claude/plugins/cache/buvis-plugins/autopilot/0.5.0/skills/review-work-completion/scripts/check_review_file.py --review-file /Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00004-workflow-core-v1-fast-review-09.md --require-codex-guard",
+    "exit": 0,
+    "output": ""
+  },
+  "cleanup": "Temporary fixture roots and installed probe environments cleaned; children reaped; detached repair-base replay worktree removed. One original worktree remains. Retained review/handoff/prompt/probe artifacts are intentional evidence.",
+  "next_gate": "Fresh FT-04F9 bounded repair, then separate fresh FT-04R10 full completion review. PRD remains WIP."
+}

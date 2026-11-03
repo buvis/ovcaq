@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "mise",
+    "exec",
+    "--",
+    "uv",
+    "run",
+    "ruff",
+    "format",
+    "--check",
+    "src",
+    "tests"
+  ],
+  "exit": 0
+}

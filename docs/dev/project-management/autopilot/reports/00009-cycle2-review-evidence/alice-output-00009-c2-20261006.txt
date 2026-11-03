@@ -1,0 +1,29 @@
+Prior cycle check: R1-R5, R7, R9-R14, R17-R20 and R24-R26 are fixed in the code. R16 and R21 are fixed, but each fix brought a new defect (listed below). R6 is only partly fixed. All touched test files pass (277 passed). `ruff check` and `mypy src/ovcaq` are clean.
+
+[ALICE] 🟡 The fix for R21 (interrupted/shutdown/not_found lanes) also catches lanes that already finished. The "started" set at codex.py:372 is built from every lane identity, including ones marked done. So a lane that completed and is later reported as `shutdown` (for example by a `close_agent` or `wait` call) emits `lane.failed`, and the TUI accepts the change from completed to failed. Confirmed by running it: running → completed → shutdown gives `['tool.completed', 'lane.failed']`. Fix: pass only lanes that are not done (`{lane for (cat, lane), done in self._identities.items() if cat == "lane" and not done}`), make `started_lanes` a required parameter (codex_events.py:205, its only caller always passes it), and add a test for completed-then-shutdown | File: src/ovcaq/drivers/codex.py:372 | Task: 23
+[ALICE] 🟡 `bounded_detail` redacts credentials first and strips terminal controls second. A key split by an escape sequence therefore survives redaction and is joined back together. Confirmed: `bounded_detail("token sk-abc\x1b[0mdefghijklmnopqrstuvwxyz0123456789ABCDEF")` returns the full `sk-abcdef…` key unredacted, and that text lands in persisted `session.failed`, `rate_limit.started` and lane payloads. The existing `_bounded` (src/ovcaq/supervisor_cli.py:77) strips first and then sanitizes. Fix: swap the order, add a regression test, and consider sharing one helper instead of a second copy of the ANSI regex | File: src/ovcaq/drivers/codex_events.py:57 | Task: 23
+[ALICE] 🟡 The R16 activity view drops the detail on error and warning messages. `_observe_activity` reads only `payload["text"]`, but the Codex provisional top-level `error` (codex.py:278) and Claude `rate_limit_warning` (claude_events.py:143) carry their message in `detail`, so they render as a bare "error" or "rate_limit_warning". These payloads and Codex `turn` messages also have no `message_id`, so they share the key `("message", "")`. The next `turn` line then replaces the error line. The test at tests/tui/test_rework_activity.py:86 uses `text` for kind `error`, so it never exercises the real provisional shape. Confirmed by code reading. Fix: fall back to `detail` when `text` is missing, give message_id-less entries a distinct key (for example kind plus sequence), and test the real provisional-error payload | File: src/ovcaq/tui/model.py:575 | Task: 26
+[ALICE] 🟡 "Selected model is at capacity" (upstream ServerOverloaded, a transient overload) is now classified as `rate_limit`. That message never carries a reset time, so decision.py:197-213 halts the batch on the first occurrence. Before this rework it was `unknown` and got one retry. The design taxonomy puts "server unavailable/503" under connectivity, which waits and retries with a bound. Move `model is at capacity` to the connectivity pattern and update the expectation at tests/drivers/test_codex_rework_decode.py:94 | File: src/ovcaq/drivers/codex_events.py:309 | Task: 23
+[ALICE] 🟡 Simplify `_report_runtime_error`. It is named as a reporter, but it now raises in 2 of its 3 branches. The third branch returns an `Exception` that the only caller ignores, and the caller then does a bare `raise` (supervisor_cli.py:193-194). Make it `-> None`, drop `return error` (fall through), or rename it `_raise_runtime_error`. Behavior stays the same | File: src/ovcaq/supervisor_cli.py:144 | Task: 26
+[ALICE] 🟡 Dead fallback: `payload.get("detail", payload.get("input"))` reads an `input` key that no driver emits (searching src for `"input"` finds only this line). The Claude case in tests/tui/test_rework_activity.py:57 builds a made-up `input` payload just to reach it. Drop the `input` fallback and make the Claude test use the real `tool.started` shape (`tool_id`, `name`, metadata) | File: src/ovcaq/tui/model.py:592 | Task: 26
+[ALICE] 🟡 Simplify: `version[10:]` behind `version.startswith("codex-cli ")` is a magic slice of the prefix length. Use `version.removeprefix("codex-cli ")` and compare it to `version` to choose between the "observed" and "missing" detail. Behavior stays the same | File: src/ovcaq/drivers/codex.py:202 | Task: 24
+[⚪ ALICE] placeholder removed
+[ALICE] ⚪ No test pins the 16 KiB per-stream capture cap, which was the core of R3. If the slice at codex.py:76 were removed (unbounded capture), every probe test would still pass, because `_probe_failure` truncates the final detail to 16 KiB anyway (tests/drivers/test_codex_rework_probe.py:140 checks only `len(detail)`). Add a check that a large stdout on the version probe is captured to at most 16 KiB, for example by making the helper's returned buffers observable | File: src/ovcaq/drivers/codex.py:76 | Task: 24
+[ALICE] ⚪ R6 is only partly fixed. Added now has two bullets, but a blank line still splits the Fixed list (CHANGELOG.md:45). The new Fixed bullet "**tui**: show bounded normalized tool, message and plan activity" repeats the Added bullet at :12 for this same unreleased PRD. Fold it into Added and remove the blank line | File: CHANGELOG.md:44 | Task: 20
+
+R1: fail
+R2: pass
+R3: pass
+R4: fail
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+**Partly done.** The review is complete: 7 Medium and 2 Low findings, 3 rubric fails. Note: the line `[⚪ ALICE] placeholder removed` above is an output error with no finding behind it. It should be dropped before parsing; the Low findings are the two lines after it.
+
+Next: You: feed these findings into the cycle 2 decision gate.

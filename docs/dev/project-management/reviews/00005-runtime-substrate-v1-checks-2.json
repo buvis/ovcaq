@@ -1,0 +1,11 @@
+[
+  {
+    "cycle": 2,
+    "finding": "In the fail-first replay, 154 touched tests pass against the pre-change code. Most are expected, because they cover code that was only moved or refactored. It is not confirmed that this cycle's new-behavior tests fail at the base.",
+    "file": null,
+    "command": "mise exec -- uv run pytest tests/runtime/test_session_emergency.py::test_failed_acknowledgement_preserves_or_restores_canonical_blocking_evidence tests/runtime/test_session_emergency.py::test_marker_replacement_during_acknowledgement_preserves_new_failure_and_gate tests/runtime/test_retention.py::test_purge_retains_oversized_newline_free_evidence_using_bounded_reads tests/runtime/test_retention.py::test_runtime_root_swap_cannot_bypass_the_original_live_run_lock tests/runtime/test_watchdog.py::test_join_times_out_during_pending_signal_and_returns_only_after_last_delivery",
+    "source": "bob",
+    "reviewer_precondition": "In a worktree at e34547e with HEAD tests overlaid; each named behavioral check is expected to fail against base.",
+    "note": "Not executed: cap-out has no work-phase verification pass. Do not interpret a current-head pass as failing-base evidence."
+  }
+]

@@ -1,0 +1,26 @@
+{
+  "origin": [
+    "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-report-vxqmn9v3/env/lib/python3.13/site-packages/ovcaq/__init__.py",
+    "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-report-vxqmn9v3/env/lib/python3.13/site-packages/ovcaq/workflow_cli.py"
+  ],
+  "argv": [
+    "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-report-vxqmn9v3/env/bin/ovcaq",
+    "--root",
+    "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-report-vxqmn9v3/project",
+    "--json",
+    "workflow",
+    "render",
+    "report"
+  ],
+  "exit": 0,
+  "first_text_matches_file": true,
+  "second_text_matches_file": false,
+  "first_prd_in_json_text": false,
+  "first_prd_in_published_file": true,
+  "second_prd_in_both": true,
+  "rerender_json_stable": true,
+  "rerender_file_stable": true,
+  "state_unchanged_by_render": true,
+  "json_text": "# Workflow report: batch\n\n## 00005-second.md\n\n- Phase: build\n- Next phase: build\n- Tasks: 0/0\n\n## Batch Summary\n\n- PRDs completed: 0\n- Total cycles: 0\n- Applied decisions: 0\n- Escalated decisions: 0\n- Deferred records: 0\n- Sessions: 0\n- Wall seconds: 0\n- Cost USD: 0.00\n- Output tokens: 0\n- Review convergences: 0\n- Cycles to converge: 0\n\n### Completed PRDs\n\n_No completed PRDs._\n\n### Deferred records\n\n_No deferred records._\n",
+  "published_text": "# Workflow report: batch\n\n## 00004-first.md\n\n- Phase: build\n- Next phase: build\n- Tasks: 0/0\n\n## 00005-second.md\n\n- Phase: build\n- Next phase: build\n- Tasks: 0/0\n\n## Batch Summary\n\n- PRDs completed: 0\n- Total cycles: 0\n- Applied decisions: 0\n- Escalated decisions: 0\n- Deferred records: 0\n- Sessions: 0\n- Wall seconds: 0\n- Cost USD: 0.00\n- Output tokens: 0\n- Review convergences: 0\n- Cycles to converge: 0\n\n### Completed PRDs\n\n_No completed PRDs._\n\n### Deferred records\n\n_No deferred records._\n"
+}

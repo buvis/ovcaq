@@ -1,0 +1,25 @@
+[ALICE] 🟡 The new HTTP-version prefix `http/\d+\.\d+` (src/ovcaq/drivers/codex_events.py:301) needs a minor version. So `HTTP/1.1 503` classifies, but HTTP/2 and HTTP/3 status lines do not, because they are written with no minor version. I ran `classify_failure`: "HTTP/2 503 Service Unavailable" and "HTTP/2 429" both return `unknown`, and the pre-change code returned connectivity and rate_limit. This also contradicts the CHANGELOG.md:43 claim that "HTTP-version status diagnostics" are recognized. If such a line reaches a Codex `turn.failed` (a guess, the same guess behind the HTTP/1.1 fix), a 503 skips the bounded connectivity WAIT and goes to died-retry then PARK, and a 429 retries instead of halting. Fix: make the minor version optional (`http(?:/\d+(?:\.\d+)?| status…)`) and add the "HTTP/2 503 Service Unavailable" and "HTTP/2 429 Too Many Requests" positives at tests/drivers/test_adapter_failure_classes.py:103. "HTTP Error 503: Service Unavailable" also returns `unknown`; that is lower likelihood, so decide whether it is in scope | File: src/ovcaq/drivers/codex_events.py:301 | Task: 11
+[ALICE] ⚪ CHANGELOG.md:43 reads as a separate fix, but it only patches this PRD's own unreleased change at CHANGELOG.md:46. The reqwest and HTTP/1.1 forms always classified before this PRD (bare numbers matched), and "literal whitespace in word diagnostics" describes something that did not change. Fold the user-visible part into CHANGELOG.md:46 and drop line 43 | File: CHANGELOG.md:43 | Task: 12
+[ALICE] ⚪ The new helper `_tier_request` is named with a noun phrase. The coding-style rule wants action-named functions to start with a verb. Rename it to, for example, `_map_model_to_tier` (both call sites are at src/ovcaq/drivers/edge.py:27 and src/ovcaq/drivers/edge.py:34) | File: src/ovcaq/drivers/edge.py:16 | Task: 7
+
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+**Status:** Done.
+
+**Changed:** Review only, no edits. I ran the PRD-scoped tests, Ruff and mypy at HEAD; I did not run the full suite. I ran the regex probes with `uv run python -c` against `classify_failure`.
+```
+416 passed, 2 warnings (tmp cleanup) | ruff: All checks passed! | mypy: Success: no issues found in 61 source files
+```
+
+**Next:** Task complete. Suggested next: send the HTTP/2 finding to the decision gate together with Blake's and Bob's outputs.

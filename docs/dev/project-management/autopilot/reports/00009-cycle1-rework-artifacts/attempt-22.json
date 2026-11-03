@@ -1,0 +1,29 @@
+{
+  "attempt": 2,
+  "model": "sonnet",
+  "actual_model": "gpt-6.1-sol",
+  "actual_provider": "openai",
+  "actual_effort": "medium",
+  "implementor": "codex",
+  "pipeline": "lean",
+  "outcome": "completed",
+  "cause": null,
+  "review_cycle": 1,
+  "self_deslop": "skipped:test-only",
+  "style_gate": "clean",
+  "split_hygiene": "clean",
+  "verification": "48passed plus2approved process cases; all50 named cases verified; initial sandbox2psfailures then approved2passed; no behavioral failures",
+  "review": "Both closures resolved; LOW notes carried",
+  "review_evidence": "docs/dev/project-management/reviews/00009-cycle1-task22-pat.md",
+  "dispatch_ids": [
+    "e233183c",
+    "482c7794",
+    "6a35c7a7"
+  ],
+  "implementation_commits": [
+    "aef477b"
+  ],
+  "prior_style_fix_commit": "d4ef489",
+  "assumptions": [],
+  "retry": "First same-tier feedback, fixture stdout mismatch corrected without relaxing assertions"
+}

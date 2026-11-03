@@ -1,0 +1,112 @@
+[
+  {
+    "ref": "R1",
+    "severity": "⚪",
+    "file": "src/ovcaq/drivers/codex_events.py:302",
+    "issue": "A plain `error` label counts as a numeric code context because the ` code` part is optional (`error(?: code)?`). So `Error: 401 tests passed` comes back `authentication`. That is an ordinary count after a generic error label, not the \"error-code\" context the PRD describes",
+    "classification": "discard",
+    "found_by": [
+      "BLAKE"
+    ]
+  },
+  {
+    "ref": "R2",
+    "severity": "⚪",
+    "file": "src/ovcaq/drivers/claude.py:81",
+    "issue": "The Claude probe checks only `command[0]` against the overlay `PATH`. With a wrapper argv (for example `env claude`), it never checks that the wrapped executable exists, while the Codex probe runs the full wrapper argv. This predates the PRD, but the PRD lists wrapper argv as a probe input",
+    "classification": "defer",
+    "found_by": [
+      "BLAKE"
+    ]
+  },
+  {
+    "ref": "R3",
+    "severity": "⚪",
+    "file": "N/A",
+    "issue": "Cannot statically verify: the Phase-2 exit gate (full `uv run pytest`) at HEAD. The settled 7202-passed run was at 93fd36f. The only run at cf48315 (`last-verification.json`) stopped with exit 130 (partial: 85 failed, 27 errors, blamed on the macOS `ps` denial), and this cycle's test gate exited 2 with no summary line. The rework since 93fd36f touches only tests and docs, and both narrow runs pass (136 passed; 2 passed), so the settled reason does not cover HEAD",
+    "classification": "verify",
+    "found_by": [
+      "BOB"
+    ]
+  },
+  {
+    "ref": "R4",
+    "severity": "🟡",
+    "file": "tests/drivers/test_adapter_failure_classes.py",
+    "issue": "109 touched test(s) pass against the pre-change code: test_numeric_codes_classify_with_explicit_status_or_error_context +103 more",
+    "classification": "discard",
+    "found_by": [
+      "mech-check"
+    ]
+  },
+  {
+    "ref": "R5",
+    "severity": "🟡",
+    "file": "tests/drivers/test_adapter_outcomes.py",
+    "issue": "17 touched test(s) pass against the pre-change code: test_unfinished_lane_fails_after_close_status +11 more",
+    "classification": "discard",
+    "found_by": [
+      "mech-check"
+    ]
+  },
+  {
+    "ref": "R6",
+    "severity": "🟡",
+    "file": "tests/drivers/test_codex_decode_terminals.py",
+    "issue": "10 touched test(s) pass against the pre-change code: test_native_failure_emits_classified_terminal_with_receipt_identity +4 more",
+    "classification": "discard",
+    "found_by": [
+      "mech-check"
+    ]
+  },
+  {
+    "ref": "R7",
+    "severity": "🟡",
+    "file": "tests/drivers/test_codex_failures.py",
+    "issue": "7 touched test(s) pass against the pre-change code: test_failure_classification_uses_documented_precedence +1 more",
+    "classification": "discard",
+    "found_by": [
+      "mech-check"
+    ]
+  },
+  {
+    "ref": "R8",
+    "severity": "🟡",
+    "file": "tests/drivers/test_codex_launch.py",
+    "issue": "61 touched test(s) pass against the pre-change code: test_launch_has_exact_order_and_omits_unconfigured_flags +55 more",
+    "classification": "discard",
+    "found_by": [
+      "mech-check"
+    ]
+  },
+  {
+    "ref": "R9",
+    "severity": "🟡",
+    "file": "tests/drivers/test_codex_rework_decode.py",
+    "issue": "14 touched test(s) pass against the pre-change code: test_native_diagnostics_have_independent_failure_classification +8 more",
+    "classification": "discard",
+    "found_by": [
+      "mech-check"
+    ]
+  },
+  {
+    "ref": "R10",
+    "severity": "🟡",
+    "file": "tests/runtime/test_adapter_health.py",
+    "issue": "19 touched test(s) pass against the pre-change code: test_probe_finds_executable_available_only_on_overlay_path, test_probe_rejects_absolute_command_that_is_not_an_executable_file, test_probe_rejects_file_without_execute_permission +13 more",
+    "classification": "discard",
+    "found_by": [
+      "mech-check"
+    ]
+  },
+  {
+    "ref": "R11",
+    "severity": "🟡",
+    "file": "tests/runtime/test_adapter_launch_routing.py",
+    "issue": "4 touched test(s) pass against the pre-change code: test_configured_supervisor_launches_each_selected_literal_model_and_effort",
+    "classification": "discard",
+    "found_by": [
+      "mech-check"
+    ]
+  }
+]

@@ -1,0 +1,27 @@
+{
+  "archive": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00004-cycle-13-dispatch-evidence.tar.gz",
+  "archive_sha256": "36cf9cca8757ef92ab440a3ca5779525165a6a5c7f16a0048f047f672c101979",
+  "archived_and_removed": {
+    "dev/local/tmp/alice-prompt-00004-cycle-13.md": "8ab6e61787f00fa83011d694e7bfe769784e0fa6c65d2aa56f794cd0c7072991",
+    "dev/local/tmp/assemble_review_13.py": "991460e3bbe9112a19a6f2189019d651bb0ebd3245578978b130d49fd0b78d6d",
+    "dev/local/tmp/blake-prompt-00004-cycle-13.md": "de47f5b011b8d5c93893bdcc20d780daa024864fe35897a8bc2c2f444838a52f",
+    "dev/local/tmp/bob-context-00004-cycle-13.md": "b26c95440de9c0dccbabfab6a3901ebe70856ed98228cc05f38b5c5015188b19",
+    "dev/local/tmp/bob-prompt-00004-cycle-13.md": "bd495289b28e7369ded12ce46d5e3bf17d91facac3bbb7903a3c3bd749d41d10",
+    "dev/local/tmp/carl-prompt-00004-cycle-13.md": "652ac480dd55eeef9f23dff627649b6e3ffbea0cd8bee57aa2b0d3c96fd325bd",
+    "dev/local/tmp/cleanup_review_13.py": "6f38083dd56ddf910b52dae9def80233fd8d5d632cc3e1f409b63720ac2db4c2",
+    "dev/local/tmp/finalize_review_13.py": "328f75c63e66065b68e78cb6e548a0c42ca3251cb0923edb66d84f0d4502a000",
+    "dev/local/tmp/pause_review_13.py": "712eb2f102196f737d21359a4077275548f2b83810bde26fbda99913dce18584",
+    "dev/local/tmp/prepare_review_13.py": "c347fda41ede87b3d402ce2727ed928e019b602ff7cefce3b5a2ece9612a49c4",
+    "dev/local/tmp/review-13-cycle-record.json": "f9e1c47da5a1e0b7b9f4cd42923390c131e029aa303e6021de09dc2dd5ca174e",
+    "dev/local/tmp/review-13-discard-record.json": "71b0c497a99f36d265925ba5f38d2258889a8e813ea62a13e82225d47918ba86",
+    "dev/local/tmp/review-context-00004-cycle-13.md": "b26c95440de9c0dccbabfab6a3901ebe70856ed98228cc05f38b5c5015188b19",
+    "dev/local/tmp/review-diff-00004-cycle-13.diff": "ca5e9a70f7a1e4d070f1655932a69ec84290b52135d82828a7ee2e2b401862c2",
+    "dev/local/tmp/review-mechanics-00004-cycle-13.md": "02e218ae172ad8d2618bd01abf5c64641c07827af40992d4f8cf32d8bfa1fe3a",
+    "dev/local/tmp/review-prd-00004-cycle-13.md": "e686084f29d6f19ab4bc664c21f139839de1e1edda71300f911a211c41b25d52",
+    "dev/local/tmp/review-tasks-00004-cycle-13.md": "945010d3243121816377ad5883307bebde339907ff928208fb667f80fde35b80",
+    "dev/local/tmp/review_13_failure.py": "b2459d7b4b5203418d20ffd96c13ad64455ea120b80bccab29d5134675a1be34",
+    "dev/local/tmp/review_13_mechanics.py": "ec4abf1f140db663b5a8a3d09c53842b3dd2719e4ce8d8f04593792885b15cfb",
+    "dev/local/tmp/validate_review_13.py": "57a712d825100f82abd662d7c03205da3d3d5c772af42577cee73c1edb6df49e"
+  },
+  "probe_cleanup": "Alice removed /private/tmp/tmp2uu0d1ev; permissions restored first"
+}

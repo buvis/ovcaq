@@ -1,0 +1,15 @@
+Review cycle 13 follow-up. PAUSED: no execution is authorized by the connectivity recovery or this artifact. Operator recovery must authorize repairs; preserve the fresh work/review boundary.
+
+### Findings (verbatim)
+- high: An ancestor replaced after its confirmation is silently adopted as the next level's parent; defer returns success without fsyncing the replacement ancestor's parent | File: src/ovcaq/workflow/_files.py:255 | Consensus: coordinator; Alice adjudication confirms
+- medium: `_ensure_directory_chain` now opens every absolute ancestor with `O_RDONLY`, so a configured runtime below a search-only directory can be traversable and writable yet defer fails with `EACCES`; preserve crash confirmation while opening only directories OVCAQ must confirm or use a descriptor mode compatible with execute-only traversal | File: src/ovcaq/workflow/_files.py:256 | Consensus: 2/3
+- medium: The ancestry loop treats the filesystem root as its own child, opening `/` twice, calling `mkdir(exist_ok=True)` on it, and fsyncing it even though OVCAQ can never create that anchor; exclude the root self-step while retaining parent confirmation for every potentially interrupted runtime ancestor | File: src/ovcaq/workflow/_files.py:255 | Consensus: 2/3
+- medium: B5: Suspected sandbox break: defer/stall/park now issue mkdir and open(O_RDONLY|O_DIRECTORY) against `/`, `/Users`, `$HOME` from inside launcher sessions that run under `codex exec --sandbox workspace-write` (plan §10.4); Path.mkdir(exist_ok=True) swallows only FileExistsError, so a seatbelt EPERM ahead of the kernel EEXIST fails every ledger write | File: src/ovcaq/workflow/_files.py:257 | Consensus: 1/3
+
+### Acceptance criteria
+Every quoted defect no longer reproduces. Before successful publication or exact replay, an ancestor inode adopted after a prior confirmation must either be refused with a retryable identity error or have its own parent confirmed again. Preserve existing abrupt-exit retries, peer creation, identity checks, exactly-once records, and state/backup bytes. Preserve search-only path access without dropping required confirmations. Remove only the redundant root self-step. Resolve the launcher-sandbox VERIFY finding with a concrete supported check; do not launch nested Codex, strip guards, or claim coverage from a different sandbox.
+
+### Evidence
+Review: dev/local/reviews/00004-workflow-core-v1-review-13.md
+Probe: dev/local/reviews/00004-cycle-13-approved-installed-probe.json
+Original work base, cycle 13 and cap 2 remain unchanged.

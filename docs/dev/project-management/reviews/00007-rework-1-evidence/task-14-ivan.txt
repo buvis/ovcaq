@@ -1,0 +1,17 @@
+Implemented the supervisor phase-settings repair.
+
+The supervisor now passes its already validated per-phase settings into phase-route resolution. Agent-specific tier and effort overrides still apply, configured prompts remain literal, and runtime/policy objects are unchanged.
+
+Verification:
+- `mise exec -- uv run pytest tests/runtime/test_supervisor.py::test_supplied_phase_settings_control_each_workflow_launch tests/runtime/test_supervisor.py::test_configured_prompt_is_literal_and_replaces_driver_fallback tests/workflow/test_supervisor_configuration.py`: 117 passed, 2 warnings in 0.41s. Both warnings were pytest cleanup warnings for nonempty temporary garbage directories.
+- `mise exec -- uv run ruff check src/ovcaq/config.py src/ovcaq/runtime/supervisor.py`: passed.
+- `mise exec -- uv run ruff format --check src/ovcaq/config.py src/ovcaq/runtime/supervisor.py`: 2 files already formatted.
+- `git diff --check -- src/ovcaq/config.py src/ovcaq/runtime/supervisor.py CHANGELOG.md`: passed.
+
+abort_reason: none
+
+ASSUMPTIONS: none
+FILES_TOUCHED: src/ovcaq/config.py
+FILES_TOUCHED: src/ovcaq/runtime/supervisor.py
+FILES_TOUCHED: CHANGELOG.md
+FILES_TOUCHED: docs/dev/tmp/00007-14-ivan-report.txt

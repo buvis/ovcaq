@@ -1,0 +1,13 @@
+diff --git a/src/ovcaq/drivers/codex_events.py b/src/ovcaq/drivers/codex_events.py
+index 7dcbd90..a4247fe 100644
+--- a/src/ovcaq/drivers/codex_events.py
++++ b/src/ovcaq/drivers/codex_events.py
+@@ -298,7 +298,7 @@ def item_tool(
+ def classify_failure(detail: str) -> FailureClass:
+     """Match native diagnostics in authentication-to-agent precedence order."""
+     status = (
+-        r"(?:http(?:/\d+(?:\.\d+)?| status(?: (?:client|server) error \()?| error)?"
++        r"(?:http(?:/\d+(?:\.\d+)?| status (?:client|server) error \()?"
+         r"|status(?: code)?|error(?: code)?)\s*+[:=]?\s*+"
+     )
+     for failure, pattern in (

@@ -1,0 +1,2 @@
+uv --cache-dir /private/tmp/ovcaq-rework-uv run pytest tests/runtime/test_rework_thread_conflict.py -q --tb=line
+Exit 0: 3 passed, 2 warnings in 0.19s. Approved real-process run; warnings concern pytest temporary garbage cleanup.

@@ -1,0 +1,2 @@
+env UV_CACHE_DIR=/tmp/ovcaq-uv-cache uv run --no-sync pytest tests/runtime/test_adapter_launch_routing.py tests/drivers/test_codex_launch.py -q --tb=line
+exit 0; 79 passed, 2 pytest temp cleanup warnings in 5.56s. Sandbox initial run had 6 ps PermissionError failures; approved retry passed. Style and split-hygiene checks exit 0.

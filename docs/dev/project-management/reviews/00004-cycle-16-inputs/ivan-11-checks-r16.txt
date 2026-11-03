@@ -1,0 +1,297 @@
+New immutable Tess tests: /Users/bob/git/src/github.com/buvis/ovcaq/tests/workflow/test_deferred_diagnostics.py
+from __future__ import annotations
+
+import errno
+import os
+from pathlib import Path
+
+import pytest
+
+from ovcaq.workflow.records import record_defer
+
+PRD = "00004-workflow-core-v1.md"
+BATCH_ID = "batch-16"
+RECORD = {"op_id": "diagnostic-16", "detail": "test"}
+
+
+def _is_deferred_path(
+    path: str | os.PathLike[str], dir_fd: int | None, runtime_root: Path
+) -> bool:
+    candidate = Path(path)
+    if candidate.is_absolute():
+        return candidate == runtime_root / "deferred"
+    if dir_fd is None or candidate != Path("deferred"):
+        return False
+    directory = os.fstat(dir_fd)
+    root = runtime_root.stat()
+    return (directory.st_dev, directory.st_ino) == (root.st_dev, root.st_ino)
+
+
+def test_record_defer_refuses_regular_file_at_deferred_path(tmp_path: Path) -> None:
+    runtime_root = tmp_path.resolve()
+    deferred = runtime_root / "deferred"
+    published = deferred / "batch-16.json"
+    deferred.write_bytes(b"obstruction")
+    inode = deferred.stat().st_ino
+
+    with pytest.raises(OSError) as raised:
+        record_defer(runtime_root, PRD, BATCH_ID, RECORD)
+
+    assert (
+        str(raised.value) == f"deferred directory is not a real directory: {deferred}"
+    )
+    assert isinstance(raised.value.__cause__, OSError)
+    assert raised.value.__cause__.errno == errno.ENOTDIR
+    assert deferred.stat().st_ino == inode
+    assert deferred.read_bytes() == b"obstruction"
+    assert not published.exists()
+
+
+def test_record_defer_refuses_symlink_at_deferred_path(tmp_path: Path) -> None:
+    runtime_root = tmp_path.resolve()
+    deferred = runtime_root / "deferred"
+    target = runtime_root / "target"
+    target.mkdir()
+    sentinel = target / "sentinel"
+    sentinel.write_bytes(b"untouched")
+    sentinel_inode = sentinel.stat().st_ino
+    deferred.symlink_to(target, target_is_directory=True)
+    link_inode = deferred.lstat().st_ino
+
+    with pytest.raises(OSError) as raised:
+        record_defer(runtime_root, PRD, BATCH_ID, RECORD)
+
+    assert (
+        str(raised.value) == f"deferred directory is not a real directory: {deferred}"
+    )
+    assert isinstance(raised.value.__cause__, OSError)
+    assert raised.value.__cause__.errno in {errno.ELOOP, errno.ENOTDIR}
+    assert deferred.is_symlink()
+    assert deferred.lstat().st_ino == link_inode
+    assert sentinel.stat().st_ino == sentinel_inode
+    assert sentinel.read_bytes() == b"untouched"
+    assert sorted(item.name for item in target.iterdir()) == ["sentinel"]
+
+
+def test_record_defer_reports_directory_vanishing_before_second_open(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime_root = tmp_path.resolve()
+    deferred = runtime_root / "deferred"
+    published = deferred / "batch-16.json"
+    actual_open = os.open
+    deferred_opens = 0
+
+    def vanish_on_second_open(
+        path: str | os.PathLike[str],
+        flags: int,
+        mode: int = 0o777,
+        *,
+        dir_fd: int | None = None,
+    ) -> int:
+        nonlocal deferred_opens
+        if _is_deferred_path(path, dir_fd, runtime_root):
+            deferred_opens += 1
+            if deferred_opens == 2:
+                deferred.rmdir()
+        return actual_open(path, flags, mode, dir_fd=dir_fd)
+
+    monkeypatch.setattr(os, "open", vanish_on_second_open)
+    with pytest.raises(OSError) as raised:
+        record_defer(runtime_root, PRD, BATCH_ID, RECORD)
+
+    assert deferred_opens == 2
+    assert (
+        str(raised.value) == f"deferred directory is not a real directory: {deferred}"
+    )
+    assert isinstance(raised.value.__cause__, OSError)
+    assert raised.value.__cause__.errno == errno.ENOENT
+    assert not deferred.exists()
+    assert not published.exists()
+
+
+@pytest.mark.parametrize("error_number", (errno.EACCES, errno.ENOSPC, errno.EBADF))
+def test_record_defer_reports_directory_creation_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error_number: int
+) -> None:
+    runtime_root = tmp_path.resolve()
+    deferred = runtime_root / "deferred"
+    published = deferred / "batch-16.json"
+    actual_mkdir = os.mkdir
+    failure = OSError(error_number, os.strerror(error_number), deferred)
+
+    def fail_deferred_mkdir(
+        path: str | os.PathLike[str],
+        mode: int = 0o777,
+        *,
+        dir_fd: int | None = None,
+    ) -> None:
+        if _is_deferred_path(path, dir_fd, runtime_root):
+            raise failure
+        actual_mkdir(path, mode, dir_fd=dir_fd)
+
+    monkeypatch.setattr(os, "mkdir", fail_deferred_mkdir)
+    with pytest.raises(OSError) as raised:
+        record_defer(runtime_root, PRD, BATCH_ID, RECORD)
+
+    assert str(raised.value) == f"deferred directory could not be created: {deferred}"
+    assert raised.value.__cause__ is failure
+    assert raised.value.__cause__.errno == error_number
+    assert not deferred.exists()
+    assert not published.exists()
+
+
+Red-check: 80d549f8f677c48e9848eab166aef9ccc88e11d5; mise exec -- uv run pytest tests/workflow/test_deferred_diagnostics.py exited1 with 3 failed, 3 passed. Only creation-error diagnostics fail; fault injection executed. Full output:
+============================= test session starts ==============================
+platform darwin -- Python 3.13.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/bob/git/src/github.com/buvis/ovcaq
+configfile: pyproject.toml
+collected 6 items
+
+tests/workflow/test_deferred_diagnostics.py ...FFF                       [100%]
+
+=================================== FAILURES ===================================
+____________ test_record_defer_reports_directory_creation_error[13] ____________
+
+tmp_path = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-6661/test_record_defer_reports_dire1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10700cfc0>
+error_number = 13
+
+    @pytest.mark.parametrize("error_number", (errno.EACCES, errno.ENOSPC, errno.EBADF))
+    def test_record_defer_reports_directory_creation_error(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error_number: int
+    ) -> None:
+        runtime_root = tmp_path.resolve()
+        deferred = runtime_root / "deferred"
+        published = deferred / "batch-16.json"
+        actual_mkdir = os.mkdir
+        failure = OSError(error_number, os.strerror(error_number), deferred)
+    
+        def fail_deferred_mkdir(
+            path: str | os.PathLike[str],
+            mode: int = 0o777,
+            *,
+            dir_fd: int | None = None,
+        ) -> None:
+            if _is_deferred_path(path, dir_fd, runtime_root):
+                raise failure
+            actual_mkdir(path, mode, dir_fd=dir_fd)
+    
+        monkeypatch.setattr(os, "mkdir", fail_deferred_mkdir)
+        with pytest.raises(OSError) as raised:
+            record_defer(runtime_root, PRD, BATCH_ID, RECORD)
+    
+>       assert str(raised.value) == f"deferred directory could not be created: {deferred}"
+E       assert "[Errno 13] P...e1/deferred')" == 'deferred dir...ire1/deferred'
+E         
+E         - deferred directory could not be created: /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-6661/test_record_defer_reports_dire1/deferred
+E         ?   ^^^^^^^^ --------------------------
+E         + [Errno 13] Permission denied: PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-6661/test_record_defer_reports_dire1/deferred')
+E         ? ++++++++++++++++++++++  ^     +++++++++++                                                                                                                           ++
+
+tests/workflow/test_deferred_diagnostics.py:136: AssertionError
+____________ test_record_defer_reports_directory_creation_error[28] ____________
+
+tmp_path = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-6661/test_record_defer_reports_dire2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10704f890>
+error_number = 28
+
+    @pytest.mark.parametrize("error_number", (errno.EACCES, errno.ENOSPC, errno.EBADF))
+    def test_record_defer_reports_directory_creation_error(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error_number: int
+    ) -> None:
+        runtime_root = tmp_path.resolve()
+        deferred = runtime_root / "deferred"
+        published = deferred / "batch-16.json"
+        actual_mkdir = os.mkdir
+        failure = OSError(error_number, os.strerror(error_number), deferred)
+    
+        def fail_deferred_mkdir(
+            path: str | os.PathLike[str],
+            mode: int = 0o777,
+            *,
+            dir_fd: int | None = None,
+        ) -> None:
+            if _is_deferred_path(path, dir_fd, runtime_root):
+                raise failure
+            actual_mkdir(path, mode, dir_fd=dir_fd)
+    
+        monkeypatch.setattr(os, "mkdir", fail_deferred_mkdir)
+        with pytest.raises(OSError) as raised:
+            record_defer(runtime_root, PRD, BATCH_ID, RECORD)
+    
+>       assert str(raised.value) == f"deferred directory could not be created: {deferred}"
+E       assert "[Errno 28] N...e2/deferred')" == 'deferred dir...ire2/deferred'
+E         
+E         - deferred directory could not be created: /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-6661/test_record_defer_reports_dire2/deferred
+E         ?   ^ ^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^
+E         + [Errno 28] No space left on device: PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-6661/test_record_defer_reports_dire2/deferred')
+E         ? ++++++++++++++++++++++++++++  ^^^ ^^^^^ ^^  ^^^                                                                                                                           ++
+
+tests/workflow/test_deferred_diagnostics.py:136: AssertionError
+____________ test_record_defer_reports_directory_creation_error[9] _____________
+
+tmp_path = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-6661/test_record_defer_reports_dire3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x106f66cf0>
+error_number = 9
+
+    @pytest.mark.parametrize("error_number", (errno.EACCES, errno.ENOSPC, errno.EBADF))
+    def test_record_defer_reports_directory_creation_error(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error_number: int
+    ) -> None:
+        runtime_root = tmp_path.resolve()
+        deferred = runtime_root / "deferred"
+        published = deferred / "batch-16.json"
+        actual_mkdir = os.mkdir
+        failure = OSError(error_number, os.strerror(error_number), deferred)
+    
+        def fail_deferred_mkdir(
+            path: str | os.PathLike[str],
+            mode: int = 0o777,
+            *,
+            dir_fd: int | None = None,
+        ) -> None:
+            if _is_deferred_path(path, dir_fd, runtime_root):
+                raise failure
+            actual_mkdir(path, mode, dir_fd=dir_fd)
+    
+        monkeypatch.setattr(os, "mkdir", fail_deferred_mkdir)
+        with pytest.raises(OSError) as raised:
+            record_defer(runtime_root, PRD, BATCH_ID, RECORD)
+    
+>       assert str(raised.value) == f"deferred directory could not be created: {deferred}"
+E       assert "[Errno 9] Ba...e3/deferred')" == 'deferred dir...ire3/deferred'
+E         
+E         - deferred directory could not be created: /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-6661/test_record_defer_reports_dire3/deferred
+E         ?   ^^ ----- ^^^   ^^^ ^^^^^^^^^^^^^^  ^^^^
+E         + [Errno 9] Bad file descriptor: PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-6661/test_record_defer_reports_dire3/deferred')
+E         ? +++++++++++++++++++  ^^  ^   ^^^ ^^^^  ^^^                                                                                                                           ++
+
+tests/workflow/test_deferred_diagnostics.py:136: AssertionError
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-2fc8570f-66af-4417-8a8c-3c2477adb13a
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-2fc8570f-66af-4417-8a8c-3c2477adb13a'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-edf25926-6635-47e0-bb3d-722cac2018b5
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-edf25926-6635-47e0-bb3d-722cac2018b5'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/workflow/test_deferred_diagnostics.py::test_record_defer_reports_directory_creation_error[13]
+FAILED tests/workflow/test_deferred_diagnostics.py::test_record_defer_reports_directory_creation_error[28]
+FAILED tests/workflow/test_deferred_diagnostics.py::test_record_defer_reports_directory_creation_error[9]
+=================== 3 failed, 3 passed, 2 warnings in 1.11s ====================
+
+
+Existing review/style checks also require closure in this single bounded tail:
+`_ensure_directory_chain` is 51 lines because it embeds the 13-line ancestry verifier; move that verifier to a named helper to satisfy the function-size limit and simplify the chain walk | File: /Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/workflow/_files.py:268
+`test_installed_defer_never_succeeds_through_unconfirmed_reparented_ancestry` is 80 lines; extract the safe-result and retry/replay assertion flows into helpers while retaining the parameterized chronology | File: /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/test_rework_13.py:357
+F4: _invoke reimplements subprocess.run's timeout kill/reap as a 16-line Popen block plus a framework-verifying `assert process.poll() is not None`; subprocess.run(timeout=20) already kills and waits on TimeoutExpired, and test_rework_12._invoke in the same diff keeps subprocess.run | File: /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/test_rework_13.py:58
+F5: os.mkdir(deferred.name, dir_fd=runtime) failures other than EEXIST (EACCES, ENOSPC, EBADF) still surface raw errno text with the bare name 'deferred'; same class as R15-03, on the create step the acceptance ("every failing open") did not name | File: /Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/workflow/_files.py:340
+F6: fix commit 93c049b changed a user-visible diagnostic (full deferred path on open failure) without a CHANGELOG entry; the only added Fixed line covers ancestry revalidation | File: /Users/bob/git/src/github.com/buvis/ovcaq/CHANGELOG.md:24
+F7: reparent-refusal branch hedges `if _ledger(runtime).exists(): _assert_one_record(runtime)`; the shipped chronology deterministically refuses inside the first _read_record_content before any write, so the direct case should pin that no ledger exists | File: /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/test_rework_13.py:406
+Existing packaging tests are explicitly in your writable allowlist for those test-only cleanup findings. Preserve their parameter cases, original chronology, origin checks, and authoritative state/record assertions. Module-level helper extraction is explicitly required by the cited 50-line style checks, so justified here. For direct refusal, pin no ledger before retry; keep replay bytes exact.

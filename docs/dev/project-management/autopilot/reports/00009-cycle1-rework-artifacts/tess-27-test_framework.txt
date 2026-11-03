@@ -1,0 +1,1 @@
+pytest; uv --cache-dir /private/tmp/ovcaq-rework-uv run pytest tests/drivers/test_codex_rework_placement.py -q --tb=line

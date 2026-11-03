@@ -1,0 +1,33 @@
+{
+  "sha": "badf378ae80592ec9cf1ec023350e55b9090d1ab",
+  "cycle": 4,
+  "commands": [
+    {
+      "command": "uv sync --all-groups",
+      "exit": 0
+    },
+    {
+      "command": "uv run pytest",
+      "exit": 0
+    },
+    {
+      "command": "uv run ruff check .",
+      "exit": 0
+    },
+    {
+      "command": "uv run ruff format --check .",
+      "exit": 0
+    },
+    {
+      "command": "uv run mypy src/ovcaq",
+      "exit": 0
+    },
+    {
+      "command": "uv build",
+      "exit": 0
+    }
+  ],
+  "passed": 7202,
+  "failed": 0,
+  "skipped": 0
+}

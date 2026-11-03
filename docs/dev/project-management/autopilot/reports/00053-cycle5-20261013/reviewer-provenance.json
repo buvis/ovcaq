@@ -1,0 +1,29 @@
+[
+  {
+    "lens": "alice",
+    "provider": "anthropic",
+    "observed_model": "claude-opus-5-5",
+    "effort": "xhigh",
+    "session": "931caaa4-05fc-4bf6-aa90-dfa4015e67b0",
+    "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-cycle5-20261013/alice-output-6a6df43383ac4ec8b9184f8715f24679.jsonl",
+    "receipt": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-cycle5-20261013/alice-output.txt.receipt.json"
+  },
+  {
+    "lens": "blake",
+    "provider": "anthropic",
+    "observed_model": "claude-opus-5-5",
+    "effort": "xhigh",
+    "session": "1674ecf2-9efd-4efc-973f-7692e89570a8",
+    "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-cycle5-20261013/blake-output-009bf7e000fd46318d894fd6db81e149.jsonl",
+    "receipt": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-cycle5-20261013/blake-output.txt.receipt.json"
+  },
+  {
+    "lens": "bob",
+    "provider": "anthropic",
+    "observed_model": "claude-opus-5-5",
+    "effort": "xhigh",
+    "session": "7d6dccbe-2295-49c1-bf2f-3e55f03313d8",
+    "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-cycle5-20261013/bob-output-9db2fc6049b243af8f74c925defea23b.jsonl",
+    "receipt": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-cycle5-20261013/bob-output.txt.receipt.json"
+  }
+]

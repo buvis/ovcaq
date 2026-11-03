@@ -1,0 +1,34 @@
+[BOB] 🟠 `bounded_detail` still leaks part of a token when a control splits it late. If the part of the token before the control already meets the 20-character threshold, the first redaction pass replaces only that head. Removing the control then glues the tail to the marker: `"Before sk-"+"a"*23+"\x00"+"TAILxyz0123456789" + " After"` becomes `Before [REDACTED]TAILxyz0123456789 After`. The same happens with `Bearer`, a CSI sequence, DEL or a lone ESC. The second pass and the Observation sanitizer both miss `[REDACTED]TAIL…`, because they need `\bsk-` or `Bearer\s+`. The cycle-1 strip-first recipe redacted the whole rebuilt token, so the two-pass rework swapped one leak for another. This breaks the PRD exit criterion "synthetic secrets and fragments are absent", and docs/driver-protocol.md:228 and CHANGELOG.md:45 claim more than the code does. Every split test cuts at offset 6, below the threshold, and the `TOKEN`/`sk-abcdefghijkl` absence checks cannot see a tail. I confirmed this by tracing `_LIKELY_SECRET` (`{20,}\b`) by hand; I did not run it | File: src/ovcaq/drivers/codex_events.py:66 | Task: 6
+[BOB] ⚪ The Unreleased Fixed section has rework entries stacked on top of each other. CHANGELOG.md:45 says controls are removed before redaction, while CHANGELOG.md:43 says redaction runs both before and after removal, so the two describe the same fix in conflicting ways. CHANGELOG.md:44 records a speed-up of a surrogate check that has not been released yet, which users never see | File: CHANGELOG.md | Task: 9
+[BOB] ⚪ The fail-first replay count for test_codex_detail_safety.py does not match a static count. By my trace, at e4d765c the 48 new `boundary-*` cases pass on purpose (they guard behavior the old code already had). All `inside-*`, `exact-cap`, `ansi-split`, `nul-split`, `alternate-*-ansi/nul` and rate-limit cases should fail. That predicts about 96 passing at base, but the replay reports 143 (and its own line says "1 + 137 more" = 138) | File: tests/drivers/test_codex_detail_safety.py | Task: general
+
+FIX:
+- A late control split leaves the token's tail unredacted — src/ovcaq/drivers/codex_events.py:66 — before removing controls, extend each first-pass marker over any tail joined to it by controls: `redacted = re.sub(rf"\[REDACTED\](?:(?:{controls})+[A-Za-z0-9_.-]+)+", "[REDACTED]", sanitize_text(protected))`, then remove controls and run the final sanitize as now. Add a CONTROL_DETAILS placement `late` = `"Before " + prefix + token[:26] + control + token[26:] + " After"` expecting `"Before " + prefix + "[REDACTED] After"`. It covers bare and Bearer tokens, through both the helper and native JSONL, and fails on HEAD. Then reword docs/driver-protocol.md:228 to match.
+- Stacked and conflicting changelog entries — CHANGELOG.md:43 — merge lines 43 and 45 into one accurate **drivers** entry (redact before and after removing recognized controls, then cap) and drop line 44.
+
+VERIFY:
+- Replay count discrepancy — run `env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache mise exec -- uv run pytest -q -rA tests/drivers/test_codex_detail_safety.py` in an e4d765c worktree with HEAD's test file overlaid. Confirm that every `inside-*`, `exact-cap`, `ansi-split`, `nul-split`, `alternate-*-ansi`, `alternate-*-nul` and rate-limit id FAILS there, and that only `boundary-*`, `bearer`, `osc-controls`, `alternate-*-plain`, printable, short and classification ids pass.
+
+KNOWN:
+- (none)
+
+R1: fail
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+```
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```

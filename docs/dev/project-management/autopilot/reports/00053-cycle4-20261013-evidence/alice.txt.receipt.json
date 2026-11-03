@@ -1,0 +1,17 @@
+{
+  "provider": "claude",
+  "model_provider": "anthropic",
+  "lens": "alice",
+  "model": "opus",
+  "started": 1791919690.077188,
+  "completed": 1791919893.5640771,
+  "output": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-cycle4-20261013-evidence/alice.txt",
+  "sha256": "d377d8029e0414c47ad6cb3bdbb0065a8d7937bd49766cf4d3e73b8b4e109d22",
+  "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-cycle4-20261013-evidence/alice-da16f1973694478b84680818552b7f10.jsonl",
+  "raw_sha256": "eb671ac7c3410e19de11f77ae18fa97cf5be9a77c720974ccd4bae7354c94d17",
+  "thread_id": "008e10ee-5015-41ba-8fac-7c1641d31fa5",
+  "root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+  "prd": "00053-adapter-operational-corrections-v1.md",
+  "cycle": 4,
+  "implementation_fingerprint": "cfe81d3d59861d91408ed5332c4e91546ece49dfe579e1a6a89d3e6e4211c29d"
+}

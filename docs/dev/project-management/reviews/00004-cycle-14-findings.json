@@ -1,0 +1,206 @@
+[
+  {
+    "source": "ALICE",
+    "emoji": "🟠",
+    "issue": "Confirmed ancestor identities are discarded when `_ensure_directory_chain` returns; replacing `runtime_root` before `deferred.mkdir()` lets publication or replay succeed in a replacement tree whose parent entry was never fsynced, leaving R13-01’s durability risk open. Keep the confirmed runtime ancestry bound through ledger creation/publication and reverify before success.",
+    "file": "src/ovcaq/workflow/_files.py:288",
+    "task": "P02-T06/P02-T07/P02-T09",
+    "severity": "high",
+    "id": "R14-01",
+    "sources": [
+      "ALICE",
+      "BOB"
+    ],
+    "consensus": "2/3",
+    "bucket": "FIX",
+    "bobId": "B1",
+    "action": "queued_pending_operator_recovery",
+    "reason": "Both independent reviewers identify the same handoff gap. Installed-wheel direct append and replay succeed after real runtime replacement without a later parent fsync; detected data-loss risk mandates pause."
+  },
+  {
+    "source": "ALICE",
+    "emoji": "🟡",
+    "issue": "The replacement regression varies absolute depth but always replaces `runtime.parent`, so an implementation checking only the final two ancestors passes. Commit the retained distance-3/5 probe as an installed regression to bind the every-ancestor requirement.",
+    "file": "tests/packaging/test_rework_13.py:143",
+    "task": "P02-T06/P02-T07/P02-T09",
+    "severity": "medium",
+    "id": "R14-02",
+    "sources": [
+      "ALICE",
+      "BOB"
+    ],
+    "consensus": "2/3",
+    "bucket": "FIX",
+    "bobId": "B3",
+    "action": "queued_pending_operator_recovery",
+    "reason": "Committed cases always replace runtime.parent. Prior Devon evidence and distance-3/5 probes establish the test-depth gap; commit durable regressions while preserving chronological direct/replay assertions."
+  },
+  {
+    "source": "BOB",
+    "emoji": "🟡",
+    "issue": "B2: the non-Darwin search_only fallback PermissionError branch has no committed test; only an ad-hoc probe (00004-cycle-13-fallback-probe.json) exercised it",
+    "file": "src/ovcaq/workflow/_files.py:415",
+    "task": "4",
+    "severity": "medium",
+    "id": "R14-03",
+    "sources": [
+      "BOB"
+    ],
+    "consensus": "1/3",
+    "bucket": "FIX",
+    "bobId": "B2",
+    "action": "queued_pending_operator_recovery",
+    "reason": "The new explicit fallback PermissionError contract was checked only by an ad-hoc probe. A forced fallback test can run on the supported macOS host and preserve errno/cause/path without adding Linux support."
+  },
+  {
+    "source": "BOB",
+    "emoji": "🟡",
+    "issue": "B5: O_SEARCH resolution inlined with a re-derived `access == os.O_RDONLY` check and a magic literal that is Darwin O_EXEC (SDK fcntl.h:162-163: O_SEARCH = O_EXEC|O_DIRECTORY); hoist to a module constant `_O_SEARCH: int | None` and branch on `is None` (also gives B2 a one-line patch hook); the test actor duplicates the same literal",
+    "file": "src/ovcaq/workflow/_files.py:400",
+    "task": "4",
+    "severity": "medium",
+    "id": "R14-04",
+    "sources": [
+      "BOB"
+    ],
+    "consensus": "1/3",
+    "bucket": "FIX",
+    "bobId": "B5",
+    "action": "queued_pending_operator_recovery",
+    "reason": "Local SDK fcntl.h confirms O_SEARCH is O_EXEC | O_DIRECTORY; current combined flags are correct. Naming the capability and using an explicit unsupported sentinel is a bounded readability/testing improvement, not a flag-value defect."
+  },
+  {
+    "source": "BOB",
+    "emoji": "⚪",
+    "issue": "B4: fallback PermissionError passes a Path as filename so str(error) renders `PosixPath('...')` (probe evidence line 10) while every other message in the module renders the bare path; cli.py:462 emits str(error)",
+    "file": "src/ovcaq/workflow/_files.py:420",
+    "task": "4",
+    "severity": "low",
+    "id": "R14-05",
+    "sources": [
+      "BOB"
+    ],
+    "consensus": "1/3",
+    "bucket": "FIX",
+    "bobId": "B4",
+    "action": "queued_pending_operator_recovery",
+    "reason": "The retained forced-fallback probe confirms PosixPath(...) appears in the user-visible message. Passing the filesystem string preserves errno/cause and aligns path formatting."
+  },
+  {
+    "source": "BOB",
+    "emoji": "⚪",
+    "issue": "B6: `opened` is reused for the parent fstat and then the level fstat (Pat LOW note carried forward)",
+    "file": "src/ovcaq/workflow/_files.py:262",
+    "task": "4",
+    "severity": "low",
+    "id": "R14-06",
+    "sources": [
+      "BOB"
+    ],
+    "consensus": "1/3",
+    "bucket": "FIX",
+    "bobId": "B6",
+    "action": "queued_pending_operator_recovery",
+    "reason": "The same local name is reused for two different directory identities. Descriptive parent/level names can be applied with the bounded ancestry repair."
+  },
+  {
+    "source": "BOB",
+    "emoji": "⚪",
+    "issue": "B7: search test asserts child-hardcoded constants (`read_denied is True`, `search_fsync is True`, `euid != 0` already guaranteed by the skip)",
+    "file": "tests/packaging/test_rework_13.py:220",
+    "task": "4",
+    "severity": "low",
+    "id": "R14-07",
+    "sources": [
+      "BOB"
+    ],
+    "consensus": "1/3",
+    "bucket": "FIX",
+    "bobId": "B7",
+    "action": "queued_pending_operator_recovery",
+    "reason": "The child capability check already refuses or skips unless the three returned conditions hold. Remove redundant metadata assertions while retaining the actual filesystem, fsync, exit, record and state checks."
+  },
+  {
+    "source": "BOB",
+    "emoji": "⚪",
+    "issue": "B8: `_assert_installed`, `_identity`, `_prepare` duplicate test_rework_12.py near-verbatim (only the required module name differs)",
+    "file": "tests/packaging/test_rework_13.py:19",
+    "task": "4",
+    "severity": "low",
+    "id": "R14-08",
+    "sources": [
+      "BOB"
+    ],
+    "consensus": "1/3",
+    "bucket": "FIX",
+    "bobId": "B8",
+    "action": "queued_pending_operator_recovery",
+    "reason": "Origin and inode helpers duplicate existing installed-test logic. Share only common setup/checks, preserving the differing state backup and per-scenario preparation semantics; do not add generic testing infrastructure."
+  },
+  {
+    "source": "BOB",
+    "emoji": "⚪",
+    "issue": "B9: on platforms without a fsync-capable search descriptor (glibc Linux) defer beneath a 0111 ancestor still fails; the fix only names the requirement",
+    "file": "src/ovcaq/workflow/_files.py:415",
+    "task": "4",
+    "severity": "low",
+    "id": "R14-09",
+    "sources": [
+      "BOB"
+    ],
+    "consensus": "1/3",
+    "bucket": "KNOWN",
+    "bobId": "B9",
+    "action": "settled-deferral",
+    "reason": "The mandatory resolved discovery explicitly excludes Linux from the personal-cutover milestone. Keep the explicit fallback failure and durability gate; no new Linux-support task."
+  },
+  {
+    "source": "BOB",
+    "emoji": "⚪",
+    "issue": "B10: Cannot statically verify: suite/ruff/format/mypy/build and fail-first replay of the 7 rework_13 cases (replay skipped: worktree denied); host reports 1359 passed / 0 skipped at 7291d9f; static trace shows each new test fails pre-change",
+    "file": "N/A",
+    "task": "general",
+    "severity": "low",
+    "id": "R14-10",
+    "sources": [
+      "BOB"
+    ],
+    "consensus": "1/3",
+    "bucket": "KNOWN",
+    "bobId": "B10",
+    "action": "settled-deferral",
+    "reason": "Fresh suite at reviewed HEAD passed 1359/0/0; other required gates have same-HEAD successful records. Full fail-first binding remains the settled R9-K4 limitation; the current replay attempt was skipped on worktree denial."
+  },
+  {
+    "source": "BLAKE",
+    "emoji": "🟠",
+    "issue": "`prd_root` is never passed through project containment or symlink-component validation: absolute roots are accepted and `resolve()` follows an in-project symlink outside the repository. Because park/stall consume these paths and rename `wip/<prd>` into `hold/<prd>`, repository or user configuration can make OVCAQ move files in an external tree, contrary to the source contract’s requirement that configured project/runtime paths remain under the resolved project except an explicitly supplied external state root.",
+    "file": "src/ovcaq/config.py:87",
+    "task": "P02-T01",
+    "severity": "high",
+    "id": "R14-11",
+    "sources": [
+      "BLAKE"
+    ],
+    "consensus": "1/3",
+    "bucket": "DISCARDED",
+    "action": "discarded",
+    "reason": "Blake retracted: containment is specified for runtime roots, not all configured PRD roots. Absolute external PRD roots are deliberately supported; treating that explicit configuration as a containment violation extends the requirement."
+  },
+  {
+    "source": "BLAKE",
+    "emoji": "🟡",
+    "issue": "`workflow check-plan` adds an unspecified `--ceiling` option and accepts every integer without validation. A large value bypasses the fixed 15-task loop policy, while a negative value classifies even an empty plan as oversized; this makes the installed policy caller-controlled and violates the no-extra-options and input-validation rules.",
+    "file": "src/ovcaq/workflow_cli.py:95",
+    "task": "P02-T04",
+    "severity": "medium",
+    "id": "R14-12",
+    "sources": [
+      "BLAKE"
+    ],
+    "consensus": "1/3",
+    "bucket": "DISCARDED",
+    "action": "discarded",
+    "reason": "Auto-dismissed by the settled ledger and retracted by Blake: frozen TEST-012 requires override semantics and CLI exposure, CMD-012/DEC-071/TEST-012 migrate under this PRD, and no positive-only domain is specified."
+  }
+]

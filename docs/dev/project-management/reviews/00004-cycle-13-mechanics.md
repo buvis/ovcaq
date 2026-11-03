@@ -1,0 +1,863 @@
+## Mechanical facts (computed, do not re-count)
+
+Function line counts from `ast`. Cite these for countable claims; a
+finding that contradicts this block is discarded at the review gate.
+
+- `CHANGELOG.md` — skipped (non-python)
+- `docs/operations.md` — skipped (non-python)
+- `docs/state-protocol.md` — skipped (non-python)
+- `src/ovcaq/cli.py`
+  - `_ArgumentParser.__init__` — line 57, 3 lines
+  - `_ArgumentParser.error` — line 61, 3 lines
+  - `_add_expected_revision` — line 66, 2 lines
+  - `_add_generic_mutation_options` — line 70, 3 lines
+  - `_add_generic_state_commands` — line 75, 16 lines
+  - `_add_task_commands` — line 93, 35 lines
+  - `_add_contract_and_restore_commands` — line 130, 12 lines
+  - `build_parser` — line 144, 17 lines
+  - `_command_parser` — line 163, 10 lines
+  - `_leaf_command_parsers` — line 175, 17 lines
+  - `command_inventory` — line 194, 16 lines
+  - `render_state_protocol_command_inventory` — line 212, 13 lines
+  - `render_command_reference` — line 227, 36 lines
+  - `_path_operation` — line 265, 14 lines
+  - `_dispatch_init_or_read` — line 284, 23 lines
+  - `_dispatch_generic_mutation` — line 309, 39 lines
+  - `_dispatch_attempt_command` — line 350, 16 lines
+  - `_dispatch_task_or_contract` — line 368, 49 lines
+  - `_dispatch` — line 419, 16 lines
+  - `_normalize_error` — line 437, 26 lines
+  - `_write_json` — line 465, 2 lines
+  - `_emit_failure` — line 469, 16 lines
+  - `_emit_workflow` — line 487, 23 lines
+  - `main` — line 512, 37 lines
+- `src/ovcaq/cli_io.py`
+  - `_read_payload` — line 19, 24 lines
+  - `_decode_text` — line 45, 8 lines
+  - `_decode_json` — line 55, 15 lines
+  - `_json_file` — line 72, 6 lines
+- `src/ovcaq/config.py`
+  - `ensure_project_config` — line 17, 8 lines
+  - `_read_config` — line 35, 23 lines
+  - `_table` — line 60, 5 lines
+  - `_configured_path` — line 67, 5 lines
+  - `workflow_settings` — line 74, 37 lines
+- `src/ovcaq/errors.py`
+  - `CommandError.__init__` — line 38, 10 lines
+  - `CommandError.exit_code` — line 50, 2 lines
+- `src/ovcaq/paths.py`
+  - `_derived_runtime_path` — line 15, 2 lines
+  - `_reject_symlink_components` — line 19, 16 lines
+  - `_validated_runtime_path` — line 37, 23 lines
+  - `_is_runtime_marker` — line 62, 5 lines
+  - `discover_project_root` — line 69, 17 lines
+  - `runtime_directory` — line 88, 2 lines
+  - `ensure_runtime_directory` — line 92, 39 lines
+  - `state_path` — line 133, 2 lines
+- `src/ovcaq/state/__init__.py` — no functions
+- `src/ovcaq/state/commands.py`
+  - `_require_task_id` — line 67, 4 lines
+  - `_preflight_task_create_ids` — line 73, 7 lines
+  - `_task_by_id` — line 82, 6 lines
+  - `_refresh_task_counts` — line 90, 5 lines
+  - `_result` — line 97, 2 lines
+  - `_require_recovery_idle` — line 101, 6 lines
+  - `_generic_path` — line 109, 8 lines
+  - `StateService.__init__` — line 120, 2 lines
+  - `StateService.show` — line 123, 2 lines
+  - `StateService.validate` — line 126, 2 lines
+  - `StateService.get` — line 129, 3 lines
+  - `StateService._transaction` — line 133, 14 lines
+  - `StateService._transaction.guarded` — line 139, 3 lines
+  - `StateService.add_task` — line 148, 53 lines
+  - `StateService.add_task.mutate` — line 157, 38 lines
+  - `StateService.start_task` — line 202, 17 lines
+  - `StateService.start_task.mutate` — line 210, 3 lines
+  - `StateService.append_attempt` — line 220, 22 lines
+  - `StateService.append_attempt.mutate` — line 229, 7 lines
+  - `StateService.complete_task` — line 243, 23 lines
+  - `StateService.complete_task.mutate` — line 252, 8 lines
+  - `StateService.set_task_body` — line 267, 18 lines
+  - `StateService.set_task_body.mutate` — line 276, 3 lines
+  - `StateService.set_task_meta` — line 286, 31 lines
+  - `StateService.set_task_meta.mutate` — line 295, 16 lines
+  - `StateService.set_task_status` — line 318, 21 lines
+  - `StateService.set_task_status.mutate` — line 327, 6 lines
+  - `StateService.clear_tasks` — line 340, 15 lines
+  - `StateService.clear_tasks.mutate` — line 345, 4 lines
+  - `StateService.set_contract_card` — line 356, 14 lines
+  - `StateService.set_contract_card.mutate` — line 362, 2 lines
+  - `StateService.set` — line 371, 18 lines
+  - `StateService.set.mutate` — line 382, 2 lines
+  - `StateService.append` — line 390, 18 lines
+  - `StateService.append.mutate` — line 401, 2 lines
+  - `StateService.delete` — line 409, 16 lines
+  - `StateService.delete.mutate` — line 418, 2 lines
+  - `StateService.restore` — line 426, 10 lines
+- `src/ovcaq/state/schema.py`
+  - `new_state` — line 286, 47 lines
+  - `_bounded_repr` — line 352, 5 lines
+  - `_safe_error_text` — line 359, 2 lines
+  - `_invalid` — line 363, 3 lines
+  - `_fail` — line 368, 2 lines
+  - `_limit` — line 372, 2 lines
+  - `_check_json_decode_depth` — line 376, 25 lines
+  - `_check_decoded_json_depth` — line 403, 13 lines
+  - `_reject_duplicate_json_keys` — line 418, 9 lines
+  - `_decode_json_integer` — line 429, 8 lines
+  - `_reject_nonstandard_json_constant` — line 439, 2 lines
+  - `decode_json` — line 443, 16 lines
+  - `decode_json.parse_integer` — line 447, 2 lines
+  - `_field_path` — line 461, 2 lines
+  - `_item_path` — line 465, 2 lines
+  - `_require_dict` — line 469, 4 lines
+  - `_require_list` — line 475, 4 lines
+  - `_require_string` — line 481, 12 lines
+  - `_require_integer` — line 495, 6 lines
+  - `_require_bool` — line 503, 4 lines
+  - `validate_timestamp` — line 512, 11 lines
+  - `_timestamp_value` — line 525, 2 lines
+  - `_validate_json` — line 529, 27 lines
+  - `validate_json_value` — line 558, 4 lines
+  - `_validate_open_map` — line 564, 12 lines
+  - `_validate_annotation` — line 578, 44 lines
+  - `_validate_common_constraints` — line 672, 18 lines
+  - `_validate_collection_constraints` — line 692, 9 lines
+  - `_validate_content_constraints` — line 703, 25 lines
+  - `_resolved_type_hints` — line 731, 2 lines
+  - `_validate_owned` — line 735, 24 lines
+  - `_require_unique_ids` — line 761, 9 lines
+  - `_validate_task_invariants` — line 772, 41 lines
+  - `_validate_review_invariants` — line 815, 5 lines
+  - `_validate_capability_attempts` — line 822, 24 lines
+  - `_validate_latest_capability` — line 848, 13 lines
+  - `_validate_capability_invariants` — line 863, 19 lines
+  - `_validate_batch_invariants` — line 884, 13 lines
+  - `validate_state` — line 899, 35 lines
+- `src/ovcaq/state/store.py`
+  - `_canonical_bytes` — line 73, 9 lines
+  - `StateStore.__init__` — line 85, 10 lines
+  - `StateStore.path` — line 97, 2 lines
+  - `StateStore.read` — line 100, 4 lines
+  - `StateStore.initialize` — line 105, 20 lines
+  - `StateStore.transaction` — line 126, 34 lines
+  - `StateStore.restore` — line 161, 30 lines
+  - `StateStore._locked` — line 193, 42 lines
+  - `StateStore._check_revision` — line 236, 10 lines
+  - `StateStore._read_bytes` — line 247, 34 lines
+  - `StateStore._read_backup` — line 282, 7 lines
+  - `StateStore._decode_state` — line 290, 22 lines
+  - `StateStore._commit_pair` — line 313, 34 lines
+  - `StateStore._publish_bytes` — line 348, 45 lines
+  - `StateStore._publish_bytes.mark_created` — line 361, 3 lines
+  - `StateStore._publish_bytes.checked_boundary` — line 365, 4 lines
+  - `StateStore._replace_bytes` — line 394, 47 lines
+  - `StateStore._repair` — line 442, 12 lines
+  - `StateStore._replace_without_hook` — line 455, 5 lines
+  - `StateStore._snapshot` — line 461, 7 lines
+  - `StateStore._artifact_exists` — line 469, 11 lines
+  - `StateStore._reject_aliased_artifact` — line 481, 13 lines
+  - `StateStore._verify_open_artifact` — line 495, 14 lines
+  - `StateStore._cleanup_stale_temps` — line 510, 13 lines
+  - `StateStore._fsync_directory` — line 524, 16 lines
+  - `StateStore._boundary` — line 541, 3 lines
+- `src/ovcaq/workflow/_files.py`
+  - `_require_basename` — line 41, 2 lines
+  - `_require_operation_id` — line 45, 2 lines
+  - `_canonical_record_bytes` — line 49, 4 lines
+  - `_fsync_directory` — line 55, 6 lines
+  - `_fsync_directory_descriptor` — line 63, 2 lines
+  - `_serialize_deferred_publication` — line 68, 12 lines
+  - `_validate_record_encoding` — line 82, 10 lines
+  - `_write_record_file` — line 94, 42 lines
+  - `_finish_record_publication` — line 138, 18 lines
+  - `_publish_record_file` — line 158, 15 lines
+  - `_read_record_file` — line 175, 5 lines
+  - `_read_record_content` — line 182, 38 lines
+  - `record_defer` — line 222, 14 lines
+  - `_deferred_item` — line 238, 6 lines
+  - `_sync_deferred_directory` — line 246, 4 lines
+  - `_ensure_directory_chain` — line 252, 12 lines
+  - `_open_deferred_ledger` — line 267, 15 lines
+  - `_lock_deferred_ledger` — line 285, 42 lines
+  - `_lock_deferred_ledger.verify` — line 305, 13 lines
+  - `_append_deferred_record` — line 329, 28 lines
+  - `load_deferred_records` — line 359, 12 lines
+  - `_open_lifecycle_directory` — line 374, 27 lines
+  - `_verify_lifecycle_directory_identity` — line 403, 15 lines
+  - `_artifact_stat` — line 420, 5 lines
+  - `_validate_prd_artifact` — line 427, 4 lines
+  - `_artifact_identity` — line 433, 4 lines
+  - `_require_artifact_identity` — line 439, 6 lines
+- `src/ovcaq/workflow/_rename.py`
+  - `rename_exclusive` — line 10, 25 lines
+- `src/ovcaq/workflow/frontmatter.py`
+  - `defaults` — line 49, 7 lines
+  - `_block` — line 58, 8 lines
+  - `_pairs` — line 68, 8 lines
+  - `_positive_integer` — line 78, 6 lines
+  - `_apply_enums` — line 86, 16 lines
+  - `parse` — line 104, 41 lines
+  - `overwrite_warnings` — line 147, 10 lines
+  - `apply_to_store` — line 159, 50 lines
+  - `apply_to_store.apply_fields` — line 171, 27 lines
+- `src/ovcaq/workflow/paths.py`
+  - `is_safe_identifier` — line 14, 11 lines
+  - `require_safe_identifier` — line 27, 7 lines
+  - `resolve_lifecycle_paths` — line 47, 18 lines
+- `src/ovcaq/workflow/policy.py`
+  - `plan_over_ceiling` — line 15, 8 lines
+  - `_task_id` — line 25, 5 lines
+  - `validate_plan_shape` — line 32, 49 lines
+  - `validate_plan_shape.visit` — line 67, 10 lines
+- `src/ovcaq/workflow/records.py`
+  - `require_recovery_idle` — line 69, 7 lines
+  - `reset_prd_fields` — line 105, 35 lines
+  - `decision_has_content` — line 142, 12 lines
+  - `completed_prd_summary` — line 156, 20 lines
+  - `complete_prd` — line 178, 32 lines
+  - `complete_prd_in_store` — line 212, 11 lines
+  - `defer_record` — line 225, 17 lines
+  - `_utc_now` — line 244, 2 lines
+  - `_new_operation_id` — line 248, 2 lines
+  - `_trip` — line 252, 3 lines
+  - `_operation_paths` — line 257, 13 lines
+  - `_verify_move` — line 272, 50 lines
+  - `_verify_moved_artifact` — line 324, 22 lines
+  - `_state_proves_reset` — line 348, 15 lines
+  - `_completed_operation_id` — line 365, 23 lines
+  - `_advance_operation` — line 390, 23 lines
+  - `_advance_operation.advance` — line 398, 13 lines
+  - `_stamp_intent` — line 415, 9 lines
+  - `_stamp_intent.stamp` — line 418, 4 lines
+  - `_commit_operation` — line 426, 34 lines
+  - `_commit_operation.commit` — line 429, 29 lines
+  - `_validate_request` — line 471, 21 lines
+  - `_prepare_operation` — line 494, 28 lines
+  - `_begin_operation` — line 524, 39 lines
+  - `_move_operation` — line 565, 33 lines
+  - `_move_operation.verify` — line 584, 8 lines
+  - `_append_operation_record` — line 600, 26 lines
+  - `_append_operation_record.trip_record_boundary` — line 612, 3 lines
+  - `_operation_record` — line 628, 11 lines
+  - `_record_and_commit` — line 641, 43 lines
+  - `_record_and_commit.verify_recorded` — line 656, 8 lines
+  - `_execute_operation` — line 686, 47 lines
+  - `stall` — line 735, 22 lines
+  - `park` — line 759, 25 lines
+- `src/ovcaq/workflow/reports.py`
+  - `_cell` — line 41, 4 lines
+  - `_table` — line 47, 14 lines
+  - `_audit_tables` — line 63, 35 lines
+  - `render_audit` — line 100, 27 lines
+  - `_deferred_rows` — line 129, 9 lines
+  - `load_metric_rows` — line 140, 24 lines
+  - `_metric_decimal` — line 166, 8 lines
+  - `_metric_integer` — line 176, 4 lines
+  - `_sum_decimal` — line 182, 8 lines
+  - `_sum_integer` — line 192, 8 lines
+  - `_metric_partitions` — line 202, 28 lines
+  - `_reduce_metric_partitions` — line 232, 12 lines
+  - `reduce_metrics` — line 246, 5 lines
+  - `_metrics_for_batch` — line 253, 4 lines
+  - `_format_decimal` — line 259, 7 lines
+  - `_format_integer` — line 268, 2 lines
+  - `_metric_summary_lines` — line 272, 9 lines
+  - `_completed_table` — line 283, 17 lines
+  - `_batch_deferred_table` — line 302, 14 lines
+  - `_prd_report_section` — line 318, 9 lines
+  - `_batch_report_section` — line 329, 31 lines
+  - `render_report` — line 362, 27 lines
+  - `_session_table` — line 391, 26 lines
+  - `render_metrics` — line 419, 37 lines
+  - `_require_component` — line 458, 5 lines
+  - `_open_real_directory` — line 473, 6 lines
+  - `_open_child_directory` — line 481, 19 lines
+  - `_output_directory` — line 503, 21 lines
+  - `_output_directory.verify` — line 509, 3 lines
+  - `_read_file` — line 526, 17 lines
+  - `_publish_file` — line 545, 45 lines
+  - `_section_span` — line 592, 15 lines
+  - `_replace_section` — line 609, 7 lines
+  - `_report_section` — line 618, 7 lines
+  - `_updated_report` — line 627, 21 lines
+  - `_publish` — line 650, 9 lines
+  - `publish_audit` — line 661, 13 lines
+  - `publish_report` — line 676, 9 lines
+  - `_publish_report` — line 687, 27 lines
+  - `archive_final_state` — line 716, 14 lines
+- `src/ovcaq/workflow/resume.py`
+  - `resume_target` — line 8, 39 lines
+- `src/ovcaq/workflow/selection.py`
+  - `sequence` — line 18, 6 lines
+  - `selectable` — line 26, 6 lines
+  - `select` — line 34, 9 lines
+  - `_directory_names` — line 45, 11 lines
+  - `select_from_paths` — line 58, 3 lines
+- `src/ovcaq/workflow/transitions.py`
+  - `_copy` — line 27, 2 lines
+  - `_to_review` — line 31, 7 lines
+  - `_rework` — line 40, 10 lines
+  - `_converged` — line 52, 7 lines
+  - `_drained` — line 61, 5 lines
+  - `apply` — line 80, 14 lines
+  - `next_phase` — line 96, 8 lines
+  - `phase_complete` — line 106, 11 lines
+- `src/ovcaq/workflow_cli.py`
+  - `_add_workflow_commands` — line 47, 15 lines
+  - `_add_workflow_lifecycle_commands` — line 64, 36 lines
+  - `_add_workflow_record_commands` — line 102, 33 lines
+  - `_root_relative` — line 137, 2 lines
+  - `_dispatch_workflow_render` — line 141, 35 lines
+  - `_frontmatter` — line 178, 23 lines
+  - `_phase_complete` — line 203, 15 lines
+  - `_check_plan` — line 220, 12 lines
+  - `_complete_prd` — line 234, 16 lines
+  - `_saga` — line 252, 27 lines
+  - `_dispatch_workflow` — line 281, 33 lines
+- `tests/fixtures/README.md` — skipped (non-python)
+- `tests/fixtures/workflow/reports/deferred.json` — skipped (non-python)
+- `tests/fixtures/workflow/reports/expected/audit.md` — skipped (non-python)
+- `tests/fixtures/workflow/reports/expected/metrics.md` — skipped (non-python)
+- `tests/fixtures/workflow/reports/expected/report.md` — skipped (non-python)
+- `tests/packaging/conftest.py`
+  - `built_artifacts` — line 20, 46 lines
+  - `installed_wheel` — line 69, 51 lines
+- `tests/packaging/packaging_support.py`
+  - `_module_member` — line 81, 5 lines
+  - `command_text` — line 107, 2 lines
+  - `run_checked` — line 111, 21 lines
+  - `isolated_environment` — line 134, 20 lines
+  - `_run` — line 156, 12 lines
+  - `_run_unchecked` — line 170, 15 lines
+  - `_hostile_cwd` — line 187, 9 lines
+  - `_installed_workflow_root` — line 198, 38 lines
+  - `workflow_command` — line 238, 12 lines
+  - `stall_command` — line 252, 14 lines
+- `tests/packaging/reports_scripts.py` — no functions
+- `tests/packaging/rework_11_scripts.py` — no functions
+- `tests/packaging/rework_12_scripts.py` — no functions
+- `tests/packaging/sagas_scripts.py` — no functions
+- `tests/packaging/test_distribution.py`
+  - `_wheel_files` — line 116, 7 lines
+  - `_sdist_files` — line 125, 33 lines
+  - `_diff_message` — line 160, 11 lines
+  - `_committed_evidence` — line 173, 15 lines
+  - `_artifact_file_sets` — line 190, 5 lines
+  - `_path_violation` — line 197, 19 lines
+  - `_text_members` — line 218, 6 lines
+  - `test_wheel_contains_exact_declared_package_and_metadata` — line 226, 79 lines
+  - `test_wheel_members_are_unique_regular_files` — line 307, 21 lines
+  - `test_wheel_record_hashes_and_sizes_are_valid` — line 330, 45 lines
+  - `test_sdist_contains_only_allowlisted_committed_inputs` — line 377, 14 lines
+  - `test_sdist_rebuilds_identical_wheel_offline` — line 393, 36 lines
+  - `test_artifact_member_paths_exclude_private_and_generated_content` — line 431, 9 lines
+  - `test_artifact_text_excludes_personal_paths_and_likely_secrets` — line 442, 14 lines
+  - `test_production_sources_have_no_checkout_bootstrap` — line 458, 23 lines
+- `tests/packaging/test_input_integrity.py`
+  - `test_installed_commands_reject_corrupt_ledger_without_mutation` — line 16, 40 lines
+  - `test_installed_named_fifo_input_refuses_without_waiting_for_writer` — line 61, 49 lines
+  - `test_installed_deep_toml_refuses_contextually_without_mutation` — line 114, 44 lines
+- `tests/packaging/test_installed_cli.py`
+  - `test_installed_drained_workflow_stays_terminal` — line 41, 23 lines
+  - `test_installed_entry_points_print_help_from_hostile_cwd` — line 66, 21 lines
+  - `test_installed_workflow_help_exposes_the_complete_command_family` — line 89, 24 lines
+  - `test_installed_frontmatter_binds_active_prd_and_tracks_explicit_cap_three` — line 115, 35 lines
+  - `test_installed_version_and_every_declared_module_come_from_wheel` — line 152, 66 lines
+- `tests/packaging/test_installed_reports.py`
+  - `test_installed_report_nonregular_target_fails_promptly` — line 24, 41 lines
+  - `_equal_key_rows` — line 67, 38 lines
+  - `test_installed_metrics_order_is_stable_when_primary_keys_collide` — line 108, 22 lines
+  - `test_installed_report_completed_summary_contract` — line 143, 22 lines
+  - `test_installed_report_rejects_traversal_and_symlinked_output_parent` — line 167, 47 lines
+  - `_write_metrics` — line 216, 28 lines
+  - `test_installed_render_consumes_metrics_and_rejects_control_headings` — line 246, 42 lines
+- `tests/packaging/test_installed_sagas.py`
+  - `test_installed_stall_rejects_conflicting_inflight_intent` — line 33, 39 lines
+  - `test_installed_deferred_directory_replacement_fails_then_reconciles` — line 86, 49 lines
+  - `test_installed_defer_distinguishes_exact_replay_from_conflicting_operation_id` — line 137, 39 lines
+  - `test_installed_stall_rejects_active_held_prd_without_durable_proof` — line 178, 35 lines
+  - `test_installed_stall_and_park_exact_replay_reject_kind_collision` — line 216, 48 lines
+  - `_concurrent_state_command` — line 266, 19 lines
+  - `test_installed_state_mutations_reject_active_recovery_then_reconcile` — line 288, 36 lines
+- `tests/packaging/test_report_updates.py`
+  - `_render_snapshot` — line 15, 14 lines
+  - `_update_report_state` — line 31, 6 lines
+  - `test_installed_report_updates_return_complete_published_text` — line 39, 46 lines
+- `tests/packaging/test_rework_11.py`
+  - `_assert_installed_origins` — line 25, 9 lines
+  - `_initialize` — line 36, 8 lines
+  - `_defer_command` — line 46, 23 lines
+  - `_read_ledger` — line 71, 9 lines
+  - `_seed_depth_ledger` — line 82, 15 lines
+  - `_run_depth_candidate` — line 99, 20 lines
+  - `_assert_candidate_within_depth_limit` — line 121, 20 lines
+  - `_assert_candidate_exceeds_depth_limit` — line 143, 26 lines
+  - `_assert_ledger_still_writable` — line 171, 24 lines
+  - `test_installed_defer_keeps_the_composed_ledger_within_reader_depth_limit` — line 198, 41 lines
+  - `test_installed_defer_retries_every_new_directory_fsync_after_failure` — line 245, 44 lines
+  - `_set_prd` — line 291, 6 lines
+  - `_render_command` — line 299, 10 lines
+  - `_assert_retry_error` — line 311, 13 lines
+  - `_successful_report_text` — line 326, 8 lines
+  - `_seed_overlap_report` — line 336, 15 lines
+  - `_start_report_actor` — line 353, 12 lines
+  - `_await_actor_ready_and_start_publisher_b` — line 367, 21 lines
+  - `_completed_process` — line 390, 7 lines
+  - `_publication_or_none` — line 399, 6 lines
+  - `_communicate_overlapping_publishers` — line 407, 42 lines
+  - `_assert_overlap_publication_state` — line 451, 15 lines
+  - `_retry_failed_overlap_publications` — line 468, 28 lines
+  - `_assert_overlap_replay` — line 498, 17 lines
+  - `_assert_overlap_final_report` — line 517, 18 lines
+  - `test_installed_report_overlap_preserves_every_successful_publication` — line 537, 46 lines
+- `tests/packaging/test_rework_12.py`
+  - `_assert_installed` — line 19, 6 lines
+  - `_prepare` — line 27, 16 lines
+  - `_state_bytes` — line 45, 7 lines
+  - `_identity` — line 54, 3 lines
+  - `_command` — line 59, 12 lines
+  - `_invoke` — line 73, 16 lines
+  - `_assert_confirmed` — line 91, 6 lines
+  - `_assert_one_record` — line 99, 9 lines
+  - `_actor` — line 111, 18 lines
+  - `_await_event` — line 131, 12 lines
+  - `_finish` — line 145, 9 lines
+  - `test_installed_retry_and_replay_confirm_ancestry_after_abrupt_exit` — line 157, 26 lines
+  - `test_installed_concurrent_creation_confirms_and_preserves_peer_directory` — line 186, 35 lines
+- `tests/packaging/test_workflow_inputs.py`
+  - `test_installed_metrics_input_refuses_nonregular_files_promptly` — line 22, 47 lines
+  - `test_installed_park_halt_and_exact_replay` — line 72, 30 lines
+  - `test_installed_workflow_uses_project_paths_and_active_tiers` — line 104, 46 lines
+  - `_workflow_config_environment` — line 152, 18 lines
+  - `test_installed_workflow_path_precedence_and_state_override` — line 174, 41 lines
+  - `test_installed_explicit_available_tiers_override_the_active_map` — line 217, 28 lines
+- `tests/state/test_cli.py`
+  - `_seed_restore_cli` — line 38, 22 lines
+  - `test_state_restore_cli_routes_through_state_service` — line 62, 43 lines
+  - `test_state_restore_cli_routes_through_state_service.recording_restore` — line 72, 7 lines
+  - `test_error_code_contains_exactly_the_public_failure_values` — line 107, 2 lines
+  - `test_parser_exposes_init_state_and_workflow_command_inventory` — line 111, 10 lines
+  - `test_main_normalizes_argparse_mistakes_to_usage_exit_one` — line 140, 9 lines
+  - `test_main_accepts_only_declared_top_level_and_subparser_option_spellings` — line 151, 45 lines
+  - `_assert_show_option_spellings` — line 198, 23 lines
+  - `test_init_uses_explicit_root_preserves_config_and_ignores_legacy_state` — line 223, 43 lines
+  - `test_init_rejects_symlinked_runtime_components_without_touching_target` — line 276, 35 lines
+  - `test_init_config_creation_failure_leaves_no_state_and_retry_succeeds` — line 313, 28 lines
+  - `_create_config_directory` — line 343, 2 lines
+  - `_create_broken_config_symlink` — line 347, 2 lines
+  - `test_init_rejects_project_config_path_collisions_before_state_publication` — line 358, 15 lines
+  - `test_init_discovers_an_absolute_project_root_and_creates_missing_config` — line 376, 36 lines
+  - `test_json_failures_have_stable_codes_exits_and_streams` — line 464, 23 lines
+  - `test_schema_failures_are_classified_without_tracebacks` — line 490, 30 lines
+  - `test_invalid_persisted_value_cannot_spoof_resource_limit_classification` — line 522, 19 lines
+  - `test_inline_json_duplicate_keys_are_rejected_without_mutation` — line 553, 25 lines
+  - `test_json_file_duplicate_keys_are_rejected_without_mutation` — line 590, 19 lines
+  - `test_persisted_duplicate_keys_have_stable_state_io_error` — line 612, 38 lines
+  - `test_duplicate_backup_has_stable_invalid_backup_error_without_mutation` — line 652, 36 lines
+  - `test_object_only_task_payloads_reject_every_non_object_json_shape_without_mutation` — line 707, 20 lines
+  - `test_directory_sync_refusal_reports_unsupported_durability` — line 729, 34 lines
+  - `test_directory_sync_refusal_reports_unsupported_durability.refuse_directory_sync` — line 738, 4 lines
+  - `test_exception_name_alone_does_not_report_unsupported_durability` — line 765, 36 lines
+  - `test_exception_name_alone_does_not_report_unsupported_durability.raise_same_named_untyped_error` — line 776, 8 lines
+- `tests/state/test_cli_limits.py`
+  - `_deep_json_array` — line 21, 2 lines
+  - `_state_bytes_with_deep_json` — line 25, 12 lines
+  - `_state_bytes_with_oversized_integer` — line 39, 11 lines
+  - `_state_bytes_with_nonstandard_constant` — line 52, 8 lines
+  - `_assert_nonstandard_constant_message` — line 62, 3 lines
+  - `test_nonstandard_inline_json_is_usage_without_mutation` — line 68, 26 lines
+  - `test_nonstandard_json_file_is_usage_without_mutation` — line 97, 23 lines
+  - `test_nonstandard_persisted_json_has_stable_state_io_error` — line 123, 19 lines
+  - `test_nonstandard_backup_json_has_stable_invalid_backup_error` — line 145, 33 lines
+  - `test_oversized_inline_json_is_rejected_before_json_parsing` — line 181, 27 lines
+  - `test_deep_inline_json_is_rejected_without_mutation_or_traceback` — line 210, 24 lines
+  - `test_deep_json_file_is_rejected_without_mutation_or_traceback` — line 236, 21 lines
+  - `test_deep_persisted_state_has_stable_resource_limit_error` — line 259, 17 lines
+  - `test_deep_backup_has_stable_invalid_backup_error_without_mutation` — line 278, 31 lines
+  - `test_oversized_inline_json_integer_is_a_resource_limit_without_mutation` — line 311, 24 lines
+  - `test_oversized_json_file_integer_is_a_resource_limit_without_mutation` — line 337, 21 lines
+  - `test_oversized_persisted_integer_has_stable_resource_limit_error` — line 360, 17 lines
+  - `test_oversized_backup_integer_has_stable_invalid_backup_error` — line 379, 31 lines
+  - `test_every_oversized_file_payload_is_rejected_before_utf8_or_json_decoding` — line 423, 36 lines
+  - `test_state_reads_follow_the_exported_size_limit` — line 461, 16 lines
+  - `test_typed_schema_resource_limit_has_stable_cli_classification` — line 479, 19 lines
+  - `test_state_protocol_inventory_and_examples_follow_the_live_parser` — line 500, 21 lines
+- `tests/state/test_commands.py`
+  - `_directory_bytes` — line 35, 6 lines
+  - `_attempt` — line 43, 22 lines
+  - `_task` — line 67, 33 lines
+  - `_state_with_tasks` — line 102, 8 lines
+  - `_store_for_state` — line 112, 4 lines
+  - `_service_for_state` — line 118, 5 lines
+  - `_record_transactions` — line 125, 14 lines
+  - `_record_transactions.transaction` — line 129, 7 lines
+  - `_service_with_transaction_spy` — line 141, 6 lines
+  - `_task_by_id` — line 149, 4 lines
+  - `_assert_result` — line 155, 8 lines
+  - `test_generic_writable_prefixes_are_only_the_extension_containers` — line 165, 5 lines
+  - `_service_with_namespaced_extensions` — line 172, 11 lines
+  - `test_generic_mutations_accept_namespaced_extension_descendants` — line 185, 50 lines
+  - `test_generic_mutations_reject_deep_values_before_copying_or_transacting` — line 238, 18 lines
+  - `test_generic_mutations_protect_every_path_outside_strict_extension_descendants` — line 287, 23 lines
+  - `test_unsafe_generic_mutations_recover_valid_core_fields` — line 312, 45 lines
+  - `test_invalid_generic_mutations_preserve_state_and_backup` — line 413, 16 lines
+  - `test_generic_mutation_revision_conflict_preserves_state_and_backup` — line 431, 20 lines
+  - `_leaf_parsers` — line 469, 16 lines
+  - `_parser_command_inventory` — line 487, 12 lines
+  - `_invoke_main` — line 501, 7 lines
+  - `_assert_json_failure` — line 510, 18 lines
+  - `_initialize_cli_root` — line 530, 9 lines
+  - `_initialize_running_cli_task` — line 541, 35 lines
+- `tests/state/test_crosswalk.py`
+  - `_table_cells` — line 110, 5 lines
+  - `_plain_code_cell` — line 117, 4 lines
+  - `_plain_text` — line 123, 2 lines
+  - `_crosswalk_rows` — line 127, 34 lines
+  - `_inventory_state_fields` — line 163, 8 lines
+  - `test_crosswalk_covers_every_legacy_state_field_once_with_its_exact_name` — line 173, 13 lines
+  - `test_crosswalk_assigns_each_field_one_allowed_complete_disposition` — line 188, 31 lines
+  - `test_crosswalk_preserves_reviewed_v1_schema_semantics` — line 221, 13 lines
+  - `test_task_counter_rows_document_atomic_materialization_from_tasks` — line 236, 16 lines
+  - `test_protocol_documents_every_typed_dict_direct_field_with_constraints` — line 254, 20 lines
+  - `test_protocol_documents_complete_transaction_and_restore_contract` — line 276, 9 lines
+  - `test_protocol_maps_every_symbolic_error_to_an_exit_code` — line 287, 11 lines
+- `tests/state/test_recovery_mutations.py`
+  - `test_every_public_state_mutation_rejects_active_recovery_atomically` — line 90, 30 lines
+- `tests/state/test_schema.py`
+  - `_clean_batch_defaults` — line 27, 11 lines
+  - `_clean_work_defaults` — line 40, 14 lines
+  - `_clean_review_defaults` — line 56, 12 lines
+  - `test_new_state_returns_the_complete_clean_v1_defaults` — line 70, 23 lines
+  - `test_new_state_accepts_arbitrary_repository_path_names` — line 99, 9 lines
+  - `test_new_state_accepts_a_runtime_generated_repository_name` — line 110, 9 lines
+  - `test_new_state_returns_fresh_independent_mutable_containers` — line 121, 31 lines
+  - `_populate_valid_batch` — line 160, 47 lines
+  - `_populate_valid_work` — line 209, 12 lines
+  - `_valid_completed_task` — line 223, 36 lines
+  - `_valid_pending_task` — line 261, 15 lines
+  - `_populate_valid_tasks` — line 278, 2 lines
+  - `_valid_review_cycle` — line 282, 23 lines
+  - `_populate_valid_review` — line 307, 34 lines
+  - `_populate_valid_recovery` — line 343, 25 lines
+  - `_valid_state` — line 370, 8 lines
+  - `_at_path` — line 380, 5 lines
+  - `_set_path` — line 387, 2 lines
+  - `_dotted_path` — line 391, 8 lines
+  - `_assert_schema_error` — line 401, 5 lines
+  - `_validate_in_neutral_process` — line 428, 22 lines
+  - `_neutral_invalid_state` — line 452, 19 lines
+  - `_runtime_valid_timestamps` — line 473, 15 lines
+  - `_runtime_invalid_timestamps` — line 490, 24 lines
+- `tests/state/test_schema_invariants.py`
+  - `test_schema_constants_match_the_v1_protocol_limits` — line 88, 32 lines
+  - `_resolve_non_recursive_annotation` — line 122, 11 lines
+  - `_json_value_map_annotation` — line 135, 8 lines
+  - `test_nested_schema_owner_requires_exactly_its_documented_annotations` — line 433, 21 lines
+  - `test_state_literal_accepts_exactly_the_documented_values` — line 507, 5 lines
+  - `test_json_aliases_define_only_recursive_finite_json_values` — line 514, 13 lines
+  - `test_validate_state_accepts_a_completed_batch_with_succeeded_requirements` — line 529, 8 lines
+  - `test_validate_state_rejects_invalid_batch_terminal_invariants` — line 571, 9 lines
+  - `_capability_attempt` — line 582, 15 lines
+  - `_capability` — line 599, 15 lines
+  - `test_validate_state_accepts_each_valid_capability_status_matrix_row` — line 638, 8 lines
+  - `test_validate_state_rejects_invalid_capability_status_matrix_rows` — line 746, 9 lines
+- `tests/state/test_service_commands.py`
+  - `_TaskIdEqualityAlias.__eq__` — line 39, 2 lines
+  - `_TaskIdEqualityAlias.__repr__` — line 42, 2 lines
+  - `test_add_task_allocates_after_the_maximum_id_and_applies_defaults` — line 74, 34 lines
+  - `test_add_task_persists_supplied_task_fields_without_reusing_positions` — line 110, 27 lines
+  - `test_add_task_preserves_a_supplied_task_id` — line 139, 9 lines
+  - `test_add_task_rejects_a_duplicate_supplied_task_id_without_durable_change` — line 150, 15 lines
+  - `_assert_start_and_body_mutations` — line 167, 27 lines
+  - `_assert_metadata_mutations` — line 196, 35 lines
+  - `_assert_status_and_contract_mutations` — line 233, 23 lines
+  - `test_start_body_meta_status_and_contract_mutations_each_use_one_transaction` — line 330, 34 lines
+  - `test_append_attempt_keeps_status_and_complete_task_appends_then_completes` — line 401, 43 lines
+  - `test_clear_tasks_clears_dependent_rework_ids_and_preserves_valid_state` — line 446, 25 lines
+  - `test_expected_revision_conflict_leaves_state_and_backup_unchanged` — line 473, 14 lines
+  - `test_restore_delegates_to_store_and_returns_committed_revision` — line 489, 27 lines
+  - `test_restore_delegates_to_store_and_returns_committed_revision.recording_restore` — line 498, 10 lines
+  - `test_restore_revision_conflict_preserves_public_error_and_durable_bytes` — line 518, 11 lines
+  - `test_restore_backup_failure_preserves_public_error_and_durable_bytes` — line 531, 10 lines
+  - `test_task_mutations_reject_missing_ids_without_position_fallback` — line 576, 16 lines
+  - `test_compound_service_rejects_aliased_task_ids_before_transacting` — line 653, 17 lines
+  - `test_add_task_rejects_aliased_blocker_ids_before_transacting` — line 681, 17 lines
+  - `test_add_task_rejects_missing_or_empty_name_without_durable_change` — line 707, 13 lines
+  - `test_invalid_task_mutations_leave_state_and_backup_unchanged` — line 757, 18 lines
+- `tests/state/test_service_contracts.py`
+  - `test_command_typed_dicts_expose_only_the_documented_fields` — line 19, 47 lines
+  - `test_show_validate_and_get_read_from_the_backing_state_file` — line 68, 32 lines
+- `tests/test_package_baseline.py`
+  - `test_declared_package_boundary_imports` — line 64, 14 lines
+  - `test_package_exposes_development_version` — line 80, 5 lines
+  - `test_package_includes_extensions_manifest_resource` — line 87, 4 lines
+  - `_main_exit_code` — line 93, 8 lines
+  - `test_console_script_callable_prints_ovcaq_help_and_usage` — line 104, 11 lines
+  - `test_module_execution_prints_ovcaq_help` — line 117, 10 lines
+  - `test_unsupported_product_command_fails` — line 129, 11 lines
+- `tests/workflow/conftest.py`
+  - `workflow_state` — line 11, 11 lines
+- `tests/workflow/saga_support.py`
+  - `saga_environment` — line 24, 29 lines
+  - `_trip_at` — line 55, 6 lines
+  - `_trip_at.trip` — line 56, 3 lines
+  - `_ledger` — line 63, 3 lines
+  - `_run_stall` — line 68, 18 lines
+  - `_run_park` — line 88, 16 lines
+- `tests/workflow/test_applications.py`
+  - `workflow_store` — line 19, 6 lines
+  - `test_frontmatter_application_maps_effective_values_in_one_cas_commit` — line 27, 37 lines
+  - `test_frontmatter_application_reports_overwrites_and_cas_is_fail_closed` — line 66, 28 lines
+  - `test_frontmatter_application_rejects_wrong_prd_without_mutation` — line 96, 15 lines
+  - `test_explicit_default_cap_remains_owned_for_later_overwrite_warning` — line 113, 18 lines
+  - `test_phase_complete_is_one_state_store_cas_transaction` — line 133, 19 lines
+  - `test_recovery_intent_fences_every_competing_workflow_mutation` — line 154, 46 lines
+  - `test_recovery_intent_fences_every_competing_workflow_mutation.stamp` — line 158, 13 lines
+  - `test_complete_prd_is_idempotent_through_state_store` — line 202, 23 lines
+  - `test_complete_prd_is_idempotent_through_state_store.converge` — line 205, 4 lines
+  - `test_complete_prd_store_rejection_preserves_bytes_and_revision` — line 228, 22 lines
+  - `test_defer_public_boundary_uses_committed_batch_and_active_prd` — line 252, 41 lines
+- `tests/workflow/test_blank_decisions.py`
+  - `test_decision_counts_and_audit_share_substantive_content_filter` — line 12, 21 lines
+  - `test_any_substantive_cell_including_numeric_zero_survives` — line 38, 17 lines
+- `tests/workflow/test_boundaries.py`
+  - `test_workflow_imports_only_state_workflow_and_standard_library` — line 30, 14 lines
+  - `test_workflow_contains_no_provider_or_legacy_runtime_strings` — line 46, 8 lines
+  - `test_workflow_contains_no_external_skill_commands` — line 56, 8 lines
+- `tests/workflow/test_characterized_fixtures.py`
+  - `_v1_from_legacy_fixture` — line 15, 45 lines
+  - `test_characterized_lifecycle_fixture_resume_outcomes_match_under_v1` — line 82, 7 lines
+- `tests/workflow/test_configuration.py`
+  - `config_root` — line 12, 5 lines
+  - `test_invalid_workflow_config_is_a_domain_error_without_effects` — line 29, 8 lines
+  - `test_configured_runtime_preserves_containment_and_symlink_refusal` — line 40, 9 lines
+  - `test_project_agent_selection_uses_only_its_merged_abstract_tier_keys` — line 51, 13 lines
+- `tests/workflow/test_deferred_ledger.py`
+  - `test_defer_directory_replacement_fails_then_replays_once` — line 21, 41 lines
+  - `test_defer_directory_replacement_fails_then_replays_once.replace` — line 34, 7 lines
+  - `_directory_replacement_io` — line 64, 38 lines
+  - `_directory_replacement_io.replace_directory` — line 71, 5 lines
+  - `_directory_replacement_io.open_at` — line 77, 14 lines
+  - `_directory_replacement_io.fsync_at` — line 92, 8 lines
+  - `test_defer_io_stays_bound_to_opened_directory` — line 105, 28 lines
+  - `test_creating_deferred_fsyncs_its_parent` — line 135, 19 lines
+  - `test_creating_deferred_fsyncs_its_parent.spy_fsync` — line 141, 3 lines
+  - `test_record_defer_requires_and_deduplicates_operation_ids` — line 156, 20 lines
+  - `test_record_defer_rejects_conflicting_operation_id_without_byte_changes` — line 178, 16 lines
+  - `test_record_defer_retry_before_atomic_publish_preserves_existing_bytes` — line 196, 21 lines
+  - `test_record_defer_retry_before_atomic_publish_preserves_existing_bytes.interrupt` — line 204, 3 lines
+  - `test_record_defer_retry_after_atomic_publish_is_byte_exact_noop` — line 219, 24 lines
+  - `test_record_defer_retry_after_atomic_publish_is_byte_exact_noop.interrupt` — line 224, 3 lines
+  - `test_record_defer_rejects_invalid_boundaries_without_writing` — line 256, 10 lines
+- `tests/workflow/test_frontmatter.py`
+  - `_block` — line 8, 2 lines
+  - `test_bare_block_takes_provider_neutral_defaults_silently` — line 12, 9 lines
+  - `test_recognized_frontmatter_rows` — line 39, 5 lines
+  - `test_invalid_rework_cap_defaults_and_warns` — line 47, 6 lines
+  - `test_invalid_enum_rows_warn_and_default` — line 62, 10 lines
+  - `test_missing_or_malformed_block_gets_one_warning` — line 75, 5 lines
+  - `test_block_closing_after_twenty_lines_is_malformed` — line 82, 5 lines
+  - `test_unrecognized_opt_ins_stay_absent_without_warning` — line 90, 8 lines
+  - `test_unknown_keys_are_ignored_and_colons_stay_in_values` — line 100, 7 lines
+  - `test_available_abstract_tier_becomes_the_frontmatter_floor` — line 109, 8 lines
+  - `test_unavailable_abstract_tier_warns_and_applies_no_floor` — line 120, 11 lines
+  - `test_overwrite_warning_only_reports_changed_existing_values` — line 133, 7 lines
+- `tests/workflow/test_ledger_integrity.py`
+  - `test_malformed_ledger_refuses_without_changing_bytes` — line 27, 16 lines
+  - `_append_competitor` — line 45, 18 lines
+  - `test_replaced_lock_refuses_and_preserves_successful_competing_append` — line 67, 25 lines
+  - `test_replaced_lock_refuses_and_preserves_successful_competing_append.replace` — line 72, 5 lines
+- `tests/workflow/test_ledger_publication.py`
+  - `_rival` — line 14, 28 lines
+  - `test_sidecar_replacement_inside_native_publish_cannot_lose_successful_append` — line 45, 43 lines
+  - `test_sidecar_replacement_inside_native_publish_cannot_lose_successful_append.replace` — line 54, 10 lines
+  - `test_restored_sidecar_cannot_authorize_overwriting_a_newer_ledger` — line 90, 31 lines
+  - `test_restored_sidecar_cannot_authorize_overwriting_a_newer_ledger.compete` — line 95, 8 lines
+- `tests/workflow/test_policy.py`
+  - `_tasks` — line 13, 5 lines
+  - `test_plan_ceiling_rows` — line 28, 2 lines
+  - `test_plan_ceiling_is_fifteen_and_can_be_overridden` — line 32, 3 lines
+  - `test_tolerant_characterized_counting_treats_missing_or_non_list_as_zero` — line 38, 4 lines
+  - `test_validate_plan_shape_accepts_an_acyclic_dependency_graph` — line 44, 6 lines
+  - `test_validate_plan_shape_rejects_invalid_rows` — line 74, 3 lines
+- `tests/workflow/test_records.py`
+  - `_decision` — line 16, 10 lines
+  - `_converge` — line 28, 4 lines
+  - `_populate_reset_owners` — line 34, 32 lines
+  - `test_reset_clears_exact_per_prd_owners_and_preserves_batch` — line 68, 49 lines
+  - `test_reset_is_pure` — line 119, 4 lines
+  - `test_completed_prd_summary_uses_v1_decision_statuses` — line 125, 19 lines
+  - `test_completed_prd_summary_defaults_zero_cycle_to_first_cycle` — line 146, 4 lines
+  - `test_complete_prd_appends_summary_and_resets_park_counter` — line 152, 11 lines
+  - `test_complete_prd_is_idempotent_for_the_same_summary` — line 165, 6 lines
+  - `test_complete_prd_rejects_mismatched_active_prd` — line 173, 4 lines
+  - `test_complete_prd_rejects_nonterminal_workflow_state` — line 180, 11 lines
+  - `test_complete_prd_rejects_done_without_convergence_marker` — line 193, 8 lines
+  - `test_complete_prd_rejects_conflicting_existing_summary` — line 203, 13 lines
+  - `test_complete_prd_is_pure` — line 218, 5 lines
+- `tests/workflow/test_report_identity.py`
+  - `publication` — line 27, 16 lines
+  - `test_displaced_publication_chain_refuses_then_retries_at_configured_path` — line 46, 45 lines
+  - `test_displaced_publication_chain_refuses_then_retries_at_configured_path.displace` — line 60, 3 lines
+  - `test_displaced_publication_chain_refuses_then_retries_at_configured_path.replace` — line 64, 3 lines
+  - `test_displaced_publication_chain_refuses_then_retries_at_configured_path.sync` — line 68, 4 lines
+- `tests/workflow/test_report_recovery.py`
+  - `test_first_batch_report_includes_earlier_prd_details_and_replaces_them` — line 14, 31 lines
+  - `publisher` — line 48, 9 lines
+  - `_observe_syncs` — line 59, 12 lines
+  - `_observe_syncs.sync` — line 63, 5 lines
+  - `test_publication_syncs_each_created_directory_parent` — line 73, 12 lines
+  - `test_identical_retry_finishes_failed_publication_directory_sync` — line 87, 22 lines
+  - `test_identical_retry_finishes_failed_publication_directory_sync.fail_after_replace` — line 95, 4 lines
+  - `test_retry_syncs_parent_after_interrupted_directory_creation` — line 111, 19 lines
+  - `test_retry_syncs_parent_after_interrupted_directory_creation.fail_directory` — line 116, 4 lines
+- `tests/workflow/test_reports.py`
+  - `_metric_rows` — line 29, 4 lines
+  - `_decision` — line 35, 10 lines
+  - `_task` — line 47, 15 lines
+  - `_populate_report_cycles` — line 64, 17 lines
+  - `_populated` — line 83, 36 lines
+  - `test_audit_render_is_deterministic_and_table_safe` — line 121, 11 lines
+  - `test_report_render_combines_state_and_operation_deduped_records` — line 134, 45 lines
+  - `test_metrics_render_reduces_retained_characterized_rows` — line 181, 21 lines
+  - `test_empty_metrics_bind_legitimate_zero_totals_to_report` — line 204, 17 lines
+  - `test_missing_values_remain_unknown_in_nonempty_metric_totals` — line 223, 14 lines
+  - `test_completed_summary_legacy_and_mixed_rows_keep_unknown_totals` — line 245, 16 lines
+  - `test_completed_summary_unknowns_are_per_field` — line 264, 12 lines
+  - `test_session_sort_key_collisions_have_deterministic_order` — line 289, 7 lines
+  - `test_convergence_sort_key_collisions_have_deterministic_order` — line 301, 7 lines
+  - `test_report_nonregular_target_is_rejected_without_blocking` — line 311, 40 lines
+  - `test_audit_and_report_publication_are_byte_idempotent` — line 353, 22 lines
+  - `test_report_publication_replaces_only_the_active_prd_section` — line 377, 25 lines
+  - `test_report_publication_collapses_preexisting_duplicate_prd_sections` — line 404, 21 lines
+  - `test_final_state_archive_is_canonical_and_byte_idempotent` — line 427, 16 lines
+  - `test_final_state_archive_rejects_nonterminal_state` — line 445, 11 lines
+  - `test_report_publication_rejects_path_unsafe_batch_id` — line 458, 13 lines
+  - `test_report_publication_rejects_control_characters_with_domain_error` — line 480, 17 lines
+  - `test_public_renderers_reject_control_characters_in_headings` — line 499, 9 lines
+  - `test_report_publication_rejects_symlinked_parent_without_touching_external` — line 510, 16 lines
+  - `test_render_surfaces_match_migrated_v1_goldens` — line 528, 22 lines
+- `tests/workflow/test_resume.py`
+  - `test_recovery_operation_outranks_every_phase_branch` — line 11, 19 lines
+  - `test_build_resume_rows` — line 52, 24 lines
+  - `test_empty_build_uses_committed_catchup_artifact` — line 78, 8 lines
+  - `test_review_resume_rows` — line 96, 11 lines
+  - `test_paused_resume_rows` — line 121, 14 lines
+  - `test_done_resume_is_terminal_for_the_prd` — line 137, 3 lines
+  - `test_resume_target_is_pure` — line 142, 4 lines
+- `tests/workflow/test_saga_artifacts.py`
+  - `_replace` — line 14, 3 lines
+  - `_restore_and_reconcile` — line 19, 17 lines
+  - `test_substituted_prd_never_resets_unfinished_work` — line 40, 33 lines
+  - `test_substituted_prd_never_resets_unfinished_work.rename` — line 51, 4 lines
+  - `test_substituted_prd_never_resets_unfinished_work.boundary` — line 56, 6 lines
+  - `test_restarted_saga_requires_original_held_artifact` — line 84, 21 lines
+- `tests/workflow/test_saga_identity.py`
+  - `test_saga_deferred_directory_replacement_preserves_recovery_until_restored` — line 33, 33 lines
+  - `test_saga_deferred_directory_replacement_preserves_recovery_until_restored.replace` — line 43, 4 lines
+  - `test_recorded_recovery_requires_ledger_proof_after_restart` — line 68, 27 lines
+  - `test_replay_after_rename_before_directory_fsync_syncs_both_lifecycle_dirs` — line 97, 34 lines
+  - `test_replay_after_rename_before_directory_fsync_syncs_both_lifecycle_dirs.spy_fsync` — line 118, 3 lines
+  - `test_after_intent_rename_away_of_lifecycle_directory_fails_recoverably` — line 134, 50 lines
+  - `test_after_intent_rename_away_of_lifecycle_directory_fails_recoverably.replace_lifecycle` — line 147, 4 lines
+  - `test_later_boundary_lifecycle_replacement_fails_then_reconciles` — line 194, 48 lines
+  - `test_later_boundary_lifecycle_replacement_fails_then_reconciles.replace_lifecycle` — line 210, 4 lines
+  - `test_after_intent_symlink_swap_cannot_escape_verified_hold_directory` — line 244, 28 lines
+  - `test_after_intent_symlink_swap_cannot_escape_verified_hold_directory.replace_hold` — line 253, 4 lines
+  - `test_saga_rejects_symlinked_lifecycle_directories_without_mutation` — line 275, 25 lines
+- `tests/workflow/test_saga_publication.py`
+  - `test_move_refuses_competing_destination_at_syscall` — line 17, 28 lines
+  - `test_move_refuses_competing_destination_at_syscall.compete` — line 28, 3 lines
+  - `test_saga_evidence_survives_state_publication` — line 50, 40 lines
+  - `test_saga_evidence_survives_state_publication.replace` — line 67, 4 lines
+  - `test_batch_preflight_has_no_filesystem_or_state_effects` — line 96, 26 lines
+  - `test_held_file_identity_remains_bound_through_commit` — line 125, 26 lines
+  - `test_held_file_identity_remains_bound_through_commit.replace` — line 138, 4 lines
+- `tests/workflow/test_sagas.py`
+  - `test_drained_state_rejects_saga_before_filesystem_effects` — line 33, 16 lines
+  - `test_inflight_stall_requires_matching_complete_intent` — line 52, 33 lines
+  - `test_saga_checks_deferred_identity_inside_state_transaction` — line 88, 40 lines
+  - `test_saga_checks_deferred_identity_inside_state_transaction.swap_before_mutation` — line 98, 15 lines
+  - `_assert_boundary_ledger` — line 130, 20 lines
+  - `test_every_characterized_durable_boundary_replays_exactly_once` — line 163, 44 lines
+  - `test_recovery_operation_preserves_raw_failure_evidence` — line 209, 24 lines
+  - `test_conflicting_recovery_refuses_without_filesystem_effects` — line 235, 26 lines
+  - `test_inactive_held_prd_is_not_mistaken_for_a_replay` — line 263, 24 lines
+  - `test_active_held_prd_without_durable_proof_fails_closed` — line 289, 16 lines
+  - `test_no_intent_replay_requires_matching_ledger_and_committed_reset` — line 307, 19 lines
+  - `test_exact_replay_uses_recorded_kind_and_rejects_kind_collision` — line 329, 48 lines
+  - `test_exact_replay_uses_recorded_kind_and_rejects_kind_collision.set_park_history` — line 336, 2 lines
+  - `test_replay_after_record_replace_syncs_record_dir_before_state_advance` — line 379, 32 lines
+  - `test_replay_after_record_replace_syncs_record_dir_before_state_advance.spy_fsync` — line 400, 5 lines
+  - `test_creating_hold_fsyncs_its_parent_before_intent` — line 413, 23 lines
+  - `test_creating_hold_fsyncs_its_parent_before_intent.spy_fsync` — line 421, 3 lines
+  - `test_active_recovery_fences_phase_complete_then_reconciles` — line 438, 22 lines
+  - `test_public_state_mutations_reject_active_recovery_then_reconcile` — line 482, 26 lines
+  - `test_park_reconciles_pending_stall_without_incrementing_park_breaker` — line 510, 27 lines
+  - `test_second_consecutive_park_commits_reset_and_systemic_pause_together` — line 539, 34 lines
+  - `test_second_consecutive_park_commits_reset_and_systemic_pause_together.select_second` — line 547, 4 lines
+- `tests/workflow/test_selection.py`
+  - `test_sequence_rows` — line 21, 2 lines
+  - `test_selectable_rows` — line 56, 2 lines
+  - `test_selection_rows` — line 90, 6 lines
+  - `test_selection_excludes_prds_present_only_in_hold` — line 98, 6 lines
+  - `test_lifecycle_paths_resolve_configured_relative_root` — line 106, 10 lines
+  - `test_lifecycle_paths_preserve_configured_absolute_root` — line 118, 3 lines
+  - `test_select_from_paths_treats_missing_lifecycle_directory_as_empty` — line 124, 11 lines
+  - `test_select_from_paths_treats_non_directory_as_empty` — line 137, 6 lines
+  - `test_select_from_paths_ignores_directory_shaped_prds` — line 145, 7 lines
+  - `test_select_from_paths_ignores_symlinked_prd_files` — line 154, 9 lines
+  - `test_select_from_paths_does_not_follow_symlinked_lifecycle_directory` — line 165, 11 lines
+- `tests/workflow/test_transitions.py`
+  - `test_drained_state_rejects_every_transition_without_mutation` — line 23, 16 lines
+  - `test_every_transition_row_lands_with_valid_full_effects` — line 45, 17 lines
+  - `test_build_to_review_starts_first_cycle_and_preserves_tasks` — line 64, 9 lines
+  - `_populate_review_history` — line 75, 31 lines
+  - `_populate_cycle_work` — line 108, 37 lines
+  - `test_rework_increments_cycle_and_clears_all_cycle_local_review_state` — line 147, 23 lines
+  - `test_convergence_adds_review_marker_idempotently` — line 172, 10 lines
+  - `test_more_prds_delegates_to_authoritative_reset` — line 184, 7 lines
+  - `test_unknown_transition_rows_fail_closed` — line 214, 12 lines
+  - `test_every_transition_is_pure` — line 228, 11 lines
+  - `test_next_phase_agrees_with_applied_full_effect` — line 241, 13 lines
+- `tests/workflow/test_workflow_cli.py`
+  - `_invoke` — line 22, 7 lines
+  - `_workflow` — line 31, 12 lines
+  - `_workflow_choices` — line 45, 14 lines
+  - `_initialize_running_root` — line 61, 17 lines
+  - `_initialize_running_root.start` — line 70, 5 lines
+  - `test_parser_registers_the_complete_workflow_family` — line 80, 13 lines
+  - `_enter_review` — line 95, 20 lines
+  - `_assert_completion_refused` — line 117, 15 lines
+  - `test_workflow_public_application_commands_use_state_store_and_cas` — line 134, 24 lines
+  - `test_frontmatter_command_rejects_wrong_prd_and_warns_after_explicit_cap_three` — line 160, 38 lines
+  - `test_selection_resume_and_plan_commands` — line 200, 29 lines
+  - `_assert_defer_replay` — line 231, 31 lines
+  - `test_defer_exact_and_conflicting_replay` — line 264, 36 lines
+  - `test_render_command_surfaces` — line 303, 15 lines
+  - `test_render_report_command_archives_terminal_state_without_removing_live_state` — line 320, 20 lines
+  - `test_render_report_command_archives_terminal_state_without_removing_live_state.drain` — line 327, 3 lines
+  - `test_stall_and_park_are_public_and_reconcile_without_marker_files` — line 342, 29 lines
+  - `test_workflow_docs_are_generated_from_the_live_parser` — line 373, 15 lines
+
+
+## Tautological test shapes (computed, do not re-judge)
+
+Each `[MECH]` line is a test whose shape cannot fail as written. Raise
+it; step 6 adds any line the table lacks. `mech-check` is the finder.
+
+[MECH] 🟡 test_init_rejects_project_config_path_collisions_before_state_publication hedges with `or`: either outcome satisfies it | File: tests/state/test_cli.py:372 | Task: general
+
+Checked 273 test function(s) in 41 test file(s).
+
+
+## Fail-first replay (computed, do not re-judge)
+
+Touched tests from HEAD, run against the pre-change code at `b43bf2c94d5e`
+(HEAD's test files overlaid on a base worktree). A test that passes there
+does not pin this change. A behavior-preserving refactor's tests pass by
+design, so weigh the PRD's intent before raising one. `mech-check` is the finder.
+
+replay: skipped (worktree add failed: Preparing worktree (detached HEAD b43bf2c)
+fatal: could not create leading directories of '.git/worktrees/wt': Operation not permitted)

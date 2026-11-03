@@ -1,0 +1,10 @@
+{
+  "cycle": 5,
+  "type": "operator-authorization",
+  "date": "2026-10-14",
+  "decision": "Fix all five cycle-5 findings R1/R3/R4/R5/R6; raise rework_cap from 5 to 6; run one more full all-lens cycle 6 in a fresh session and normal finalization only if all review gates pass. New authorization supersedes earlier limits only for these repairs and cycle 6. Preserve historical evidence and settled deferrals; no broader contract changes.",
+  "issue": "Cycle-5 R1/R3/R4/R5/R6 and cap 5 require operator authorization",
+  "severity": "low",
+  "action": "fix",
+  "reason": "Fix all five cycle-5 findings R1/R3/R4/R5/R6; raise rework_cap from 5 to 6; run one more full all-lens cycle 6 in a fresh session and normal finalization only if all review gates pass. New authorization supersedes earlier limits only for these repairs and cycle 6. Preserve historical evidence and settled deferrals; no broader contract changes."
+}

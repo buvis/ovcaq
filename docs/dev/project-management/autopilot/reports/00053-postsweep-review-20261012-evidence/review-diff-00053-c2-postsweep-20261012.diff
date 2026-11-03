@@ -1,0 +1,1524 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index b6d25be..a104dfb 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -40,6 +40,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+ 
+ ### Fixed
+ 
++- **drivers**: recognize Codex reqwest and HTTP-version status diagnostics while preserving complete numeric status matching, failure precedence, and literal whitespace in word diagnostics.
++- **drivers**: check Claude's executable against the effective host-plus-configured PATH, matching subprocess lookup with `os.defpath` when host PATH is absent and treating an empty host PATH as unhealthy. Codex already uses the merged environment and searches the current directory with an empty host PATH; empty configured PATH remains invalid.
++- **drivers**: preserve once-resolved supervised Codex models when their names also match tier keys, retaining direct tier-key precedence and explicit-model validation.
++- **drivers**: require HTTP/status/error-code context, including native bare status diagnostics, for Codex numeric failures and retry model capacity as connectivity through bounded WAIT/retry exhaustion; retain existing authentication word diagnostics and genuine rate/quota limits.
++- **drivers**: keep completed and failed Codex receiver lanes terminal under late updates; synthetic close failures apply only to remembered unfinished lanes, while closes of terminal lanes retain raw unknown evidence.
+ - **drivers**: redact diagnostic credentials both before and after terminal control removal, preserving original token boundaries and hiding reconstructed tokens before truncation.
+ - **events**: speed up surrogate detection while preserving original-container validation and tolerant native preflight handling.
+ - **drivers**: remove terminal controls before redacting and bounding Codex diagnostic details so split credentials cannot survive normalization.
+diff --git a/docs/driver-protocol.md b/docs/driver-protocol.md
+index b4e99f9..48ece65 100644
+--- a/docs/driver-protocol.md
++++ b/docs/driver-protocol.md
+@@ -31,8 +31,14 @@ version is rejected with `IncompatibleDriverError`; version negotiation is not
+ performed.
+ 
+ The CLI foreground launch path calls the selected driver's `probe()` before
+-running the supervisor. Unhealthy version or authentication evidence rejects
+-the launch with a bounded, sanitized runtime error before agent execution.
++running the supervisor. Both native adapters locate executables using the
++effective host environment plus the configured overlay, including `PATH`.
++An absent configured `PATH` inherits the host lookup behavior: a missing host
++`PATH` uses the standard default search path. With an empty host `PATH`, the
++Claude probe is unhealthy; only the Codex subprocess probe searches the current
++directory. `AgentSettings` rejects an empty configured `PATH`.
++Unhealthy executable, version or authentication evidence rejects the launch
++with a bounded, sanitized runtime error before phase execution.
+ Directly constructed supervisors do not probe their injected drivers.
+ 
+ `DriverFactory` is a zero-argument callable, but a registration may use a
+@@ -175,10 +181,13 @@ argv = (
+ )
+ ```
+ 
+-An absent model omits its segment. A configured tier resolves through
+-`settings.tiers`; an already resolved tier value is accepted unchanged. An
+-arbitrary explicit model requires `allow_explicit_model=True`. Shared modules
+-provide no provider model default. Absent effort omits its segment. `low`,
++An absent model omits its segment. The supervisor resolves the selected model
++once, and the driver preserves that resolved value even when it also matches
++a configured tier key. Direct `build_launch` requests retain tier-key precedence:
++a configured tier resolves through `settings.tiers`; an already resolved tier
++value is accepted unchanged. An arbitrary explicit model requires
++`allow_explicit_model=True`. Shared modules provide no provider model default.
++Absent effort omits its segment. `low`,
+ `medium`, `high` and `xhigh` map identically to `model_reasoning_effort` with a
+ quoted TOML value. Blank effort fails; another nonblank value logs one warning
+ containing the requested value and omits the override without guessing.
+@@ -231,9 +240,12 @@ removal is outside this diagnostic-helper contract.
+ 
+ Collaboration requires `agents_states` keys matching native receiver thread
+ IDs. Pending/running receivers start or progress a lane, completed receivers
+-complete it, and errored receivers fail it. Interrupted, shutdown and not-found
+-receivers emit `lane.failed` only when their lane was previously started;
+-unstarted receivers and missing attribution remain raw unknown evidence.
++complete it, and errored receivers fail it. Completed and failed lanes remain
++terminal under all late receiver updates. Late pending/running, completed and
++errored updates for terminal lanes do not emit lane observations.
++Interrupted, shutdown and not-found receivers emit `lane.failed` only for
++remembered unfinished lanes; these close statuses for terminal or unstarted
++receivers, and missing attribution, remain raw unknown evidence.
+ Lane payloads supply `label` and bounded `detail`; a completed collaboration
+ tool does not prove receiver completion.
+ The checked-in `lanes.jsonl` deliberately mismatches these identities and
+@@ -254,6 +266,12 @@ Each valid thread header emits exactly one `session.started`. A conflicting
+ header resets usage and queues a raw gap for the next `turn.completed`, using
+ that completion record's digest and sanitized preview.
+ 
++The diagnostic "Selected model is at capacity" is classified as `connectivity`
++and uses the supervisor's bounded WAIT/retry policy, including retry exhaustion.
++Genuine rate or quota limits retain `rate_limit` precedence. Numeric diagnostic codes
++require HTTP, status or error-code context; ordinary counts alone remain
++`unknown`. Existing rate-limit reset parsing is unchanged.
++
+ ### Usage and unknown telemetry
+ 
+ Normalized input excludes separately counted cache reads/writes, matching the
+diff --git a/src/ovcaq/drivers/claude.py b/src/ovcaq/drivers/claude.py
+index 15a5232..847b2d3 100644
+--- a/src/ovcaq/drivers/claude.py
++++ b/src/ovcaq/drivers/claude.py
+@@ -3,6 +3,7 @@
+ import hashlib
+ import json
+ import math
++import os
+ import shutil
+ from collections import OrderedDict
+ from collections.abc import Iterable
+@@ -78,7 +79,8 @@ class ClaudeDriver:
+ 
+     def probe(self) -> DriverHealth:
+         command = self._settings.command[0]
+-        resolved = shutil.which(command)
++        path = self._environment.get("PATH", os.environ.get("PATH", os.defpath))
++        resolved = shutil.which(command, path=path)
+         if resolved is None:
+             return DriverHealth(
+                 False, f"Command is missing or not executable: {command}"
+diff --git a/src/ovcaq/drivers/codex.py b/src/ovcaq/drivers/codex.py
+index 9b4d3ed..b19b201 100644
+--- a/src/ovcaq/drivers/codex.py
++++ b/src/ovcaq/drivers/codex.py
+@@ -369,13 +369,19 @@ class CodexDriver:
+         observations = [self._observation(kind, payload, timestamp)]
+         projected, has_unknown = item_lanes(
+             item,
+-            {lane_id for category, lane_id in self._identities if category == "lane"},
++            {
++                lane_id
++                for (category, lane_id), done in self._identities.items()
++                if category == "lane" and not done
++            },
+         )
+         if has_unknown:
+             observations.append(
+                 self._observation(ObservationType.RAW_UNKNOWN, raw_payload, timestamp)
+             )
+         for lane_id, lane_kind, lane_payload in projected:
++            if self._identities.get(("lane", lane_id)):
++                continue
+             if (
+                 lane_kind == ObservationType.LANE_PROGRESS
+                 and ("lane", lane_id) not in self._identities
+diff --git a/src/ovcaq/drivers/codex_events.py b/src/ovcaq/drivers/codex_events.py
+index b815bc8..01195c5 100644
+--- a/src/ovcaq/drivers/codex_events.py
++++ b/src/ovcaq/drivers/codex_events.py
+@@ -297,27 +297,35 @@ def item_tool(
+ 
+ def classify_failure(detail: str) -> FailureClass:
+     """Match native diagnostics in authentication-to-agent precedence order."""
++    status = (
++        r"(?:http(?:/\d+\.\d+| status(?: (?:client|server) error \()?)?"
++        r"|status(?: code)?|error code)\s*:?\s*"
++    )
+     for failure, pattern in (
+         (
+             FailureClass.AUTHENTICATION,
+-            r"401|unauthorized|not logged in|(?:invalid|expired) credentials?",
++            (
++                rf"{status}401|unauthorized|not logged in|"
++                r"(?:invalid|expired) credentials?"
++            ),
+         ),
+         (
+             FailureClass.PERMISSION,
+-            r"403|permission denied|sandbox (?:denied|error)|approval denied",
++            rf"{status}403|permission denied|sandbox (?:denied|error)|approval denied",
+         ),
+         (
+             FailureClass.RATE_LIMIT,
+             (
+-                r"429|rate[- ]limit(?:s|ed|ing)?|quota (?:limits?|exceeded)|"
+-                r"usage limits?|model is at capacity"
++                rf"{status}429|rate[- ]limit(?:s|ed|ing)?|quota (?:limits?|exceeded)|"
++                r"usage limits?"
+             ),
+         ),
+         (
+             FailureClass.CONNECTIVITY,
+             (
+-                r"502|503|connection reset|connection refused|connection failed|dns|"
+-                r"network unreachable|server unavailable|stream disconnected"
++                rf"{status}(?:502|503)|connection reset|connection refused|"
++                r"connection failed|dns|network unreachable|server unavailable|"
++                r"stream disconnected|model is at capacity"
+             ),
+         ),
+         (FailureClass.TIMEOUT, r"timeouts?|timed out"),
+diff --git a/src/ovcaq/drivers/edge.py b/src/ovcaq/drivers/edge.py
+index a8e9bc3..6bdf6a2 100644
+--- a/src/ovcaq/drivers/edge.py
++++ b/src/ovcaq/drivers/edge.py
+@@ -6,21 +6,32 @@ from dataclasses import replace
+ from pathlib import Path
+ from uuid import uuid4
+ 
+-from ovcaq.config import agent_settings
++from ovcaq.config import AgentSettings, agent_settings
+ from ovcaq.drivers.base import AgentDriver, LaunchRequest, LaunchSpec
+ from ovcaq.drivers.claude import ClaudeDriver
+ from ovcaq.drivers.codex import CodexDriver
+ from ovcaq.errors import CommandError, ErrorCode
+ 
+ 
++def _tier_request(settings: AgentSettings, request: LaunchRequest) -> LaunchRequest:
++    tiers = {model: tier for tier, model in settings.tiers.items()}
++    if request.model in tiers:
++        return replace(request, model=tiers[request.model])
++    return request
++
++
+ class _ResolvedModelClaudeDriver(ClaudeDriver):
+     """Map the supervisor's resolved model back to its configured tier key."""
+ 
+     def build_launch(self, request: LaunchRequest) -> LaunchSpec:
+-        tiers = {model: tier for tier, model in self._settings.tiers.items()}
+-        if request.model in tiers:
+-            request = replace(request, model=tiers[request.model])
+-        return super().build_launch(request)
++        return super().build_launch(_tier_request(self._settings, request))
++
++
++class _ResolvedModelCodexDriver(CodexDriver):
++    """Map the supervisor's resolved model back to its configured tier key."""
++
++    def build_launch(self, request: LaunchRequest) -> LaunchSpec:
++        return super().build_launch(_tier_request(self._settings, request))
+ 
+ 
+ def build_driver(root: Path, name: str | None) -> AgentDriver:
+@@ -28,5 +39,5 @@ def build_driver(root: Path, name: str | None) -> AgentDriver:
+     if agent.name == "claude":
+         return _ResolvedModelClaudeDriver(agent, run_id=uuid4().hex)
+     if agent.name == "codex":
+-        return CodexDriver(agent, run_id=uuid4().hex)
++        return _ResolvedModelCodexDriver(agent, run_id=uuid4().hex)
+     raise CommandError(ErrorCode.RUNTIME_FORMAT, f"unknown agent: {agent.name}")
+diff --git a/tests/drivers/test_adapter_failure_classes.py b/tests/drivers/test_adapter_failure_classes.py
+new file mode 100644
+index 0000000..3218a5c
+--- /dev/null
++++ b/tests/drivers/test_adapter_failure_classes.py
+@@ -0,0 +1,253 @@
++import json
++from datetime import UTC, datetime, timedelta
++from pathlib import Path
++
++import pytest
++
++from ovcaq.config import AgentSettings
++from ovcaq.drivers.codex import CodexDriver
++from ovcaq.drivers.codex_events import classify_failure
++from ovcaq.events.model import FailureClass
++from ovcaq.runtime.decision import (
++    AttemptResult,
++    DecisionKind,
++    ProgressSnapshot,
++    RetryState,
++    SupervisorPolicy,
++    decide,
++    snapshot,
++)
++from ovcaq.state.schema import new_state
++
++
++@pytest.fixture
++def driver() -> CodexDriver:
++    settings = AgentSettings(
++        name="codex",
++        command=("fixture-wrapper",),
++        tiers={"standard": "fixture-model"},
++        environment={},
++        options={},
++    )
++    return CodexDriver(settings, run_id="capacity-run")
++
++
++def running_snapshot() -> ProgressSnapshot:
++    state = new_state(repo_root=Path("/tmp/decision-contract"))
++    state["batch"]["id"] = "batch-1"
++    state["batch"]["status"] = "running"
++    state["work"]["prd"] = "00001-feature.md"
++    return snapshot(state)
++
++
++@pytest.mark.parametrize(
++    ("code", "expected"),
++    [
++        ("401", FailureClass.AUTHENTICATION),
++        ("403", FailureClass.PERMISSION),
++        ("429", FailureClass.RATE_LIMIT),
++        ("502", FailureClass.CONNECTIVITY),
++        ("503", FailureClass.CONNECTIVITY),
++    ],
++)
++@pytest.mark.parametrize(
++    "template",
++    ["HTTP {code}", "HTTP status: {code}", "status code: {code}", "error code: {code}"],
++)
++def test_numeric_diagnostics_require_an_explicit_status_or_error_context(
++    code: str, expected: FailureClass, template: str
++) -> None:
++    assert classify_failure(template.format(code=code)) is expected
++
++
++@pytest.mark.parametrize(
++    ("detail", "expected"),
++    [
++        ("unexpected status 503 Service Unavailable", FailureClass.CONNECTIVITY),
++        ("unexpected status 502 Bad Gateway", FailureClass.CONNECTIVITY),
++        ("unexpected status 403 Forbidden", FailureClass.PERMISSION),
++        (
++            "exceeded retry limit, last status: 429 Too Many Requests",
++            FailureClass.RATE_LIMIT,
++        ),
++    ],
++)
++def test_explicit_bare_status_diagnostics_are_classified(
++    detail: str, expected: FailureClass
++) -> None:
++    assert classify_failure(detail) is expected
++
++
++@pytest.mark.parametrize(
++    ("detail", "expected"),
++    [
++        (
++            "HTTP status client error (429 Too Many Requests) for url (https://example.test)",
++            FailureClass.RATE_LIMIT,
++        ),
++        (
++            "HTTP status client error (403 Forbidden) for url (https://example.test)",
++            FailureClass.PERMISSION,
++        ),
++        (
++            "HTTP status server error (503 Service Unavailable) for url (https://example.test)",
++            FailureClass.CONNECTIVITY,
++        ),
++        ("HTTP/1.1 401 Unauthorized", FailureClass.AUTHENTICATION),
++        ("HTTP/1.1 403 Forbidden", FailureClass.PERMISSION),
++        ("HTTP/1.1 429 Too Many Requests", FailureClass.RATE_LIMIT),
++        ("HTTP/1.1 502 Bad Gateway", FailureClass.CONNECTIVITY),
++        ("HTTP/1.1 503 Service Unavailable", FailureClass.CONNECTIVITY),
++    ],
++)
++def test_reqwest_and_http_version_status_diagnostics_are_classified(
++    detail: str, expected: FailureClass
++) -> None:
++    assert classify_failure(detail) is expected
++
++
++@pytest.mark.parametrize("code", ["401", "403", "429", "502", "503"])
++@pytest.mark.parametrize(
++    "template",
++    [
++        "processed {code} files",
++        "inspected {code} records",
++        "port {code}",
++        "{code}",
++        "completed {code} tasks",
++    ],
++)
++def test_unrelated_numbers_are_not_failure_diagnostics(
++    code: str, template: str
++) -> None:
++    assert classify_failure(template.format(code=code)) is FailureClass.UNKNOWN
++
++
++@pytest.mark.parametrize(
++    "detail",
++    [
++        "disk at capacity",
++        "context capacity reached",
++        "Disk at capacity while model runs normally",
++    ],
++)
++def test_ordinary_resource_capacity_is_unknown(detail: str) -> None:
++    assert classify_failure(detail) is FailureClass.UNKNOWN
++
++
++@pytest.mark.parametrize("code", ["401", "403", "429", "502", "503"])
++def test_numeric_diagnostics_require_a_complete_status_number(code: str) -> None:
++    assert classify_failure(f"HTTP {code}0") is FailureClass.UNKNOWN
++
++
++@pytest.mark.parametrize(
++    ("detail", "expected"),
++    [
++        ("UnAuThOrIzEd", FailureClass.AUTHENTICATION),
++        ("Rate limit reached", FailureClass.RATE_LIMIT),
++        ("Rate\tlimit reached", FailureClass.UNKNOWN),
++        ("invalid credentials", FailureClass.AUTHENTICATION),
++    ],
++)
++def test_native_word_diagnostics_retain_case_without_widening_whitespace(
++    detail: str, expected: FailureClass
++) -> None:
++    assert classify_failure(detail) is expected
++
++
++@pytest.mark.parametrize(
++    "detail", ["Authentication failed", "MCP server authentication failed"]
++)
++def test_generic_authentication_failure_messages_remain_unknown(detail: str) -> None:
++    assert classify_failure(detail) is FailureClass.UNKNOWN
++
++
++@pytest.mark.parametrize(
++    ("detail", "expected"),
++    [
++        ("timeout; connection refused", FailureClass.CONNECTIVITY),
++        ("permission denied; not logged in", FailureClass.AUTHENTICATION),
++        ("not logged in; permission denied", FailureClass.AUTHENTICATION),
++        (
++            "unexpected status 403 Forbidden; not logged in",
++            FailureClass.AUTHENTICATION,
++        ),
++        (
++            "not logged in; unexpected status 403 Forbidden",
++            FailureClass.AUTHENTICATION,
++        ),
++    ],
++)
++def test_failure_precedence_is_independent_of_diagnostic_order(
++    detail: str, expected: FailureClass
++) -> None:
++    assert classify_failure(detail) is expected
++
++
++@pytest.mark.parametrize("event", ["error", "turn.failed"])
++def test_authentication_is_classified_beyond_the_display_detail_limit(
++    driver: CodexDriver, event: str
++) -> None:
++    detail = "x" * 5000 + " Unauthorized"
++    record = (
++        {"type": "error", "message": detail}
++        if event == "error"
++        else {"type": "turn.failed", "error": {"message": detail}}
++    )
++    observations = driver.decode(json.dumps(record))
++    expected_type = "activity.message" if event == "error" else "session.failed"
++    normalized = next(o for o in observations if o.type == expected_type)
++    assert normalized.payload["failure_class"] == "authentication"
++    summary = driver.summarize(observations, 1)
++    assert not summary.success
++    assert summary.failure_class is FailureClass.AUTHENTICATION
++
++
++@pytest.mark.parametrize(
++    ("connectivity_retries", "expected_kind"),
++    [
++        (0, DecisionKind.WAIT),
++        (1, DecisionKind.WAIT),
++        (2, DecisionKind.WAIT),
++        (3, DecisionKind.HALT),
++    ],
++)
++def test_model_capacity_uses_connectivity_wait_until_exact_retry_bound(
++    driver: CodexDriver, connectivity_retries: int, expected_kind: DecisionKind
++) -> None:
++    observations = driver.decode(
++        json.dumps(
++            {
++                "type": "turn.failed",
++                "error": {"message": "Selected model is at capacity"},
++            }
++        )
++    )
++    summary = driver.summarize(observations, 1)
++    assert not summary.success
++    assert summary.failure_class is FailureClass.CONNECTIVITY
++    assert summary.rate_limit_reset_at is None
++    assert not any(o.type == "rate_limit.started" for o in observations)
++    before = running_snapshot()
++    now = datetime(2026, 10, 2, 12, tzinfo=UTC)
++    result = AttemptResult(
++        summary=summary,
++        started_at=now - timedelta(seconds=10),
++        finished_at=now,
++        state_after=before,
++        state_error=None,
++    )
++    policy = SupervisorPolicy(
++        died_retries=2,
++        connectivity_retries=3,
++        rate_limit_retries=2,
++        connectivity_wait_seconds=7.5,
++        rate_limit_wait_seconds=120.0,
++        phase_repeat_limit=3,
++    )
++    retries = RetryState(connectivity=connectivity_retries, rate_limit=0)
++    decision = decide(before, result, retries, policy, now=now)
++    assert decision.kind is expected_kind
++    assert decision.wait_seconds == (
++        7.5 if expected_kind is DecisionKind.WAIT else None
++    )
+diff --git a/tests/drivers/test_adapter_outcomes.py b/tests/drivers/test_adapter_outcomes.py
+new file mode 100644
+index 0000000..4a9d7f4
+--- /dev/null
++++ b/tests/drivers/test_adapter_outcomes.py
+@@ -0,0 +1,294 @@
++import json
++from hashlib import sha256
++
++import pytest
++
++from ovcaq.config import AgentSettings
++from ovcaq.drivers.codex import CodexDriver
++from ovcaq.events.model import Observation, ObservationType
++
++
++@pytest.fixture
++def driver() -> CodexDriver:
++    settings = AgentSettings(
++        name="codex",
++        command=("fixture-wrapper",),
++        tiers={"standard": "fixture-model"},
++        environment={},
++        options={},
++    )
++    return CodexDriver(settings, run_id="rework-run")
++
++
++def decode(driver: CodexDriver, record: dict[str, object]) -> tuple[Observation, ...]:
++    return driver.decode(json.dumps(record))
++
++
++def collab_record(
++    child_status: str,
++    *,
++    tool: str = "spawn_agent",
++    receiver: str = "child",
++    event_type: str = "item.completed",
++    item_type: str = "collab_tool_call",
++    status: str = "completed",
++) -> dict[str, object]:
++    return {
++        "type": event_type,
++        "item": {
++            "id": f"collab-{tool}-{child_status}",
++            "type": item_type,
++            "tool": tool,
++            "sender_thread_id": "parent",
++            "receiver_thread_ids": [receiver],
++            "agents_states": {
++                receiver: {"status": child_status, "message": "Inspect receiver"}
++            },
++            "status": status,
++        },
++    }
++
++
++def start_lane(driver: CodexDriver, receiver: str = "child") -> None:
++    observations = decode(
++        driver,
++        collab_record(
++            "running",
++            receiver=receiver,
++            event_type="item.started",
++            status="in_progress",
++        ),
++    )
++    assert [
++        observation.lane_id
++        for observation in observations
++        if observation.type == ObservationType.LANE_STARTED
++    ] == [receiver]
++    assert not any(
++        observation.type == ObservationType.LANE_FAILED for observation in observations
++    )
++
++
++@pytest.mark.parametrize("tool", ["wait", "close_agent"])
++@pytest.mark.parametrize("child_status", ["interrupted", "shutdown", "not_found"])
++def test_completed_lane_remains_completed_after_close_status(
++    driver: CodexDriver, tool: str, child_status: str
++) -> None:
++    start_lane(driver)
++    completed = decode(driver, collab_record("completed", tool="wait"))
++    assert [
++        observation.lane_id
++        for observation in completed
++        if observation.type == ObservationType.LANE_COMPLETED
++    ] == ["child"]
++    assert not any(
++        observation.type == ObservationType.LANE_FAILED for observation in completed
++    )
++
++    closed = decode(driver, collab_record(child_status, tool=tool))
++    assert any(
++        observation.type == ObservationType.RAW_UNKNOWN for observation in closed
++    )
++    assert not any(
++        observation.type
++        in (ObservationType.LANE_FAILED, ObservationType.LANE_COMPLETED)
++        for observation in closed
++    )
++
++
++@pytest.mark.parametrize("tool", ["wait", "close_agent"])
++@pytest.mark.parametrize("child_status", ["interrupted", "shutdown", "not_found"])
++def test_unfinished_lane_fails_after_close_status(
++    driver: CodexDriver, tool: str, child_status: str
++) -> None:
++    start_lane(driver)
++
++    observations = decode(driver, collab_record(child_status, tool=tool))
++
++    failures = [
++        observation
++        for observation in observations
++        if observation.type == ObservationType.LANE_FAILED
++    ]
++    assert len(failures) == 1
++    assert failures[0].lane_id == "child"
++    assert not any(
++        observation.type == ObservationType.LANE_COMPLETED
++        for observation in observations
++    )
++
++
++@pytest.mark.parametrize("child_status", ["interrupted", "shutdown", "not_found"])
++def test_unknown_receiver_close_retains_raw_unknown(
++    driver: CodexDriver, child_status: str
++) -> None:
++    start_lane(driver)
++
++    raw_line = json.dumps(
++        collab_record(child_status, tool="close_agent", receiver="unseen")
++    )
++    observations = driver.decode(raw_line)
++
++    assert any(
++        observation.type == ObservationType.RAW_UNKNOWN
++        and observation.payload["raw_sha256"] == sha256(raw_line.encode()).hexdigest()
++        and observation.payload["preview"] == raw_line[:512]
++        for observation in observations
++    )
++    assert not any(
++        observation.type == ObservationType.LANE_FAILED for observation in observations
++    )
++    known_receiver = decode(driver, collab_record(child_status, tool="close_agent"))
++    assert [
++        observation.lane_id
++        for observation in known_receiver
++        if observation.type == ObservationType.LANE_FAILED
++    ] == ["child"]
++
++
++@pytest.mark.parametrize("child_status", ["interrupted", "shutdown", "not_found"])
++def test_repeated_close_does_not_fail_lane_again(
++    driver: CodexDriver, child_status: str
++) -> None:
++    start_lane(driver)
++    record = collab_record(child_status, tool="close_agent")
++    first_close = decode(driver, record)
++    assert (
++        sum(
++            observation.type == ObservationType.LANE_FAILED
++            and observation.lane_id == "child"
++            for observation in first_close
++        )
++        == 1
++    )
++
++    repeated_close = decode(driver, record)
++
++    assert not any(
++        observation.type
++        in (ObservationType.LANE_FAILED, ObservationType.LANE_COMPLETED)
++        for observation in repeated_close
++    )
++
++
++@pytest.mark.parametrize("tool", ["wait", "close_agent"])
++@pytest.mark.parametrize("child_status", ["interrupted", "shutdown", "not_found"])
++def test_completed_receiver_does_not_prevent_unfinished_receiver_failure(
++    driver: CodexDriver, tool: str, child_status: str
++) -> None:
++    start_lane(driver, "finished")
++    start_lane(driver, "unfinished")
++    completed = decode(
++        driver, collab_record("completed", tool="wait", receiver="finished")
++    )
++    assert [
++        observation.lane_id
++        for observation in completed
++        if observation.type == ObservationType.LANE_COMPLETED
++    ] == ["finished"]
++
++    closed = decode(
++        driver, collab_record(child_status, tool=tool, receiver="unfinished")
++    )
++    assert [
++        observation.lane_id
++        for observation in closed
++        if observation.type == ObservationType.LANE_FAILED
++    ] == ["unfinished"]
++    assert not any(
++        observation.type == ObservationType.LANE_COMPLETED for observation in closed
++    )
++
++
++@pytest.mark.parametrize("child_status", ["interrupted", "shutdown", "not_found"])
++def test_unrelated_item_type_does_not_transition_lane(
++    driver: CodexDriver, child_status: str
++) -> None:
++    start_lane(driver)
++    observations = decode(
++        driver,
++        collab_record(child_status, tool="close_agent", item_type="command_execution"),
++    )
++    assert not any(
++        observation.type
++        in (
++            ObservationType.LANE_STARTED,
++            ObservationType.LANE_PROGRESS,
++            ObservationType.LANE_COMPLETED,
++            ObservationType.LANE_FAILED,
++        )
++        for observation in observations
++    )
++    closed = decode(driver, collab_record(child_status, tool="close_agent"))
++    assert [
++        observation.lane_id
++        for observation in closed
++        if observation.type == ObservationType.LANE_FAILED
++    ] == ["child"]
++
++
++@pytest.mark.parametrize("child_status", ["interrupted", "shutdown", "not_found"])
++def test_unrelated_event_type_does_not_transition_lane(
++    driver: CodexDriver, child_status: str
++) -> None:
++    start_lane(driver)
++    observations = decode(
++        driver,
++        collab_record(child_status, tool="close_agent", event_type="thread.started"),
++    )
++    assert not any(
++        observation.type
++        in (
++            ObservationType.LANE_STARTED,
++            ObservationType.LANE_PROGRESS,
++            ObservationType.LANE_COMPLETED,
++            ObservationType.LANE_FAILED,
++        )
++        for observation in observations
++    )
++    closed = decode(driver, collab_record(child_status, tool="close_agent"))
++    assert [
++        observation.lane_id
++        for observation in closed
++        if observation.type == ObservationType.LANE_FAILED
++    ] == ["child"]
++
++
++@pytest.mark.parametrize(
++    ("terminal_status", "terminal_type"),
++    [
++        ("completed", ObservationType.LANE_COMPLETED),
++        ("errored", ObservationType.LANE_FAILED),
++    ],
++    ids=["completed", "failed"],
++)
++@pytest.mark.parametrize("late_status", ["running", "errored", "completed"])
++def test_finished_lane_late_update_retains_only_non_lane_observations(
++    driver: CodexDriver,
++    terminal_status: str,
++    terminal_type: ObservationType,
++    late_status: str,
++) -> None:
++    start_lane(driver)
++    terminal = decode(driver, collab_record(terminal_status, tool="wait"))
++    assert [
++        (observation.type, observation.lane_id)
++        for observation in terminal
++        if observation.type
++        in (ObservationType.LANE_COMPLETED, ObservationType.LANE_FAILED)
++    ] == [(terminal_type, "child")]
++
++    observations = decode(driver, collab_record(late_status, tool="wait"))
++
++    assert observations
++    assert all(
++        observation.type
++        not in (
++            ObservationType.LANE_STARTED,
++            ObservationType.LANE_PROGRESS,
++            ObservationType.LANE_FAILED,
++            ObservationType.LANE_COMPLETED,
++            ObservationType.RAW_UNKNOWN,
++        )
++        for observation in observations
++    )
+diff --git a/tests/drivers/test_codex_decode_terminals.py b/tests/drivers/test_codex_decode_terminals.py
+index 6385974..dfd0198 100644
+--- a/tests/drivers/test_codex_decode_terminals.py
++++ b/tests/drivers/test_codex_decode_terminals.py
+@@ -8,7 +8,6 @@ import pytest
+ 
+ from ovcaq.config import AgentSettings
+ from ovcaq.drivers.codex import CodexDriver
+-from ovcaq.drivers.codex_events import classify_failure
+ from ovcaq.events.model import FailureClass, Observation
+ from ovcaq.events.reducer import reduce_session, session_failure_observation
+ 
+@@ -65,6 +64,7 @@ class SingleUse:
+         ("Quota limit reached: HTTP 429", "rate_limit"),
+         ("Connection reset: HTTP 503", "connectivity"),
+         ("Request timed out", "timeout"),
++        ("Selected model is at capacity", "connectivity"),
+         ("Unexpected diagnostic", "unknown"),
+     ],
+ )
+@@ -96,16 +96,16 @@ def test_native_failure_emits_classified_terminal_with_receipt_identity(
+ 
+ 
+ @pytest.mark.parametrize(
+-    "fixture",
++    ("fixture", "failure_class"),
+     [
+-        "rate-limited",
+-        "authentication-failed",
+-        "connectivity-failed",
+-        "permission-failed",
++        ("rate-limited", "rate_limit"),
++        ("authentication-failed", "authentication"),
++        ("connectivity-failed", "connectivity"),
++        ("permission-failed", "permission"),
+     ],
+ )
+ def test_fixture_error_then_identical_failure_has_one_terminal_and_rate_start(
+-    driver: CodexDriver, fixture: str
++    driver: CodexDriver, fixture: str, failure_class: str
+ ) -> None:
+     records = (FIXTURES / f"{fixture}.jsonl").read_text().splitlines()
+     observations = tuple(o for line in records for o in driver.decode(line))
+@@ -117,12 +117,11 @@ def test_fixture_error_then_identical_failure_has_one_terminal_and_rate_start(
+     ]
+     assert len(failures) == len(provisional) == 1
+     detail = json.loads(records[-1])["error"]["message"]
+-    classification = classify_failure(detail)
+-    assert failures[0].payload["failure_class"] == classification.value
+-    assert provisional[0].payload["failure_class"] == classification.value
++    assert failures[0].payload["failure_class"] == failure_class
++    assert provisional[0].payload["failure_class"] == failure_class
+     assert provisional[0].type == "activity.message"
+     rates = [o for o in observations if o.type == "rate_limit.started"]
+-    assert len(rates) == int(classification == FailureClass("rate_limit"))
++    assert len(rates) == int(failure_class == "rate_limit")
+     for rate in rates:
+         assert dict(rate.payload) == {
+             "reset_at": None,
+diff --git a/tests/drivers/test_codex_failures.py b/tests/drivers/test_codex_failures.py
+index c9d7828..0a1b576 100644
+--- a/tests/drivers/test_codex_failures.py
++++ b/tests/drivers/test_codex_failures.py
+@@ -313,10 +313,13 @@ def test_classifies_native_failure_detail_case_insensitively(
+ @pytest.mark.parametrize(
+     ("detail", "expected"),
+     (
+-        ("401 403 429 502 timeout agent failed", FailureClass.AUTHENTICATION),
+-        ("403 429 503 timeout agent failed", FailureClass.PERMISSION),
+-        ("429 502 timeout agent failed", FailureClass.RATE_LIMIT),
+-        ("503 timeout agent failed", FailureClass.CONNECTIVITY),
++        (
++            "HTTP 401; HTTP 403; HTTP 429; HTTP 502; timeout agent failed",
++            FailureClass.AUTHENTICATION,
++        ),
++        ("HTTP 403; HTTP 429; HTTP 503; timeout agent failed", FailureClass.PERMISSION),
++        ("HTTP 429; HTTP 502; timeout agent failed", FailureClass.RATE_LIMIT),
++        ("HTTP 503; timeout agent failed", FailureClass.CONNECTIVITY),
+         ("timeout agent failed", FailureClass.TIMEOUT),
+         ("permission denied; expired credential", FailureClass.AUTHENTICATION),
+         ("rate limit; sandbox denied", FailureClass.PERMISSION),
+diff --git a/tests/drivers/test_codex_launch.py b/tests/drivers/test_codex_launch.py
+index 8b98237..d9120fa 100644
+--- a/tests/drivers/test_codex_launch.py
++++ b/tests/drivers/test_codex_launch.py
+@@ -1,7 +1,9 @@
+ """Codex launch arguments remain literal and configuration-driven."""
+ 
++import json
+ import logging
+ import subprocess
++from collections.abc import Mapping
+ from dataclasses import replace
+ from pathlib import Path
+ 
+@@ -10,6 +12,37 @@ import pytest
+ from ovcaq.config import AgentSettings
+ from ovcaq.drivers.base import LaunchRequest
+ from ovcaq.drivers.codex import CodexDriver
++from ovcaq.drivers.edge import build_driver
++
++
++def toml_value(value: object) -> str:
++    if isinstance(value, Mapping):
++        return (
++            "{ "
++            + ", ".join(
++                f"{json.dumps(key)} = {toml_value(item)}" for key, item in value.items()
++            )
++            + " }"
++        )
++    return json.dumps(value)
++
++
++def configured_driver(
++    settings: AgentSettings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> CodexDriver:
++    root = tmp_path / "configured-project"
++    root.mkdir()
++    monkeypatch.setenv("HOME", str(tmp_path / "home"))
++    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "user-config"))
++    monkeypatch.setenv("CODEX_HOME", str(tmp_path / "provider-home"))
++    (root / "ovcaq.toml").write_text(
++        'agent = "codex"\n[agents.codex]\n'
++        f"command = {toml_value(settings.command)}\n"
++        f"tiers = {toml_value(dict(settings.tiers))}\n"
++        f"environment = {toml_value(dict(settings.environment))}\n"
++        f"options = {toml_value(dict(settings.options))}\n"
++    )
++    return build_driver(root, "codex")
+ 
+ 
+ @pytest.fixture
+@@ -41,14 +74,22 @@ def launch_request(tmp_path: Path) -> LaunchRequest:
+     ((None, None), ("standard", "fixture-model"), ("fixture-model", "fixture-model")),
+ )
+ @pytest.mark.parametrize("effort", (None, "low", "medium", "high", "xhigh"))
++@pytest.mark.parametrize("use_factory", (False, True), ids=("direct", "configured"))
+ def test_launch_has_exact_order_and_omits_unconfigured_flags(
+     settings: AgentSettings,
+     launch_request: LaunchRequest,
+     model: str | None,
+     resolved: str | None,
+     effort: str | None,
++    use_factory: bool,
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
+ ) -> None:
+-    driver = CodexDriver(settings, run_id="launch-contract")
++    driver = (
++        configured_driver(settings, tmp_path, monkeypatch)
++        if use_factory
++        else CodexDriver(settings, run_id="launch-contract")
++    )
+     requested = replace(launch_request, model=model, effort=effort)
+     spec = driver.build_launch(requested)
+     expected = (
+@@ -126,28 +167,52 @@ def test_accepted_options_keep_the_safe_launch_defaults(
+ def test_constructor_rejects_unknown_or_invalid_options(
+     settings: AgentSettings, options: dict[str, object]
+ ) -> None:
+-    with pytest.raises(ValueError):
++    with pytest.raises(ValueError) as raised:
+         CodexDriver(replace(settings, options=options), run_id="invalid-options")
++    assert raised.type is ValueError
+ 
+ 
++@pytest.mark.parametrize(
++    ("tiers", "requested", "resolved"),
++    (
++        (
++            {"standard": "premium", "premium": "fixture-large"},
++            "premium",
++            "fixture-large",
++        ),
++        ({"default": "o3", "o3": "o3-pro"}, "o3", "o3-pro"),
++    ),
++)
+ def test_tier_key_resolves_before_a_matching_configured_model_value(
+-    settings: AgentSettings, launch_request: LaunchRequest
++    settings: AgentSettings,
++    launch_request: LaunchRequest,
++    tiers: dict[str, str],
++    requested: str,
++    resolved: str,
+ ) -> None:
+-    settings = replace(
+-        settings, tiers={"standard": "premium", "premium": "fixture-large"}
+-    )
++    settings = replace(settings, tiers=tiers)
+     driver = CodexDriver(settings, run_id="tier-precedence")
+-    argv = driver.build_launch(replace(launch_request, model="premium")).argv
+-    assert argv[-4:] == ("-m", "fixture-large", "--", launch_request.prompt)
++    argv = driver.build_launch(replace(launch_request, model=requested)).argv
++    assert argv[-4:] == ("-m", resolved, "--", launch_request.prompt)
+ 
+ 
+ @pytest.mark.parametrize("allow", (None, False, True))
++@pytest.mark.parametrize("use_factory", (False, True), ids=("direct", "configured"))
+ def test_arbitrary_explicit_models_require_the_opt_in(
+-    settings: AgentSettings, launch_request: LaunchRequest, allow: bool | None
++    settings: AgentSettings,
++    launch_request: LaunchRequest,
++    allow: bool | None,
++    use_factory: bool,
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
+ ) -> None:
+     options = {} if allow is None else {"allow_explicit_model": allow}
+     selected = replace(settings, options=options)
+-    driver = CodexDriver(selected, run_id="explicit-model")
++    driver = (
++        configured_driver(selected, tmp_path, monkeypatch)
++        if use_factory
++        else CodexDriver(selected, run_id="explicit-model")
++    )
+     requested = replace(launch_request, model="unconfigured-model")
+     if allow:
+         assert driver.build_launch(requested).argv[-4:] == (
+diff --git a/tests/drivers/test_codex_rework_decode.py b/tests/drivers/test_codex_rework_decode.py
+index 4b476b6..c1d61c3 100644
+--- a/tests/drivers/test_codex_rework_decode.py
++++ b/tests/drivers/test_codex_rework_decode.py
+@@ -91,7 +91,7 @@ def collab_record(child_status: str, message: str) -> dict[str, object]:
+         ("Quota exceeded. Check your plan and billing details.", "rate_limit"),
+         ("internal error; agent loop died unexpectedly", "agent"),
+         ("sandbox error", "permission"),
+-        ("Selected model is at capacity", "rate_limit"),
++        ("Selected model is at capacity", "connectivity"),
+         ("usage limits", "rate_limit"),
+         ("quota limits", "rate_limit"),
+         ("rate limiting", "rate_limit"),
+diff --git a/tests/runtime/test_adapter_health.py b/tests/runtime/test_adapter_health.py
+new file mode 100644
+index 0000000..3f99d16
+--- /dev/null
++++ b/tests/runtime/test_adapter_health.py
+@@ -0,0 +1,343 @@
++from __future__ import annotations
++
++import json
++import os
++import shutil
++import sys
++from pathlib import Path
++
++import pytest
++
++from ovcaq.cli import main
++from ovcaq.config import AgentSettings, supervisor_settings
++from ovcaq.drivers.claude import ClaudeDriver
++from ovcaq.drivers.codex import CodexDriver
++from ovcaq.paths import state_path
++from ovcaq.runtime.registry import FleetRegistry
++from ovcaq.state.schema import State
++from ovcaq.state.store import StateStore
++
++
++@pytest.fixture(autouse=True)
++def isolated_homes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
++    for variable in ("HOME", "XDG_CONFIG_HOME", "XDG_STATE_HOME"):
++        home = tmp_path / variable.lower()
++        home.mkdir()
++        monkeypatch.setenv(variable, str(home))
++
++
++def fake_executable(
++    directory: Path,
++    log: Path,
++    marker: Path,
++    name: str = "fixture-agent-health",
++) -> Path:
++    directory.mkdir()
++    executable = directory / name
++    executable.write_text(
++        f"#!{sys.executable}\n"
++        "import json\nimport sys\nfrom pathlib import Path\n"
++        "arguments = sys.argv[1:]\n"
++        f"with Path({str(log)!r}).open('a', encoding='utf-8') as stream:\n"
++        "    stream.write(json.dumps(arguments) + '\\n')\n"
++        "if arguments == ['--version']:\n"
++        "    print('codex-cli 0.160.0')\n"
++        "elif arguments == ['login', 'status']:\n"
++        "    print('Logged in with fixture authentication')\n"
++        "else:\n"
++        f"    Path({str(marker)!r}).touch()\n"
++        "    raise SystemExit(77)\n",
++        encoding="utf-8",
++    )
++    executable.chmod(0o700)
++    return executable
++
++
++def driver_for(
++    provider: str, command: str, environment: dict[str, str]
++) -> ClaudeDriver | CodexDriver:
++    options: dict[str, object] = (
++        {"permission_mode": "auto"} if provider == "claude" else {}
++    )
++    settings = AgentSettings(
++        provider,
++        (command,),
++        {"sonnet": "fixture-model", "opus": "fixture-model"},
++        environment,
++        options,
++    )
++    if provider == "claude":
++        return ClaudeDriver(settings, run_id="health-fixture")
++    return CodexDriver(settings, run_id="health-fixture")
++
++
++def assert_probe_evidence(
++    provider: str, log: Path, marker: Path, healthy: bool
++) -> None:
++    records = (
++        [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines()]
++        if log.exists()
++        else []
++    )
++    expected = (
++        [["--version"], ["login", "status"]] if provider == "codex" and healthy else []
++    )
++    assert records == expected
++    assert not marker.exists()
++
++
++@pytest.mark.parametrize("provider", ("claude", "codex"))
++@pytest.mark.parametrize(
++    "command_name", ("fixture-agent-health", "overlay-runner", "queue-worker")
++)
++def test_probe_finds_executable_available_only_on_overlay_path(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    provider: str,
++    command_name: str,
++) -> None:
++    log, marker = tmp_path / "probe.jsonl", tmp_path / "phase-exec"
++    executable = fake_executable(tmp_path / "overlay", log, marker, command_name)
++    host = tmp_path / "host"
++    host.mkdir()
++    empty = tmp_path / "empty"
++    empty.mkdir()
++    monkeypatch.setenv("PATH", str(host))
++
++    health = driver_for(
++        provider,
++        executable.name,
++        {"PATH": os.pathsep.join((str(empty), str(executable.parent)))},
++    ).probe()
++
++    assert health.healthy is True
++    assert health.detail.strip()
++    assert_probe_evidence(provider, log, marker, healthy=True)
++
++
++@pytest.mark.parametrize("provider", ("claude", "codex"))
++@pytest.mark.parametrize("command_kind", ("missing-file", "directory"))
++def test_probe_rejects_absolute_command_that_is_not_an_executable_file(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    provider: str,
++    command_kind: str,
++) -> None:
++    log, marker = tmp_path / "probe.jsonl", tmp_path / "phase-exec"
++    overlay = tmp_path / "overlay"
++    overlay.mkdir()
++    command = tmp_path / command_kind
++    if command_kind == "directory":
++        command.mkdir()
++    monkeypatch.setenv("PATH", str(overlay))
++
++    health = driver_for(provider, str(command), {"PATH": str(overlay)}).probe()
++
++    assert health.healthy is False
++    assert health.detail.strip()
++    assert_probe_evidence(provider, log, marker, healthy=False)
++
++
++@pytest.mark.parametrize("provider", ("claude", "codex"))
++@pytest.mark.parametrize("command_kind", ("name", "absolute"))
++def test_probe_rejects_file_without_execute_permission(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    provider: str,
++    command_kind: str,
++) -> None:
++    log, marker = tmp_path / "probe.jsonl", tmp_path / "phase-exec"
++    executable = fake_executable(tmp_path / "overlay", log, marker)
++    executable.chmod(0o600)
++    host = tmp_path / "host"
++    host.mkdir()
++    monkeypatch.setenv("PATH", str(host))
++    command = executable.name if command_kind == "name" else str(executable)
++
++    health = driver_for(provider, command, {"PATH": str(executable.parent)}).probe()
++
++    assert health.healthy is False
++    assert health.detail.strip()
++    assert_probe_evidence(provider, log, marker, healthy=False)
++
++
++@pytest.mark.parametrize("provider", ("claude", "codex"))
++def test_probe_finds_executable_symlink_on_overlay_path(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, provider: str
++) -> None:
++    log, marker = tmp_path / "probe.jsonl", tmp_path / "phase-exec"
++    executable = fake_executable(tmp_path / "target", log, marker)
++    overlay = tmp_path / "overlay"
++    overlay.mkdir()
++    link = overlay / executable.name
++    link.symlink_to(executable)
++    host = tmp_path / "host"
++    host.mkdir()
++    monkeypatch.setenv("PATH", str(host))
++
++    health = driver_for(provider, link.name, {"PATH": str(overlay)}).probe()
++
++    assert health.healthy is True
++    assert health.detail.strip()
++    assert_probe_evidence(provider, log, marker, healthy=True)
++
++
++def test_claude_probe_rejects_sh_hidden_by_overlay_path(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    assert shutil.which("sh", path=os.defpath) is not None
++    log, marker = tmp_path / "probe.jsonl", tmp_path / "phase-exec"
++    overlay = tmp_path / "overlay"
++    overlay.mkdir()
++    monkeypatch.setenv("PATH", os.defpath)
++
++    health = driver_for("claude", "sh", {"PATH": str(overlay)}).probe()
++
++    assert health.healthy is False
++    assert health.detail.strip()
++    assert_probe_evidence("claude", log, marker, healthy=False)
++
++
++@pytest.mark.parametrize("provider", ("claude", "codex"))
++def test_probe_finds_executable_on_inherited_host_path(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, provider: str
++) -> None:
++    log, marker = tmp_path / "probe.jsonl", tmp_path / "phase-exec"
++    executable = fake_executable(tmp_path / "host", log, marker)
++    monkeypatch.setenv("PATH", str(executable.parent))
++
++    health = driver_for(provider, executable.name, {}).probe()
++
++    assert health.healthy is True
++    assert health.detail.strip()
++    assert_probe_evidence(provider, log, marker, healthy=True)
++
++
++@pytest.mark.parametrize("provider", ("claude", "codex"))
++def test_probe_rejects_host_executable_hidden_by_overlay_path(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, provider: str
++) -> None:
++    log, marker = tmp_path / "probe.jsonl", tmp_path / "phase-exec"
++    executable = fake_executable(tmp_path / "host", log, marker)
++    overlay = tmp_path / "overlay"
++    overlay.mkdir()
++    monkeypatch.setenv("PATH", str(executable.parent))
++
++    health = driver_for(provider, executable.name, {"PATH": str(overlay)}).probe()
++
++    assert health.healthy is False
++    assert health.detail.strip()
++    assert_probe_evidence(provider, log, marker, healthy=False)
++
++
++@pytest.mark.parametrize("provider", ("claude", "codex"))
++def test_probe_preserves_absolute_executable_with_unrelated_overlay_path(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, provider: str
++) -> None:
++    log, marker = tmp_path / "probe.jsonl", tmp_path / "phase-exec"
++    executable = fake_executable(tmp_path / "bin", log, marker)
++    unrelated = tmp_path / "unrelated"
++    unrelated.mkdir()
++    monkeypatch.setenv("PATH", str(unrelated))
++
++    health = driver_for(provider, str(executable), {"PATH": str(unrelated)}).probe()
++
++    assert health.healthy is True
++    assert health.detail.strip()
++    assert_probe_evidence(provider, log, marker, healthy=True)
++
++
++def test_claude_probe_uses_default_search_path_when_host_path_is_absent(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    log, marker = tmp_path / "probe.jsonl", tmp_path / "phase-exec"
++    executable = fake_executable(tmp_path / "default-bin", log, marker)
++    monkeypatch.setattr(os, "defpath", str(executable.parent))
++    monkeypatch.delenv("PATH", raising=False)
++    assert shutil.which(executable.name) is None
++
++    health = driver_for("claude", executable.name, {}).probe()
++
++    assert health.healthy is True
++    assert health.detail.strip()
++    assert_probe_evidence("claude", log, marker, healthy=True)
++
++
++@pytest.mark.parametrize("command_kind", ("fixture", "default-path"))
++def test_claude_probe_keeps_empty_host_path_unhealthy(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, command_kind: str
++) -> None:
++    log, marker = tmp_path / "probe.jsonl", tmp_path / "phase-exec"
++    executable = fake_executable(tmp_path / "bin", log, marker)
++    monkeypatch.chdir(executable.parent)
++    monkeypatch.setenv("PATH", "")
++    command = executable.name if command_kind == "fixture" else "sh"
++    if command_kind == "default-path":
++        assert shutil.which(command, path=os.defpath) is not None
++
++    health = driver_for("claude", command, {}).probe()
++
++    assert health.healthy is False
++    assert health.detail.strip()
++    assert_probe_evidence("claude", log, marker, healthy=False)
++
++
++def initialize_running_project(root: Path, capsys: pytest.CaptureFixture[str]) -> None:
++    root.mkdir()
++    assert main(["--root", str(root), "--json", "init"]) == 0
++    capsys.readouterr()
++
++    def start(state: State) -> None:
++        state["batch"]["id"] = "batch-cli"
++        state["batch"]["status"] = "running"
++        state["batch"]["started_at"] = "2026-08-30T12:00:00Z"
++        state["work"]["prd"] = "00004-workflow-core-v1.md"
++
++    StateStore(state_path(root)).transaction(start)
++
++
++def configure_project(root: Path, provider: str, command: str, overlay: Path) -> None:
++    options = (
++        '[agents.claude.options]\npermission_mode = "auto"\n'
++        if provider == "claude"
++        else ""
++    )
++    (root / "ovcaq.toml").write_text(
++        f"agent = {json.dumps(provider)}\n[agents.{provider}]\n"
++        f"command = {json.dumps([command])}\n"
++        'tiers = { sonnet = "fixture-model", opus = "fixture-model" }\n'
++        f"environment = {{ PATH = {json.dumps(str(overlay))} }}\n"
++        f"{options}[workflow]\nruntime_root = 'runtime'\n",
++        encoding="utf-8",
++    )
++
++
++@pytest.mark.parametrize("provider", ("claude", "codex"))
++def test_unhealthy_overlay_blocks_supervised_phase_exec_and_publication(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    capsys: pytest.CaptureFixture[str],
++    provider: str,
++) -> None:
++    log, marker = tmp_path / "probe.jsonl", tmp_path / "phase-exec"
++    executable = fake_executable(tmp_path / "host", log, marker)
++    overlay = tmp_path / "overlay"
++    overlay.mkdir()
++    root = tmp_path / "project"
++    initialize_running_project(root, capsys)
++    configure_project(root, provider, executable.name, overlay)
++    monkeypatch.setenv("PATH", str(executable.parent))
++    paths = supervisor_settings(root).runtime.paths
++
++    code = main(["--root", str(root), "--json", "run", "--no-tui"])
++    captured = capsys.readouterr()
++
++    assert code != 0
++    assert captured.out == ""
++    error = json.loads(captured.err)
++    assert error["ok"] is False
++    assert "agent is unhealthy" in error["error"]["message"]
++    assert_probe_evidence(provider, log, marker, healthy=False)
++    assert tuple(paths.sessions.glob("*")) == ()
++    assert not FleetRegistry(paths.fleet_root).snapshot().live
+diff --git a/tests/runtime/test_adapter_launch_routing.py b/tests/runtime/test_adapter_launch_routing.py
+new file mode 100644
+index 0000000..47eeb5c
+--- /dev/null
++++ b/tests/runtime/test_adapter_launch_routing.py
+@@ -0,0 +1,152 @@
++"""Configured supervisor routes preserve the selected model at launch."""
++
++from __future__ import annotations
++
++import json
++import sys
++from pathlib import Path
++
++import pytest
++from tests.runtime.test_supervisor import Harness, rows
++from tests.runtime.test_supervisor_adapters import adapter_harness, prepare_workflow
++
++from ovcaq.config import supervisor_settings
++from ovcaq.drivers.edge import build_driver
++from ovcaq.runtime.decision import DecisionKind
++from ovcaq.runtime.session import reconcile_metrics
++from ovcaq.runtime.supervisor import Supervisor
++
++
++def configured_workflow(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    tiers: dict[str, str],
++    routes: tuple[tuple[str, str, str], ...],
++    provider: str,
++) -> Harness:
++    h = adapter_harness(tmp_path, monkeypatch)
++    monkeypatch.setenv("CODEX_HOME", str(tmp_path / "provider-home"))
++    fake = Path(__file__).parents[1] / "fixtures/codex/v1/fake_codex.py"
++    if provider == "claude":
++        claude_fixture = fake.parents[2] / "claude/v1/fake_claude.py"
++        wrapper = tmp_path / "fake_claude_workflow.py"
++        wrapper.write_text(
++            "import runpy, sys\n"
++            f"edge = runpy.run_path({str(fake)!r})\n"
++            f"edge['workflow'].__globals__['__file__'] = {str(claude_fixture)!r}\n"
++            "edge['emit_invocation'](sys.argv[1:])\n"
++            "raise SystemExit(edge['workflow']())\n"
++        )
++        fake = wrapper
++    command = [sys.executable, "-u", str(fake)]
++    cli = str(Path(sys.executable).with_name("ovcaq"))
++    (h.root / "ovcaq.toml").write_text(
++        f"agent = {json.dumps(provider)}\n[agents.{provider}]\n"
++        f"command = {json.dumps(command)}\n"
++        "tiers = { "
++        + ", ".join(
++            f"{json.dumps(key)} = {json.dumps(value)}" for key, value in tiers.items()
++        )
++        + " }\n"
++        + ('options = { permission_mode = "auto" }\n' if provider == "claude" else "")
++        + 'environment = { OVCAQ_FAKE_SCENARIO = "workflow", '
++        'OVCAQ_FAKE_MARKER = "ordinary value with spaces", '
++        f"OVCAQ_FAKE_CLI = {json.dumps(cli)} }}\n"
++        "[workflow]\nruntime_root = 'runtime'\n"
++        f"state_file = {json.dumps(str(h.paths.state_file))}\n"
++        + "".join(
++            f"[phases.{phase}]\ntier = {json.dumps(tier)}\n"
++            f"effort = {json.dumps(effort)}\n"
++            "timeout_seconds = 3\n"
++            for phase, tier, effort in routes
++        )
++    )
++    prepare_workflow(h)
++    return h
++
++
++@pytest.mark.parametrize("provider", ["codex", "claude"])
++@pytest.mark.parametrize(
++    ("tiers", "routes"),
++    (
++        (
++            {"default": "o3", "o3": "o3-pro", "cleanup": "fixture-last"},
++            (
++                ("build", "default", "low"),
++                ("review", "o3", "xhigh"),
++                ("done", "cleanup", "medium"),
++            ),
++        ),
++        (
++            {
++                "default": "fixture-fast",
++                "fixture-fast": "fixture-careful",
++                "cleanup": "fixture-final",
++            },
++            (
++                ("build", "fixture-fast", "medium"),
++                ("review", "default", "low"),
++                ("done", "cleanup", "xhigh"),
++            ),
++        ),
++        (
++            {
++                "default": "fixture-plain",
++                "reviewer": "fixture-review",
++                "cleanup": "fixture-finish",
++            },
++            (
++                ("build", "default", "xhigh"),
++                ("review", "reviewer", "medium"),
++                ("done", "cleanup", "low"),
++            ),
++        ),
++    ),
++    ids=("named-collision", "different-collision", "distinct-models"),
++)
++def test_configured_supervisor_launches_each_selected_literal_model_and_effort(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    tiers: dict[str, str],
++    routes: tuple[tuple[str, str, str], ...],
++    provider: str,
++) -> None:
++    if provider == "claude":
++        routes = tuple((phase, tier, "high") for phase, tier, _ in routes)
++    h = configured_workflow(tmp_path, monkeypatch, tiers, routes, provider)
++    settings = supervisor_settings(
++        h.root, runtime=h.settings.runtime, policy=h.settings.policy
++    )
++    supervisor = Supervisor(
++        h.root,
++        store=h.store,
++        driver=build_driver(h.root, provider),
++        settings=settings,
++        capability_runner=lambda _: h.runner,
++        clock=h.clock,
++        sleeper=h.waits.append,
++    )
++    outcome = supervisor.run()
++    assert outcome.exit_code == 0 and outcome.decision.kind == DecisionKind.COMPLETE
++    assert outcome.sessions_attempted == 3
++    metrics = [
++        metric for metric in reconcile_metrics(h.paths) if metric.kind == "phase"
++    ]
++    assert [metric.phase_launched for metric in metrics] == ["build", "review", "done"]
++    for metric, (_, tier, effort) in zip(metrics, routes, strict=True):
++        raw = rows(h.paths.sessions / metric.session_id / "raw.jsonl")
++        (invocation,) = [row for row in raw if row.get("type") == "fake_invocation"]
++        argv = invocation["argv"]
++        model_flag = "--model" if provider == "claude" else "-m"
++        assert argv.count(model_flag) == 1
++        assert argv[argv.index(model_flag) + 1] == tiers[tier]
++        if provider == "claude":
++            assert argv.count("--effort") == 1
++            assert argv[argv.index("--effort") + 1] == effort
++        else:
++            assert argv.count("-c") == 1
++            assert argv[argv.index("-c") + 1] == f'model_reasoning_effort="{effort}"'
++        assert (
++            invocation["environment"]["OVCAQ_FAKE_MARKER"]
++            == "ordinary value with spaces"
++        )

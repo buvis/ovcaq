@@ -1,0 +1,67 @@
+{
+  "artifact_hashes": {
+    "sdist_sha256": "8edde79fb888731194bc078b53ccdd5ce47c8ce3b641eb9d5f1b4763117f4c94",
+    "wheel_sha256": "e085e2fba91ab171abe1dcb22693495040a238c9846dd83e93d0bfd9621c47f4"
+  },
+  "branch": "master",
+  "commit": {
+    "head": "39ecaf4f95c79df6a88c30e4626386a352d1505b",
+    "subject": "fix(workflow): close publication durability races",
+    "timestamp": "2026-09-06T21:18:02+02:00"
+  },
+  "dispatches": [
+    {
+      "actual_model": "gpt-5.6-sol",
+      "actual_provider": "OpenAI",
+      "logical_tier": "sonnet",
+      "role": "Tess",
+      "status": "complete"
+    },
+    {
+      "actual_model": "sonnet",
+      "actual_provider": "Anthropic Claude CLI",
+      "dispatch_id": "e9409cc8",
+      "logical_tier": "sonnet",
+      "role": "Ivan implementation",
+      "status": "complete"
+    },
+    {
+      "actual_model": "sonnet",
+      "actual_provider": "Anthropic Claude CLI",
+      "dispatch_id": "004bfa5e",
+      "logical_tier": "sonnet",
+      "role": "Ivan retry",
+      "status": "complete"
+    },
+    {
+      "actual_model": "sonnet",
+      "actual_provider": "Anthropic Claude CLI",
+      "dispatch_id": "24e0b086",
+      "logical_tier": "sonnet",
+      "role": "Ivan style repair",
+      "status": "complete"
+    }
+  ],
+  "gates": {
+    "build": "pass",
+    "full_pytest": "1348 passed",
+    "full_range_whitespace": "pass",
+    "mypy": "pass: 51 source files",
+    "new_installed_regressions": "9 passed",
+    "pytest_workflow_packaging": "460 passed",
+    "ruff_check": "pass",
+    "ruff_format_check": "pass: 119 files",
+    "split_hygiene": "pass",
+    "style_limits": "pass",
+    "tautology_detector": "pass",
+    "uv_sync_all_groups": "pass"
+  },
+  "historical_state": {
+    "attached": false,
+    "mutated": false,
+    "observed_at_preflight": "absent",
+    "path": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/autopilot/state.json"
+  },
+  "next_phase": "FT-04R12 fresh completion review",
+  "result": "build_complete"
+}

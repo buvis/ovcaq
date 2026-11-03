@@ -1,0 +1,17 @@
+RESULT: PASS
+
+Implemented the narrow style-limit refactor in `Supervisor._collect` by extracting timeout observation construction and persistence into `_record_timeout`. Timeout classification, timeout usage preservation, raw-before-normalized processing, process cleanup, and nested writer closure remain unchanged. Added one concise Unreleased/Fixed changelog bullet.
+
+Verification:
+- Named regression selection: 16 passed in 6.98s (exit 0). Pytest emitted two unrelated temporary-directory cleanup warnings.
+- `ruff check src/ovcaq/runtime/supervisor.py`: passed (exit 0).
+- `ruff format --check src/ovcaq/runtime/supervisor.py`: passed (exit 0).
+- Independent AST measurement: file 611 lines; `_collect` 45 lines; `_record_timeout` 17 lines; `_conclude` 48 lines (exit 0).
+- Test immutability: `git diff --name-only -- tests` returned no paths; scoped status lists only CHANGELOG.md and supervisor.py (exit 0).
+- Requested `check_style_limits --diff docs/dev/tmp/00007-15-source-red.diff src/ovcaq/runtime/supervisor.py` could not execute because `check_style_limits` is unavailable to `uv run` (exit 2: no such file or directory). `mise which check_style_limits` also reported no installed binary (exit 1). The equivalent AST limits were verified directly above.
+
+abort_reason: none
+ASSUMPTIONS: none
+FILES_TOUCHED: src/ovcaq/runtime/supervisor.py
+FILES_TOUCHED: CHANGELOG.md
+FILES_TOUCHED: docs/dev/tmp/00007-15-ivan-report.txt

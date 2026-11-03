@@ -1,0 +1,16 @@
+{
+  "attempt": 1,
+  "model": "sonnet",
+  "actual_model": "gpt-6.1-sol",
+  "actual_provider": "openai",
+  "actual_effort": "medium",
+  "implementor": "codex",
+  "outcome": "aborted",
+  "cause": "context_overrun",
+  "dispatch_ids": [
+    "3857c6a6"
+  ],
+  "contributed": false,
+  "verification": "not run",
+  "files_touched": []
+}

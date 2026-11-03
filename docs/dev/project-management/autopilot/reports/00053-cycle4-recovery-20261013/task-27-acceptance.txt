@@ -1,0 +1,4 @@
+- Remove both redundant ` error` and plain ` status` alternatives inside the HTTP prefix group. Keep the reqwest parenthetical branch and HTTP version branch.
+- Preserve all classification behavior, including precedence, status/error label spellings, complete-code boundaries, ordinary-number negatives and possessive whitespace behavior.
+- Change only src/ovcaq/drivers/codex_events.py; no new tests or broader grammar.
+- This is the approved behavior-preserving micro repair for review-4 R2. Bob's complete merged detail is retained in the canonical review; the task description preserves the consolidated Alice row verbatim.

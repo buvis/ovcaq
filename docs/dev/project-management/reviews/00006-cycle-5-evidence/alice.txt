@@ -1,0 +1,13 @@
+[ALICE] 🟡 `_preview` still preserves a whitespace-free truncated window unless it contains `sk-`, contrary to Task 22’s unconditional empty-preview contract; replace the conditional with `end = 0` and update the older test that expects an `x` preview. | File: src/ovcaq/events/tail.py:148 | Task: 22
+R1: fail
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: pass
+R13: pass

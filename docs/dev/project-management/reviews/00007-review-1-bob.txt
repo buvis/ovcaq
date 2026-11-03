@@ -1,0 +1,87 @@
+[BOB] 🟠 Retry budgets can be dodged forever. `Supervisor._decide` resets `RetryState` whenever the failure class changes, and failure-path RETRY/WAIT decisions never advance `phase_repeats`. Alternating failures (agent death, then connectivity, then agent death...) therefore relaunch sessions without limit. This breaks the PRD's "Retry storms: Bound every wait/retry" mitigation. Confirmed by tracing `decide` and `_decide` | File: src/ovcaq/runtime/supervisor.py:557 | Task: P05-T04
+[BOB] 🟠 No production code ever starts a batch. Nothing in `src/` writes `batch.id` or `batch.status="running"`, and `new_state` leaves `batch.id=""`. So `ovcaq init` followed by `ovcaq run --no-tui` raises at `_open_session` → `publish_session_metric` → `_validate_identifier("")`, and `archive_final_state` also requires the id. The installed drain acceptance test passes only because its SEED script writes the batch fields straight through StateStore | File: tests/packaging/test_installed_supervisor_cli.py:68 | Task: P05-T07
+[BOB] 🟡 A bootstrap repeat-stall (no PRD) returns PAUSE with exit 0 and writes no pause intent; the plan (§12.3 step 11) says halt. CI reads it as success, and every rerun burns another session before pausing again (test asserts `(0, PAUSE, 3)`) | File: src/ovcaq/runtime/decision.py:276 | Task: P05-T04
+[BOB] 🟡 `StateService.resume` always clears `pause_reason` but leaves `work.phase/next_phase == "paused"`. After a systemic park (records.py:445) or a `review_cap` pause, it erases the reason and the review_cap routing key that `workflow/resume.py:17` reads. Meanwhile `_boundary` still returns PAUSE, so `ovcaq run` exits 0 with 0 sessions and no explanation | File: src/ovcaq/state/commands.py:458 | Task: P05-T05
+[BOB] 🟡 A successful capability retry leaves `control.attention` ("capability 'X' failed") set on a batch now marked `completed`. `finish_capability`'s success branch never clears it, and no test checks it (test_supervisor.py:684-698), so the TUI will show stale attention | File: src/ovcaq/state/commands.py:564 | Task: P05-T06
+[BOB] 🟡 The batch status lifecycle is incomplete. `apply(COMPLETE)` only archives, so a drain with no *required* capability (non-empty drain, or empty drain with only optional pending capabilities) archives `batch.status` still `running`. A failed capability never sets `batch.status="attention"`, which plan §8.6 step 5 requires | File: src/ovcaq/runtime/supervisor.py:236 | Task: P05-T06
+[BOB] 🟡 Capability timeout comes from the workflow phase route (`resolve_phase_route(work.phase or next_phase)`), not from capability config (plan §7 `[capabilities.agoge] timeout_seconds`). Startup `_reconcile_capabilities` resolves a full agent route (it needs agent config and a valid tier, and raises on phase `paused`) only to throw the timeout away | File: src/ovcaq/runtime/supervisor.py:236 | Task: P05-T06
+[BOB] 🟡 `record_state_failure` has no production caller. Supervisor state read/write failures return HALT without emergency evidence, so the `require_no_emergency_failure` gate never fires for a real failure and the next `ovcaq run` relaunches (plan §8.4) | File: src/ovcaq/runtime/supervisor.py:583 | Task: P05-T07
+[BOB] 🟡 Reports count capability metric rows as workflow sessions. Canonical rows always carry `phase_launched` (None for capabilities) and `_metric_partitions` selects sessions by key presence. One capability attempt therefore inflates the session count and turns batch cost/token totals to unknown. No test covers it (test_canonical_metrics only has phase rows) | File: src/ovcaq/workflow/reports.py:222 | Task: P05-T08
+[BOB] 🟡 `_metric_partitions` silently drops any row whose `usage` is not a Mapping, using a `for usage in [...] if isinstance(...)` comprehension trick. That swallows an error and is hard to read | File: src/ovcaq/workflow/reports.py:217 | Task: P05-T08
+[BOB] 🟡 Extra `reconcile_metrics` calls. `CapabilityService._begin` rebuilds the aggregate right after publishing the pending row, so the aggregate shows the live capability attempt as `interrupted` for its whole run. `Supervisor._run_capability` calls it again after `finish`→`_finalize` already did | File: src/ovcaq/runtime/capability.py:392 | Task: P05-T08
+[BOB] 🟡 `Supervisor._run_capability` duplicates CapabilityService. It hand-builds `SessionPaths` that `_begin` already returned and `start` threw away, and re-implements `retry`'s run/finish-on-exception flow with a different failure detail (bare `str(error)` vs "runner raised …; retry X explicitly") | File: src/ovcaq/runtime/supervisor.py:260 | Task: P05-T06
+[BOB] 🟡 `_ResolvedModelClaudeDriver` inverts the tier map to turn the supervisor's resolved model back into a tier key so `ClaudeDriver` can resolve it again. The round trip is a subclass whose only job is undoing work | File: src/ovcaq/drivers/edge.py:15 | Task: P05-T02
+[BOB] 🟡 `DEFAULT_PHASE_TIERS = {"build": "sonnet", "review": "opus", ...}` lives in the provider-neutral `ovcaq.drivers` package init and feeds `config._supervisor_phases`. Neutral routing defaults are therefore Claude tier names: any agent without `sonnet`/`opus` tier keys fails with "Unknown agent tier" (AGENTS.md: model names live under their adapter) | File: src/ovcaq/drivers/__init__.py:18 | Task: P05-T02
+[BOB] 🟡 Nothing in `src/` reads `SupervisorSettings.phases`. The supervisor routes through `resolve_phase_route(root, …)`, which rebuilds settings from disk (parsing both TOML files twice per call). So the validated `phases=` override and the `**explicit: object` runtime type checks in `supervisor_settings` only matter to tests | File: src/ovcaq/config.py:512 | Task: P05-T02
+[BOB] 🟡 `_boundary` is a second, pre-launch decision table outside decision.py. It imports the private `_capability_decision` and ignores the `control.attention` that `decide` halts on, so a non-drained state with attention launches a session before halting (PRD: every halt is a pure, table-tested decision) | File: src/ovcaq/runtime/supervisor.py:103 | Task: P05-T01
+[BOB] 🟡 `Supervisor._collect` (54 lines) and `Supervisor._conclude` (51 lines) exceed the 50-line function limit (mechanical facts) | File: src/ovcaq/runtime/supervisor.py:386 | Task: P05-T07
+[BOB] 🟡 `test_incomplete_lifecycle_commands_fail_with_json_usage_errors` passes against the pre-change code, because unknown commands also return `usage`. It pins neither `run` requiring `--no-tui` nor `capability retry` requiring NAME (fail-first replay) | File: tests/runtime/test_supervisor_cli.py:111 | Task: P05-T07
+[BOB] ⚪ [MECH] `test_init_rejects_project_config_path_collisions_before_state_publication` hedges with `config.is_dir() or config.is_symlink()`, so either param passes on either outcome (existing test, in a touched file) | File: tests/state/test_cli.py:384 | Task: general
+[BOB] ⚪ tests/state/test_cli.py is 812 lines (807 at base); this diff grows a file already over the 800-line cap | File: tests/state/test_cli.py | Task: general
+[BOB] ⚪ Every lifecycle failure (unknown agent, live capability owner, unavailable runner, unverifiable or failed stop) maps to `runtime_format`. Callers cannot tell "retry later" from a config error | File: src/ovcaq/supervisor_cli.py:52 | Task: P05-T07
+[BOB] ⚪ `Supervisor.run` reconciles capabilities (a state write) before `require_no_emergency_failure`, so it writes state before checking whether the store was declared broken | File: src/ovcaq/runtime/supervisor.py:142 | Task: P05-T07
+[BOB] ⚪ `skip_empty_drain_capabilities` stamps `completed_at` from `datetime.now(UTC)` instead of the injected clock, unlike `finish_capability` (PRD: injectable time) | File: src/ovcaq/state/commands.py:601 | Task: P05-T06
+[BOB] ⚪ `ovcaq run` never calls `driver.probe()` (`build_driver` skips discovery and probe), so a missing agent binary shows up as a spawn exception after session evidence already exists | File: src/ovcaq/supervisor_cli.py:57 | Task: P05-T07
+[BOB] ⚪ New `# noqa: PLC0414` suppression markers re-export `SessionEvidenceWriter`/`EvidenceLimitError` from session.py | File: src/ovcaq/runtime/session.py:19 | Task: P05-T08
+[BOB] ⚪ `ProgressSnapshot.phase_fingerprint` is captured and persisted but `decide` never compares it, so repeat counts carry across restarts even when state changed between runs | File: src/ovcaq/runtime/decision.py:127 | Task: P05-T03
+[BOB] 🟡 `ovcaq stop` leaves no durable stopped outcome in state. The SIGTERM path only finalizes summary.json and the metric (`decision="halt"`), but plan §6 and §8.4 require "record the stopped outcome" as a supervisor-authored state outcome | File: src/ovcaq/runtime/supervisor.py:138 | Task: P05-T05
+[BOB] ⚪ Cannot statically verify: the full suite passes at HEAD bbe7d52 (recorded 3501 passed at 18f90e2, before the handoff commit) | File: N/A | Task: general
+[BOB] ⚪ Production `ovcaq run` and `ovcaq capability retry` have no real capability runner (`_UnavailableRunner`), so any pinned required capability fails with "no capability runner is available" | File: src/ovcaq/supervisor_cli.py:50 | Task: P05-T06
+[BOB] ⚪ [MECH] 6 params of `test_incompatible_versions_fail_before_factory_construction` pass against the pre-change code | File: tests/drivers/test_discovery.py | Task: general
+[BOB] ⚪ [MECH] `test_empty_metrics_reduce_to_zero_sessions` passes against the pre-change code | File: tests/workflow/test_canonical_metrics.py | Task: P05-T08
+
+R1: fail
+R2: fail
+R3: pass
+R4: fail
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: fail
+R11: pass
+R12: fail
+R13: fail
+
+FIX:
+- Retry budgets reset on failure-class change, so alternating failures relaunch forever — src/ovcaq/runtime/supervisor.py:557 — add a consecutive-unproductive-session counter to `RetryState` that only CONTINUE resets (not class changes), and HALT/PARK once it reaches the configured cap. This keeps DEC-032's per-class reset. Add an alternating AGENT/CONNECTIVITY test that must end.
+- Bootstrap repeat-stall pauses with exit 0 and no durable intent — src/ovcaq/runtime/decision.py:276 — use `DecisionKind.PARK if after.prd else DecisionKind.HALT` per plan §12.3 step 11; update the DEC-039 test and parity row.
+- `resume` erases phase-level pause reasons while the phase stays `paused` — src/ovcaq/state/commands.py:458 — clear only `pause_requested` (and `pause_reason` only when `work.phase != "paused"`); add a systemic-park resume test.
+- Stale attention after successful retry — src/ovcaq/state/commands.py:564 — on success, clear `control.attention` when its site is `capability:{name}`; assert it in test_supervisor.py:694.
+- Batch never reaches `completed` without required capabilities, and `attention` status is never set — src/ovcaq/runtime/supervisor.py:236 — add a StateService method that commits `status="completed"` and `completed_at` before `_archive`; set `batch["status"]="attention"` in the `finish_capability` failure branch.
+- Capability timeout taken from the phase route; startup reconcile resolves routes — src/ovcaq/runtime/supervisor.py:236 — read the timeout from capability config (or keep CapabilityService's default), and build the reconcile service without calling `resolve_phase_route`.
+- State failures never write emergency evidence — src/ovcaq/runtime/supervisor.py:583 — call `record_state_failure(self._paths, …)` in the `_decide` and `_loop` (line 192) `_STATE_ERRORS` branches before returning HALT.
+- Capability rows counted as sessions in reports — src/ovcaq/workflow/reports.py:222 — select sessions by `row.get("kind", "phase") == "phase" and "phase_launched" in row`; add a capability row to the mixed-metrics test.
+- Rows with non-mapping usage silently dropped — src/ovcaq/workflow/reports.py:217 — extract `_canonical_projection(row)` that raises `ReportError` on a non-mapping `usage` and returns legacy rows unchanged.
+- Extra `reconcile_metrics` calls show the live attempt as interrupted — src/ovcaq/runtime/capability.py:392 — delete the call in `_begin` and the one at src/ovcaq/runtime/supervisor.py:297; startup and `_finalize` already cover both cases.
+- `_run_capability` duplicates CapabilityService — src/ovcaq/runtime/supervisor.py:260 — have `start` return `(attempt, session)` from `_begin`, and move run-then-finish (with one failure-detail format) into a single CapabilityService method used by both `retry` and the supervisor.
+- Tier→model→tier round trip — src/ovcaq/drivers/edge.py:15 — pass `route.tier` as `LaunchRequest.model` from `Supervisor._attempt` (keep `route.model` for the metric) and delete `_ResolvedModelClaudeDriver`.
+- Claude tier names as neutral defaults — src/ovcaq/drivers/__init__.py:18 — move the table into drivers/claude.py behind a driver method (like `default_prompt`), or require explicit `[phases.*].tier` when the agent lacks the keys.
+- Nothing reads `SupervisorSettings.phases`, and config is parsed twice per call — src/ovcaq/config.py:512 — make `resolve_phase_route` take the built `SupervisorSettings` (the supervisor passes `self._settings`), and replace `**explicit: object` with typed keyword-only params.
+- `_boundary` is a second decision table that ignores attention — src/ovcaq/runtime/supervisor.py:103 — move it into decision.py as public `decide_boundary` with attention → HALT, and add table tests.
+- `_collect`/`_conclude` over 50 lines — src/ovcaq/runtime/supervisor.py:386 — extract the timeout observation and summary override into `_timeout_summary`, and the metric finalization into `_finalize_metric`.
+- Lifecycle usage test passes at base — tests/runtime/test_supervisor_cli.py:111 — assert the error message names the missing argument (`--no-tui`, `NAME`).
+- MECH `or` hedge — tests/state/test_cli.py:384 — assert `is_dir()` for the directory param and `is_symlink()` for the broken-symlink param.
+- test_cli.py over 800 lines — tests/state/test_cli.py:111 — move `test_parser_exposes_init_state_and_workflow_command_inventory` into tests/runtime/test_supervisor_cli.py, or split the init tests into their own module.
+- Catch-all `runtime_format` error code — src/ovcaq/supervisor_cli.py:52 — add specific `ErrorCode` values (unknown agent, capability busy, unverified supervisor) and update `ERROR_CODES`.
+- Emergency check runs after a reconcile write — src/ovcaq/runtime/supervisor.py:142 — call `require_no_emergency_failure` before `_reconcile_capabilities`.
+- Non-injectable completion time — src/ovcaq/state/commands.py:601 — accept `completed_at` from the caller and pass `_timestamp(self._clock.now())` from `apply(SKIP_CAPABILITIES)`.
+- No driver preflight — src/ovcaq/supervisor_cli.py:57 — call `driver.probe()` in `_run` and raise `CommandError` when unhealthy, before `Supervisor.run`.
+- Suppression-marker re-export — src/ovcaq/runtime/session.py:19 — import both names plainly and list them in `__all__`, or import them from `_session_evidence` in supervisor.py.
+- Unused `phase_fingerprint` snapshot field — src/ovcaq/runtime/decision.py:127 — in `decide`, use 0 as the repeat base when `before.phase_fingerprint != _fingerprint(before)`, or drop the field.
+VERIFY:
+- No batch initialization path — rg `batch` in docs/dev/project-management/prds/implementation-plan-coverage.md to find which PRD owns batch start (`batch.id`/`status`/`started_at`). Then remove the `_python(..., SEED)` call at tests/packaging/test_installed_supervisor_cli.py:246 and run `test_installed_foreground_run_drains_committed_build_review_and_done`: it must launch a session, not fail with "record identifier must be a single path component".
+- No durable stopped outcome — rg `stop` in src/ovcaq/state/schema.py and in docs/dev/project-management/prds/implementation-plan-coverage.md to see whether 00007 or 00008 owns "record the stopped outcome". If 00007, assert a state field after `test_installed_stop_signals_the_verified_foreground_supervisor`.
+- Suite at HEAD — `UV_CACHE_DIR=/private/tmp/ovcaq-final-cache uv run pytest` at bbe7d52; expect 0 failed and 0 skipped.
+KNOWN:
+- `_UnavailableRunner` means no real capability runner exists — P05-T06 requires only a fake agoge; the real launcher runner and smoke tests belong to PRD 00010 (coverage: "Required agoge and independent retry | 00010").
+- 6 `test_incompatible_versions...` params pass at base — versions -1/0/99 were incompatible before and after. The changed param (1, formerly 2) is what pins the API-2 bump, and it fails at base.
+- `test_empty_metrics_reduce_to_zero_sessions` passes at base — the empty-input result is the same before and after by design; the mixed canonical test pins the projection change.
+
+```
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```

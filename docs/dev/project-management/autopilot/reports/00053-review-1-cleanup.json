@@ -1,0 +1,55 @@
+{
+  "method": "recoverable move of exact stale session-owned scratch; live PRD context retained",
+  "assets": [
+    {
+      "source": "docs/dev/tmp/review-tasks-00053-c1-20261010.md",
+      "recovery": "/private/tmp/ovcaq-00053-review-recovery-20261010/review-tasks-00053-c1-20261010.md",
+      "sha256": "062825f76d0caa43bdc02751e893265f897467c3dd384933ed300c5525c5d507"
+    },
+    {
+      "source": "docs/dev/tmp/review-prd-00053-c1-20261010.md",
+      "recovery": "/private/tmp/ovcaq-00053-review-recovery-20261010/review-prd-00053-c1-20261010.md",
+      "sha256": "1ce61f0fa5e8970d8eaac35b5b57b4f7d1b4fd8b636b449f000d498390296de6"
+    },
+    {
+      "source": "docs/dev/tmp/review-prd-raw-00053-c1-20261010.md",
+      "recovery": "/private/tmp/ovcaq-00053-review-recovery-20261010/review-prd-raw-00053-c1-20261010.md",
+      "sha256": "d7901e373d0203ab8252463ba72c0dee97c7de08bb1f02957848fa21109295d6"
+    },
+    {
+      "source": "docs/dev/tmp/review-context-00053-c1-20261010.md",
+      "recovery": "/private/tmp/ovcaq-00053-review-recovery-20261010/review-context-00053-c1-20261010.md",
+      "sha256": "d5f368c7ca0e62479f375f34b649bd9bfac129d7f2729866568be2234914f513"
+    },
+    {
+      "source": "docs/dev/tmp/review-diff-00053-c1-20261010.diff",
+      "recovery": "/private/tmp/ovcaq-00053-review-recovery-20261010/review-diff-00053-c1-20261010.diff",
+      "sha256": "cad5efbb5f1669e74bb0b5bfec8e091808ec2b6bc58f2881cfebc2f3c5b07c72"
+    },
+    {
+      "source": "docs/dev/tmp/alice-prompt-00053-c1-20261010.md",
+      "recovery": "/private/tmp/ovcaq-00053-review-recovery-20261010/alice-prompt-00053-c1-20261010.md",
+      "sha256": "d44cc2bdff282d4303d25a64cad2b9264d4e2951ff6d23e2e500692e3c6ce8d9"
+    },
+    {
+      "source": "docs/dev/tmp/blake-prompt-00053-c1-20261010.md",
+      "recovery": "/private/tmp/ovcaq-00053-review-recovery-20261010/blake-prompt-00053-c1-20261010.md",
+      "sha256": "9f97e8366f5458a4bf888d23126df52b69a5e18b50aebceb69d22b20a4a4af8a"
+    },
+    {
+      "source": "docs/dev/tmp/bob-prompt-00053-c1-20261010.md",
+      "recovery": "/private/tmp/ovcaq-00053-review-recovery-20261010/bob-prompt-00053-c1-20261010.md",
+      "sha256": "064088673a12e3a66d4761b86d80e4e9c070a6aeb9f7f3670ea30562fcdfa1e4"
+    },
+    {
+      "source": "docs/dev/tmp/00053-assemble-review.py",
+      "recovery": "/private/tmp/ovcaq-00053-review-recovery-20261010/00053-assemble-review.py",
+      "sha256": "ad3f730703076639134fe7ddbce376e93f52fb32190a702fd150d9f4e3be4369"
+    },
+    {
+      "source": "docs/dev/tmp/00053-review-decisions.json",
+      "recovery": "/private/tmp/ovcaq-00053-review-recovery-20261010/00053-review-decisions.json",
+      "sha256": "feecf57c59f9b53653092efae478d132cc1dc8e2c3346525089e776e68750d9d"
+    }
+  ]
+}

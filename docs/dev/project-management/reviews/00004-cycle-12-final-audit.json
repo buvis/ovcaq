@@ -1,0 +1,23 @@
+{
+  "schema": "valid",
+  "task_counts": {
+    "total": 13,
+    "completed": 10,
+    "pending": 3
+  },
+  "phase": "paused",
+  "next_phase": "paused",
+  "cycle": 12,
+  "pause_site": "data_loss_risk",
+  "host_review_gap": null,
+  "owned_rows_verified_in_alice": 55,
+  "source_tasks_verified": 10,
+  "raw_rubrics_complete": true,
+  "bob_receipt_verified": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00004-cycle-12-bob-retry-output.txt.receipt.json",
+  "bob_requested_model": "opus",
+  "review_file": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00004-workflow-core-v1-review-12.md",
+  "review_sha256": "e26fb8e972b9e866b8e62947ae0000c9074dd5a1eb7e6f4220603991661ee7c7",
+  "product_tree_unchanged": true,
+  "worktrees": 1,
+  "checks_queue_passed": 5
+}

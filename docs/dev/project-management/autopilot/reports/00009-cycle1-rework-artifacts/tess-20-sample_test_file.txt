@@ -1,0 +1,1 @@
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/tui/test_codex_projection.py read first220lines only for standalone Supervisor initialization; /Users/bob/git/src/github.com/buvis/ovcaq/tests/runtime/test_supervisor.py read first260lines only if existing Harness needed. Do not read other reference files.

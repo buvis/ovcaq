@@ -1,0 +1,18 @@
+[
+  {
+    "cycle": 5,
+    "finding": "Full suite at HEAD is unconfirmed. Run uv run pytest at 0228eb0 and confirm exit 0.",
+    "file": null,
+    "command": "uv run pytest",
+    "source": "bob",
+    "result": {
+      "exit": 0,
+      "executed_command": "uv run pytest -q",
+      "passed": 3003,
+      "failed": 0,
+      "skipped": 0,
+      "sha": "0228eb00f39a3152a008351212fee3b01603a646",
+      "evidence": "00006-events-claude-adapter-v1-verification-5.json"
+    }
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "attempt": 1,
+  "model": "haiku",
+  "outcome": "completed",
+  "review_cycle": 2,
+  "cause": null,
+  "implementor": "orchestrator",
+  "preflight_outcome": null,
+  "pipeline": "minimal",
+  "red_check": "n/a:micro-lane",
+  "self_deslop": "skipped:trivial",
+  "style_gate": "skipped:tier",
+  "actual_model": "gpt-6.1-sol",
+  "actual_provider": "openai"
+}

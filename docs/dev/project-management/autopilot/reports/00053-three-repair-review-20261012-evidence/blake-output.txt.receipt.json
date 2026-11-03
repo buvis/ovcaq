@@ -1,0 +1,17 @@
+{
+  "provider": "claude",
+  "model_provider": "anthropic",
+  "lens": "blake",
+  "model": "opus",
+  "started": 1791837814.866251,
+  "completed": 1791838338.54026,
+  "output": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-three-repair-review-20261012-evidence/blake-output.txt",
+  "sha256": "5a60ea7e463c407a1899b9b07a11e3c3a75b6e07089d5d2feee7927e3b608050",
+  "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-three-repair-review-20261012-evidence/blake-output-ce79abb9a7794712a664c10c2f5235f1.jsonl",
+  "raw_sha256": "95b0b4228991183738238f276f0919db420293876cb7c70fd834d490d941a90c",
+  "thread_id": "e4aba6fe-c1ef-4bb4-9330-a3c3ab9029bb",
+  "root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+  "prd": "00053-adapter-operational-corrections-v1.md",
+  "cycle": 2,
+  "implementation_fingerprint": "224988c1bf7002d797c23f74b43dd2b1aefcd8c56c8cac2c43ce101e0d6f1fcc"
+}

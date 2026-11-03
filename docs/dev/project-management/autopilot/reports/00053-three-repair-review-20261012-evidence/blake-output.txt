@@ -1,0 +1,32 @@
+Six findings, all low severity. The full gate passes and nothing blocks the PRD. The three unsettled ones sit on edge paths, and the other three were already deferred in earlier review rounds.
+
+Gates (run fresh): the six acceptance test files gave `274 passed`, and the full suite gave `7154 passed`. `ruff check` reported `All checks passed!`, `ruff format --check` reported `236 files already formatted`, and mypy reported `no issues found in 61 source files`. `uv build` built both the sdist and the wheel, output to `/tmp`. Nothing changed outside `src/ovcaq/drivers`, so driver API 2, protocol 1 and state schema 1 are untouched. The PRD's Phases 0/1/2 are scored in order as B15/B16/B17.
+
+[BLAKE] ⚪ A completed lane can still turn into a failure after the identity cache fills. At 4096 entries, eviction drops finished entries first, so long sessions lose finished lanes before anything else. Reproduced: start lane `child`, complete it, decode 4096 command items, then send a late `errored` update for `child`. The decoder emits `lane.failed` for `child`, alongside the raw capacity-gap evidence. Native Codex is unlikely to send `errored` after `completed`, so the practical risk is low. | File: src/ovcaq/drivers/codex.py:414 | Task: Phase 0
+[BLAKE] ⚪ A late `running`, `completed` or `errored` update for a finished lane is dropped with no raw-unknown observation. A late close status (`shutdown`, `interrupted`, `not_found`) for the same lane does get raw-unknown evidence. The behavior is documented, and the raw session file still holds the line. | File: src/ovcaq/drivers/codex.py:383 | Task: Phase 0
+[BLAKE] ⚪ Drivers built by `build_driver` read any model value as "already resolved". So with tiers `{default: o3, o3: o3-pro}`, a request for tier key `o3` launches `o3` through `build_driver`, but `o3-pro` through a directly built driver. Only the supervisor uses `build_driver`, and the docs state this, but the same interface now behaves differently depending on how the driver was built. | File: src/ovcaq/drivers/edge.py:16 | Task: Phase 1
+[BLAKE] ⚪ Already deferred: some explicit HTTP/status forms now come out `unknown`, though they classified correctly before this PRD. Confirmed: `HTTP Error 429: Too Many Requests`, `HTTP error 503`, `status=429` and `status_code=429` all give `unknown`. Tests pin `status=429` and `Error 429:` as `unknown`. The native Codex forms are covered. | File: src/ovcaq/drivers/codex_events.py:300 | Task: Phase 0
+[BLAKE] ⚪ Already deferred: the health check and the launch resolve relative lookups against different directories. This covers relative command paths, relative PATH entries, and Codex's current-directory search when host PATH is empty. The probe uses the supervisor's working directory, but the launch runs in the project root, so the two can disagree when `--root` points somewhere else. With an empty host PATH, the Claude probe reports unhealthy while the launch would succeed. | File: src/ovcaq/drivers/claude.py:82 | Task: Phase 1
+[BLAKE] ⚪ Already deferred: an HTTP status number given only with its reason phrase, with no `HTTP`/`status` prefix, now comes out `unknown`. Examples: `503 Service Unavailable` and `429 Too Many Requests`. Before this PRD these classified correctly. The spec's context rule allows this, but those reason phrases could have been kept as word-based diagnostics. | File: src/ovcaq/drivers/codex_events.py:304 | Task: Phase 0
+
+B1: pass
+B2: pass
+B3: pass
+B4: pass
+B5: pass
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: pass
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: pass
+B16: pass
+B17: pass
+B18: pass
+B19: pass
+
+Next: You: decide whether to fix the eviction issue (finding 1) in this PRD or defer it with the other edge-path items.

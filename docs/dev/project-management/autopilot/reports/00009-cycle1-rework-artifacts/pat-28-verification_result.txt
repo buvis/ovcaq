@@ -1,0 +1,2 @@
+uv --cache-dir /private/tmp/ovcaq-rework-uv run pytest tests/packaging/test_distribution.py -q --tb=line
+Exit0: 8 passed, 2 cleanup warnings. Tess/red skipped:test-only. Self-deslop skipped:test-only. Prior split27 committed exact relocation at90d5c54, 34 regression cases pass, independent Pat closure resolved; this split owns packaging inventory only. Full split range provided so original finding remains verifiable.

@@ -1,0 +1,53 @@
+{
+  "final": {
+    "sha": "9b8c55a3c4bb93790d59b8bf69de4e3ada6c353b",
+    "cycle": 2,
+    "commands": [
+      {
+        "command": "env UV_CACHE_DIR=/tmp/ovcaq-uv-cache uv sync --all-groups",
+        "exit": 0
+      },
+      {
+        "command": "env UV_CACHE_DIR=/tmp/ovcaq-uv-cache uv run pytest -q --tb=line",
+        "exit": 0
+      },
+      {
+        "command": "env UV_CACHE_DIR=/tmp/ovcaq-uv-cache uv run ruff check .",
+        "exit": 0
+      },
+      {
+        "command": "env UV_CACHE_DIR=/tmp/ovcaq-uv-cache uv run ruff format --check .",
+        "exit": 0
+      },
+      {
+        "command": "env UV_CACHE_DIR=/tmp/ovcaq-uv-cache uv run mypy src/ovcaq",
+        "exit": 0
+      },
+      {
+        "command": "env UV_CACHE_DIR=/tmp/ovcaq-uv-cache uv build",
+        "exit": 0
+      }
+    ],
+    "passed": 7159,
+    "failed": 0,
+    "skipped": 0
+  },
+  "prior_full_suite": {
+    "exit": 1,
+    "passed": 7158,
+    "failed": 1,
+    "seconds": 429.43,
+    "failure": "tests/integration/test_viewer_fallback.py::test_ordinary_fleet_ui_failure_uses_one_bounded_selection"
+  },
+  "targeted_retry": {
+    "exit": 0,
+    "passed": 1,
+    "seconds": 0.68
+  },
+  "final_full_suite": {
+    "exit": 0,
+    "passed": 7159,
+    "seconds": 432.52,
+    "warnings": 2
+  }
+}

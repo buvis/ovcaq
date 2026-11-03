@@ -1,0 +1,43 @@
+[BOB] 🟠 Removing controls before redaction now leaks tokens that the old order caught. When a bare C0 control, DEL or lone ESC sits between a word character and a token, removal glues them together: `"x\x00sk-" + "a"*30` becomes `xsk-aaaa…` and `"auth\x00Bearer " + "a"*26` becomes `authBearer …`. `_LIKELY_SECRET` needs `\b` before `sk-`/`Bearer`, so neither `bounded_detail` nor the Observation's second sanitizer redacts them. The old order redacted both, because the control supplied the word boundary. Confirmed by tracing the regex by hand; not executed (read-only sandbox) | File: src/ovcaq/drivers/codex_events.py:64 | Task: 3
+[BOB] 🟡 The preflight's `except (ValueError, RecursionError)` branch, which hands the frame to the driver, has no test. No RawFirstDecoder test feeds a deeply nested frame. Narrowing it to `except ValueError` would still pass the suite: deep frames would then get "driver failed to decode frame" instead of the driver's own native gap, against the contract's "ValueError or RecursionError → delegate unchanged" | File: src/ovcaq/events/tail.py:119 | Task: 2
+[BOB] 🟡 The preflight parse and scan sit inside the tolerant driver catch, so the try blocks nest 4 levels deep (the limit). Hoist the `json.loads` try and the scalar check above it and wrap only `tuple(self._driver.decode(frame))` in `except Exception`. This also matches the contract's "consume decode under the existing tolerant catch" | File: src/ovcaq/events/tail.py:116 | Task: 2
+[BOB] 🟡 Duplicated test tables: the completion construct and record-decode tests repeat the same `additions` dict and body. Hoist it to one module constant or merge them into one test parametrized over construct vs decode | File: tests/events/test_unicode_safety.py:314 | Task: 1
+[BOB] ⚪ The receiver-lane test compares a value with itself. It passes `lane_detail` as `expected` to `assert_safe_details`, so `payload["detail"] == expected` is lane == lane, and the exact-cap case skips its positive check. The lane detail is plain `bounded_detail(message)`, so `lane_detail == expected` holds for every case | File: tests/drivers/test_codex_detail_safety.py:281 | Task: 3
+[BOB] ⚪ The scalar scan runs a Python generator per character, and it runs up to 5 times per frame (preflight, `_payload`, `sanitize_json` inside `_payload`, and both again in `observation_record` on write) over frames up to 1 MiB. A precompiled `re.compile("[\ud800-\udfff]").search` runs in C, and `_payload` can call `_sanitize_json` after its own scan | File: src/ovcaq/events/model.py:83 | Task: 1
+[BOB] 🟡 The same strip-after-redact bug exists in the TUI. `display_text` drops Cc/Cf characters from already-sanitized activity and tool text without redacting again, so a stored `sk-abc\x00defghijklmnopqrstuvwxyz0123` shows on screen as the rebuilt token | File: src/ovcaq/tui/model.py:136 | Task: general
+[BOB] ⚪ `has_invalid_unicode_scalar` never ends on a cyclic container. The old recursive copy raised RecursionError, and a cycle under a sensitive key used to return `[REDACTED]` | File: src/ovcaq/events/model.py:77 | Task: 1
+[BOB] ⚪ The raw-first tests live in `test_unicode_frames.py`. The PRD's task 2 acceptance command (`test_unicode_safety.py tests/events/test_tail.py`) never runs them | File: tests/events/test_unicode_frames.py:1 | Task: 2
+[BOB] ⚪ Cannot statically verify: focused and full suites pass at the review HEAD. The test gate was reused from 0961e40, and HEAD 4c84d4d adds chore commits on top | File: N/A | Task: general
+
+R1: fail
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: fail
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+FIX:
+- Word-boundary redaction regression in strip-first order — src/ovcaq/drivers/codex_events.py:64 — redact before and after removing controls: `return sanitize_text(_CONTROLS.sub("", sanitize_text(detail)))[:4096]`. The cap reproducer and split cases still pass. Add SPLIT_DETAILS rows `"Before x\x00" + TOKEN + " After"` → `"Before x[REDACTED] After"` and `"auth\x00Bearer " + "a"*26` → `"authBearer [REDACTED]"`. This needs the design's verbatim `bounded_detail` contract amended.
+- Preflight RecursionError delegation untested — tests/events/test_unicode_frames.py:267 — add a frame `'{"type":"thread.started","thread_id":"t","x":' + "["*100000 + '"\\ud800"' + "]"*100000 + "}"` (about 200 KB, under the frame cap). Assert its observations equal `native_unicode_driver().decode(frame)` (reason "Malformed or unsupported Codex record") and that `unicode_adapter_state` is unchanged.
+- Nested try in `_complete` — src/ovcaq/events/tail.py:116 — move the `json.loads` try/except and the `has_invalid_unicode_scalar` branch out of the outer try, leaving only the `tuple(self._driver.decode(frame))` call under `except Exception`.
+- Duplicated completion test tables — tests/events/test_unicode_safety.py:314 — define the `additions` table once at module level (lines 314 and 334), or merge both tests with `@pytest.mark.parametrize("path", ["construct", "decode"])`.
+- Lane test self-comparison — tests/drivers/test_codex_detail_safety.py:281 — replace the `if detail != CAP_REPRODUCER` guard with `assert lane_detail == expected` and pass `expected` to `assert_safe_details`.
+- Slow, repeated scalar scans — src/ovcaq/events/model.py:83 — use a module `_SURROGATE = re.compile("[\ud800-\udfff]")` with `_SURROGATE.search(current)`, and call `_sanitize_json(payload)` at src/ovcaq/events/model.py:252 since `_payload` already scanned.
+VERIFY:
+- Suites pass at review HEAD 4c84d4d — run `env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache mise exec -- uv run pytest -q --tb=line tests/events/test_unicode_safety.py tests/events/test_unicode_frames.py tests/events/test_tail.py tests/drivers/test_codex_detail_safety.py tests/drivers/test_codex_decode_terminals.py tests/runtime/test_unicode_continuity.py` and confirm exit 0 with 0 skipped.
+KNOWN:
+- TUI `display_text` strip-after-redact — the PRD's Risks section rules out activity-UI changes ("those have separate dispositions"). Needs a follow-up PRD to redact again after dropping controls.
+- Cyclic-container hang in `has_invalid_unicode_scalar` — the contract scopes the scan to acyclic JSON-like values, and every production payload comes from parsed JSON. Adding a guard would protect against a state that cannot occur, and both design reviews recorded it as a non-blocker.
+- Raw-first tests outside the PRD-named file — the coordinator approved the split to keep `test_unicode_safety.py` under 800 lines (it would be 821). The full pytest gate runs them, and the PRD may not be edited.
+
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass

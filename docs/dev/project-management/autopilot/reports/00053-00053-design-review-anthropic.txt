@@ -1,0 +1,53 @@
+No repo-reading tools (file read, `rg`, Bash) were available this session, so I checked the draft against itself and against known Python behavior, not against the code. Every `file:symbol` citation below comes from the draft. I could not confirm that those symbols exist or behave as described.
+
+## Findings
+
+**1. blocker - Codex edge adaptation is undefined when the resolved model matches no tier value**
+- Evidence: "Interfaces & contracts" says `_ResolvedModelCodexDriver.build_launch` "maps a configured model value back to a corresponding tier key". The only worked case is `{default: o3, o3: o3-pro}`, where `default` has value `o3`. Take tiers `{default: gpt-5, o3: o3-pro}` and an operator-configured literal `o3`. No key has the value `o3`, so the inverse lookup finds nothing. Delegating the literal to `CodexDriver` then resolves it as tier key `o3` and launches `o3-pro`, which is the PRD defect again. "Test strategy outline" only covers the one colliding example.
+- Suggested fix: Specify the no-match branch. Either bypass tier lookup for a resolved literal, or pass a copy of the tiers with the literal mapped to itself. Add a test with a literal that is a tier key but not a tier value. Also say whether explicit-model validation still runs on the subclass path. The text says validation is "unchanged" but never says the subclass reaches it. If the Claude mirror already handles this, state it and downgrade to non-blocker.
+
+**2. non-blocker - Empty and absent PATH semantics are still ambiguous and differ between the two adapters**
+- Evidence: "Interfaces & contracts" says an empty PATH "stays empty" and an absent PATH follows "subprocess/default PATH semantics". `shutil.which(cmd, path="")` returns `None` (the empty-path guard). A `subprocess` spawn with `PATH=""` treats `''` as the current directory and can find `./codex`. The Claude probe (via `which`) and the Codex probe (via spawn) therefore disagree on the same input. For an absent PATH, `which(path=None)` falls back to `os.confstr("CS_PATH")`, while `subprocess` uses `os.defpath`. These differ on macOS. The review log's dispatch-1 note raises both points and the body does not close them.
+- Suggested fix: State the expected result for empty PATH (unhealthy for both adapters, as the conservative choice) and test it for both. Pass `path=os.defpath` explicitly when PATH is absent. Say how relative commands that contain a slash resolve (the child's cwd versus the supervisor's cwd). Keep unhealthy messages to the command name and the PATH source. The effective env holds secrets, so it must not be echoed.
+
+**3. non-blocker - Changing `started_lanes` to mean "unfinished" leaves several behaviors undefined**
+- Evidence: "Interfaces & contracts" keeps the `item_lanes(item, started_lanes)` signature but now passes only lanes whose terminal flag is false. Four cases are not defined:
+  - Does the synthetic `LANE_FAILED` set the terminal flag? If not, a repeated `interrupted` produces a second failure.
+  - Does a repeated update to a completed lane, which is now absent from the set, look like a new start and emit a spurious `LANE_STARTED`?
+  - What does `started_lanes=None` do for `interrupted`, `shutdown` and `not_found`?
+  - Does an `interrupted` on an already-completed lane yield raw-unknown or nothing? "Unsupported terminal statuses otherwise produce raw-unknown" is ambiguous here.
+  - "Risks & edge cases" notes that bounded eviction keeps the raw fallback. An evicted lane that is still running will never be failed, so the TUI would show it as running forever.
+- Suggested fix: Add a transition table of (status × {unfinished, completed, unknown/evicted, None}) to observation. Require `_item_observations` to set the terminal flag after any synthetic failure. Add tests for double-interrupt, a repeated update after completion, and an evicted running lane. If the evicted-lane gap is accepted, say so.
+
+**4. non-blocker - The capacity-to-CONNECTIVITY retry bound is asserted, not cited**
+- Evidence: "Architecture fit", "Data flow" and the `classify_failure` paragraph rely on "existing bounded WAIT/retry exhaustion", with no symbol, limit or delay named. A capacity error arrives while the network is up. If the CONNECTIVITY WAIT is gated on a connectivity check, that check passes at once, and the retry becomes a count-bounded hot loop with no backoff. That could hammer an already saturated provider. The test outline does include "capacity WAIT and retry exhaustion", which is good. This is not a cardinal sin only if the bound exists.
+- Suggested fix: Cite the retry cap and backoff symbols in the runtime. Have the exhaustion test assert the exact attempt count and the inter-attempt delay. Say what the terminal outcome is at exhaustion.
+
+**5. non-blocker - The diagnostic-context contract is open-ended**
+- Evidence: The `classify_failure` paragraph says numerics need "explicit diagnostic context such as HTTP status, status code or error code, including genuine fixture spellings", and "meaningful existing word diagnostics" are retained. Neither list is enumerated, so the contract is defined by whatever the fixtures happen to contain. It also says "capacity" becomes CONNECTIVITY without saying whether the match is the full phrase or the bare word. A bare word would catch "disk capacity" or "context capacity".
+- Suggested fix: Enumerate the accepted numeric context patterns and the retained word diagnostics in the design or PRD. Match the full phrase `Selected model is at capacity`. Add a negative test for prose with "capacity" in it.
+
+**6. non-blocker - Two existing tests contradict the new contract, and the body does not reconcile them**
+- Evidence: The review log (dispatch 1) says the bare-number precedence expectations in `test_codex_failures` and the capacity expectations in `test_codex_rework_decode` conflict with the corrected contract. "Module placement" only says "update existing fixture/terminal tests". `rules/testing.md` says not to change a wrong-looking test quietly.
+- Suggested fix: Add an "Intentional expectation changes" list to "Test strategy outline". Name each test and the old and new literal, with the reason.
+
+**7. question - Where does the pre-spawn health gate live?**
+- Evidence: "Interfaces & contracts" requires both adapters to "fail health before supervisor spawn", but names no runtime symbol that consults `probe`. It also does not say how the tests prove no spawn. The Codex path is described as already correct ("reproduce and regress").
+- Suggested fix: Cite the supervisor gate (file:symbol). State the no-spawn oracle, for example a fake executable that writes a marker file and a test asserting the marker is absent. Confirm that `FileNotFoundError` and `PermissionError` in the Codex probe become unhealthy and do not raise.
+
+**8. question - Is the "no policy change" claim accurate?**
+- Evidence: "Architecture fit" says there is no policy change. Moving "capacity" to CONNECTIVITY changes the retry outcome for that input. Tightening the bare numerics changes the classes (and so the outcomes) for any string that matched only on a bare number.
+- Suggested fix: Rephrase as "no policy code, schema or protocol change; classification inputs change", and list the affected input classes in `CHANGELOG.md`.
+
+## Checked and correct
+- **Cardinal sins:** none found. The change is reversible code with no state or schema ("Architecture fit"), the operator is named, and no secrets appear. Driver API 2, observation protocol 1 and state schema 1 stay unchanged, so no versioning gap. Raw JSONL is retained ("Data flow"). The retry-bound caveat is in finding 4.
+- **Provider boundary:** `_ResolvedModelCodexDriver` mirrors `drivers/edge.py:_ResolvedModelClaudeDriver`. This keeps provider code at the edge (`AGENTS.md` invariant 3). Alternatives 2 and 3 are rejected with reasons ("Alternatives considered").
+- **Claude PATH overlay:** the Claude overlay design (`os.environ` plus launch env) matches how a spawn resolves a bare command. The hidden-host and overlay-only tests in "Test strategy outline" cover the right failure.
+- **Duplicate model values:** if the chosen key's value equals the resolved value, any key among duplicates gives the same literal ("Risks & edge cases"). The soundness holds only for the match case (finding 1).
+- **Fixture oracles:** "literal independent oracles, never derived through the production classifier" avoids a circular test.
+
+## Handoff
+**Status:** Partly done. This is a design-only review. The code claims are unverified because I had no repo-reading tools.
+**Changed:** No files were touched.
+**Not done:** I did not check any of the draft's citations against `drivers/edge.py`, `codex.py`, `codex_events.py` or `claude.py`.
+**Next:** You: rerun this review with repo access, or resolve findings 1-3 in the design first.

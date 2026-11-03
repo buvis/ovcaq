@@ -1,0 +1,21 @@
+{
+  "attempt": 1,
+  "model": "sonnet",
+  "actual_model": "gpt-6.1-sol",
+  "actual_provider": "openai",
+  "actual_effort": "medium",
+  "implementor": "codex",
+  "outcome": "failed",
+  "cause": "gate_failed",
+  "contributed": true,
+  "dispatch_ids": [
+    "e233183c"
+  ],
+  "verification": "45passed5failed2warnings in8.42s; five existing probe fixture cases; approved run exit1",
+  "files_touched": [
+    "tests/drivers/test_codex_fake.py",
+    "tests/runtime/test_supervisor_adapters.py",
+    "tests/drivers/test_codex_prompt.py"
+  ],
+  "retry": "same-tier first feedback retry, fixture native health output mismatch; assertions preserved"
+}

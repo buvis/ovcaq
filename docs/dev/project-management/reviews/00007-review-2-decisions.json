@@ -1,0 +1,122 @@
+[
+  {
+    "cycle": 2,
+    "finding_id": "F09",
+    "issue": "Empty-drain handling changes every required capability to optional before marking it skipped, erasing the pinned `required` contract instead of preserving the specified required-and-skipped state.",
+    "file": "src/ovcaq/state/commands.py:646",
+    "severity": "medium",
+    "consensus": "1/3",
+    "action": "cycle 2: discarded",
+    "reason": "The accepted design explicitly removes applicability (required=false) before skipping empty-drain capabilities to preserve the existing schema invariant that completed batches have no unsatisfied required entries. Design lines 22-29 and 195-197 document this deliberate choice. No new contract erosion was introduced by rework."
+  },
+  {
+    "cycle": 2,
+    "finding_id": "F18",
+    "issue": "Cannot statically verify: pytest, ruff and mypy pass at HEAD 3f5a0bd (rework evidence records 3863 passed in 00007-rework-1-evidence/final-pytest.txt)",
+    "file": "N/A",
+    "severity": "low",
+    "consensus": "1/3",
+    "action": "cycle 2: routed to verification",
+    "reason": "The four exact project commands are queued under Bob provenance. No work pass runs on cap-out, so their queue results remain absent. Independent review verification already ran the equivalent suite, root lint/format and mypy checks with retained argv/output: 3863 tests and typing pass; root lint/format retain the pre-existing 41-error/46-file artifact debt. This is not represented as a fresh work-phase queue execution."
+  },
+  {
+    "cycle": 2,
+    "finding_id": "F19",
+    "issue": "[MECH] test_init_rejects_project_config_path_collisions_before_state_publication hedges with `or`: either outcome satisfies it",
+    "file": "tests/state/test_cli.py:358",
+    "severity": "medium",
+    "consensus": "1/3",
+    "action": "cycle 2: discarded",
+    "reason": "Settled discard F19: the assertion is unchanged from the original PRD base. This rework moves a different inventory test out of the file. No new hedge was introduced."
+  },
+  {
+    "cycle": 2,
+    "finding_id": "F20",
+    "issue": "[MECH] 15 touched test(s) pass against the pre-change code: test_capability_request_uses_bounded_configuration_without_agent_route, test_explicit_timeout_overrides_project_and_user_values +9 more",
+    "file": "tests/runtime/test_capability_execution_contract.py",
+    "severity": "medium",
+    "consensus": "1/3",
+    "action": "cycle 2: discarded",
+    "reason": "Preserved default/explicit timeout and pre-existing validation paths are deliberately in the matrix. Configured timeout selection and new invalid inputs supply the failing regression cases. The task-12 report independently records 72 failed/26 passed red and a subsequent 2 failed/100 passed strengthening run. Passing baseline branches do not invalidate the new negative cases."
+  },
+  {
+    "cycle": 2,
+    "finding_id": "F21",
+    "issue": "[MECH] 150 touched test(s) pass against the pre-change code: test_empty_drain_skips_but_nonempty_drain_runs_sorted_required_capabilities, test_committed_progress_continues_before_session_failure_without_drain +144 more",
+    "file": "tests/runtime/test_decision.py",
+    "severity": "medium",
+    "consensus": "1/3",
+    "action": "cycle 2: discarded",
+    "reason": "Most added parameter cases extend the existing productive-state-wins behavior to task/review/PRD/completed-PRD progress. Other edits align fixtures with persisted fingerprints or remove unrelated attention. Those behaviors must remain unchanged; new failure-budget and attention cases are in separate tests that fail at base."
+  },
+  {
+    "cycle": 2,
+    "finding_id": "F22",
+    "issue": "[MECH] 13 touched test(s) pass against the pre-change code: test_unchanged_attempts_share_the_persisted_phase_limit +7 more",
+    "file": "tests/runtime/test_decision_retry_bound.py",
+    "severity": "medium",
+    "consensus": "1/3",
+    "action": "cycle 2: discarded",
+    "reason": "Eleven successful-session cases already used the phase-repeat limit; two no-pending attention cases already halted. The changed unsuccessful-session/retry and stale-fingerprint cases fail at base. Keeping the successful/control branches is intentional regression coverage."
+  },
+  {
+    "cycle": 2,
+    "finding_id": "F23",
+    "issue": "[MECH] 2 touched test(s) pass against the pre-change code: test_reconciliation_projects_interrupted_pending_without_rewriting_evidence",
+    "file": "tests/runtime/test_session_metrics.py",
+    "severity": "medium",
+    "consensus": "1/3",
+    "action": "cycle 2: discarded",
+    "reason": "Startup reconciliation's interrupted projection is intentionally unchanged for both phase and capability rows. Task 12 explicitly preserved this behavior while removing the redundant live-attempt rebuild."
+  },
+  {
+    "cycle": 2,
+    "finding_id": "F24",
+    "issue": "[MECH] 2 touched test(s) pass against the pre-change code: test_retry_budget_resets_after_progress_or_a_changed_failure_class",
+    "file": "tests/runtime/test_supervisor.py",
+    "severity": "medium",
+    "consensus": "1/3",
+    "action": "cycle 2: discarded",
+    "reason": "Both existing per-class reset tests intentionally retain their behavior; the repeat cap is raised locally to six so the new global backstop does not mask that assertion. Separate alternating-failure tests exercise the new cap."
+  },
+  {
+    "cycle": 2,
+    "finding_id": "F25",
+    "issue": "[MECH] 1 touched test(s) pass against the pre-change code: test_run_commits_batch_identity_before_first_metric_and_preserves_work",
+    "file": "tests/runtime/test_supervisor_batch_lifecycle.py",
+    "severity": "medium",
+    "consensus": "1/3",
+    "action": "cycle 2: discarded",
+    "reason": "`started=True` asserts an already initialized batch is preserved. The `started=False` case fails at base and pins the missing production initialization."
+  },
+  {
+    "cycle": 2,
+    "finding_id": "F26",
+    "issue": "[MECH] 24 touched test(s) pass against the pre-change code: test_committed_controls_block_every_startup_boundary +18 more",
+    "file": "tests/runtime/test_supervisor_boundary_policy.py",
+    "severity": "medium",
+    "consensus": "1/3",
+    "action": "cycle 2: discarded",
+    "reason": "Three existing pause control types across four boundaries and two sites remain valid. Eight attention cases exercise the missing boundary halt. The enlarged matrix intentionally proves pause behavior is preserved."
+  },
+  {
+    "cycle": 2,
+    "finding_id": "F27",
+    "issue": "[MECH] 3 touched test(s) pass against the pre-change code: test_parser_exposes_init_state_and_workflow_command_inventory, test_incomplete_lifecycle_commands_fail_with_json_usage_errors",
+    "file": "tests/runtime/test_supervisor_cli.py",
+    "severity": "medium",
+    "consensus": "1/3",
+    "action": "cycle 2: discarded",
+    "reason": "The inventory case was moved unchanged from state tests; the two missing-argument cases strengthen assertions for already implemented command behavior. They fail at the original PRD work base `4e350272`, as retained in `00007-rework-1-evidence/task-15-red-replay.json` and `.txt`; they correctly pass the post-implementation cycle-1 review base."
+  },
+  {
+    "cycle": 2,
+    "finding_id": "F28",
+    "issue": "[MECH] 6 touched test(s) pass against the pre-change code: test_successful_retry_completes_batch_and_clears_only_its_attention, test_retry_rejects_stale_revision_without_state_or_backup_writes, test_success_cannot_complete_batch_with_another_unfinished_required_capability",
+    "file": "tests/state/test_supervisor_commands.py",
+    "severity": "medium",
+    "consensus": "1/3",
+    "action": "cycle 2: discarded",
+    "reason": "Two unrelated-attention cases, one stale-revision case and three unfinished-other-capability cases preserve existing safeguards. The same test matrix fails at base for clearing capability-specific attention and publishing failed batch status."
+  }
+]

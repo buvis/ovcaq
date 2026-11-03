@@ -1,0 +1,121 @@
+Your tests have quality issues. Fix them.
+
+Issues found:
+Strengthen only task 4's existing new tests; no product edits or commits. Devon proved the tests permit an implementation that checks replacement only for the literal component name "ancestor". All five tests passed that wrong implementation. Full exploit and run evidence follow this feedback.
+
+Make the replacement directory name independent of that literal (e.g. a generated component passed explicitly to the actor) and cover both existing direct/exact-replay paths. Preserve exact chronology: baseline must reach successful publication despite replacement, not merely a different diagnostic. Keep current permissions/root/creation-boundary tests and no broader product changes. Existing template's path discovery restrictions remain; only test_rework_13.py and rework_13_scripts.py are writable, all supporting paths remain the same.
+
+Also declare the intentional ANCESTRY_BOUNDARY_ACTOR export in __all__, consistent with rework_12_scripts.py. The split-hygiene checker currently reports:
+UNUSED | /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/rework_13_scripts.py:5 | ANCESTRY_BOUNDARY_ACTOR | module-level binding never read in this file
+It is consumed by test_rework_13.py, so do not delete it. This is module export metadata, not an assertion change.
+
+Run the new tests once against unchanged production to verify intended red. No full suite. Required ASSUMPTIONS footer. Devon evidence:
+
+# Task 4 adversarial validation
+
+Baseline SHA-256: 57c2b3b4dc90df7f3c54c4a48419702ad7aa479bcfdf2b82910953896f2928a4
+
+Attempt 1: check ancestry identity only for a directory named `ancestor`.
+
+```python
+def _ensure_directory_chain(path: Path) -> None:
+    import errno
+    import os
+    import sys
+
+    destination = path.absolute()
+    flags = os.O_DIRECTORY | getattr(
+        os, "O_SEARCH", 0x40000000 if sys.platform == "darwin" else os.O_RDONLY
+    )
+    parent = Path(destination.anchor)
+    descriptor = os.open(parent, flags)
+    try:
+        for part in destination.parts[1:]:
+            child = parent / part
+            try:
+                expected = os.stat(child)
+            except FileNotFoundError:
+                os.mkdir(child)
+                expected = os.stat(child)
+            os.fsync(descriptor)
+            child_descriptor = os.open(child, flags)
+            actual = os.fstat(child_descriptor)
+            # Deliberately wrong: replacement is rejected only for this test name.
+            if child.name == "ancestor" and (
+                expected.st_dev, expected.st_ino
+            ) != (actual.st_dev, actual.st_ino):
+                os.close(child_descriptor)
+                raise OSError(errno.EAGAIN, f"identity changed; retry: {child}")
+            os.close(descriptor)
+            descriptor = child_descriptor
+            parent = child
+    finally:
+        os.close(descriptor)
+```
+
+Attempt 1 first execution: fixture setup error, 5 errors in 0.08s. uv selected an interpreter without hatchling. Tests did not run.
+
+Attempt 1 rerun with UV_PYTHON selecting the supplied venv interpreter:
+
+```text
+exit=0; elapsed=0.95s
+.....                                                                    [100%]
+5 passed in 0.85s
+
+```
+
+Verdict: tests were broken by one obviously incorrect mutant. No second or third mutant was needed.
+
+Weak test: `test_installed_defer_refuses_replaced_ancestry_until_fresh_attempt` covers both direct and exact replay, but the replaced directory is always named `ancestor`. The mutant checks `(st_dev, st_ino)` only for that literal name and silently accepts replacements for every other directory component. It does not inspect test mode or monkeypatch tests.
+
+Prevention: parameterize the replaced component using independently generated names and at several depths (including the runtime directory). For each, require OSError, `identity changed; retry`, the actual replaced path in the error, no returned path, no new ledger in either displaced or replacement ancestry, preserved state and preexisting ledger bytes, and successful recording only on a fresh invocation. At minimum, running the existing direct/exact-replay assertions against a second arbitrary component name kills this mutant.
+
+Scope: only `_ensure_directory_chain` in the existing permitted product file was replaced. No test source, canonical repository, state, or other product source was edited. No agents were spawned. Source implementation was used only as bytes/AST function boundary to replace the authorized function; no implementation body was emitted as context. Support read: packaging_support.py and tests/packaging/conftest.py; tests/conftest.py was absent.
+
+Created explicit paths: `devon-files.baseline` (will be overwritten with one placeholder line after byte-exact verification), `devon-result.md` (retained as required evidence). Test/fixture artifacts were created under `pytest-of-bob/` inside this disposable tree; pytest may also refresh its cache and Python bytecode there. No new product source files were created.
+
+Both pytest subprocess calls used a 300-second timeout. The first did not execute tests because build setup lacked hatchling. The second used TMPDIR equal to this disposable tree and UV_PYTHON equal to the supplied canonical venv interpreter, leaving the mandated pytest command unchanged.
+
+Restoration verified independently: byte-for-byte equal to backup, 15,432 bytes; SHA-256 `57c2b3b4dc90df7f3c54c4a48419702ad7aa479bcfdf2b82910953896f2928a4`. Backup then overwritten with one placeholder line.
+
+abort_reason: none
+
+
+Original requirements (unchanged):
+
+Description:
+Task 4 only. Write bounded installed-wheel regressions for record_defer runtime ancestry. The operator authorized this repair on 2026-09-13.
+Create /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/test_rework_13.py and, if needed, /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/rework_13_scripts.py. Do not modify existing tests or production files. Read only these new files and the explicitly listed supporting test files below. Use public ovcaq.workflow.records.record_defer; its implementation is not provided.
+Read the sample /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/test_rework_12.py. Additional allowed test support: /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/packaging_support.py (InstalledWheel, run_checked); /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/conftest.py (installed_wheel fixture); /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/rework_11_scripts.py (INITIALIZE_STATE); /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/rework_12_scripts.py (ORIGIN_CHECK, ANCESTRY_ACTOR). Read named symbols only; keep total reads below 25K. Reuse harness helpers where practical; do not import test modules. No broad repository searches. Do not commit or change workflow state.
+Use real OS filesystem operations and observe/inject only filesystem boundaries such as os.open, os.fsync, os.mkdir or Path.mkdir. Do not patch product internals. Fault injection must be chronological and must demonstrate that the intended interleaving actually occurred.
+Framework config: Python >=3.12; pytest uses tests/packaging/conftest.py and shared installed_wheel fixture. Commands use mise exec -- uv run --offline --no-sync pytest. Do not run a full suite. Tool timeouts are adapted to exec_command yielding and deadline-aware polling on this host.
+
+
+Acceptance Criteria:
+1. Between confirmation of an existing ancestor and creation/confirmation of its next child, rename that ancestor away and create a new directory at its original path. Require a retryable OSError (message includes "identity changed; retry") before ledger publication on that interrupted attempt. This chooses the explicitly allowed fail-closed behavior for this bounded repair. Verify the replacement actually occurred and no successful publication was reported. Cover direct defer and exact replay (preexisting ledger bytes remain unmodified in the displaced tree). A fresh attempt must succeed with one record and unchanged authoritative state/backup bytes.
+2. A runtime below an execute/search-only (0111) ancestor must remain usable on the current macOS host with native O_SEARCH support. Exercise real permissions with unprivileged execution, restore modes on teardown, and observe actual parent confirmation. If the platform has no fsync-capable search descriptor or permissions are bypassed as root, document an explicit platform skip instead of weakening assertions.
+3. The filesystem root must not be treated as its own child: no mkdir('/') or redundant root self-confirmation. Preserve confirmation of the actual first descendant's entry.
+4. Do not attempt mkdir on already-existing system/project ancestors outside the requested writable runtime subtree. Existing ancestors still need required durability checks. Test this boundary with deterministic EPERM on forbidden creation attempts; do not claim this synthetic test alone proves launcher sandbox integration. Existing peer creation, abrupt-exit retry/replay and exactly-once tests remain unchanged and will run as preservation checks.
+5. Keep test functions small, test one behavior per test, no tautological/hedged assertions. Installed subprocess origins must be checked in the parent, subprocesses must be bounded/reaped, and state/backup bytes must remain unchanged.
+
+
+Rewrite the tests addressing each issue above. Keep every test that is already
+sound — this is a targeted fix, not a rewrite from scratch.
+
+The original rules still apply. In particular:
+
+1. Write tests from requirements only. You are a USER of this API, not its builder.
+2. Each test name describes a behavior, not an implementation detail.
+3. Assert on outputs, return values, side effects, and errors. Never assert on mock existence.
+4. For EACH test, ask yourself: "What wrong implementation would still pass this?" If easy to answer, add constraints.
+5. SIMPLICITY FIRST: test only the behavior in the acceptance criteria. Strengthening a weak test does not mean adding tests nobody asked for.
+6. NEVER INVENT A CONTRACT: if the requirements name a data structure but do not pin its exact field names, enum values, or types, STOP and report it as a blocker rather than inventing a plausible schema.
+7. SURGICAL: only create/modify test files. Match the existing test file's style.
+
+Read only the files listed above. If a file or symbol you need is not listed, stop and report it as a blocker — do not run broad `rg` sweeps to discover scope.
+
+Abort and report if you read more than 100K of total input. Return the partial result and an abort_reason: context_overrun field.
+
+Read every file before your first Edit to it. Never call bash `head`, `tail`, `cat`, `grep`, or `find` - a hook blocks them. Use the Read tool (offset/limit), `rg`, or `rg --files` instead. Never combine an inspection (read, list, search, diff) with a test, lint or build invocation in one Bash call - run them as two calls, because a combined command has two ways to hang and one exit code. Pass an explicit `timeout` on every Bash call: 60000 ms for an inspection, 300000 ms for a lint run or a narrow test run, 600000 ms for a full suite or a full build.
+
+End your report with `ASSUMPTIONS:` - one line per assumption you made where the task, tests, or listed files were silent (guessed interface, data shape, resolved ambiguity, unstated behavior). Write `ASSUMPTIONS: none` if you made none.

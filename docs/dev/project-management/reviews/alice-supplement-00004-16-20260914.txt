@@ -1,0 +1,49 @@
+Supplement to the unchanged initial report:
+
+The High finding should be discarded after linearization analysis.
+
+The proposed deterministic interleaving is:
+
+1. Wrap `_append_deferred_record`; call the real function and arm the race only after it returns.
+2. This targets `_open_deferred_ledger`’s final `verify()` at line 362.
+3. During `verify_ancestry`, let `os.stat(ancestor)` obtain the original inode.
+4. Before returning that stat result, rename/recreate the ancestor and reparent the unchanged descendant subtree beneath it.
+5. Return the original stat result. Remaining descendant identities match, so verification and `record_defer` succeed.
+
+This does reproduce success, but it does not establish the reported defect. The complete old ancestry existed when the target stat occurred, and direct publication or exact-replay syncing had already completed before the wrapper armed the race. The ancestry validation therefore has a valid linearization point immediately before the external swap. The external actor’s subsequent rename is responsible for its own directory durability.
+
+If the mutation occurs before the target stat, the replacement is detected. If it occurs after the target stat, the completed publication and ancestry observation can linearize before it. I found no interleaving where OVCAQ adopts the replacement during publication, misses it in every later verification, and succeeds without a valid pre-mutation linearization point. The committed regression covers the relevant earlier mutation and refuses it. This changes R9 to pass; R1 remains failed for the missing diagnostic regression.
+
+P02-T01: pass — `selection.py`, `test_selection.py`, and installed workflow-input tests cover WIP-first ordering, backlog fallback, hold exclusion, lifecycle paths, and configured roots.
+
+P02-T02: pass — `frontmatter.py`, `test_frontmatter.py`, `test_applications.py`, and installed CLI tests cover defaults, validation, abstract tiers, overwrite warnings, and application.
+
+P02-T03: pass — `transitions.py`, `test_transitions.py`, and application/CLI tests cover every transition and rejection row with compound state effects.
+
+P02-T04: pass — `resume.py`, `policy.py`, `test_resume.py`, `test_policy.py`, and workflow CLI tests cover resume precedence and configurable plan ceiling behavior.
+
+P02-T05: pass — `records.py`, `test_records.py`, and `test_applications.py` cover per-PRD reset ownership, batch preservation, deterministic summaries, rejection, and idempotency.
+
+P02-T06: pass — `_files.py`, deferred-ledger, ledger-integrity/publication, installed-saga, and rework 11–13 tests cover operation-ID deduplication, serialization, durability, replay, ancestry replacement, and state-byte preservation. R1 remains failed because the restored full-path diagnostic has no committed file/symlink/second-open regression.
+
+P02-T07: pass — saga, saga-artifact, saga-identity, saga-publication, and installed-saga tests cover park/stall intent, move, record, reset, commit, failpoints, and reconciliation.
+
+P02-T08: pass — report, report-identity, report-recovery, installed-report, report-update, and golden tests cover deterministic audit/report/metrics rendering and serialized publication.
+
+P02-T09: pass — configuration, boundary, installed workflow-input, and ancestry tests cover configured runtime paths and contain no production `dev/local/autopilot` reference.
+
+P02-T10: pass — `test_workflow_cli.py` verifies `docs/operations.md` exactly equals output generated from the live parser and checks the state-protocol inventory.
+
+Phase A: pass — characterized lifecycle fixtures plus selection, frontmatter, transition, resume, policy, reset, and completion suites match the v1 outcomes.
+
+Phase B: pass — deferred and park/stall suites cover direct operation, interruption, reconciliation, exact replay, duplicate prevention, directory identity, and installed-wheel execution. The missing diagnostic regression is a rubric testing gap rather than a failed durability-boundary outcome.
+
+Phase C: pass — all workflow commands, report surfaces, generated documentation, provider-string guards, and dependency guards are present and covered.
+
+Source Phase 2 exit 1: pass — characterized lifecycle fixtures have equivalent OVCAQ outcomes under the v1 schema.
+
+Source Phase 2 exit 2: pass — park/stall interruption is recoverable at every represented durable boundary without duplicate records or lost work.
+
+Source Phase 2 exit 3: pass — workflow imports only state and standard-library/lower-layer modules; the boundary guard passes.
+
+The cycle-16 source audit confirms the accepted-plan digest, frozen-inventory digest, all 55 Phase 2 migration rows, and all eight target routes at reviewed HEAD `4011d1a`. Recorded verification at that HEAD reports 1372 passed, zero failed, zero skipped, with sync, Ruff, mypy, and build successful.

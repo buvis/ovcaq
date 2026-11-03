@@ -1,0 +1,17 @@
+{
+  "provider": "claude",
+  "model_provider": "anthropic",
+  "lens": "bob",
+  "model": "opus",
+  "started": 1791317818.282775,
+  "completed": 1791318358.04296,
+  "output": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/bob-output-00009-c2-20261006.txt",
+  "sha256": "8714979d3cdd89a9837a2a20fc48b2c01d11a757f7a39c8fa0edccd303ad9feb",
+  "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/bob-output-00009-c2-20261006-4bf34f58c9104aaab1ca117918bc560d.jsonl",
+  "raw_sha256": "e3d9ab81c2ee9d0b1c5e8215197d1782ab13eab48b1da750475b591eadfa1771",
+  "thread_id": "49c243a4-aff8-49d3-874a-08b42128545a",
+  "root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+  "prd": "00009-codex-adapter-v1.md",
+  "cycle": 2,
+  "implementation_fingerprint": "45a944d80a1539e0d8c4e3caadb1e7f35c4aabba01b8349770d2884c0de363ea"
+}

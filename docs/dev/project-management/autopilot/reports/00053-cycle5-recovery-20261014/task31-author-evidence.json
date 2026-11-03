@@ -1,0 +1,10 @@
+[
+  {
+    "task": "31",
+    "role": "implementation",
+    "model": "gpt-6.1-sol",
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle5-recovery-20261014/rollout-2026-10-14T21-29-49-01a13be4-7324-71d1-b499-14a734845196.jsonl",
+    "line": 8,
+    "sha256": "6a49f22552668fa738b5ef5193fa78b76e799fb7e16358df5afdd3772b1b2aec"
+  }
+]

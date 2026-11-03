@@ -1,0 +1,6 @@
+{
+  "status": "approval_denied",
+  "dispatched": false,
+  "reason": "Automatic approval review rejected export of repository review context to optional Gemini/Copilot without destination-specific operator authorization; no backend ran.",
+  "retry": false
+}

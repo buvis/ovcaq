@@ -1,0 +1,24 @@
+[
+  {
+    "ref": "R1",
+    "severity": "\u26aa",
+    "file": "CHANGELOG.md",
+    "issue": "CHANGELOG.md:43 says the change will \"avoid quadratic backtracking when Codex failure diagnostics contain long whitespace runs after a status prefix\". That status prefix was added earlier in this same unreleased PRD (codex_events.py:300), and the pre-PRD base had no such regex. Compared with the base, users see no change. Task 16 deleted an earlier entry of the same kind (\"describes no change from the pre-PRD base\"). Delete this entry too. The `fix` commit type seems to have forced the entry, so a follow-up `docs` commit can remove it",
+    "classification": "fix",
+    "found_by": [
+      "ALICE",
+      "BLAKE",
+      "BOB"
+    ]
+  },
+  {
+    "ref": "R3",
+    "severity": "\ud83d\udfe1",
+    "file": "src/ovcaq/drivers/codex_events.py:300",
+    "issue": "Some explicit status-code messages now classify as `unknown`. Before this change they classified correctly. Probed: `status=429`, `Error 429: Too Many Requests`, `HTTP error 503`, and bare reason-phrase forms like `429 Too Many Requests` and `503 Service Unavailable`. The spec allows numbers only in explicit HTTP/status/error-code context, and `status=429` and `Error 429:` are exactly that. Worse, tests/drivers/test_adapter_failure_classes.py:115 locks `status=429` and `Error 429:` in as `unknown`, so the wrong answer is now enforced as the expected class. Impact: a real 429 or 503 in these forms goes to the generic retry-then-PARK path instead of the bounded WAIT or rate-limit path. The native Codex forms (\"unexpected status N\", reqwest, HTTP/x) are covered.",
+    "classification": "fix",
+    "found_by": [
+      "BLAKE"
+    ]
+  }
+]

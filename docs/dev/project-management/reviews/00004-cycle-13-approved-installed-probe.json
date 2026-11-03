@@ -1,0 +1,102 @@
+{
+  "module": "/private/tmp/ovcaq-r13-installed-probe-h2eni9i2/venv/lib/python3.14/site-packages/ovcaq/workflow/_files.py",
+  "status": "success",
+  "error": null,
+  "replacement_happened": true,
+  "project_identity": [
+    16777230,
+    169072427
+  ],
+  "parent_confirmed_after_replacement": false,
+  "returned_path_exists": true,
+  "ledger": {
+    "batch_id": "batch",
+    "items": [
+      {
+        "op_id": "replacement-probe",
+        "prd": "00004-a.md"
+      }
+    ]
+  },
+  "events": [
+    {
+      "event": "fsync",
+      "identity": [
+        16777230,
+        2
+      ]
+    },
+    {
+      "event": "fsync",
+      "identity": [
+        16777230,
+        2
+      ]
+    },
+    {
+      "event": "fsync",
+      "identity": [
+        16777230,
+        107435247
+      ]
+    },
+    {
+      "event": "fsync",
+      "identity": [
+        16777230,
+        107436446
+      ]
+    },
+    {
+      "event": "fsync",
+      "identity": [
+        16777230,
+        169072427
+      ]
+    },
+    {
+      "event": "replace",
+      "new": [
+        16777230,
+        169072429
+      ],
+      "old": [
+        16777230,
+        169072428
+      ]
+    },
+    {
+      "event": "fsync",
+      "identity": [
+        16777230,
+        169072429
+      ]
+    },
+    {
+      "event": "fsync",
+      "identity": [
+        16777230,
+        169072430
+      ]
+    },
+    {
+      "event": "fsync",
+      "identity": [
+        16777230,
+        169072433
+      ]
+    },
+    {
+      "event": "fsync",
+      "identity": [
+        16777230,
+        169072431
+      ]
+    }
+  ],
+  "limit": "Real directory rename/recreation and fsync observation; no simulated physical power-loss claim.",
+  "wheel_matches_reviewed_source": true,
+  "wheel_sha256": "27be06d8b913e35b9b6465b224cabbd5dd7b2ff8dceacb0dca27357a8c1093a0",
+  "isolated_python": true
+}
+

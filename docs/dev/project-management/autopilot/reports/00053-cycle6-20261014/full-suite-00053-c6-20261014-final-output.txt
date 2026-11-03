@@ -1,0 +1,32 @@
+Command: uv run pytest -q --tb=line
+Execution: approved retry with process inspection available
+Exit: 0
+This file preserves the final returned output chunk; earlier chunks contained progress dots only.
+
+........................ [ 88%]
+........................................................................ [ 89%]
+........................................................................ [ 90%]
+........................................................................ [ 91%]
+........................................................................ [ 92%]
+........................................................................ [ 93%]
+........................................................................ [ 94%]
+........................................................................ [ 95%]
+........................................................................ [ 96%]
+........................................................................ [ 97%]
+........................................................................ [ 98%]
+........................................................................ [ 99%]
+.......................................................................  [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-2eb5bcbb-034b-4be6-b686-865fb4e3ebae
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-2eb5bcbb-034b-4be6-b686-865fb4e3ebae'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-dd371b8e-d844-4e53-acba-5ac495bda503
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-dd371b8e-d844-4e53-acba-5ac495bda503'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+7199 passed, 2 warnings in 265.32s (0:04:25)
+

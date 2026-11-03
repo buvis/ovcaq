@@ -1,0 +1,63 @@
+diff --git a/tests/drivers/test_adapter_outcomes.py b/tests/drivers/test_adapter_outcomes.py
+index 4a9d7f4..1d4afa3 100644
+--- a/tests/drivers/test_adapter_outcomes.py
++++ b/tests/drivers/test_adapter_outcomes.py
+@@ -200,41 +200,18 @@ def test_completed_receiver_does_not_prevent_unfinished_receiver_failure(
+     )
+ 
+ 
+-@pytest.mark.parametrize("child_status", ["interrupted", "shutdown", "not_found"])
+-def test_unrelated_item_type_does_not_transition_lane(
+-    driver: CodexDriver, child_status: str
+-) -> None:
+-    start_lane(driver)
+-    observations = decode(
+-        driver,
+-        collab_record(child_status, tool="close_agent", item_type="command_execution"),
+-    )
+-    assert not any(
+-        observation.type
+-        in (
+-            ObservationType.LANE_STARTED,
+-            ObservationType.LANE_PROGRESS,
+-            ObservationType.LANE_COMPLETED,
+-            ObservationType.LANE_FAILED,
+-        )
+-        for observation in observations
+-    )
+-    closed = decode(driver, collab_record(child_status, tool="close_agent"))
+-    assert [
+-        observation.lane_id
+-        for observation in closed
+-        if observation.type == ObservationType.LANE_FAILED
+-    ] == ["child"]
+-
+-
+-@pytest.mark.parametrize("child_status", ["interrupted", "shutdown", "not_found"])
+-def test_unrelated_event_type_does_not_transition_lane(
+-    driver: CodexDriver, child_status: str
++@pytest.mark.parametrize(
++    "override",
++    [{"item_type": "command_execution"}, {"event_type": "thread.started"}],
++    ids=["item-type", "event-type"],
++)
++def test_unrelated_discriminator_does_not_transition_lane(
++    driver: CodexDriver, override: dict[str, str]
+ ) -> None:
+     start_lane(driver)
+     observations = decode(
+         driver,
+-        collab_record(child_status, tool="close_agent", event_type="thread.started"),
++        collab_record("shutdown", tool="close_agent", **override),
+     )
+     assert not any(
+         observation.type
+@@ -246,7 +223,7 @@ def test_unrelated_event_type_does_not_transition_lane(
+         )
+         for observation in observations
+     )
+-    closed = decode(driver, collab_record(child_status, tool="close_agent"))
++    closed = decode(driver, collab_record("shutdown", tool="close_agent"))
+     assert [
+         observation.lane_id
+         for observation in closed

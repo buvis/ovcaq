@@ -1,0 +1,125 @@
+# AGENTS.md — OVCAQ
+
+OVCAQ means **Orchestration, Visibility, and Control for Agent Queues**. It is
+an installable Python CLI/TUI that supervises a PRD-driven workflow through
+Claude Code, Codex, or another headless coding agent.
+
+The global `AGENTS.md` remains in force. This file adds project-specific rules.
+
+## Current state
+
+The repository is in planning/bootstrap. Until an implementation PRD replaces
+it, `docs/dev/project-management/plans/implementation-plan.md` is the architecture and sequencing
+authority. Do not create production modules opportunistically outside that
+sequence.
+
+## Product boundary
+
+OVCAQ core owns state, lifecycle commands, process supervision, agent adapters,
+normalized events, observability, the TUI, and launcher provisioning checks.
+
+OVCAQ core does **not** contain launcher-specific skills, agents, hooks, or
+plugins. Those live in external marketplaces. Core may carry declarative
+identifiers and version requirements needed to reconcile them.
+
+## Architecture invariants
+
+1. **One state writer.** Every durable `state.json` mutation goes through the
+   state store. Agents mutate state only through `ovcaq state` or a higher-level
+   OVCAQ command. Never instruct an agent to edit `state.json` directly.
+2. **State decides; prose does not.** Session completion, phase handoff, pause,
+   drain, retry, and failure decisions derive from committed state plus a
+   normalized session result. A final agent message is never authoritative.
+3. **Provider code stays at the edge.** Claude/Codex argv, environment variables,
+   event formats, model names, rate-limit parsing, and connectivity checks live
+   under their adapter. Shared runtime and UI code must not parse provider-native
+   events.
+4. **Raw evidence survives normalization.** Preserve each session's raw output.
+   Normalizers are tolerant and must degrade to an unknown/raw observation
+   instead of crashing the supervisor.
+5. **The TUI observes shared models.** It reads state, registry, metrics, and
+   normalized observations. It does not implement lifecycle policy or maintain a
+   second liveness algorithm.
+6. **External capabilities stay external.** Provisioning invokes a launcher's
+   supported marketplace/plugin CLI and verifies the result. It does not copy
+   plugin contents into this package or hand-edit launcher caches.
+7. **No shell evaluation of configured commands.** Store agent commands as argv
+   arrays and spawn them without `shell=True`.
+
+## Target layout
+
+```text
+src/ovcaq/
+  state/        # schema, transactions, compound mutations
+  workflow/     # PRD selection, transitions, records, policy
+  runtime/      # supervisor, decisions, registry, process ownership
+  drivers/      # Claude, Codex, and generic command adapters
+  events/       # normalized event model and session reduction
+  tui/          # discovery and Textual/Rich presentation
+  provision/    # marketplace/plugin reconciliation
+tests/          # mirrors package boundaries; provider JSONL fixtures
+docs/           # tracked architecture and operator documentation
+```
+
+## Toolchain
+
+- Python 3.12+ managed through `mise`.
+- `uv` for environments, locking, build, and command execution.
+- `pytest` for tests; `ruff` for formatting/linting; `mypy` for package types.
+- Keep the runtime dependency set small. Textual/Rich are justified by the TUI;
+  prefer the standard library for state, locking, configuration, and subprocesses.
+
+Planned verification commands once the scaffold lands:
+
+```bash
+uv sync --all-groups
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy src/ovcaq
+uv build
+```
+
+## Development rules
+
+- Characterize current behavior before moving it from `~/.claude`.
+- Extract state first, then pure workflow logic, runtime, adapters, TUI, and
+  provisioning in that order.
+- Sanitized Claude and Codex JSONL fixtures belong in `tests/fixtures/`; tests
+  never read live files from `~/.claude` or `~/.codex`.
+- Test process-group, lock, and signal behavior with real subprocesses in
+  addition to unit tests.
+- Documentation for commands comes from the same command registry/parser as the
+  implementation; do not maintain a second hand-written verb inventory.
+- Keep provider-neutral modules free of the strings `claude`, `anthropic`,
+  `codex`, and provider model identifiers except in tests that enforce this rule.
+- Use conventional commits. No compatibility shim, dual writer, or rollback
+  framework is required for the initial cutover.
+
+## Migration stance
+
+This is a one-way early-stage extraction. Start a fresh OVCAQ batch/state tree;
+do not build an importer for the current `docs/dev/project-management/autopilot/state.json` unless
+a later requirement explicitly needs it. Temporary delegation during a local
+canary is acceptable, but do not ship `autoclaude`, `autopilot`, `tracon`, or
+`statectl` aliases as permanent public APIs.
+
+Bounded task 6 work mandate:
+Source review: docs/dev/project-management/reviews/00051-triage-a-single-valid-codex-record-can-crash-th-v1-review-1.md
+
+Disposition and bounded acceptance:
+Review-cycle correction: the transmitted original strip-first recipe lost original regex word boundaries. This is a specification gap, not a capability failure. Preserve original-token redaction AND redact reconstructed tokens after removing the unchanged recognized controls, then cap to 4096. A bounded candidate is sanitize original detail, remove the existing controls, sanitize the full cleaned result, then truncate. Preserve classification/reset extraction from untouched full native text, all existing cap/control/Unicode regressions, and public signatures. Amend the design with a review-1 contract correction citing R5; retain its historical recipe/review evidence rather than erase it. Independently test C0/DEL/lone-ESC boundary destruction for bare tokens and Bearer values through helper and actual native normalized payloads/JSONL, plus original R2 control-split cap cases. Never weaken shared sanitizer boundaries or expand recognized control forms.
+
+R4 scan optimization must preserve original full-container scalar validation before redaction, valid non-BMP scalars and subclass handling. Avoid bypassing sanitize_json in a caller not already fully checked. A precompiled surrogate regex is sufficient if eliminating repeated validation risks the contract.
+
+R7 needs an independent native-parser reason/adapter-state assertion for a bounded deeply nested JSON frame that raises RecursionError in the preflight. R8 must preserve tolerant validation/decode handling and fatal publication boundaries; helper extraction inside the current catch is acceptable, literal hoisting that widens escaping failures is not.
+
+Acceptance: every quoted finding is resolved without scope expansion, all original source R7/R2 regressions remain pinned, and focused events/detail tests pass. Do not add cyclic-container guards or TUI changes. Keep the witnessed out-of-scope limitations in the review ledger.
+
+### Findings (verbatim)
+- ⚪ src/ovcaq/events/model.py:224: Hot-path scan cost. `_payload` scans the whole payload at line 224, then `sanitize_json` scans it again at line 252, and `_usage_payload` scans again through `sanitize_json`. Each scan uses a per-character Python generator: about 22 ms per MiB, against about 2.5 ms for a precompiled `re.compile("[\ud800-\udfff]").search`. Every frame also gets re-validated by `replace()` in `_bind_observations` and by `observation_record` in the writer. Behavior-preserving fix: use the regex in the predicate, and call `_sanitize_json` inside `_payload` and `_usage_payload` once the up-front check has passed (found by: ALICE, BOB)
+- 🟠 src/ovcaq/drivers/codex_events.py:64: Removing controls before redaction now leaks tokens that the old order caught. When a bare C0 control, DEL or lone ESC sits between a word character and a token, removal glues them together: `"x\x00sk-" + "a"*30` becomes `xsk-aaaa…` and `"auth\x00Bearer " + "a"*26` becomes `authBearer …`. `_LIKELY_SECRET` needs `\b` before `sk-`/`Bearer`, so neither `bounded_detail` nor the Observation's second sanitizer redacts them. The old order redacted both, because the control supplied the word boundary. Confirmed by tracing the regex by hand; not executed (read-only sandbox) (found by: BOB)
+- 🟡 src/ovcaq/events/tail.py:119: The preflight's `except (ValueError, RecursionError)` branch, which hands the frame to the driver, has no test. No RawFirstDecoder test feeds a deeply nested frame. Narrowing it to `except ValueError` would still pass the suite: deep frames would then get "driver failed to decode frame" instead of the driver's own native gap, against the contract's "ValueError or RecursionError → delegate unchanged" (found by: BOB)
+- 🟡 src/ovcaq/events/tail.py:116: The preflight parse and scan sit inside the tolerant driver catch, so the try blocks nest 4 levels deep (the limit). Hoist the `json.loads` try and the scalar check above it and wrap only `tuple(self._driver.decode(frame))` in `except Exception`. This also matches the contract's "consume decode under the existing tolerant catch" (found by: BOB)
+
+READING BUDGET: events/model.py lines 20–110 and 185–280; events/tail.py lines 90–180; codex_events.py lines 1–80. Design Interfaces & contracts and append correction citing review-1 R5; retain historical recipe and review log. CHANGELOG Unreleased only. Order: fix detail redaction; optimize scalar predicate; simplify preflight within tolerant catch; append contract correction; changelog. Tests listed below are read-only, never modify. Run only the named test files -q --tb=line. Do not commit or mutate state. No cyclic or TUI expansion. Avoid unnecessary repeated validation where already fully scanned, retaining subclass semantics. Source recipe is superseded by task correction.

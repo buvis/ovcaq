@@ -1,0 +1,63 @@
+[
+  {
+    "original": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/review-tasks-00005-c2-20260925.md",
+    "archived": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00005-cycle-02-inputs/review-tasks-00005-c2-20260925.md",
+    "sha256": "95097ef74e67681549ab5c56a46de8a4eaefb3941a8d27f11776095a33d0ec67"
+  },
+  {
+    "original": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/review-prd-00005-c2-20260925.md",
+    "archived": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00005-cycle-02-inputs/review-prd-00005-c2-20260925.md",
+    "sha256": "560e74d14ef8d6a01a6c64de7ac76676998227aa0fbcf438ce46158fb00d10a1"
+  },
+  {
+    "original": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/review-context-00005-c2-20260925.md",
+    "archived": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00005-cycle-02-inputs/review-context-00005-c2-20260925.md",
+    "sha256": "b79f1e076d1bcaec5d5d71096f98d0ebc37f55caf5aa0cf4c0bd64e3c7cc7d5a"
+  },
+  {
+    "original": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/review-diff-00005-c2-20260925.diff",
+    "archived": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00005-cycle-02-inputs/review-diff-00005-c2-20260925.diff",
+    "sha256": "5c7f6154832ee69c7e570dd81c56ea5222b5e890d12aecf6ff50fb5fe86d2876"
+  },
+  {
+    "original": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/bob-context-00005-c2-20260925.md",
+    "archived": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00005-cycle-02-inputs/bob-context-00005-c2-20260925.md",
+    "sha256": "5f723170f59be31adf82865dcccc21cd8ff91a092648ca01f71e20eed34f3237"
+  },
+  {
+    "original": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/alice-prompt-00005-c2-20260925.md",
+    "archived": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00005-cycle-02-inputs/alice-prompt-00005-c2-20260925.md",
+    "sha256": "b0834f368ccbcc4e101dafa104fd7ae9db7394aa19c54f5ec221393da336957b"
+  },
+  {
+    "original": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/blake-prompt-00005-c2-20260925.md",
+    "archived": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00005-cycle-02-inputs/blake-prompt-00005-c2-20260925.md",
+    "sha256": "8192367830b97f74d4eb2a74d54fa1cbdc5edd86fca0fa1a64658211567ac08e"
+  },
+  {
+    "original": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/bob-prompt-00005-c2-20260925.md",
+    "archived": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00005-cycle-02-inputs/bob-prompt-00005-c2-20260925.md",
+    "sha256": "115a84645541bb7bf2f162264eb543d0a43e6c8d63b7a4ea8db568410e727364"
+  },
+  {
+    "original": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/carl-prompt-00005-c2-20260925.md",
+    "archived": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00005-cycle-02-inputs/carl-prompt-00005-c2-20260925.md",
+    "sha256": "be697fa36610872c6692f6d684305aa0b5cab8df7f3d6cf4f88b1ee1f87b243d"
+  },
+  {
+    "original": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/mechanical-checks-00005-c2-20260925.md",
+    "archived": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00005-cycle-02-inputs/mechanical-checks-00005-c2-20260925.md",
+    "sha256": "786b9fb86f8a7169d264b12fe9104f21e53cdd91f36fe0e1396c841425b97d1d"
+  },
+  {
+    "original": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/alice-output-00005-c2-20260925.txt",
+    "archived": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00005-cycle-02-inputs/alice-output-00005-c2-20260925.txt",
+    "sha256": "86387b26a9c551f7d3fe34ccad57c01bf984e6a95215a4b85a174c6e8ecb8041"
+  },
+  {
+    "original": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/blake-output-00005-c2-20260925.txt",
+    "archived": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00005-cycle-02-inputs/blake-output-00005-c2-20260925.txt",
+    "sha256": "3cc509d6a39cbe149cbcd3b1477cd7bb4e7809ce82cc7c69417159ddacd6792e"
+  }
+]
+

@@ -1,0 +1,2 @@
+### Findings (verbatim)
+- ⚪ tests/runtime/test_adapter_health.py: tests/runtime/test_adapter_health.py:90 runs `command_name` over three names ("fixture-agent-health", "overlay-runner", "queue-worker"). In both probes all three take the same code path, so there are 6 cases where 2 would do. R8 removed the same kind of padding from test_adapter_outcomes.py. Keep one name (found by: BOB)

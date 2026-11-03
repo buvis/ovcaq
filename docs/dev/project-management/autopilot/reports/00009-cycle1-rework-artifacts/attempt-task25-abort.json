@@ -1,0 +1,1 @@
+{"attempt": 1, "model": "sonnet", "actual_model": "gpt-6.1-sol", "actual_provider": "openai", "implementor": "codex", "role": "test_author", "contributed_changes": false, "pipeline": "lean", "review_cycle": 1, "outcome": "aborted", "cause": "context_overrun", "verification": "skipped:context_overrun", "dispatch_ids": ["35cd950c"]}

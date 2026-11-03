@@ -1,0 +1,12 @@
+{
+  "command": [
+    "mise",
+    "exec",
+    "--",
+    "codex",
+    "--version"
+  ],
+  "exit_code": 0,
+  "stdout": "codex-cli 0.162.1\n",
+  "stderr": "WARNING: proceeding, even though we could not create PATH aliases: Operation not permitted (os error 1)\n"
+}

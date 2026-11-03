@@ -1,0 +1,37 @@
+{
+  "task15": {
+    "tess": {
+      "logical_tier": "sonnet",
+      "model": "gpt-6.1-sol",
+      "provider": "openai",
+      "effort": "medium",
+      "dispatch_id": "032da172",
+      "session": "01a1312c-022f-78a1-a0b3-03d16762dce9"
+    },
+    "ivan": {
+      "logical_tier": "sonnet",
+      "model": "gpt-6.1-sol",
+      "provider": "openai",
+      "effort": "medium",
+      "dispatch_id": "12821ccf",
+      "session": "01a1312d-5bca-72a0-8b52-96165f1147ba"
+    },
+    "task_base_sha": "95029638c682cbce4aeb332b60f4d66aa7f4306e"
+  },
+  "task16": {
+    "logical_tier": "haiku",
+    "micro_lane": true,
+    "model": "gpt-6.1-sol",
+    "provider": "openai",
+    "effort": "low",
+    "task_base_sha": "750178cb7dbfd95577b7360bde09d2204a92c874"
+  },
+  "task17": {
+    "logical_tier": "sonnet",
+    "micro_lane": true,
+    "model": "gpt-6.1-sol",
+    "provider": "openai",
+    "effort": "low",
+    "task_base_sha": "02333aa41eddaaa8fd9b2ccf9747dafc53d57c29"
+  }
+}

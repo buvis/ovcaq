@@ -1,0 +1,392 @@
+# Design: OVCAQ shared runtime substrate
+
+## Architecture fit
+
+PRD 00005 implements source tasks P03-T01 through P03-T11 at the provider-neutral runtime boundary. `ovcaq.paths` and `ovcaq.config` resolve configuration and filesystem roots; `ovcaq.runtime` owns run locking, fleet discovery, child-process groups, watchdog escalation, run/session metadata, raw evidence, retention, signals, and platform probes. `ovcaq.cli` exposes `status`, `doctor`, and `logs` by calling those services through the existing stable human/JSON output boundary.
+
+The runtime may depend on `ovcaq.state` for authoritative state reads and emergency notices, but it must not import `ovcaq.drivers`, `ovcaq.events`, `ovcaq.tui`, `ovcaq.provision`, or workflow policy. It emits shared facts for later supervisors and observers; it does not choose workflow transitions. Provider names are opaque metadata strings. Every configured child command remains an argv sequence executed with `shell=False` and closed stdin.
+
+Durable session evidence and authoritative state use the existing descriptor-relative, restrictive-permission, atomic-publication patterns. The state store remains the sole `state.json` writer. A runtime failure may call `StateService` through an injected callback; when that callback is unavailable or fails, it writes a separate emergency artifact and refuses another launch rather than editing state directly.
+
+## Module placement
+
+- Edit `src/ovcaq/paths.py`: add resolved XDG paths, an explicit external-state-root distinction, runtime layout construction, containment checks, and installed arbitrary-cwd discovery while retaining existing symlink rejection.
+- Edit `src/ovcaq/config.py`: extend the current CLI > project > user > default merge into runtime settings without making environment variables a general configuration layer.
+- Add production code to `src/ovcaq/runtime/capability.py`: immutable platform capability results and macOS support probes.
+- Add production code to `src/ovcaq/runtime/registry.py`: process identity, `run.lock`, atomic fleet entry publication, live-entry reconciliation, and stale pruning.
+- Add production code to `src/ovcaq/runtime/process.py`: shell-free child spawn, owned process-group signaling, wait/exit collection, signal scopes, and emergency-cleanup result types.
+- Add production code to `src/ovcaq/runtime/watchdog.py`: injectable-clock timeout tracking and TERM/grace/KILL escalation against an `OwnedProcess`.
+- Add production code to `src/ovcaq/runtime/session.py`: secure run/session directories, `run.json`, raw-first byte tee, session metadata/summary publication, evidence inventory, explicit purge planning/application, and emergency failure evidence.
+- Edit `src/ovcaq/runtime/__init__.py`: export only the stable shared runtime types needed by later drivers, supervisor, and TUI.
+- Edit `src/ovcaq/cli.py`, `src/ovcaq/cli_io.py`, and `src/ovcaq/errors.py`: register and dispatch `status`, `doctor`, `logs`, and `logs purge` from the live parser; add only runtime-specific stable error codes that cannot reuse `state_io` or `usage`.
+- Add `tests/runtime/test_paths.py`, `test_registry.py`, `test_process.py`, `test_watchdog.py`, `test_session.py`, and `test_retention.py`; extend CLI, packaging, command-inventory, provider-neutral import/string, and installed-wheel tests where their public contracts change.
+- Generate/update the operations reference from `ovcaq.cli.build_parser()` rather than maintaining a second command inventory.
+
+## Interfaces & contracts
+
+`src/ovcaq/paths.py`:
+
+```python
+@dataclass(frozen=True)
+class RuntimePaths:
+    project_root: Path
+    runtime_root: Path
+    state_file: Path
+    run_lock: Path
+    run_metadata: Path
+    events: Path
+    metrics: Path
+    sessions: Path
+    reports: Path
+    fleet_root: Path
+    fleet_lock: Path
+    retention_lock: Path
+
+def discover_project_root(explicit_root: Path | None = None, *, start: Path | None = None) -> Path: ...
+def resolve_runtime_paths(
+    project_root: Path,
+    *,
+    runtime_root: Path | None = None,
+    external_state_root: Path | None = None,
+    xdg_state_home: Path | None = None,
+) -> RuntimePaths: ...
+def ensure_runtime_layout(paths: RuntimePaths) -> RuntimePaths: ...
+```
+
+`runtime_root` is relative to or contained by the resolved project root. An absolute path outside the project is rejected unless it arrived through the distinct `external_state_root` parameter. `runtime_root` and `external_state_root` are mutually exclusive. `${XDG_STATE_HOME:-~/.local/state}/ovcaq/runs` is used only when `xdg_state_home` was not explicitly injected. Created runtime, sessions, reports, and fleet directories are mode `0o700`; durable files are created with mode `0o600`. Existing symlink components, non-directory components, and post-open inode substitutions fail closed.
+
+The exact derived mapping is `state_file=<runtime_root>/state.json`, `run_lock=<runtime_root>/run.lock`, `run_metadata=<runtime_root>/run.json`, `events=<runtime_root>/events.jsonl`, `metrics=<runtime_root>/metrics.jsonl`, `sessions=<runtime_root>/sessions`, `reports=<runtime_root>/reports`, `fleet_root=<xdg_state_home>/ovcaq/runs`, `fleet_lock=<fleet_root>/fleet.lock`, and `retention_lock=<runtime_root>/retention.lock`. Inode-substitution rejection applies both between resolution and layout creation and during each create/open traversal: `ensure_runtime_layout()` must revalidate every existing component and verify the opened directory descriptor still names the path before returning.
+
+`src/ovcaq/config.py`:
+
+```python
+@dataclass(frozen=True)
+class RuntimeSettings:
+    paths: RuntimePaths
+    term_grace_seconds: float
+    max_session_bytes: int
+    max_retained_bytes: int
+    min_free_bytes: int
+
+def runtime_settings(
+    root: Path,
+    *,
+    runtime_root: Path | None = None,
+    external_state_root: Path | None = None,
+    xdg_config_home: Path | None = None,
+    xdg_state_home: Path | None = None,
+    term_grace_seconds: float | None = None,
+    max_session_bytes: int | None = None,
+    max_retained_bytes: int | None = None,
+    min_free_bytes: int | None = None,
+) -> RuntimeSettings: ...
+```
+
+Precedence is explicit arguments, tracked `<root>/ovcaq.toml`, `${XDG_CONFIG_HOME:-~/.config}/ovcaq/config.toml`, then defaults. The default runtime is `<root>/dev/local/ovcaq`; default grace is 10 seconds. The default limits are 16 GiB per session, 128 GiB retained per project, and 1 GiB minimum free space. Crossing a byte budget never deletes evidence: it rejects a new launch or stops the producing session after preserving the bytes already written, with `status`/`doctor` reporting the exact limit and purge command. Configuration rejects booleans, non-finite values, negative byte limits, grace outside `0 <= seconds <= 300`, unknown schema versions, and simultaneous internal/external roots.
+
+The supported TOML schema version is top-level `version = 1`; an omitted version remains accepted for the existing bootstrap configuration, while any other value is rejected. Internal `runtime_root` remains the existing `[workflow].runtime_root` key. Runtime-only keys live under `[runtime]`: `external_state_root`, `term_grace_seconds`, `max_session_bytes`, `max_retained_bytes`, and `min_free_bytes`. Declaring both `[workflow].runtime_root` and `[runtime].external_state_root` is invalid. The same merge is applied user-first then project, per key, before explicit arguments override it.
+
+`src/ovcaq/runtime/capability.py`:
+
+```python
+CapabilityStatus = Literal["supported", "unsupported", "degraded"]
+
+@dataclass(frozen=True)
+class CapabilityResult:
+    name: str
+    status: CapabilityStatus
+    detail: str
+
+def probe_platform(*, platform_name: str = sys.platform) -> tuple[CapabilityResult, ...]: ...
+def require_process_capabilities(results: Sequence[CapabilityResult]) -> None: ...
+```
+
+Named probes are `platform`, `advisory_lock`, `process_group`, `group_signal`, and `directory_fsync`. Darwin is supported for this milestone. Other platforms report `unsupported` or `degraded` facts and do not pretend to satisfy the personal-cutover gate.
+
+`src/ovcaq/runtime/registry.py`:
+
+```python
+@dataclass(frozen=True)
+class ProcessIdentity:
+    pid: int
+    started: str
+
+@dataclass(frozen=True)
+class FleetEntry:
+    schema_version: Literal[1]
+    root: Path
+    pid: int
+    process_start: str
+    run_id: str
+    agent: str
+    started_at: str
+
+@dataclass(frozen=True)
+class RegistrySnapshot:
+    live: tuple[FleetEntry, ...]
+    malformed: tuple[Path, ...]
+    stale: tuple[Path, ...]
+
+class DuplicateRunError(RuntimeError): ...
+class RunLock:
+    @classmethod
+    def acquire(cls, path: Path) -> RunLock: ...
+    def close(self) -> None: ...
+    def __enter__(self) -> RunLock: ...
+    def __exit__(self, *exc_info: object) -> None: ...
+
+def process_identity(pid: int) -> ProcessIdentity | None: ...
+def process_matches(identity: ProcessIdentity) -> bool: ...
+
+class FleetRegistry:
+    def __init__(self, root: Path) -> None: ...
+    def publish(self, entry: FleetEntry) -> Path: ...
+    def snapshot(self) -> RegistrySnapshot: ...
+    def prune(self) -> RegistrySnapshot: ...
+    def remove(self, run_id: str, *, expected: FleetEntry | None = None) -> bool: ...
+```
+
+`RunLock.acquire()` opens `run.lock` with `O_NOFOLLOW | O_CLOEXEC`, verifies a regular `0o600` file, takes `fcntl.LOCK_EX | LOCK_NB`, verifies descriptor/path identity, and keeps the descriptor open for the run lifetime. Contention raises `DuplicateRunError` and never consults registry metadata as authority. The `run.lock` inode is persistent: normal completion unlocks and closes it but never unlinks or replaces it, so waiters and new contenders always serialize on the same inode. The logical held lock, not the file, is the ephemeral artifact released at completion.
+
+Fleet entries are `<fleet_root>/<run_id>.json`, bounded JSON objects published through same-directory `0o600` temporaries, file `fsync`, `os.replace`, and directory `fsync`. `FleetEntry.schema_version` is `1`; its exact JSON keys are `schema_version`, `root`, `pid`, `process_start`, `run_id`, `agent`, and `started_at`. Unknown/missing keys, duplicate keys, invalid UTC RFC 3339 timestamps, nonpositive PIDs, non-basename IDs, and future schema versions make an entry malformed rather than live. `FleetRegistry.publish()`, `prune()`, and `remove()` hold the persistent `fleet_lock` across their final read/compare/mutation/fsync; lock-free `snapshot()` reads only atomically published files. Liveness requires both an alive PID and the same process-start identity. `prune()` revalidates under the mutation lock immediately before unlink. `remove()` compares the complete expected entry under that same lock, so a replacement run cannot be removed by an old owner.
+
+`src/ovcaq/runtime/process.py`:
+
+```python
+@dataclass(frozen=True)
+class ProcessExit:
+    returncode: int
+    signal: int | None
+    timed_out: bool
+    term_sent: bool
+    kill_sent: bool
+
+class ProcessOwnershipError(RuntimeError): ...
+
+class OwnedProcess:
+    @classmethod
+    def spawn(
+        cls,
+        argv: Sequence[str],
+        *,
+        cwd: Path,
+        env: Mapping[str, str] | None = None,
+    ) -> OwnedProcess: ...
+    @property
+    def pid(self) -> int: ...
+    @property
+    def stdout(self) -> BinaryIO: ...
+    def poll(self) -> int | None: ...
+    def wait(self, timeout: float | None = None) -> int: ...
+    def signal_group(self, signal_number: int) -> bool: ...
+    def collect_exit(self, *, timed_out: bool, term_sent: bool, kill_sent: bool) -> ProcessExit: ...
+
+class SupervisorSignal(Exception):
+    signal_number: int
+
+@contextmanager
+def supervisor_signal_scope() -> Iterator[None]: ...
+```
+
+`OwnedProcess.spawn()` requires a nonempty list/tuple of nonempty strings and first starts the internal `[sys.executable, "-m", "ovcaq.runtime._group_anchor"]` helper with `shell=False`, a new process group (`process_group=0`), and a private control pipe. The anchor is the recorded PGID leader, ignores TERM while its control pipe is open, and remains alive even when the agent leader exits. The agent argv is passed directly to `subprocess.Popen` with `shell=False`, `stdin=subprocess.DEVNULL`, `stdout=subprocess.PIPE`, `stderr=subprocess.STDOUT`, and `process_group=<anchor pid>`; environment values are never logged. On normal agent completion the owner closes the anchor control pipe and reaps it. On teardown, `signal_group()` verifies the still-live anchor's `ProcessIdentity` and PGID before `os.killpg`; TERM leaves the anchor present through the grace period, and KILL removes the whole residual group. This anchor lifetime makes child-exits-before-grandchild cleanup testable without a PID/name scan and prevents PGID reuse while signaling. `signal_group()` returns `False` only when the recorded group is already fully exited and there is nothing to signal; it returns `True` only after `os.killpg` succeeds. A live anchor whose process identity or PGID no longer matches raises `ProcessOwnershipError`; the caller records attention and stops rather than risking collateral damage. No name/regex-based orphan scan is part of this substrate.
+
+`supervisor_signal_scope()` installs temporary SIGINT, SIGTERM, and SIGHUP handlers on the main thread, restores prior handlers, and raises `SupervisorSignal`; the caller tears down the one tracked `OwnedProcess`, removes only its own fleet entry, closes its lock descriptor, and maps exits to `128 + signal_number`.
+
+`src/ovcaq/runtime/watchdog.py`:
+
+```python
+class Clock(Protocol):
+    def monotonic(self) -> float: ...
+    def wait(self, event: threading.Event, timeout: float) -> bool: ...
+
+@dataclass(frozen=True)
+class WatchdogResult:
+    fired: bool
+    term_sent: bool
+    kill_sent: bool
+
+class Watchdog:
+    def __init__(
+        self,
+        process: OwnedProcess,
+        *,
+        timeout_seconds: float,
+        grace_seconds: float,
+        clock: Clock | None = None,
+    ) -> None: ...
+    def start(self) -> None: ...
+    def cancel(self) -> WatchdogResult: ...
+    def join(self, timeout: float | None = None) -> WatchdogResult: ...
+```
+
+Timeout and grace values must be finite and nonnegative. The watchdog sends TERM once at the deadline, waits at most the grace period, and sends KILL once only while the exact owned group remains live. Cancellation before the deadline sends nothing. Its worker is bounded and joinable; no leaked non-daemon thread may hold process exit open.
+
+`src/ovcaq/runtime/session.py`:
+
+```python
+@dataclass(frozen=True)
+class SessionPaths:
+    root: Path
+    raw: Path
+    normalized: Path
+    metrics: Path
+    metadata: Path
+    summary: Path
+
+@dataclass(frozen=True)
+class SessionMetadata:
+    schema_version: Literal[1]
+    run_id: str
+    session_id: str
+    agent: str
+    pid: int
+    process_start: str
+    started_at: str
+
+@dataclass(frozen=True)
+class EvidenceItem:
+    session_id: str
+    path: Path
+    size_bytes: int
+    modified_at: str
+    active: bool
+    device: int
+    inode: int
+
+@dataclass(frozen=True)
+class EvidenceInventory:
+    runtime_root: Path
+    total_bytes: int
+    sessions: tuple[EvidenceItem, ...]
+
+@dataclass(frozen=True)
+class PurgePlan:
+    schema_version: Literal[1]
+    runtime_root: Path
+    selected: tuple[EvidenceItem, ...]
+    total_bytes: int
+    command: tuple[str, ...]
+
+class ActiveSessionError(RuntimeError): ...
+
+def create_session(paths: RuntimePaths, metadata: SessionMetadata) -> SessionPaths: ...
+
+class RawSessionWriter:
+    def __init__(self, path: Path, *, max_bytes: int, min_free_bytes: int) -> None: ...
+    def write(self, chunk: bytes) -> int: ...
+    def flush(self) -> None: ...
+    def close(self) -> None: ...
+
+def publish_run_metadata(paths: RuntimePaths, metadata: SessionMetadata) -> None: ...
+def publish_session_summary(paths: SessionPaths, summary: Mapping[str, JSONValue]) -> None: ...
+def inventory_evidence(paths: RuntimePaths) -> EvidenceInventory: ...
+def plan_purge(
+    paths: RuntimePaths,
+    *,
+    session_id: str | None = None,
+    before: datetime | None = None,
+) -> PurgePlan: ...
+def apply_purge(plan: PurgePlan) -> tuple[Path, ...]: ...
+
+class EmergencyStateFailure(RuntimeError): ...
+
+@dataclass(frozen=True)
+class FailureDisposition:
+    state_recorded: bool
+    emergency_path: Path | None
+    block_launch: bool
+
+def record_state_failure(
+    paths: RuntimePaths,
+    *,
+    site: str,
+    detail: str,
+    write_state_notice: Callable[[str, str], None],
+) -> FailureDisposition: ...
+def require_no_emergency_failure(paths: RuntimePaths) -> None: ...
+def acknowledge_emergency_failure(paths: RuntimePaths, *, state_valid: bool) -> Path: ...
+```
+
+All owned durable JSON formats carry `schema_version: 1`, use duplicate-key-safe bounded decoding, exact required key sets, UTC RFC 3339 timestamps, and reject unknown future versions. `SessionMetadata` encodes exactly `schema_version`, `run_id`, `session_id`, `agent`, `pid`, `process_start`, and `started_at`. `summary.json` encodes `schema_version`, `session_id`, `finished_at`, `returncode`, `signal`, `timed_out`, and `detail`; `detail` is nullable and bounded. Session-local normalized and metric JSONL records use the envelope `{"schema_version":1,"session_id":"...","payload":<bounded JSON value>}`. The root `events.jsonl` and `metrics.jsonl` are optional aggregate projections written only through a retention-lock-aware helper; session-local files are the canonical purge/log unit.
+
+`create_session()` rejects non-basename run/session IDs and creates `<runtime>/sessions/<session_id>/` without following symlinks. It publishes versioned `meta.json` before launch. `RawSessionWriter.write()` accepts bytes only, completes partial writes before returning, checks the session byte ceiling and filesystem free-space floor before each chunk, and makes accepted bytes observable before any caller decodes them. On a limit it raises `EvidenceLimitError` after preserving prior bytes; the supervisor records attention and terminates the producer without deleting evidence. `summary.json` is durable and never replaces raw evidence. Normal completion removes the owner's fleet entry, `run.json`, and named temporary files and releases/closes (but does not unlink) persistent lock files; it never removes a session directory, raw log, metadata, summary, normalized events, metrics, reports, or emergency archives.
+
+`inventory_evidence()` determines active sessions itself from the authoritative project `run.lock` plus versioned `run.json`; registry PID alone never marks activity. It tolerates vanished entries, returns deterministic session-id order, never follows symlinks, records directory device/inode identities, counts regular retained files only, and includes both session-local evidence and aggregate projection bytes. `plan_purge()` requires exactly one selector (`session_id` or timezone-aware UTC `before`), selects only whole eligible session directories, records their identities, and renders the exact re-runnable argv in `command`, ending in `--apply`. It mutates nothing.
+
+`apply_purge()` first acquires the project `run.lock` nonblocking; any live supervisor therefore refuses the whole purge. It then holds `retention_lock` across complete re-inventory, plan-identity comparison, aggregate JSONL filtering, descriptor-relative directory deletion, and directory fsync. Any changed identity or active run raises before deleting anything. Aggregate rewrites remove only versioned envelopes whose `session_id` is selected; malformed aggregate rows are preserved and reported, never guessed away. Every future raw/normalized/metric writer uses the same retention lock around publication. There is no timer, startup, shutdown, completion, or drain call to either purge function.
+
+`record_state_failure()` first invokes the injected sole-writer callback. If it succeeds, it returns `FailureDisposition(state_recorded=True, emergency_path=None, block_launch=True)`. If it fails, it atomically publishes `<runtime>/state-write-failed.json` with exact keys `schema_version`, `site`, `detail`, and `created_at`, mode `0o600`, and returns the artifact path with `block_launch=True`; it never starts a child. `require_no_emergency_failure()` is a mandatory pre-launch gate and raises `EmergencyStateFailure` while that artifact exists. `status` and `doctor` always surface its path and detail. `acknowledge_emergency_failure()` requires a successfully validated authoritative state (`state_valid=True` supplied only by the CLI after `StateStore.read()`), moves the artifact atomically to `reports/emergency-<UTC timestamp>.json`, fsyncs both directories, and is the only operation that re-enables launch. Details are bounded, and callers must not pass environment values.
+
+CLI additions in `src/ovcaq/cli.py`:
+
+```text
+ovcaq [--root PATH] [--json] status
+ovcaq [--root PATH] [--json] doctor
+ovcaq [--root PATH] [--json] doctor --acknowledge-emergency
+ovcaq [--root PATH] [--json] logs [--session ID] [--kind raw|normalized] [--follow]
+ovcaq [--root PATH] [--json] logs purge (--session ID | --before RFC3339) [--apply]
+```
+
+`status` JSON is the versioned object `{schema_version,state,run,evidence,attention}`; `state` is `available|missing|invalid`, `run` is `idle|active|inconsistent`, `evidence` contains `runtime_root`, `sessions`, `total_bytes`, `max_retained_bytes`, and `min_free_bytes`, and `attention` is null or the emergency artifact summary. `doctor` JSON is `{schema_version,ok,paths,capabilities,checks,purge_preview,attention}` with deterministic name-sorted arrays. `logs` JSON is `{schema_version,session_id,kind,path,size_bytes,active}`. Purge JSON is `{schema_version,applied,selected,total_bytes,command}`. Human output renders the same facts.
+
+`status` determines activity from `run.lock` plus matching versioned run metadata and process identity; registry-only evidence yields `inconsistent`, never active. `doctor` includes every `CapabilityResult`, resolved paths, writable/permission and budget checks, the exact purge preview/apply syntax, and emergency recovery. `doctor --acknowledge-emergency` is a mutation: it first validates state, archives the marker, and reports the archive path. `logs` selects `raw` or session-local `normalized`; default kind is `raw`, default session is the newest by metadata timestamp, and `--follow` is allowed only for human mode on an inactive or active regular file (Ctrl-C exits 130). JSON mode with `--follow` is a usage error. `logs purge` previews unless `--apply`; output includes selected paths, total bytes, and exact apply argv. Mutation/progress text remains stderr; requested data remains stdout; JSON failures retain `{ok:false,error:{code,message,path}}`. Readers reject future versions with a stable `runtime_format` error and report malformed current evidence without crashing status/doctor.
+
+## Data flow
+
+1. CLI and later supervisor code resolve a project root, merge runtime configuration, obtain a `RuntimePaths`, and run the capability probe before creating runtime artifacts.
+2. A supervisor runs the emergency and evidence-budget preflights, creates the secure layout, acquires `RunLock`, generates run/session IDs, computes its own `ProcessIdentity`, publishes versioned `run.json`, and atomically publishes its versioned `FleetEntry`. The lock remains authoritative if registry publication is missing or stale.
+3. `OwnedProcess.spawn()` creates a durable group anchor and places the agent in that dedicated process group. The returned stdout byte stream is copied into the bounded `RawSessionWriter` first; only after each successful raw write may later PRD 00006 code decode the same bytes into session-local normalized events and optional aggregate projections.
+4. `Watchdog` observes the exact owned process. Normal exit cancels it; timeout sends TERM then bounded KILL. SIGINT/TERM/HUP becomes a controlled exception and drives the same owned-group teardown.
+5. Completion publishes versioned `summary.json`, removes only the current registry entry and ephemeral run metadata/temp files, releases persistent lock descriptors, and closes the group anchor. All per-session evidence remains.
+6. `status`, `doctor`, and later TUI consumers read the shared lock/registry/session/state models. They expose missing or malformed observations without manufacturing lifecycle decisions.
+7. `logs purge` builds a deterministic no-write plan. Only explicit `--apply`, while holding both project and retention ownership, revalidates inactivity and identities before deleting selected session directories and their aggregate rows.
+
+## Reuse inventory
+
+- `src/ovcaq/paths.py:discover_project_root`, `_validated_runtime_path`, `_reject_symlink_components`, and `ensure_runtime_directory`: retain the installed arbitrary-cwd discovery, project containment, symlink-component rejection, and secure runtime-root creation; extend them into `RuntimePaths` rather than introducing a second path resolver. Greps used: `resolve|discover|lookup|find` plus `root|runtime|path`.
+- `src/ovcaq/config.py:_read_config`, `_table`, `_configured_path`, and `workflow_settings`: reuse bounded no-follow TOML loading and the existing user/project merge order; extract a shared merge helper if both workflow/runtime settings need it. Greps used: `read|load|parse|resolve` plus `config|settings|root`.
+- `src/ovcaq/state/store.py:StateStore._locked`, `_read_bytes`, `_publish`, `_replace_and_sync`, and durability boundaries: reuse their lock, bounded-read, restrictive temporary, replace, fsync, and ancestry-defense patterns by extracting a small private filesystem primitive only if doing so preserves state-store test coverage. Do not call the state store to publish non-state JSON. Greps used: `lock|flock`, `atomic|replace|fsync|temp`, and `permission|chmod`.
+- `src/ovcaq/workflow/_files.py:_ensure_directory_chain`, `_open_lifecycle_directory`, `_serialize_deferred_publication`, `_publish_record_file`, and identity verifiers: reuse the descriptor-relative anti-symlink and replace/revalidation approach for mutable registry/session artifacts; a shared private helper is preferable to copy-paste only when its ownership stays below both workflow and runtime. Greps used: `create|ensure|open|verify` plus `directory|ledger|artifact`.
+- `src/ovcaq/state/schema.py:decode_json`, `validate_json_value`, `validate_timestamp`, and shared size/depth limits: reuse bounded duplicate-key-safe JSON decoding and JSON-value validation for registry/session/summary reads. Greps used: `decode|parse|validate|check` plus `json|timestamp|limit`.
+- `src/ovcaq/cli.py:build_parser`, `command_inventory`, `_normalize_error`, `_write_json`, and `_emit_workflow`, plus `src/ovcaq/cli_io.py:_read_payload`: extend the single live parser and stable output/error surface. Greps used: `render|serialize|write`, `command|help|json`, and `read|load` plus `payload`.
+- `tests/characterization/current_system.toml` entries DEC-004..008, DEC-025..027, DEC-057..060 and the named legacy tests: port their observed behavior as characterization inputs, while deliberately replacing PID-only/regex orphan authority and automatic drained purge with the PRD's stronger contracts.
+- Nothing found for reusable runtime `RunLock`, `FleetRegistry`, `OwnedProcess`, `Watchdog`, `RawSessionWriter`, or retention/purge production classes: the target runtime modules are empty. Greps tried `lock|flock|fcntl`, `registry|pid|process_start`, `spawn|Popen|setsid|killpg`, `watchdog|deadline|grace`, and `raw|tee|session|evidence|retention|purge`; positive controls found the state store's `fcntl`, workflow durability helpers, and characterization inventory.
+
+## Alternatives considered
+
+1. Chosen: small provider-neutral runtime services with explicit value types and injected boundaries. This is larger than a direct port, but buys one lock/identity model for supervisor, CLI, and TUI; deterministic real-process tests; and seams for PRD 00006 decoders and PRD 00007 policy without circular ownership.
+2. Smallest diff: copy the legacy loop registry, watchdog thread, and shell/Bash process handling into `runtime/*`, then wrap them. Rejected because it preserves PID-only/regex liveness, duplicates discovery logic, keeps automatic purge behavior, and cannot guarantee `shell=False` or a single TUI/supervisor model.
+3. Use `psutil` for process identity and tree termination. Rejected for the personal macOS phase because it adds a runtime dependency where `fcntl`, process groups, `/proc`-free `ps` argv probes, and injected test doubles suffice. The public Linux PRD may revisit the identity backend behind `process_identity()` without changing callers.
+
+## Risks & edge cases
+
+- PID reuse between observation and mutation can delete or signal another process. Persistent mutation locks serialize registry and retention changes, and a live group anchor prevents PGID reuse through signaling; tests force replacement between check and action.
+- A child may fork a grandchild, exit, ignore TERM, or close stdout early. Group ownership is recorded at spawn, real-process tests cover grandchildren and TERM-ignoring children, and group identity is checked before KILL. No cleanup scans by executable name.
+- Lock files and registry/session paths can be symlinked or replaced concurrently. Open with no-follow flags where supported, compare descriptor/path device+inode, publish same-directory temporaries, fsync the containing directory, and fail closed when identity or durability cannot be proven.
+- Raw writes may be partial, invalid UTF-8, huge, or interrupted. The byte writer loops on partial writes, accepts no text, preserves invalid bytes, and leaves existing bytes intact on failure. Later decoding is downstream and cannot precede this write.
+- Evidence is retained indefinitely but resource use is bounded: session/project byte ceilings and a free-space floor block new production without silently deleting old data. Status/doctor expose the limit, current bytes, and exact purge command. The operator remains the human owner of retention and deletion.
+- Likely next changes are PRD 00006 attaching decoders/drivers to the raw stream, PRD 00007 composing these pieces into the supervisor decision loop, and PRD 00008 consuming registry/session facts in the TUI. Stable neutral types and dependency-direction tests prevent those consumers from adding provider parsing or duplicate liveness policy here.
+- Linux process identity and capability behavior arrive in PRD 00013. The interface permits a platform-specific identity backend, but this PRD claims passing support only on macOS.
+
+## Test strategy outline
+
+- Paths/config: table-driven precedence, XDG injection, arbitrary cwd, no marker, relative containment, explicit external root, `..`, symlink escape/replacement, invalid TOML/version/grace, and restrictive directory modes.
+- Run lock/registry: two real processes contend for the persistent `run.lock`; lock inode survives release; atomic publication failpoints; malformed/unreadable/future-version entries; dead PID; same PID/different start identity; fleet-lock forced replacement races; detach survival; registry failure leaves lock authority intact.
+- Process/watchdog/signals: real Python child and grandchild groups, including an agent leader that exits before its grandchild; anchor identity and teardown; stdin EOF; merged byte output; argv metacharacters prove no shell evaluation; TERM-handled, TERM-ignored then KILL, fast exit, zero timeout/grace, cancelled watchdog, SIGINT/TERM/HUP mappings, and an unrelated sentinel process that remains alive.
+- Sessions/raw evidence: `0o700` directories and `0o600` files under an adversarial umask; invalid UTF-8 and split writes round-trip byte-for-byte; metadata precedes launch; summary publication failure retains raw; detach/crash retains run/session facts; cleanup removes only the owner's ephemeral artifacts.
+- Retention: byte/free-space budget crossings preserve existing evidence and block production; deterministic inventory; vanished/symlink/nonregular entries; preview is side-effect-free; exact apply argv; session/cutoff selection; run-lock active refusal before any deletion; retention-lock identity changes and aggregate rewrites; successful deletion affects only selected session evidence; searches prove no automatic call to `apply_purge` from startup/completion/timer/drain paths.
+- CLI/packaging: human stdout/stderr and JSON envelopes for `status`, `doctor`, `logs`, and purge; help/docs generated from the parser; clean installed wheel from outside checkout; provider-neutral import/string guards; macOS capability integration; full `uv sync`, pytest, Ruff check/format, mypy, and wheel build.
+- Source coverage: each implementation task copies the exact P03-Txx acceptance and phase exit criteria, and final evidence maps all eleven IDs to tests or inspected artifacts.
+
+## Review log
+
+- non-blocker: `runtime/capability.py` is also planned for post-drain capability lifecycle in PRD 00007; consider renaming the platform-probe module then if the shared name becomes confusing.
+- dispatch 1 (codex): cardinal-sin 1, blocker 6, non-blocker 1, question 0
+- non-blocker: session-local normalized/metrics paths are predeclared before PRD 00006 supplies their writers, so PRD 00005 coverage may otherwise appear to promise more than it implements.
+- non-blocker: dispatch 1 retained counts and its unresolved non-blocker but not itemized titles for the resolved cardinal/blocker findings.
+- question: the configurable 16 GiB session, 128 GiB project, and 1 GiB free-space defaults are design-selected safety values, not PRD-pinned measurements.
+- dispatch 2 (claude): cardinal-sin 0, blocker 1, non-blocker 2, question 1
+- non-blocker: `_group_anchor.py` is required by the process contract but omitted from the module-placement list.
+- non-blocker: session-local normalized/metrics paths remain intentionally predeclared ahead of PRD 00006 writers.
+- question: `block_launch=True` after a successful state notice is an immediate caller-enforced stop; only the emergency artifact persists a failed-notice gate across restart.
+- dispatch 3 (claude): cardinal-sin 0, blocker 1, non-blocker 2, question 1

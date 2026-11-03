@@ -1,0 +1,53 @@
+[
+  {
+    "case": "real-process-rival-at-replace",
+    "error": "deferred lock identity changed: batch-deferred.json.lock",
+    "rival_exit": 0,
+    "rival_stdout": "committed second\n",
+    "before_retry": [
+      "first"
+    ],
+    "after_retry": [
+      "first"
+    ]
+  },
+  {
+    "case": "frontmatter-skip",
+    "returned_fields": {
+      "catchup_mode": "skip",
+      "design_mode": "skip",
+      "rework_cap": 2
+    },
+    "committed_catchup": {
+      "completed_at": null,
+      "head_sha": null
+    },
+    "resume": "build: catchup then planning",
+    "second_warnings": []
+  },
+  {
+    "case": "frontmatter-force",
+    "returned_fields": {
+      "catchup_mode": "force",
+      "design_mode": "skip",
+      "rework_cap": 2
+    },
+    "committed_catchup": {
+      "completed_at": "2026-09-05T10:00:00Z",
+      "head_sha": null
+    },
+    "resume": "skip catchup -> planning",
+    "second_warnings": []
+  },
+  {
+    "case": "missing-source-refusal",
+    "errors": [
+      "PRD is not present in wip or hold: 00004-workflow-core-v1.md",
+      "PRD artifact identity changed: /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r9-absent-source-zkmikx0q/prds/wip/00004-workflow-core-v1.md"
+    ],
+    "artifact": null,
+    "tasks": 1,
+    "restored_input_preserved": true,
+    "retry_state_bytes_preserved": true
+  }
+]

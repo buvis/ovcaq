@@ -1,0 +1,28 @@
+{
+  "attempt": 1,
+  "model": "sonnet",
+  "actual_model": "gpt-6.1-sol",
+  "actual_provider": "openai",
+  "actual_effort": "medium",
+  "implementor": "codex",
+  "pipeline": "lean",
+  "outcome": "completed",
+  "cause": null,
+  "review_cycle": 1,
+  "self_deslop": "skipped:test-only",
+  "style_gate": "fixed:d4ef489",
+  "split_hygiene": "clean",
+  "verification": "59 passed,2 warnings; two named fixture/projection files, exit0; same after style split",
+  "review": "Closure resolved; NO FINDINGS",
+  "review_evidence": "docs/dev/project-management/reviews/00009-cycle1-task29-pat.md",
+  "dispatch_ids": [
+    "597d0329",
+    "4b6e642c",
+    "688a517b"
+  ],
+  "implementation_commits": [
+    "14fcbe7",
+    "d4ef489"
+  ],
+  "assumptions": []
+}

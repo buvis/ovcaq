@@ -1,0 +1,66 @@
+diff --git a/tests/drivers/test_adapter_failure_classes.py b/tests/drivers/test_adapter_failure_classes.py
+index 8a863fc..6e2ae5d 100644
+--- a/tests/drivers/test_adapter_failure_classes.py
++++ b/tests/drivers/test_adapter_failure_classes.py
+@@ -60,6 +60,24 @@ def test_numeric_diagnostics_require_an_explicit_status_or_error_context(
+     assert classify_failure(template.format(code=code)) is expected
+ 
+ 
++@pytest.mark.parametrize(
++    ("detail", "expected"),
++    [
++        ("unexpected status 503 Service Unavailable", FailureClass.CONNECTIVITY),
++        ("unexpected status 502 Bad Gateway", FailureClass.CONNECTIVITY),
++        ("unexpected status 403 Forbidden", FailureClass.PERMISSION),
++        (
++            "exceeded retry limit, last status: 429 Too Many Requests",
++            FailureClass.RATE_LIMIT,
++        ),
++    ],
++)
++def test_explicit_bare_status_diagnostics_are_classified(
++    detail: str, expected: FailureClass
++) -> None:
++    assert classify_failure(detail) is expected
++
++
+ @pytest.mark.parametrize("code", ["401", "403", "429", "502", "503"])
+ @pytest.mark.parametrize(
+     "template",
+@@ -99,7 +117,7 @@ def test_numeric_diagnostics_require_a_complete_status_number(code: str) -> None
+     [
+         ("UnAuThOrIzEd", FailureClass.AUTHENTICATION),
+         ("Rate\tlimit reached", FailureClass.RATE_LIMIT),
+-        ("Authentication failed", FailureClass.AUTHENTICATION),
++        ("invalid credentials", FailureClass.AUTHENTICATION),
+     ],
+ )
+ def test_native_word_diagnostics_retain_case_and_whitespace_variants(
+@@ -108,11 +126,27 @@ def test_native_word_diagnostics_retain_case_and_whitespace_variants(
+     assert classify_failure(detail) is expected
+ 
+ 
++@pytest.mark.parametrize(
++    "detail", ["Authentication failed", "MCP server authentication failed"]
++)
++def test_generic_authentication_failure_messages_remain_unknown(detail: str) -> None:
++    assert classify_failure(detail) is FailureClass.UNKNOWN
++
++
+ @pytest.mark.parametrize(
+     ("detail", "expected"),
+     [
+         ("timeout; connection refused", FailureClass.CONNECTIVITY),
+         ("permission denied; not logged in", FailureClass.AUTHENTICATION),
++        ("not logged in; permission denied", FailureClass.AUTHENTICATION),
++        (
++            "unexpected status 403 Forbidden; not logged in",
++            FailureClass.AUTHENTICATION,
++        ),
++        (
++            "not logged in; unexpected status 403 Forbidden",
++            FailureClass.AUTHENTICATION,
++        ),
+     ],
+ )
+ def test_failure_precedence_is_independent_of_diagnostic_order(

@@ -1,0 +1,2 @@
+uv --cache-dir /private/tmp/ovcaq-uv-cache run pytest tests/runtime/test_supervisor_adapters.py tests/runtime/test_adapter_launch_routing.py -q
+exit 0; 8 passed, 2 warnings in 6.50s; approved ps-access retry after sandbox failure.

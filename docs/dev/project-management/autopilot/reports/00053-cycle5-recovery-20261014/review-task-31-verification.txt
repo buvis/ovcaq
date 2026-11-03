@@ -1,0 +1,4 @@
+Command: mise exec -- uv run pytest tests/runtime/test_adapter_health.py -k uses_default_search_path_when_host_path_is_absent -q --tb=line
+Exit: 0
+Runner summary: 2 passed, 22 deselected, 2 warnings in 1.06s
+Warnings concern pytest temporary-directory cleanup. Executed once by the isolated worker; raw output retained in its rollout.

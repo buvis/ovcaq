@@ -1,0 +1,10 @@
+{
+  "name": "[C2] Make owner cleanup observable and retryable (M)",
+  "description": "Preserve ownership mismatch refusal while distinguishing I/O failure and permitting safe retry after partial ephemeral-record cleanup.\n\nDisposition: deferred at cycle/cap 2/2. Review evidence only; no automatic repair dispatch is authorized by this task record. Keep it unstarted for operator/batch-end triage.\nSource review: dev/local/reviews/00005-runtime-substrate-v1-review-02.md\n\n### Findings (verbatim)\n[BOB] 🟡 `cleanup_run_records` turns every OSError, ValueError and TypeError into `False`. A caller cannot tell \"record belongs to another run\" from \"unlink or fsync failed\", and the cause is lost. | File: src/ovcaq/runtime/session.py:370 | Task: 19\n[BOB] ⚪ `cleanup_run_records` removes the fleet entry before `run.json`. If that unlink fails, or the entry is already gone, `remove()` returns False on every retry. `run.json` is then stranded and `status` stays inconsistent until the next run overwrites it. | File: src/ovcaq/runtime/session.py:361 | Task: 19\n\nAcceptance criteria:\n- [ ] Resolve every linked finding against PRD 00005 and its accepted source contracts.\n- [ ] Preserve single state writer, provider-neutral boundaries, owned-process signaling, and retained evidence.\n- [ ] Add only meaningful regression coverage and run the applicable quality gates when repair is authorized.\n\nFinding IDs: C2F16, C2F28",
+  "review_cycle": 2,
+  "finding_ids": [
+    "C2F16",
+    "C2F28"
+  ],
+  "deferred_at_cap": true
+}

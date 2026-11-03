@@ -1,0 +1,1 @@
+Original-boundary and reconstructed-token inputs are redacted exactly; deep JSON preserves native delegation. All original cases remain unchanged.

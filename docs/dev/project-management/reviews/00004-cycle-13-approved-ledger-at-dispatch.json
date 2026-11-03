@@ -1,0 +1,75 @@
+[
+  {
+    "cycle": 12,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "F4: reports.publish_report has no production caller; workflow_cli reaches into the module-private reports._publish_report instead",
+    "file": "src/ovcaq/workflow/reports.py:676",
+    "reason": "The R10 repair explicitly retains the public Path-returning publish_report contract while CLI consumes complete composed text from the shared publication. Both paths have callers; removal/renaming offers no required simplification."
+  },
+  {
+    "cycle": 12,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "K1: A ledger written past the reader's depth limit by a pre-fix build stays unreadable and unappendable; the repair is prospective only",
+    "file": "src/ovcaq/workflow/_files.py:82",
+    "reason": "Fresh-state one-way extraction explicitly excludes an importer or historical corrupt-ledger repair."
+  },
+  {
+    "cycle": 12,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "K2: render report requires runtime_root to already exist while defer now creates its chain",
+    "file": "src/ovcaq/workflow/reports.py:507",
+    "reason": "Render requires an existing configured runtime root and fails loudly; no accepted clause requires render to provision it."
+  },
+  {
+    "cycle": 12,
+    "disposition": "settled-deferral",
+    "severity": "medium",
+    "issue": "R8-K1: inherited config-collision test retains the mechanically flagged either-or assertion",
+    "file": "tests/state/test_cli.py:372",
+    "reason": "Inherited collision assertion is a settled exception; broad state-test restructuring excluded."
+  },
+  {
+    "cycle": 12,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "R8-K2: inherited 53-line add_task and three unchanged packaging functions exceed R12",
+    "file": "src/ovcaq/state/commands.py:148",
+    "reason": "Inherited function-size exceptions are settled; retain existing API and test boundaries."
+  },
+  {
+    "cycle": 12,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "R9-K3: inherited state schema remains 933 lines, over R13",
+    "file": "src/ovcaq/state/schema.py:1",
+    "reason": "Inherited schema-size exception is settled; broad state restructuring excluded."
+  },
+  {
+    "cycle": 12,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "R9-K4: universal implementation-base fail-first binding remains unproven; this cycle's replay was skipped outright (worktree creation denied)",
+    "file": "N/A",
+    "reason": "Universal full-base fail-first binding remains unproven; current replay collection fails on missing packaging_support. Retain narrower chronological regressions."
+  },
+  {
+    "cycle": 13,
+    "disposition": "discarded",
+    "severity": "high",
+    "issue": "`check-plan` exposes an unspecified `--ceiling` override, letting callers bypass the fixed 15-task plan-size policy with a large value and accepting nonsensical negative ceilings instead of rejecting invalid input",
+    "file": "src/ovcaq/workflow_cli.py",
+    "reason": "Withdrawn by Blake: frozen source inventory TEST-012 explicitly requires override semantics, and CMD-012/DEC-071/TEST-012 migrate under PRD 00004. No positive-only domain or fixed non-overridable policy is specified."
+  },
+  {
+    "cycle": 13,
+    "attempt": "20260913-resumed",
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "`workflow check-plan` exposes an extra `--ceiling` option absent from the specified command and accepts zero or negative values, allowing a valid empty plan to be rejected as oversized",
+    "file": "src/ovcaq/workflow_cli.py:88",
+    "reason": "Blake retracted after verifying TEST-012 requires override semantics/CLI exposure and DEC-071 specifies no positive-only domain. Mandatory migration assigns these source rows to PRD 00004/P02-T04."
+  }
+]

@@ -1,0 +1,38 @@
+....................F................................................... [ 74%]
+FF.......................                                                [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert 'BeforeEDACTED] After' == 'Before[REDACTED] After'
+      
+      - Before[REDACTED] After
+      ?       --
+      + BeforeEDACTED] After
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_codex_detail_safety.py:140: AssertionError: assert 'BeforeEDACTED] After' == 'Before[REDACTED] After'
+E   AssertionError: assert 'BeforeEDACTED] After' == 'Before[REDACTED] After'
+      
+      - Before[REDACTED] After
+      ?       --
+      + BeforeEDACTED] After
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_codex_detail_safety.py:112: AssertionError: assert 'BeforeEDACTED] After' == 'Before[REDACTED] After'
+E   AssertionError: assert 'BeforeEDACTED] After' == 'Before[REDACTED] After'
+      
+      - Before[REDACTED] After
+      ?       --
+      + BeforeEDACTED] After
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_codex_detail_safety.py:112: AssertionError: assert 'BeforeEDACTED] After' == 'Before[REDACTED] After'
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-ac85e4f3-fc22-40db-aab0-78e0972f2b68
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-ac85e4f3-fc22-40db-aab0-78e0972f2b68'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-eb5fdc34-659b-4aef-a3f0-b476c4c6a026
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-eb5fdc34-659b-4aef-a3f0-b476c4c6a026'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/drivers/test_codex_detail_safety.py::test_bounded_detail_redacts_control_boundaries_and_reconstructed_credentials[bare-boundary-1b]
+FAILED tests/drivers/test_codex_detail_safety.py::test_native_failure_saves_redaction_at_control_boundaries_and_inside_credentials[bare-boundary-1b-error]
+FAILED tests/drivers/test_codex_detail_safety.py::test_native_failure_saves_redaction_at_control_boundaries_and_inside_credentials[bare-boundary-1b-turn.failed]
+3 failed, 94 passed, 2 warnings in 0.35s

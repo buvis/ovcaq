@@ -1,0 +1,1 @@
+Test-only rework. Split main only, preserve scenarios/status/emissions and assertions. Read only fake launcher relevant functions and main ranges; no broad files. Regression two named testfiles read-only; process ps requires approval. No state/commits. Tool timeout unavailable, use yield_time_ms.

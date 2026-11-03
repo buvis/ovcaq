@@ -1,0 +1,110 @@
+{
+  "product_sha": "e90ce6bea414a775b008d5098b746a2e44dee3ef",
+  "review_cycle": 1,
+  "regression_fix_cycles": 1,
+  "initial_pytest": {
+    "passed": 4458,
+    "failed": 44,
+    "errors": 76
+  },
+  "final_pytest_summary": "4579 passed, 2 warnings in 160.54s (0:02:40)",
+  "commands": [
+    {
+      "command": [
+        "uv",
+        "sync",
+        "--all-groups"
+      ],
+      "exit": 0,
+      "timeout_seconds": 300,
+      "sha": "cce42f8159797c60527bcfcbae3f30d6fe76dfc6",
+      "log": "docs/dev/tmp/rfinal-sync.log"
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "pytest",
+        "-q",
+        "--tb=short"
+      ],
+      "exit": 1,
+      "timeout_seconds": 600,
+      "sha": "cce42f8159797c60527bcfcbae3f30d6fe76dfc6",
+      "log": "docs/dev/tmp/rfinal-pytest.log"
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "ruff",
+        "check",
+        "."
+      ],
+      "exit": 1,
+      "timeout_seconds": 300,
+      "sha": "cce42f8159797c60527bcfcbae3f30d6fe76dfc6",
+      "log": "docs/dev/tmp/rfinal-ruff.log"
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "ruff",
+        "format",
+        "--check",
+        "."
+      ],
+      "exit": 1,
+      "timeout_seconds": 300,
+      "sha": "cce42f8159797c60527bcfcbae3f30d6fe76dfc6",
+      "log": "docs/dev/tmp/rfinal-format.log"
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "mypy",
+        "src/ovcaq"
+      ],
+      "exit": 0,
+      "timeout_seconds": 300,
+      "sha": "cce42f8159797c60527bcfcbae3f30d6fe76dfc6",
+      "log": "docs/dev/tmp/rfinal-mypy.log"
+    },
+    {
+      "command": [
+        "uv",
+        "build"
+      ],
+      "exit": 0,
+      "timeout_seconds": 600,
+      "sha": "cce42f8159797c60527bcfcbae3f30d6fe76dfc6",
+      "log": "docs/dev/tmp/rfinal-build.log"
+    },
+    {
+      "command": "uv run pytest -q --tb=short",
+      "exit": 0,
+      "sha": "e90ce6bea414a775b008d5098b746a2e44dee3ef",
+      "log": "docs/dev/tmp/rfinal-cycle1-pytest.log"
+    },
+    {
+      "command": "uv run ruff check .",
+      "exit": 0,
+      "sha": "e90ce6bea414a775b008d5098b746a2e44dee3ef",
+      "log": "docs/dev/tmp/rfinal-cycle1-ruff.log"
+    },
+    {
+      "command": "uv run ruff format --check .",
+      "exit": 0,
+      "sha": "e90ce6bea414a775b008d5098b746a2e44dee3ef",
+      "log": "docs/dev/tmp/rfinal-cycle1-format.log"
+    }
+  ],
+  "extra_type_check": {
+    "command": "uv run mypy src/ovcaq",
+    "exit": 0,
+    "context": "after task 2 observation error-boundary fix",
+    "log": "docs/dev/tmp/rfinal-task2-mypy.log"
+  }
+}

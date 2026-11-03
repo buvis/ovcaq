@@ -1,0 +1,172 @@
+Abort and report if you read more than 100K of total input. Return the partial result and an abort_reason: context_overrun field.
+A diff has been written to satisfy this task. The implementation passed its
+tests. Your job: prune slop from the diff while keeping every test green.
+This is best-effort cleanup, not a correctness rework — do not change
+behavior, do not modify tests, do not refactor.
+
+Task: [D1] src/ovcaq/
+
+Description:
+Source review: docs/dev/project-management/reviews/00051-triage-a-single-valid-codex-record-can-crash-th-v1-review-1.md
+
+Disposition and bounded acceptance:
+Review-cycle correction: the transmitted original strip-first recipe lost original regex word boundaries. This is a specification gap, not a capability failure. Preserve original-token redaction AND redact reconstructed tokens after removing the unchanged recognized controls, then cap to 4096. A bounded candidate is sanitize original detail, remove the existing controls, sanitize the full cleaned result, then truncate. Preserve classification/reset extraction from untouched full native text, all existing cap/control/Unicode regressions, and public signatures. Amend the design with a review-1 contract correction citing R5; retain its historical recipe/review evidence rather than erase it. Independently test C0/DEL/lone-ESC boundary destruction for bare tokens and Bearer values through helper and actual native normalized payloads/JSONL, plus original R2 control-split cap cases. Never weaken shared sanitizer boundaries or expand recognized control forms.
+
+R4 scan optimization must preserve original full-container scalar validation before redaction, valid non-BMP scalars and subclass handling. Avoid bypassing sanitize_json in a caller not already fully checked. A precompiled surrogate regex is sufficient if eliminating repeated validation risks the contract.
+
+R7 needs an independent native-parser reason/adapter-state assertion for a bounded deeply nested JSON frame that raises RecursionError in the preflight. R8 must preserve tolerant validation/decode handling and fatal publication boundaries; helper extraction inside the current catch is acceptable, literal hoisting that widens escaping failures is not.
+
+Acceptance: every quoted finding is resolved without scope expansion, all original source R7/R2 regressions remain pinned, and focused events/detail tests pass. Do not add cyclic-container guards or TUI changes. Keep the witnessed out-of-scope limitations in the review ledger.
+
+### Findings (verbatim)
+- ⚪ src/ovcaq/events/model.py:224: Hot-path scan cost. `_payload` scans the whole payload at line 224, then `sanitize_json` scans it again at line 252, and `_usage_payload` scans again through `sanitize_json`. Each scan uses a per-character Python generator: about 22 ms per MiB, against about 2.5 ms for a precompiled `re.compile("[\ud800-\udfff]").search`. Every frame also gets re-validated by `replace()` in `_bind_observations` and by `observation_record` in the writer. Behavior-preserving fix: use the regex in the predicate, and call `_sanitize_json` inside `_payload` and `_usage_payload` once the up-front check has passed (found by: ALICE, BOB)
+- 🟠 src/ovcaq/drivers/codex_events.py:64: Removing controls before redaction now leaks tokens that the old order caught. When a bare C0 control, DEL or lone ESC sits between a word character and a token, removal glues them together: `"x\x00sk-" + "a"*30` becomes `xsk-aaaa…` and `"auth\x00Bearer " + "a"*26` becomes `authBearer …`. `_LIKELY_SECRET` needs `\b` before `sk-`/`Bearer`, so neither `bounded_detail` nor the Observation's second sanitizer redacts them. The old order redacted both, because the control supplied the word boundary. Confirmed by tracing the regex by hand; not executed (read-only sandbox) (found by: BOB)
+- 🟡 src/ovcaq/events/tail.py:119: The preflight's `except (ValueError, RecursionError)` branch, which hands the frame to the driver, has no test. No RawFirstDecoder test feeds a deeply nested frame. Narrowing it to `except ValueError` would still pass the suite: deep frames would then get "driver failed to decode frame" instead of the driver's own native gap, against the contract's "ValueError or RecursionError → delegate unchanged" (found by: BOB)
+- 🟡 src/ovcaq/events/tail.py:116: The preflight parse and scan sit inside the tolerant driver catch, so the try blocks nest 4 levels deep (the limit). Hoist the `json.loads` try and the scalar check above it and wrap only `tuple(self._driver.decode(frame))` in `except Exception`. This also matches the contract's "consume decode under the existing tolerant catch" (found by: BOB)
+
+
+Acceptance criteria:
+Every in-scope quoted finding resolved without scope expansion
+
+Tests that the diff made pass (do NOT modify):
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_codex_detail_safety.py, /Users/bob/git/src/github.com/buvis/ovcaq/tests/events/test_unicode_frames.py
+
+Files in the diff:
+CHANGELOG.md
+docs/dev/project-management/designs/00051-triage-a-single-valid-codex-record-can-crash-th-v1-design.md
+src/ovcaq/drivers/codex_events.py
+src/ovcaq/events/model.py
+src/ovcaq/events/tail.py
+
+
+Procedure:
+
+1. Read the diff for each file in scope (`git diff HEAD~1..HEAD <file>` or
+   equivalent in your environment).
+2. For each line, block, helper, comment or docstring added in the
+   diff, ask:
+     "Does this trace to a failing test, an acceptance criterion, or
+     existing-behavior preservation?"
+   If the answer is no, mark the construct for removal.
+3. Apply removals one at a time. After each individual removal, re-run the
+   tests listed above (the narrow set Tess wrote). If any test fails,
+   restore that single removal and move on to the next candidate. Never
+   delete the test that fails — the test is authoritative.
+4. If no removal survived its test re-run, exit WITHOUT committing. Return
+   the literal string "no slop found" so the caller can record a noop.
+5. If at least one removal survived, commit with message:
+     chore: prune slop from [D1] src/ovcaq/
+   No CHANGELOG entry. No HEREDOC. No Co-Authored-By trailer. One commit
+   only — do not split into multiple cleanup commits.
+
+Rules:
+
+- **Do not modify tests.** If a test reads as weak, that is the per-task
+  reviewer's call (step 5.7), not yours. Leave it. Dead bindings a split left
+  behind in a test file are not yours either: `check_split_hygiene.py` answers
+  that mechanically at the task boundary (step 5.65), with `ast` rather than
+  judgment, so you never have to guess which test binding is safe to drop.
+- **Do not change behavior.** Tests prove behavior; if you cannot satisfy
+  the tests, the deletion is wrong. Restore.
+- **Do not refactor.** This pass deletes; it does not move code around,
+  rename symbols, or extract helpers. If a slop pattern would only resolve
+  through restructuring, note it in the return message instead of acting.
+- **Do not touch files outside the diff.** The cleanup is scoped to what
+  the implementor just produced. Adjacent slop in untouched files is out
+  of scope here — the post-session codex pass catches it separately.
+
+Slop patterns to look for (catalog inlined from `prompts/de-sloppify.md`):
+
+
+### 1. Language/framework verification tests
+
+Tests that only prove the runtime or framework works, not the project's behavior.
+
+### 2. Weak or tautological tests
+
+Replace existence checks, mock-confirming tests, self-referential assertions, and unexplained magic assertions with behavior-focused assertions. If an important boundary or failure case is missing, add the smallest useful test.
+
+### 3. Redundant type checks
+
+Remove runtime checks that duplicate compile-time guarantees, except at system boundaries.
+
+### 4. Impossible-state error handling
+
+Remove defensive handling for states that cannot occur from the current control flow. Keep validation and error handling at boundaries.
+
+### 5. Swallowed errors and empty catch blocks
+
+Do not hide failures. Re-throw, surface, or handle them meaningfully.
+
+### 6. Debug statements
+
+Remove development-only prints and logs.
+
+### 7. Commented-out code
+
+Delete dead code kept in comments.
+
+### 8. Obvious comments
+
+Remove comments that restate the code. Keep comments that explain intent, constraints, workarounds, or why.
+
+### 9. Over-abstraction and unnecessary indirection
+
+Inline abstractions that have only one consumer and no current testability or architectural value.
+
+### 10. Duplicate code
+
+Reuse existing code or standard library helpers instead of introducing parallel logic.
+
+### 11. Suspicious dependencies
+
+Verify any newly added dependency exists, is used, and is justified. Remove hallucinated, unused, or speculative dependencies.
+
+### 12. Hardcoded secrets and placeholder credentials
+
+Replace with environment variables, secret storage, or project-approved configuration.
+
+### 13. Deprecated APIs and outdated patterns
+
+Modernize only when the newer approach is already supported by the project and the change stays in scope.
+
+### 14. Naive performance patterns
+
+Fix only if the code is on a hot path or clearly scales poorly with input size.
+
+### 15. Leftover artifacts
+
+Remove temp files, scratch scripts, backup files, unrelated lockfile churn, and agent-generated planning docs.
+
+### 16. AI-style docstrings
+
+Remove multi-paragraph docstrings on trivial functions. Remove docstrings that paraphrase the function name or restate its arguments — when the function is well-named, the docstring is noise. Remove "this function does X by calling Y" preambles that describe implementation rather than contract. Keep docstrings that capture non-obvious intent, invariants, or constraints.
+
+### 17. Trivial-type validation
+
+Remove runtime type guards, JSON schemas, or pydantic models that duplicate compile-time guarantees in a fully-typed file. Examples: `isinstance(x, int)` inside a function whose signature is `x: int`; a pydantic model declared for a function-internal dict whose shape is already pinned by the caller's types. Keep validation at real system boundaries (request bodies, file inputs, external API responses).
+
+### 18. Single-instantiation factories
+
+Inline factory functions, builders, or wrapper classes called from exactly one place where direct construction reads more clearly. A factory pattern only earns its complexity when multiple call sites benefit; before there are multiple call sites, the abstraction is speculative.
+
+### 19. Speculative configuration
+
+Remove config flags, env vars, options parameters that have exactly one used value across the codebase. Configuration is a contract with future readers — exposing one without a current consumer adds maintenance burden for no benefit.
+
+### 20. Restating comments
+
+Remove comments that say what the next line of code already says. Examples: `// increment counter` above `counter += 1`; `# parse the response` above `data = json.loads(raw)`. Keep comments that explain non-obvious why (invariants, workarounds, constraints).
+
+### 21. Framework-verification tests
+
+A more explicit subsection of #2. Remove tests asserting only "import works", "function exists", "method returns truthy" without exercising business logic. Remove mock-confirming tests (the only assertion is `mock.assert_called_with(...)`). Remove snapshot tests where the shape itself is not the contract — they catch any change, including correct ones. Keep behavior assertions that fail when business logic changes.
+
+
+Return one of:
+  - "no slop found" — exited without commit, nothing to clean.
+  - "committed {sha}" — committed `chore: prune slop from ...` at {sha},
+    test suite green.
+  - "errored: {short reason}" — dispatch problem; do not commit, just
+    explain so the caller can record the failure.
+Task 6 only; read changed hunks first, each file under 100K combined. No full suite, run only named tests -q --tb=line. Preserve required historical design evidence. UV_CACHE_DIR=/private/tmp/ovcaq-rework-uv-cache. No workflow state changes.

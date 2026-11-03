@@ -1,0 +1,16 @@
+{
+  "attempt": 1,
+  "model": "sonnet",
+  "outcome": "completed",
+  "review_cycle": 3,
+  "cause": null,
+  "implementor": "codex",
+  "actual_model": "gpt-6.1-sol",
+  "actual_provider": "openai",
+  "preflight_outcome": null,
+  "pipeline": "lean",
+  "red_check": "n/a:docs-only-task",
+  "self_deslop": "skipped:trivial",
+  "style_gate": "clean",
+  "split_hygiene": "skipped:no-tests"
+}

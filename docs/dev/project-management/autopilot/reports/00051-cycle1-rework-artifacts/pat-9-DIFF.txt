@@ -1,0 +1,37 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 16a5250..b6d25be 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -42,9 +42,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+ 
+ - **drivers**: redact diagnostic credentials both before and after terminal control removal, preserving original token boundaries and hiding reconstructed tokens before truncation.
+ - **events**: speed up surrogate detection while preserving original-container validation and tolerant native preflight handling.
+-- **runtime**: continue supervised sessions after native Unicode gaps while propagating normalized gap publication failures and cleaning up the live child.
+ - **drivers**: remove terminal controls before redacting and bounding Codex diagnostic details so split credentials cannot survive normalization.
+-- **events**: retain native JSON frames containing invalid Unicode scalars as raw gaps before adapter state can change.
++- **events**: retain native JSON frames containing invalid Unicode scalars as raw gaps before adapter state can change, allowing supervised sessions to continue while genuine normalized publication failures still propagate and trigger owned-child cleanup.
+ - **events**: reject surrogate code points in shared observation and summary text before redaction or truncation while preserving valid Unicode scalars.
+ - **cli**: reject unhealthy adapters before foreground agent execution using sanitized health diagnostics.
+ - **tui**: show bounded normalized tool, message and plan activity alongside selected-session lanes with literal markup.
+diff --git a/docs/driver-protocol.md b/docs/driver-protocol.md
+index fd4fcb5..b4e99f9 100644
+--- a/docs/driver-protocol.md
++++ b/docs/driver-protocol.md
+@@ -221,10 +221,13 @@ Tool failure requires native failure/decline status, explicit native error or
+ nonzero command exit. Ordinary command output is not provider-health evidence.
+ File detail summarizes paths and change kinds; MCP and web detail is sanitized
+ and bounded to 4096 characters, rather than retained as wholesale results.
+-Codex diagnostic details processed by `bounded_detail` remove terminal controls
+-before credential redaction and the 4096-character bound. This order prevents
+-controls inside a credential from hiding it from redaction or exposing a secret
+-prefix at the truncation boundary.
++Codex diagnostic details processed by `bounded_detail` redact credentials before
++and after removing recognized C0 controls (except tab, LF and CR), DEL and 7-bit
++CSI sequences, then apply the 4096-character bound. Lone ESC is masked as a
++removable control before redaction so a new redaction marker cannot become CSI.
++This preserves original credential boundaries and redacts tokens reconstructed
++by those recognized forms before truncation. Broader display-time character
++removal is outside this diagnostic-helper contract.
+ 
+ Collaboration requires `agents_states` keys matching native receiver thread
+ IDs. Pending/running receivers start or progress a lane, completed receivers

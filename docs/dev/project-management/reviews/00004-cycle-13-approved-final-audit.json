@@ -1,0 +1,19 @@
+{
+  "schema": "pass",
+  "task_counts": "13/16",
+  "review_shape": "pass",
+  "host_rubrics_and_receipt": "pass",
+  "contract_card": "matches CLI-normalized content; initial exact-newline comparison corrected",
+  "phase": "paused",
+  "next_phase": "paused",
+  "cycle": 13,
+  "cap": 2,
+  "original_tasks_preserved": true,
+  "batch_preserved": true,
+  "original_reviewed_head_unchanged": true,
+  "tracked_worktree": "clean",
+  "bob_helper_exit": 0,
+  "carl_exit": 3,
+  "watcher": "DONE",
+  "all_agents_terminal": true
+}

@@ -1,0 +1,2 @@
+### Findings (verbatim)
+- 🟡 tests/runtime/test_adapter_health.py:263: The "fixture" case in `test_claude_probe_keeps_empty_host_path_unhealthy` puts the executable in tmp_path/bin while the working directory is tmp_path. It cannot tell the conservative empty-PATH handling apart from a current-directory search. Put the executable in the working directory to pin the choice (found by: ALICE, BOB)

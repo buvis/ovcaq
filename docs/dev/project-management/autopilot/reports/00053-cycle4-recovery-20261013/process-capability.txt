@@ -1,0 +1,4 @@
+ps -p $$ -o pid=,ppid=,pgid=,command=
+Default tool permissions: exit 126, /bin/ps: Operation not permitted
+require_escalated retry: exit 126, /bin/ps: Operation not permitted
+Full suite default and escalated retries both fail launching ps in tests/drivers/test_claude_process.py.

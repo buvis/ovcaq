@@ -1,0 +1,10 @@
+{
+  "command": [
+    "uv",
+    "build",
+    "--out-dir",
+    "docs/dev/tmp/00053-cycle4-build"
+  ],
+  "exit": 0,
+  "elapsed_s": 0.94
+}

@@ -1,0 +1,30 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_incomplete_lifecycle_commands_fail_with_json_usage_errors[run-requires-no-tui] _
+tests/runtime/test_supervisor_cli.py:157: in test_incomplete_lifecycle_commands_fail_with_json_usage_errors
+    assert required_argument in failure["error"]["message"].lower()
+E   assert '--no-tui' in "usage: ovcaq [-h] [--root path] [--json]\n             {init,state,workflow,status,doctor,logs} ...\novcaq: error: argument command: invalid choice: 'run' (choose from init, state, workflow, status, doctor, logs)"
+E    +  where "usage: ovcaq [-h] [--root path] [--json]\n             {init,state,workflow,status,doctor,logs} ...\novcaq: error: argument command: invalid choice: 'run' (choose from init, state, workflow, status, doctor, logs)" = <built-in method lower of str object at 0x108f86630>()
+E    +    where <built-in method lower of str object at 0x108f86630> = "usage: ovcaq [-h] [--root PATH] [--json]\n             {init,state,workflow,status,doctor,logs} ...\novcaq: error: argument command: invalid choice: 'run' (choose from init, state, workflow, status, doctor, logs)".lower
+_ test_incomplete_lifecycle_commands_fail_with_json_usage_errors[capability-retry-requires-name] _
+tests/runtime/test_supervisor_cli.py:157: in test_incomplete_lifecycle_commands_fail_with_json_usage_errors
+    assert required_argument in failure["error"]["message"].lower()
+E   assert 'name' in "usage: ovcaq [-h] [--root path] [--json]\n             {init,state,workflow,status,doctor,logs} ...\novcaq: error: argument command: invalid choice: 'capability' (choose from init, state, workflow, status, doctor, logs)"
+E    +  where "usage: ovcaq [-h] [--root path] [--json]\n             {init,state,workflow,status,doctor,logs} ...\novcaq: error: argument command: invalid choice: 'capability' (choose from init, state, workflow, status, doctor, logs)" = <built-in method lower of str object at 0x1090056b0>()
+E    +    where <built-in method lower of str object at 0x1090056b0> = "usage: ovcaq [-h] [--root PATH] [--json]\n             {init,state,workflow,status,doctor,logs} ...\novcaq: error: argument command: invalid choice: 'capability' (choose from init, state, workflow, status, doctor, logs)".lower
+=============================== warnings summary ===============================
+../../../Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-26c66270-dd86-4aed-827d-ce60f0e17608
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-26c66270-dd86-4aed-827d-ce60f0e17608'
+    warnings.warn(
+
+../../../Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-5f316d1a-fc81-430f-b96b-6648a3248f97
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-5f316d1a-fc81-430f-b96b-6648a3248f97'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/runtime/test_supervisor_cli.py::test_incomplete_lifecycle_commands_fail_with_json_usage_errors[run-requires-no-tui]
+FAILED tests/runtime/test_supervisor_cli.py::test_incomplete_lifecycle_commands_fail_with_json_usage_errors[capability-retry-requires-name]
+2 failed, 2 warnings in 0.09s

@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "python3",
+    "/Users/bob/.claude/plugins/cache/buvis-plugins/autopilot/0.6.0/skills/review-work-completion/scripts/replay_tests_against_base.py",
+    "--base",
+    "bbe7d521321428b670d15c4ede00e31792a61e1c",
+    "--cmd",
+    "env PYTHONPATH=src /Users/bob/git/src/github.com/buvis/ovcaq/.venv/bin/python -m pytest",
+    "--timeout",
+    "300"
+  ],
+  "exit": 0
+}

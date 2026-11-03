@@ -1,0 +1,162 @@
+[
+  {
+    "task": "23",
+    "role": "read_only_task_review",
+    "model": "claude-sonnet-5-5",
+    "provider": "anthropic",
+    "requested_effort": "high",
+    "path": "docs/dev/project-management/autopilot/reviewer-sessions/841d372a-ed14-4f24-93ea-9a68b9725205.jsonl",
+    "line": 21,
+    "sha256": "35cacd9fde2fff7535959738a3b5b40837bc52dfb9eefa7a656a219471bd0ed4"
+  },
+  {
+    "task": "23",
+    "role": "read_only_task_review",
+    "model": "claude-sonnet-5-5",
+    "provider": "anthropic",
+    "requested_effort": "high",
+    "path": "docs/dev/project-management/autopilot/reviewer-sessions/841d372a-ed14-4f24-93ea-9a68b9725205.jsonl",
+    "line": 22,
+    "sha256": "73a341dea3d0ac095c66f6e6822d5b2115eb88175e79ce8f404f88076c2b3227"
+  },
+  {
+    "task": "24",
+    "role": "read_only_task_review",
+    "model": "claude-sonnet-5-5",
+    "provider": "anthropic",
+    "requested_effort": "high",
+    "path": "docs/dev/project-management/autopilot/reviewer-sessions/8c1eef7d-a89e-4979-a8ee-51ef054b123d.jsonl",
+    "line": 20,
+    "sha256": "fe51e3e4468bf6ce44466afe8d0e80f871d3907521cffffc20989996e806fc00"
+  },
+  {
+    "task": "24",
+    "role": "read_only_task_review",
+    "model": "claude-sonnet-5-5",
+    "provider": "anthropic",
+    "requested_effort": "high",
+    "path": "docs/dev/project-management/autopilot/reviewer-sessions/8c1eef7d-a89e-4979-a8ee-51ef054b123d.jsonl",
+    "line": 21,
+    "sha256": "e4e0267d85a746bae163c8b16f5eb667fabe9288a08a99a2d5b531656703262d"
+  },
+  {
+    "task": "27",
+    "role": "read_only_task_review",
+    "model": "claude-sonnet-5-5",
+    "provider": "anthropic",
+    "requested_effort": "high",
+    "path": "docs/dev/project-management/autopilot/reviewer-sessions/108f27c8-a5dc-4ef9-9cf7-5ac9eaa14987.jsonl",
+    "line": 20,
+    "sha256": "4b1c7a0e4ee0d52f77790d6555a0341dbd6cac266b7c579dffd48756cede4735"
+  },
+  {
+    "task": "28",
+    "role": "read_only_task_review",
+    "model": "claude-sonnet-5-5",
+    "provider": "anthropic",
+    "requested_effort": "high",
+    "path": "docs/dev/project-management/autopilot/reviewer-sessions/0eb357d2-4dc0-4e9e-b42b-eeb5c5a36edc.jsonl",
+    "line": 20,
+    "sha256": "4c7f9bb95f68e5ef5389d73bb5f6ab5badb4f50ca9b9bdfbe1dcb061f09e0258"
+  },
+  {
+    "task": "28",
+    "role": "read_only_task_review",
+    "model": "claude-sonnet-5-5",
+    "provider": "anthropic",
+    "requested_effort": "high",
+    "path": "docs/dev/project-management/autopilot/reviewer-sessions/0eb357d2-4dc0-4e9e-b42b-eeb5c5a36edc.jsonl",
+    "line": 21,
+    "sha256": "95f3fbdb8db2bdd2a9396d1907596b6f4273fac515d73270284413767f609593"
+  },
+  {
+    "task": "26",
+    "role": "read_only_task_review",
+    "model": "claude-sonnet-5-5",
+    "provider": "anthropic",
+    "requested_effort": "high",
+    "path": "docs/dev/project-management/autopilot/reviewer-sessions/d74fbed2-4a1c-45f2-987f-b947dac4bc55.jsonl",
+    "line": 18,
+    "sha256": "2e797d15b8ff3b131b054035110356a34e3d4d5c60882e276fa7f02dd1b45de8"
+  },
+  {
+    "task": "26",
+    "role": "read_only_task_review",
+    "model": "claude-sonnet-5-5",
+    "provider": "anthropic",
+    "requested_effort": "high",
+    "path": "docs/dev/project-management/autopilot/reviewer-sessions/d74fbed2-4a1c-45f2-987f-b947dac4bc55.jsonl",
+    "line": 19,
+    "sha256": "ba2cc769c9b0b5a5ac500a02bfc00e776dcde2a3022b221599608d4094dd4957"
+  },
+  {
+    "task": "20",
+    "role": "read_only_task_review",
+    "model": "claude-sonnet-5-5",
+    "provider": "anthropic",
+    "requested_effort": "high",
+    "path": "docs/dev/project-management/autopilot/reviewer-sessions/48b715d9-76de-4a99-9eae-f89a3eab52fd.jsonl",
+    "line": 18,
+    "sha256": "7c93f9917f4726cc8fcb2291dc549c56a083be4d8c30c898253eda542ea22c7d"
+  },
+  {
+    "task": "20",
+    "role": "read_only_task_review",
+    "model": "claude-sonnet-5-5",
+    "provider": "anthropic",
+    "requested_effort": "high",
+    "path": "docs/dev/project-management/autopilot/reviewer-sessions/48b715d9-76de-4a99-9eae-f89a3eab52fd.jsonl",
+    "line": 19,
+    "sha256": "44b7be8b20af0f5cd2ad61d262938477ac522731a60896b6959b57640de53279"
+  },
+  {
+    "task": "29",
+    "role": "read_only_task_review",
+    "model": "claude-sonnet-5-5",
+    "provider": "anthropic",
+    "requested_effort": "high",
+    "path": "docs/dev/project-management/autopilot/reviewer-sessions/1d0fb014-4344-45a0-b66e-63c43bc970a7.jsonl",
+    "line": 20,
+    "sha256": "ac4858f33f47443a9b442027fe12731a5f4c29686464a2c73b00ce0a2b45b249"
+  },
+  {
+    "task": "29",
+    "role": "read_only_task_review",
+    "model": "claude-sonnet-5-5",
+    "provider": "anthropic",
+    "requested_effort": "high",
+    "path": "docs/dev/project-management/autopilot/reviewer-sessions/1d0fb014-4344-45a0-b66e-63c43bc970a7.jsonl",
+    "line": 21,
+    "sha256": "a2f6bf4fc80613f09b3e22683b1617e932d0c1a41249398768f8c6161979dfe9"
+  },
+  {
+    "task": "30",
+    "role": "read_only_task_review",
+    "model": "claude-sonnet-5-5",
+    "provider": "anthropic",
+    "requested_effort": "high",
+    "path": "docs/dev/project-management/autopilot/reviewer-sessions/3d924310-fcf2-4ce3-b5e0-df2869838b46.jsonl",
+    "line": 20,
+    "sha256": "262cd9368ba82ef05f790df46df863990e361607c88f91b04387c2675b00c837"
+  },
+  {
+    "task": "22",
+    "role": "read_only_task_review",
+    "model": "claude-sonnet-5-5",
+    "provider": "anthropic",
+    "requested_effort": "high",
+    "path": "docs/dev/project-management/autopilot/reviewer-sessions/04253d41-f512-4f52-bbcc-654b2e8ae726.jsonl",
+    "line": 18,
+    "sha256": "8ae7a9b70b105005e820f351feea29c5c917ac847747b13c2533b16e2e5f74d8"
+  },
+  {
+    "task": "22",
+    "role": "read_only_task_review",
+    "model": "claude-sonnet-5-5",
+    "provider": "anthropic",
+    "requested_effort": "high",
+    "path": "docs/dev/project-management/autopilot/reviewer-sessions/04253d41-f512-4f52-bbcc-654b2e8ae726.jsonl",
+    "line": 19,
+    "sha256": "22663f28fa4a8a2f3d3e1dbd38471463dc76b25f1da7e9f0fe881acbf3c97b38"
+  }
+]

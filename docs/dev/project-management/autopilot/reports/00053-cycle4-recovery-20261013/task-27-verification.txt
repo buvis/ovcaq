@@ -1,0 +1,8 @@
+Command: mise exec -- uv run pytest tests/drivers/test_adapter_failure_classes.py -q --tb=line
+Exit: 0
+Runner summary: 140 passed in 0.22s
+Source: native worker /root/ivan27, dispatch 9e1a37c7; raw worker evidence copied beside this record.
+git diff --check: exit 0
+check_reflow.py src/ovcaq/drivers/codex_events.py: exit 0
+check_style_limits.py over task base c621a2c..ca59071: exit 0
+The diff is one replacement line and preserves the second regex string and all other patterns.

@@ -1,0 +1,55 @@
+{
+  "module": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/_files.py",
+  "status": "refused",
+  "error": "OSError('runtime directory identity changed; retry: /private/tmp/ovcaq-r13-ancestry-r_wym3y9/ancestor')",
+  "replacement_happened": true,
+  "project_identity": [
+    16777230,
+    169706641
+  ],
+  "parent_confirmed_after_replacement": false,
+  "returned_path_exists": null,
+  "ledger": null,
+  "events": [
+    {
+      "event": "fsync",
+      "identity": [
+        16777230,
+        2
+      ]
+    },
+    {
+      "event": "fsync",
+      "identity": [
+        16777230,
+        107435247
+      ]
+    },
+    {
+      "event": "fsync",
+      "identity": [
+        16777230,
+        107436446
+      ]
+    },
+    {
+      "event": "fsync",
+      "identity": [
+        16777230,
+        169706641
+      ]
+    },
+    {
+      "event": "replace",
+      "new": [
+        16777230,
+        169706643
+      ],
+      "old": [
+        16777230,
+        169706642
+      ]
+    }
+  ],
+  "limit": "Real directory rename/recreation and fsync observation; no simulated physical power-loss claim."
+}

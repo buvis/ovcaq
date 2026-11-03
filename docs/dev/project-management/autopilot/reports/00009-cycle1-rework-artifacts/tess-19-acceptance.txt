@@ -1,0 +1,1 @@
+Every stated behavioral regression independently fails against current tree. Preserve existing assertions. Narrow tests only. No production edits.

@@ -1,0 +1,35 @@
+diff --git a/tests/drivers/test_codex_launch.py b/tests/drivers/test_codex_launch.py
+index d9120fa..4d537c1 100644
+--- a/tests/drivers/test_codex_launch.py
++++ b/tests/drivers/test_codex_launch.py
+@@ -10,7 +10,7 @@ from pathlib import Path
+ import pytest
+ 
+ from ovcaq.config import AgentSettings
+-from ovcaq.drivers.base import LaunchRequest
++from ovcaq.drivers.base import AgentDriver, LaunchRequest
+ from ovcaq.drivers.codex import CodexDriver
+ from ovcaq.drivers.edge import build_driver
+ 
+@@ -29,7 +29,7 @@ def toml_value(value: object) -> str:
+ 
+ def configured_driver(
+     settings: AgentSettings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+-) -> CodexDriver:
++) -> AgentDriver:
+     root = tmp_path / "configured-project"
+     root.mkdir()
+     monkeypatch.setenv("HOME", str(tmp_path / "home"))
+diff --git a/tests/runtime/test_adapter_launch_routing.py b/tests/runtime/test_adapter_launch_routing.py
+index 47eeb5c..2b3ecf9 100644
+--- a/tests/runtime/test_adapter_launch_routing.py
++++ b/tests/runtime/test_adapter_launch_routing.py
+@@ -111,8 +111,6 @@ def test_configured_supervisor_launches_each_selected_literal_model_and_effort(
+     routes: tuple[tuple[str, str, str], ...],
+     provider: str,
+ ) -> None:
+-    if provider == "claude":
+-        routes = tuple((phase, tier, "high") for phase, tier, _ in routes)
+     h = configured_workflow(tmp_path, monkeypatch, tiers, routes, provider)
+     settings = supervisor_settings(
+         h.root, runtime=h.settings.runtime, policy=h.settings.policy

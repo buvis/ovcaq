@@ -1,0 +1,17 @@
+[
+  {
+    "cycle": 6,
+    "finding": "Cannot statically verify: the Phase-2 exit gate (full `uv run pytest`) at HEAD. The settled 7202-passed run was at 93fd36f. The only run at cf48315 (`last-verification.json`) stopped with exit 130 (partial: 85 failed, 27 errors, blamed on the macOS `ps` denial), and this cycle's test gate exited 2 with no summary line. The rework since 93fd36f touches only tests and docs, and both narrow runs pass (136 passed; 2 passed), so the settled reason does not cover HEAD",
+    "file": null,
+    "command": "mise exec -- uv run pytest",
+    "source": "bob",
+    "result": {
+      "exit": 0,
+      "executed_command": "uv run pytest -q --tb=line",
+      "summary": "7199 passed, 2 warnings in 265.32s (0:04:25)",
+      "sha": "ca878006eba9e0fff0f1eb175a30557d82f8278b",
+      "evidence": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/full-suite-00053-c6-20261014-final-output.txt"
+    },
+    "reason": "Same complete project pytest suite through the mise-managed uv executable, with quiet/traceback display flags only; no exclusions or tests skipped."
+  }
+]

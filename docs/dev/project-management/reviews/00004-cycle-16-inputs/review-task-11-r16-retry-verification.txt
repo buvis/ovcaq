@@ -1,0 +1,29 @@
+Task base 4011d1a3ce186ae9dcd023e8a7fb4b87412b935d; initial tests 80d549f8f677c48e9848eab166aef9ccc88e11d5; current HEAD 2742c08fe5f8194f65a36fa1e49a5980d69c16ef.
+Before implementation: mise exec -- uv run pytest tests/workflow/test_deferred_diagnostics.py -> exit1; 3 failed (creation-error diagnostic mismatches), 3 passed, no collection errors.
+After implementation and correcting the coordinator-supplied public ledger filename: mise exec -- uv run pytest tests/workflow/test_deferred_diagnostics.py -> exit0.
+============================= test session starts ==============================
+platform darwin -- Python 3.13.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/bob/git/src/github.com/buvis/ovcaq
+configfile: pyproject.toml
+collected 6 items
+
+tests/workflow/test_deferred_diagnostics.py ......                       [100%]
+
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-465c2396-f024-4822-83c9-7e3a424473d2
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-465c2396-f024-4822-83c9-7e3a424473d2'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-ede528bd-5064-4a72-9454-40741b6f503a
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-ede528bd-5064-4a72-9454-40741b6f503a'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 6 passed, 2 warnings in 0.02s =========================
+
+Style-limit and split-hygiene checks passed at this HEAD. Fresh self-deslop found no permissible removals. The full workspace suite is mandated after task closure and has not run on this tail yet; prior 1372/0/0 counts were at reviewed HEAD4011d1a.
+The earlier Pat dispatch stopped at quota before producing any review. This prompt will contain the complete current diff for the single authorized retry after reset; no previous review verdict is assumed.
+
+Measured AST spans (end_lineno - lineno + 1): _verify_directory_chain 13, _ensure_directory_chain 40, _open_deferred_ledger 47, _invoke 34, _assert_reparented_result_is_safe 35, _assert_reparented_retry_and_replay 30, test_installed_defer_never_succeeds_through_unconfirmed_reparented_ancestry 44 lines. All are below the 50-line limit.

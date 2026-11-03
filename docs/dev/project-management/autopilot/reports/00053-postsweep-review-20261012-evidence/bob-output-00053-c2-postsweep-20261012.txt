@@ -1,0 +1,34 @@
+[BOB] ⚪ The Claude routing cases set every phase effort to "high" and give no reason. Config accepts low/medium/high/xhigh for any agent (src/ovcaq/config.py:364), and ClaudeDriver passes effort through unchanged, so Claude effort pass-through is only tested with one value | File: tests/runtime/test_adapter_launch_routing.py | Task: 11
+[BOB] ⚪ The protocol doc says completed and failed lanes stay terminal "under all late receiver updates". But identity eviction removes terminal lanes first (src/ovcaq/drivers/codex.py:413). Once a lane is evicted, a late running update for it emits `lane.started` again | File: docs/driver-protocol.md | Task: 4
+[BOB] ⚪ The CHANGELOG entry about reqwest/HTTP-version forms and literal whitespace describes no change from the pre-PRD base. Bare codes already matched those forms there, and whitespace was already literal. The entry records rework done inside this PRD and overlaps the numeric-context entry three lines below | File: CHANGELOG.md | Task: 4
+[BOB] ⚪ `configured_driver` is annotated `-> CodexDriver` but returns `build_driver(...)`, which is typed `AgentDriver`. mypy only checks src/ovcaq, so nothing reports the mismatch | File: tests/drivers/test_codex_launch.py | Task: 2
+
+FIX:
+- The doc claims terminal lanes stay terminal even after eviction — docs/driver-protocol.md:243 — change it to "Remembered completed and failed lanes remain terminal under late receiver updates"
+- The changelog entry repeats another and describes no change from the base — CHANGELOG.md:43 — delete it, and add "including bare-status, reqwest and HTTP-version forms" to the numeric-context entry at CHANGELOG.md:46
+- The return annotation is wrong — tests/drivers/test_codex_launch.py:32 — annotate `-> AgentDriver`, imported from `ovcaq.drivers.base`
+VERIFY:
+- The Claude effort override has no stated reason — delete tests/runtime/test_adapter_launch_routing.py:114-115, then run `uv run pytest -q tests/runtime/test_adapter_launch_routing.py -k claude`. If it passes, keep the lines deleted. If it fails, restore them with a one-line comment giving the reason
+KNOWN:
+- (none)
+
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+```
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```

@@ -1,0 +1,30 @@
+[
+  {
+    "cycle": 2,
+    "finding": "Cannot statically verify: pytest, ruff and mypy pass at HEAD 3f5a0bd (rework evidence records 3863 passed in 00007-rework-1-evidence/final-pytest.txt)",
+    "file": null,
+    "command": "uv run pytest",
+    "source": "bob"
+  },
+  {
+    "cycle": 2,
+    "finding": "Cannot statically verify: pytest, ruff and mypy pass at HEAD 3f5a0bd (rework evidence records 3863 passed in 00007-rework-1-evidence/final-pytest.txt)",
+    "file": null,
+    "command": "uv run ruff check .",
+    "source": "bob"
+  },
+  {
+    "cycle": 2,
+    "finding": "Cannot statically verify: pytest, ruff and mypy pass at HEAD 3f5a0bd (rework evidence records 3863 passed in 00007-rework-1-evidence/final-pytest.txt)",
+    "file": null,
+    "command": "uv run ruff format --check .",
+    "source": "bob"
+  },
+  {
+    "cycle": 2,
+    "finding": "Cannot statically verify: pytest, ruff and mypy pass at HEAD 3f5a0bd (rework evidence records 3863 passed in 00007-rework-1-evidence/final-pytest.txt)",
+    "file": null,
+    "command": "uv run mypy src/ovcaq",
+    "source": "bob"
+  }
+]

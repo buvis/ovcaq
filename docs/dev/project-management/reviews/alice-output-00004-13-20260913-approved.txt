@@ -1,0 +1,23 @@
+Inspected the incremental diff from `39ecaf4` through reviewed HEAD `be5e385`, the assembled review context, mandatory Phase 2 source specifications, changed implementation/tests, and relevant callers. Reused recorded HEAD-matched gates: 1,352 tests passed with zero failures/skips; Ruff lint/format, mypy, and build passed. Universal implementation-base replay remains the settled R9-K4 limitation.
+
+Prior findings: R12-01, F1, F2, F3, and F5 are repaired by chronological installed-wheel coverage and the implementation changes. F4 remains correctly discarded. V1 is verified. K1, K2, R8-K1, R8-K2, R9-K3, and R9-K4 remain settled and were not re-raised.
+
+P02-T01 through P02-T05 remain reconciled through unchanged selection/path, frontmatter, transitions, resume/policy, reset/completion implementations and existing characterization/row tests. P02-T06 is materially repaired for crash retry, exact replay, peer creation, state-byte preservation, and exactly-once ledger publication, but the valid search-only-ancestor regression below prevents full acceptance. P02-T07 remains reconciled through unchanged saga/failpoint coverage. P02-T08’s contention diagnostic is repaired and its publication behavior remains covered. P02-T09 is affected by the same configured-runtime-path permissions regression. P02-T10 remains reconciled through parser/docs contract coverage.
+
+Phase A exit passes on existing lifecycle fixture evidence. Phase B exit fails because a configured runtime beneath a traversable search-only ancestor can no longer reach defer/recovery, despite the repaired abrupt-exit cases. Phase C exit fails because the installed command path inherits that valid configured-path regression; provider-neutral dependency/string guards and parser-generated docs otherwise remain satisfied.
+
+R1: fail
+R2: pass
+R3: pass
+R4: fail
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+[ALICE] 🟡 `_ensure_directory_chain` now opens every absolute ancestor with `O_RDONLY`, so a configured runtime below a search-only directory can be traversable and writable yet defer fails with `EACCES`; preserve crash confirmation while opening only directories OVCAQ must confirm or use a descriptor mode compatible with execute-only traversal | File: src/ovcaq/workflow/_files.py:256 | Task: P02-T06/P02-T09
+[ALICE] 🟡 The ancestry loop treats the filesystem root as its own child, opening `/` twice, calling `mkdir(exist_ok=True)` on it, and fsyncing it even though OVCAQ can never create that anchor; exclude the root self-step while retaining parent confirmation for every potentially interrupted runtime ancestor | File: src/ovcaq/workflow/_files.py:255 | Task: P02-T06/P02-T09
+

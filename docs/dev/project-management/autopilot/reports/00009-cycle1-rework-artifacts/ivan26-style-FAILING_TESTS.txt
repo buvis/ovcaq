@@ -1,0 +1,2 @@
+FUNCTION | src/ovcaq/supervisor_cli.py:151 | _run | 55 lines
+FUNCTION | src/ovcaq/tui/model.py:519 | ProjectObserver._apply | 52 lines

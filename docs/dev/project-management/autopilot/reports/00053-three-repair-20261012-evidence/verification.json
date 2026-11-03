@@ -1,0 +1,54 @@
+{
+  "sha": "7fbcfd0a49614c78ed7a9daba2c02eef36a54f03",
+  "cycle": 2,
+  "commands": [
+    {
+      "command": "mise exec -- uv sync --all-groups",
+      "exit": 0
+    },
+    {
+      "command": "uv run pytest -q --tb=line (first full run via mise Python subprocess)",
+      "exit": 1
+    },
+    {
+      "command": "uv run pytest -q --tb=line (escalated retry via mise Python subprocess; interrupted after repeated failure pattern)",
+      "exit": 130
+    },
+    {
+      "command": "mise exec -- uv run ruff check .",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv run ruff format --check .",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv run mypy src/ovcaq",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv build",
+      "exit": 0
+    }
+  ],
+  "passed": null,
+  "failed": null,
+  "skipped": null,
+  "first_full_run": {
+    "passed": 6428,
+    "failed": 555,
+    "errors": 172,
+    "skipped": 0,
+    "warnings": 2,
+    "duration_seconds": 518.12,
+    "exit": 1,
+    "log": "docs/dev/project-management/autopilot/reports/00053-three-repair-20261012-evidence/pytest-full-first-run.txt"
+  },
+  "retry": {
+    "exit": 130,
+    "counts": null,
+    "reason": "Coordinator interrupted the escalated retry after it reproduced the same error/failure pattern near 46%; first full result retained.",
+    "log": "docs/dev/project-management/autopilot/reports/00053-three-repair-20261012-evidence/pytest-full.txt"
+  },
+  "limitation": "Host denies ps. Narrow escalated attempts confirm restriction. First full run has 611 direct ps PermissionError lines plus downstream startup/timeouts; not every failure independently diagnosed."
+}

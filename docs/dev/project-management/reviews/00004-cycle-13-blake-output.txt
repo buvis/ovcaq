@@ -1,0 +1,57 @@
+The finding is unsupported and should be withdrawn.
+
+The authoritative sources do not establish a non-overridable ceiling:
+
+- `implementation-plan.md:668` requires the “plan-size policy.”
+- `implementation-plan.md:1161` requires P02-T04 to “Port resume mapping and plan-size policy.”
+- `current_system.toml:3940-3943` defines the behavior as comparing a real task list against “the ceiling.”
+- Most decisively, `current_system.toml:4426-4431` says `cli/test_policy.py` characterizes “the fifteen-task plan ceiling, override semantics, tolerant task counting, no mutation, CLI exposure, and missing-state failure.”
+
+Therefore `--ceiling` is part of the mandatory characterized behavior, not scope creep.
+
+Implementation evidence inspected:
+
+- `src/ovcaq/workflow/policy.py:8` sets the default ceiling to 15.
+- `src/ovcaq/workflow/policy.py:15-22` accepts an override and compares task count against it.
+- `src/ovcaq/workflow_cli.py:91-99` exposes `check-plan --ceiling`, defaulting to 15.
+- `src/ovcaq/workflow_cli.py:220-230` validates plan shape, applies the selected ceiling, and returns `OVERSIZED_PLAN` with the count and ceiling.
+- `docs/operations.md` is generated from the parser and identifies the option.
+- The inspected CLI test demonstrated `--ceiling -1` produces `oversized_plan`. That behavior looked suspicious in isolation, but the characterized contract explicitly requires override semantics and does not specify a positive-only domain. It cannot support a blind-review defect.
+
+Coverage actually inspected:
+
+- P02-T01: `selection.py`, `paths.py`, selection/configuration tests.
+- P02-T02: `frontmatter.py`, frontmatter/application/CLI tests.
+- P02-T03: `transitions.py`, row/rejection/application/CLI tests.
+- P02-T04: `resume.py`, `policy.py`, characterized fixtures and policy/CLI tests.
+- P02-T05: completion/reset logic in `records.py` and application/record tests.
+- P02-T06: defer implementation in `_files.py`/`records.py` and deferred-ledger tests.
+- P02-T07: park/stall saga in `records.py`, `_files.py`, `_rename.py`, including durable-boundary, identity, publication, and replay tests.
+- P02-T08: `reports.py`, golden/report identity/recovery/publication tests.
+- P02-T09: configuration/path implementation and legacy-path/provider-boundary searches/tests.
+- P02-T10: parser-derived command reference in `cli.py`, `workflow_cli.py`, `docs/operations.md`, and parser/docs contract tests.
+- Phase exit evidence: characterized lifecycle tests, saga interruption tests, package boundary guards, installed CLI/report/saga tests.
+- Verification run: 431 selected workflow/packaging tests passed; Ruff and mypy passed.
+
+Corrected report:
+
+[BLAKE] ✅ No issues found
+B1: pass
+B2: pass
+B3: pass
+B4: pass
+B5: pass
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: pass
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: pass
+B16: pass
+B17: pass
+B18: pass
+B19: pass

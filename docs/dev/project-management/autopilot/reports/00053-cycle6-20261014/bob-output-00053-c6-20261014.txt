@@ -1,0 +1,40 @@
+[BOB] ⚪ Cannot statically verify: the Phase-2 exit gate (full `uv run pytest`) at HEAD. The settled 7202-passed run was at 93fd36f. The only run at cf48315 (`last-verification.json`) stopped with exit 130 (partial: 85 failed, 27 errors, blamed on the macOS `ps` denial), and this cycle's test gate exited 2 with no summary line. The rework since 93fd36f touches only tests and docs, and both narrow runs pass (136 passed; 2 passed), so the settled reason does not cover HEAD | File: N/A | Task: general
+
+The five prior findings are resolved. I checked each at HEAD:
+- **R1** (task 30): `docs/driver-protocol.md` was reflowed and no words changed. The longest touched prose line is now 84 characters (line 272), close enough to the file's ~80-column wrap, where 81-character lines already exist.
+- **R3** (task 29): the duplicate display-limit test is gone. `tests/drivers/test_codex_rework_decode.py:136` still covers that path. `json` and the `driver` fixture are still used, at `tests/drivers/test_adapter_failure_classes.py:240`.
+- **R4** (task 29): only `(2, WAIT)` and `(3, HALT)` remain. They pin the `<` bound at `src/ovcaq/runtime/decision.py:215`.
+- **R5** (task 29): the test is renamed, and no stale references remain in `src`, `tests`, the docs, the CHANGELOG or the PRDs.
+- **R6** (task 31): the test now runs for both `claude` and `codex`. The Codex case does pin the behavior. `Popen` with no `PATH` in its environment falls back to `os.get_exec_path`, then to the patched `os.defpath`. The line `assert shutil.which(executable.name) is None` (`tests/runtime/test_adapter_health.py:239`) shows that a `CS_PATH`-based lookup would fail. The fake executable uses an absolute shebang, so removing `PATH` cannot break the child process.
+
+No production code changed since 93fd36f (`src/` diff is empty), so the rework cannot have broken anything in production.
+
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+FIX:
+- (none)
+
+VERIFY:
+- The full suite is unverified at HEAD (the last run at cf48315 exited 130; this cycle's gate exited 2) — run `mise exec -- uv run pytest` at ca87800 on a host where `ps` and process inspection are allowed. Expect exit 0 with 7199 passed and 0 failed, errors or skipped: 7202, minus 2 for the deleted auth test, minus 2 for the dropped capacity cases, plus 1 for the new codex case.
+
+KNOWN:
+- (none)
+
+```
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```

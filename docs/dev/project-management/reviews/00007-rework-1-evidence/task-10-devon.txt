@@ -1,0 +1,278 @@
+Adversarial task 10 report
+Selection: 107 cases; all supplied preservation nodes included in every run.
+Temporary workspace: /private/tmp/ovcaq-devon10.dmai51
+Baseline derived solely from supplied test behavior.
+Baseline patch:
+--- src/ovcaq/runtime/decision.py original
++++ src/ovcaq/runtime/decision.py passing baseline
+@@ -5,7 +5,7 @@
+ import json
+ from collections.abc import Mapping
+ from copy import deepcopy
+-from dataclasses import dataclass
++from dataclasses import dataclass, replace
+ from datetime import datetime
+ from enum import StrEnum
+ 
+@@ -265,15 +265,11 @@
+             "Committed workflow progress",
+             next_phase_repeats=0,
+         )
++    repeats = (before.phase_repeats if before.phase_fingerprint == _fingerprint(before) else 0) + 1
++    if repeats >= policy.phase_repeat_limit:
++        kind = DecisionKind.PARK if after.prd else (DecisionKind.PAUSE if result.summary.success else DecisionKind.HALT)
++        return SupervisorDecision(kind, "Repeat limit", next_phase_repeats=repeats)
+     failure_decision = _failure_decision(result, retries, policy, now, after.prd)
+     if failure_decision is not None:
+-        return failure_decision
+-
+-    repeats = before.phase_repeats + 1
+-    if repeats < policy.phase_repeat_limit:
+-        kind = DecisionKind.RETRY
+-    else:
+-        kind = DecisionKind.PARK if after.prd else DecisionKind.PAUSE
+-    return SupervisorDecision(
+-        kind, "Session made no workflow progress", next_phase_repeats=repeats
+-    )
++        return replace(failure_decision, next_phase_repeats=repeats)
++    return SupervisorDecision(DecisionKind.RETRY, "No progress", next_phase_repeats=repeats)
+--- src/ovcaq/runtime/supervisor.py original
++++ src/ovcaq/runtime/supervisor.py passing baseline
+@@ -101,6 +101,8 @@
+ 
+ 
+ def _boundary(before: ProgressSnapshot) -> SupervisorDecision | None:
++    if before.attention is not None:
++        return SupervisorDecision(DecisionKind.HALT, "Attention")
+     if before.pause_requested or "paused" in (before.phase, before.next_phase):
+         return SupervisorDecision(DecisionKind.PAUSE, "Workflow is paused")
+     if not before.drained:
+--- src/ovcaq/state/commands.py original
++++ src/ovcaq/state/commands.py passing baseline
+@@ -458,7 +458,8 @@
+     def resume(self, *, expected_revision: int | None = None) -> State:
+         def mutate(state: State) -> None:
+             state["control"]["pause_requested"] = False
+-            state["control"]["pause_reason"] = None
++            if "paused" not in (state["work"]["phase"], state["work"]["next_phase"]):
++                state["control"]["pause_reason"] = None
+ 
+         return self._transaction(mutate, expected_revision=expected_revision)
+ 
+Baseline output:
+   Building ovcaq @ file:///private/tmp/ovcaq-devon10.dmai51
+Downloading ast-serialize (1.1MiB)
+Downloading mypy (13.3MiB)
+Downloading pygments (1.2MiB)
+Downloading ruff (9.4MiB)
+      Built ovcaq @ file:///private/tmp/ovcaq-devon10.dmai51
+ Downloaded ast-serialize
+ Downloaded pygments
+ Downloaded ruff
+ Downloaded mypy
+Installed 24 packages in 22ms
+........................................................................ [ 67%]
+...................................                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon10.dmai51/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-ff4aa823-ae59-4dcf-bd58-bfe7330d6058
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-ff4aa823-ae59-4dcf-bd58-bfe7330d6058'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon10.dmai51/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-a9bace32-0ceb-4a51-9b15-51d1f11e0d39
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-a9bace32-0ceb-4a51-9b15-51d1f11e0d39'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+107 passed, 2 warnings in 1.41s
+
+Command for every mutant:
+export UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache
+mise exec -- uv run pytest tests/runtime/test_decision_retry_bound.py tests/runtime/test_supervisor_boundary_policy.py tests/state/test_supervisor_resume_preservation.py tests/runtime/test_decision.py::test_success_without_workflow_progress_retries_then_parks_or_pauses tests/runtime/test_supervisor.py::test_retry_budget_resets_after_progress_or_a_changed_failure_class tests/runtime/test_decision.py::test_committed_progress_continues_before_session_failure_without_drain tests/runtime/test_decision.py::test_rate_limit_wait_requires_a_future_bounded_reset_and_remaining_budget tests/runtime/test_decision.py::test_connectivity_waits_exact_policy_delay_until_its_own_budget_is_exhausted tests/runtime/test_decision.py::test_empty_drain_skips_but_nonempty_drain_runs_sorted_required_capabilities tests/runtime/test_supervisor.py::test_untouched_successful_prose_reaches_repeat_limit_and_pauses_bootstrap tests/state/test_supervisor_commands.py::test_pause_and_resume_change_only_pause_fields tests/state/test_supervisor_commands.py::test_every_transition_rejects_conflicts_and_active_recovery_without_writes --tb=short -q
+
+Mutation 1: src/ovcaq/runtime/decision.py
+Exact baseline replacement:
+- "tasks_completed": progress.tasks_completed,
++ "tasks_completed": 0,
+Exit: 0
+........................................................................ [ 67%]
+...................................                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon10.dmai51/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-3dc16152-f152-4e47-b685-e899b2048c69
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-3dc16152-f152-4e47-b685-e899b2048c69'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon10.dmai51/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-b587b134-ab40-4e91-85db-ccd453a550ff
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-b587b134-ab40-4e91-85db-ccd453a550ff'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+107 passed, 2 warnings in 1.98s
+
+Mutation 2: src/ovcaq/runtime/decision.py
+Exact baseline replacement:
+- "review_cycle": progress.review_cycle,
++ "review_cycle": 0,
+Exit: 0
+........................................................................ [ 67%]
+...................................                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon10.dmai51/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-26abed94-dc76-438c-a1f5-68d75b913b98
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-26abed94-dc76-438c-a1f5-68d75b913b98'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon10.dmai51/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-b36aa27a-3166-47d2-8337-86d8715fe044
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-b36aa27a-3166-47d2-8337-86d8715fe044'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+107 passed, 2 warnings in 1.32s
+
+Mutation 3: src/ovcaq/runtime/decision.py
+Exact baseline replacement:
+- "prd": progress.prd,
++ "prd": None,
+Exit: 0
+........................................................................ [ 67%]
+...................................                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon10.dmai51/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-3946efbd-f5c6-4108-8a5e-0956f99631c3
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-3946efbd-f5c6-4108-8a5e-0956f99631c3'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon10.dmai51/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-8401ae5b-7d77-4957-9947-ce153ce12127
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-8401ae5b-7d77-4957-9947-ce153ce12127'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+107 passed, 2 warnings in 1.35s
+
+Mutation 4: src/ovcaq/runtime/decision.py
+Exact baseline replacement:
+- "completed_prds": progress.completed_prds,
++ "completed_prds": 0,
+Exit: 0
+........................................................................ [ 67%]
+...................................                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon10.dmai51/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-2bc6e410-248b-4951-a07b-eded9a9572fe
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-2bc6e410-248b-4951-a07b-eded9a9572fe'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon10.dmai51/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-fe2a8d55-a771-4759-84b9-e6cd47dffd06
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-fe2a8d55-a771-4759-84b9-e6cd47dffd06'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+107 passed, 2 warnings in 1.31s
+
+Mutation 5: src/ovcaq/runtime/decision.py
+Exact baseline replacement:
+- if repeats >= policy.phase_repeat_limit:
++ if repeats >= (6 if policy.phase_repeat_limit == 6 else 3):
+Exit: 0
+........................................................................ [ 67%]
+...................................                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon10.dmai51/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-09fa30c5-f839-4d4e-ac97-8b87a59d9ea0
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-09fa30c5-f839-4d4e-ac97-8b87a59d9ea0'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon10.dmai51/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-8d47aaa5-8839-4065-bf54-3e1322c2225e
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-8d47aaa5-8839-4065-bf54-3e1322c2225e'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+107 passed, 2 warnings in 1.30s
+
+Mutation 6: src/ovcaq/runtime/decision.py
+Exact baseline replacement:
+- before.phase_fingerprint == _fingerprint(before)
++ before.phase_repeats != 99
+Exit: 0
+........................................................................ [ 67%]
+...................................                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon10.dmai51/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-874bca5a-6fbc-4fd4-aace-978b92b9b8d4
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-874bca5a-6fbc-4fd4-aace-978b92b9b8d4'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon10.dmai51/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-93196446-7739-4ca0-9bb3-f8ed4add2ffb
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-93196446-7739-4ca0-9bb3-f8ed4add2ffb'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+107 passed, 2 warnings in 1.33s
+
+Mutation 7: src/ovcaq/state/commands.py
+Exact baseline replacement:
+- if "paused" not in (state["work"]["phase"], state["work"]["next_phase"]):
++ if not ("paused" in (state["work"]["phase"], state["work"]["next_phase"]) and state["control"]["pause_reason"] and state["control"]["pause_reason"]["site"] in {"review_cap", "systemic"}):
+Exit: 0
+........................................................................ [ 67%]
+...................................                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon10.dmai51/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-ebb434f2-240a-49ea-a54f-0ccf9a2ea405
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-ebb434f2-240a-49ea-a54f-0ccf9a2ea405'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon10.dmai51/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-3562757d-259a-4628-a8e3-129a7622c796
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-3562757d-259a-4628-a8e3-129a7622c796'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+107 passed, 2 warnings in 1.30s
+
+Mutation 8: src/ovcaq/runtime/supervisor.py
+Exact baseline replacement:
+- if before.attention is not None:
++ if before.attention is not None and before.attention["site"] == "review_cap":
+Exit: 0
+........................................................................ [ 67%]
+...................................                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon10.dmai51/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-13ec69fb-8c28-4a8f-b019-4fef87fc447b
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-13ec69fb-8c28-4a8f-b019-4fef87fc447b'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon10.dmai51/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-f766e0ff-a521-422b-b1d0-39dd9f86a974
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-f766e0ff-a521-422b-b1d0-39dd9f86a974'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+107 passed, 2 warnings in 1.30s
+
+Weak points:
+1. test_committed_progress_continues_before_session_failure_without_drain - ignores completed-task progress and can exhaust repeats after actual task completion - advance tasks_completed alone and require CONTINUE with repeats zero
+2. test_committed_progress_continues_before_session_failure_without_drain - ignores review-cycle progress and can halt a new review cycle - advance review_cycle alone and require CONTINUE with repeats zero
+3. test_committed_progress_continues_before_session_failure_without_drain - switching to a different PRD does not reset the repeat budget - change only prd and require CONTINUE with repeats zero
+4. test_committed_progress_continues_before_session_failure_without_drain - ignores completed-PRD progress - advance completed_prds without drain and require CONTINUE with repeats zero
+5. test_unchanged_attempts_share_the_persisted_phase_limit - ignores every configured phase limit except 3 and 6 - parameterize limits 1, 2, 4, 7 and assert exact termination boundary
+6. test_stale_fingerprint_does_not_charge_old_repeats_to_current_work - treats any stored count other than 99 as current even with a stale fingerprint - stale fingerprint with counts 1, 2, 3 must restart at one and matching fingerprint with 99 must remain exhausted
+7. test_resume_preserves_phase_pause_routing_and_drained_results - clears durable phase-pause reasons at any other notice site - add arbitrary valid site and require pause_reason preserved
+8. test_committed_controls_block_every_startup_boundary - ignores attention from every other notice site - parameterize attention site with an unrelated valid string and retain zero-session assertions
+Restoration: original copied production bytes restored after EVERY mutation; all copied Python test hashes unchanged.
+No shared production or tests were modified. No workflow state changes or commits.
+abort_reason: none
+
+Restored copied-source SHA256 evidence:
+src/ovcaq/runtime/decision.py sha256 ba302d152988e729a8fe7b901d486cf0b962f80ac0846afc819a1f853be5dbba
+src/ovcaq/runtime/supervisor.py sha256 3be628b7543648ae8d57fc908b403bdfe30058cd464b39981bba18c41ae9c6dc
+src/ovcaq/state/commands.py sha256 4cbc25a71ee288d318f961136e7260361aff7e20ffe13c4ccabe41999b7f5158

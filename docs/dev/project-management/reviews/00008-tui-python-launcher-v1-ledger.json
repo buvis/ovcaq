@@ -1,0 +1,162 @@
+[
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "high",
+    "issue": "Theme path checks inspect only the configured root and its `ovcaq` child; a symlink in an earlier ancestor is followed by direct chmod/open/replace operations, violating the all-components no-follow contract",
+    "file": "src/ovcaq/tui/app.py:123",
+    "reason": "The alleged all-ancestor no-follow contract is not in the PRD/design. Task 6 explicitly reuses existing config/path conventions; config.runtime_settings resolves XDG_CONFIG_HOME via paths._trusted_path, whose contract permits symlink aliases, and tests/runtime/test_paths.py:357 pins that behavior. Rejecting ancestors of an explicitly selected trusted anchor would contradict that contract. F22 instead aligns theme handling with the resolved anchor while rejecting application-owned child/file symlinks."
+  },
+  {
+    "cycle": 1,
+    "disposition": "settled-deferral",
+    "severity": "medium",
+    "issue": "Changed-test fail-first replay timed out after 600 seconds, leaving no evidence that the changed tests fail against the pre-change implementation",
+    "file": "N/A",
+    "reason": "The mandatory replay was attempted, retried with approved worktree access, and reached its documented 600-second bound. It reports no regression verdict; final-HEAD pytest passes 4263 tests. Bob supplied no exact runnable VERIFY command, so it is not queued. Preserve this verification limitation; behavioral repair tasks must provide meaningful regression tests, without rerunning the whole replay merely to satisfy this artifact finding."
+  },
+  {
+    "cycle": 1,
+    "disposition": "settled-deferral",
+    "severity": "medium",
+    "issue": "Cannot statically verify: fail-first replay. The replay runner timed out after 600 s (`review-replay-00008-c1-20261003.md`).",
+    "file": "N/A",
+    "reason": "The mandatory replay was attempted, retried with approved worktree access, and reached its documented 600-second bound. It reports no regression verdict; final-HEAD pytest passes 4263 tests. Bob supplied no exact runnable VERIFY command, so it is not queued. Preserve this verification limitation; behavioral repair tasks must provide meaningful regression tests, without rerunning the whole replay merely to satisfy this artifact finding."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "`verify_run`, `launch_supervisor` and `stop_supervisor` (process ownership) live in the CLI dispatch module, so the TUI imports `supervisor_cli`. AGENTS.md and the PRD structure put process ownership under `runtime/`.",
+    "file": "src/ovcaq/supervisor_cli.py:158",
+    "reason": "The accepted design explicitly promotes verify_run/launch_supervisor/stop_supervisor in supervisor_cli.py and task 8 names that placement; design dispatch 2 recorded the promotion as required. Moving these provider-neutral public services is an unsolicited structural rewrite, not a proven lifecycle-policy duplication. Actual duplicated resume/control behavior is handled by F24."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "Production code never produces `AttachResult` reason \"fallback\"; only test doubles do.",
+    "file": "src/ovcaq/tui/app.py:97",
+    "reason": "AttachResult reason 'fallback' is part of the accepted explicit public type contract. No rule requires every enum value to be produced on every path; terminal completed/detached/failed results remain meaningful after fallback. Deleting the declared value solely for having no current producer would change the contract without a behavioral defect."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "The `ControlService.pause` `reason` parameter has no production caller: the TUI never passes one, only `test_supervisor_cli` does.",
+    "file": "src/ovcaq/tui/app.py:43",
+    "reason": "ControlService.pause explicitly includes optional reason in the accepted interface and RunControlService passes it through the public operator-notice service. The UI's default caller omitting an optional argument does not make that public contract dead code; removing it would contradict the pinned signature."
+  },
+  {
+    "cycle": 1,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "`observe_metrics` imports `JsonlFollower` inside the function to avoid a `runtime.session` ↔ `events.tail` import cycle.",
+    "file": "src/ovcaq/runtime/session.py:254",
+    "reason": "Bob's KNOWN bucket correctly identifies an existing module dependency constraint. The local import avoids the cycle while preserving the PRD's specified tail-module placement; relocation is outside this bounded TUI repair."
+  },
+  {
+    "cycle": 1,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "`verify_run` reads run.json with an unbounded `read_text()` that follows symlinks, while `observe_run` does a bounded O_NOFOLLOW read.",
+    "file": "src/ovcaq/supervisor_cli.py:158",
+    "reason": "Bob classified this KNOWN and traced it to pre-existing _stop logic moved into a public helper. Preserve the shared-runtime hardening concern as a low-severity deferral instead of expanding the TUI repair into the earlier runtime boundary."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "`tests/runtime/test_runtime_cli.py` is 1234 lines, over the 800 limit.",
+    "file": "tests/runtime/test_runtime_cli.py",
+    "reason": "The file was already above 800 lines before this PRD and the scoped change only replaces two runtime path strings. This is pre-existing size debt; splitting the unrelated runtime CLI suite is outside the changed behavior. Raw R13 verdicts are preserved unchanged."
+  },
+  {
+    "cycle": 2,
+    "disposition": "settled-deferral",
+    "severity": "high",
+    "issue": "If the selected supervisor completes during evidence reads, exit revalidation discards even valid selected-owner final state and sets ended=True; ProjectObserver permanently caches unknown, so both viewers return failed/1 for normal completion. Reobserve the attested final selection before caching a terminal result.",
+    "file": "src/ovcaq/runtime/_run_observation.py:141",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 2,
+    "disposition": "settled-deferral",
+    "severity": "medium",
+    "issue": "Active observation no longer checks the exact live registry entry; removing or replacing that entry while metadata, PID and run lock remain valid still exposes state and telemetry as running. Restore shared registry validation before and after evidence reads.",
+    "file": "src/ovcaq/runtime/_run_observation.py:116",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 2,
+    "disposition": "settled-deferral",
+    "severity": "medium",
+    "issue": "Three copies of the byte-at-a-time subprocess barrier reader appear in test_control_commit_identity, test_guarded_run_mutation and test_launcher_outcomes; extract one integration helper preserving their deadlines and EOF checks.",
+    "file": "tests/integration/test_control_commit_identity.py:99",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 2,
+    "disposition": "settled-deferral",
+    "severity": "medium",
+    "issue": "Raw fallback shows only a telemetry label: RAW_UNKNOWN previews are discarded, raw.jsonl is never tailed for presentation, and neither viewer displays raw output when normalization is unavailable.",
+    "file": "src/ovcaq/tui/model.py:539",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 2,
+    "disposition": "settled-deferral",
+    "severity": "medium",
+    "issue": "Capability failure and retry guidance are inaccessible through keyboard navigation at 80×24: the stacked Static frame overflows, but Tab, Down, PageDown and End leave scroll_y at zero; an in-memory Textual probe exposed the retry command only after programmatic scrolling.",
+    "file": "src/ovcaq/tui/app.py:345",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 2,
+    "disposition": "settled-deferral",
+    "severity": "medium",
+    "issue": "F20 is only partly fixed: a supervisor that exits 0 with a PAUSE decision is reported as a failed launch. This happens on an interactive `ovcaq run` while a pause request is pending, and every confirmed `s` stop leaves one (`_record_stop` sets `pause_requested`). `_completed_launch` accepts only batch status `completed`, so `_launch_failure` prints \"supervisor pid N exited with code 0: {raw SessionMetadata JSON}\" and the command exits nonzero. If the parent wins the handshake race instead, `cli.py:513` re-raises `MissingRunError`. Both outcomes contradict the pinned rule that paused maps to detached/0.",
+    "file": "src/ovcaq/supervisor_cli.py:396",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 2,
+    "disposition": "settled-deferral",
+    "severity": "medium",
+    "issue": "`ProjectObserver.__init__` builds a `JsonlFollower` on the runtime `events.jsonl` that is never read. `_apply` always replaces it before the first read, because `_session_id` starts as None. It also points readers at the file F01 proved wrong.",
+    "file": "src/ovcaq/tui/model.py:291",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 2,
+    "disposition": "settled-deferral",
+    "severity": "medium",
+    "issue": "The per-session usage machinery is now dead. The observer follows one session's file, drops records from other run/session pairs (line 536), and calls `_clear()` on every session change. So `self._usage` never holds more than one entry, and the pop/reinsert step plus the `MAX_USAGE_SESSIONS` eviction can never run. No test references the cap.",
+    "file": "src/ovcaq/tui/model.py:548",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 2,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "`_run` reads the private `supervisor._metadata` from another module to build the completion proof.",
+    "file": "src/ovcaq/supervisor_cli.py:177",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 2,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "`except _STATE_ERRORS: pass` silently drops a failed final-state read or attestation write. The viewer then reports \"final state does not belong to the selected run\", which blames an I/O fault on an ownership mismatch. Impact is limited because it fails closed, and the viewer reports its own read error when the state is unreadable.",
+    "file": "src/ovcaq/runtime/supervisor.py:180",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 2,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "Dropping `or None` from `next_phase` makes an empty committed `next_phase` render blank (`phase: build -> `) instead of a label. The change was made to satisfy a test fixture, not a requirement.",
+    "file": "src/ovcaq/tui/model.py:396",
+    "reason": "rework cap reached with this finding unresolved"
+  }
+]

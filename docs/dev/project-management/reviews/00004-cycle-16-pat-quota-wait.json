@@ -1,0 +1,16 @@
+{
+  "task": "11",
+  "stage": "work/5.7",
+  "review": "waiting:usage_limit",
+  "reset_epoch": 1789344600,
+  "retry_not_before_epoch": 1789344605,
+  "timezone": "Europe/Prague",
+  "reset_local": "2026-09-14T02:10:00+02:00",
+  "parent_deadline_epoch": 1789347959.725811,
+  "first_dispatch_exit": 1,
+  "first_output": "dev/local/reviews/pat-output-00004-16-task-11.txt",
+  "first_dispatch_id": "78269b4a",
+  "session_id": "08d02420-4e9a-426a-8ad2-29863b143ec0",
+  "head_sha": "92c60bc5479d556cb8515a7fa3c88d7a5560c0a5",
+  "note": "Await quota reset within existing deadline; no early retry, cap change, or phase advance. Source per-task retry budget remains one."
+}

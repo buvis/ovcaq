@@ -1,0 +1,579 @@
+{
+  "phase": "done",
+  "next_phase": "",
+  "schema_version": 1,
+  "batch": {
+    "id": "202610272211",
+    "mode": "autopilot",
+    "completed_prds": [
+      {
+        "filename": "00057-autopilot-controller-client-v1.md",
+        "cycles": 3,
+        "autonomous_decisions": 18,
+        "escalated_decisions": 0,
+        "tasks_completed": 8,
+        "tasks_total": 8,
+        "lane": "full",
+        "lane_reason": "override",
+        "lane_effective": "full",
+        "lane_escalated": null
+      },
+      {
+        "filename": "00062-supervisor-process-identity-v1.md",
+        "cycles": 2,
+        "autonomous_decisions": 14,
+        "escalated_decisions": 0,
+        "tasks_completed": 5,
+        "tasks_total": 5,
+        "lane": "full",
+        "lane_reason": "override",
+        "lane_effective": "full",
+        "lane_escalated": null
+      },
+      {
+        "filename": "00063-driver-failure-classes-tiers-v1.md",
+        "cycles": 2,
+        "autonomous_decisions": 35,
+        "escalated_decisions": 0,
+        "tasks_completed": 9,
+        "tasks_total": 9,
+        "lane": "full",
+        "lane_reason": "override",
+        "lane_effective": "full",
+        "lane_escalated": null
+      }
+    ],
+    "plugin_versions": {
+      "aegis@buvis-plugins": "0.4.1",
+      "warden@buvis-plugins": "0.14.1"
+    },
+    "catchup_completed_at": "2026-10-28T21:21:00Z",
+    "catchup_head_sha": "0bd25ed",
+    "parks_consecutive": 0,
+    "skips": [
+      {
+        "prd": "00058-autopilot-workflow-extraction-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00058",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-28T03:42:00Z"
+      },
+      {
+        "prd": "00059-autopilot-mixed-driver-jobs-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00059",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-28T03:42:00Z"
+      },
+      {
+        "prd": "00060-autopilot-supervisor-sync-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00060",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-28T03:42:00Z"
+      },
+      {
+        "prd": "00061-autopilot-wave-parity-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00061",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-28T03:42:00Z"
+      },
+      {
+        "prd": "00058-autopilot-workflow-extraction-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00058",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-28T03:42:48Z"
+      },
+      {
+        "prd": "00059-autopilot-mixed-driver-jobs-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00059",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-28T03:42:48Z"
+      },
+      {
+        "prd": "00060-autopilot-supervisor-sync-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00060",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-28T03:42:48Z"
+      },
+      {
+        "prd": "00061-autopilot-wave-parity-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00061",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-28T03:42:48Z"
+      },
+      {
+        "prd": "00058-autopilot-workflow-extraction-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00058",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-28T05:44:30Z"
+      },
+      {
+        "prd": "00059-autopilot-mixed-driver-jobs-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00059",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-28T05:44:30Z"
+      },
+      {
+        "prd": "00060-autopilot-supervisor-sync-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00060",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-28T05:44:30Z"
+      },
+      {
+        "prd": "00061-autopilot-wave-parity-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00061",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-28T05:44:30Z"
+      },
+      {
+        "prd": "00058-autopilot-workflow-extraction-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00058",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-28T05:44:56Z"
+      },
+      {
+        "prd": "00059-autopilot-mixed-driver-jobs-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00059",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-28T05:44:56Z"
+      },
+      {
+        "prd": "00060-autopilot-supervisor-sync-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00060",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-28T05:44:56Z"
+      },
+      {
+        "prd": "00061-autopilot-wave-parity-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00061",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-28T05:44:56Z"
+      },
+      {
+        "prd": "00058-autopilot-workflow-extraction-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00058",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-29T00:45:17Z"
+      },
+      {
+        "prd": "00059-autopilot-mixed-driver-jobs-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00059",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-29T00:45:17Z"
+      },
+      {
+        "prd": "00060-autopilot-supervisor-sync-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00060",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-29T00:45:17Z"
+      },
+      {
+        "prd": "00061-autopilot-wave-parity-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00061",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-29T00:45:17Z"
+      },
+      {
+        "prd": "00064-operations-api-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00064",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-29T00:45:17Z"
+      },
+      {
+        "prd": "00065-headless-distribution-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00065",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-29T00:45:17Z"
+      }
+    ],
+    "minted_stubs": [
+      "00066-triage-reclassifying-429-as-rate-limit-makes-a-v1.md"
+    ]
+  },
+  "prd": "00063-driver-failure-classes-tiers-v1.md",
+  "catchup_mode": "run",
+  "doubt_reviewer": "codex",
+  "consensus_engine": "legacy",
+  "session_model": "sonnet",
+  "rework_cap": 2,
+  "lane": "full",
+  "lane_reason": "override",
+  "lane_effective": "full",
+  "catchup_probe": {
+    "batch_id": "202610272211",
+    "gh": "ok",
+    "engram": "unregistered",
+    "checked_at": "2026-10-27T21:11:04Z"
+  },
+  "tasks_total": 0,
+  "tasks_completed": 0,
+  "cycle": 2,
+  "applied_review_batches": [
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00057-autopilot-controller-client-v1-review-1.md::decision-gate",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00057-autopilot-controller-client-v1-review-2.md::decision-gate",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00057-autopilot-controller-client-v1-review-3.md::decision-gate",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00062-supervisor-process-identity-v1-review-1.md::decision-gate",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00062-supervisor-process-identity-v1-review-2.md::decision-gate",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00062-supervisor-process-identity-v1-review-2.md::tail-sweep",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00063-driver-failure-classes-tiers-v1-review-1.md::decision-gate"
+  ],
+  "phases_completed": [
+    "review"
+  ],
+  "replan_count": 0,
+  "prd_budget_since": "2026-10-28T05:44:56Z",
+  "design_mode": "run",
+  "design_doc": "docs/dev/project-management/designs/00063-driver-failure-classes-tiers-v1-design.md",
+  "tasks": [],
+  "work_start_sha": "f6f652f29bd89a4a69914ac1bb5329c335771fbf",
+  "repo_root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+  "contract_card": "step: cycle 2 decision gate complete; rework cap reached (cycle 2 of cap 2), loop-mode cap-out took the Exit-0 deferral path. phase-done --outcome converged applied; next session runs Phase 9 finalize.\n\ninvariants that bind right now:\n- This is converged-with-deferrals, NOT a stall. cap-check exited 0 (R2's file src/ovcaq/runtime/decision.py is untouched by this cycle's rework, so no cap_regression), and no CRITICAL was raised, so no custody capture and no hold/ move. The PRD finalizes with 3 open deferrals.\n- state.deferred_decisions holds the 3 cap-overflow records (R2 high, R1 medium, R7 medium). They are the ONLY sink a cap-out writes; Phase 9 step 6 migrates them to the batch deferred JSON. Every record carries issue text, so the Phase 9 reconciliation cannot read one as always-missing.\n- \"review\" is in phases_completed, so Phase 4's loop-level skip fires and the next session resumes at Phase 9. Do NOT re-review, do NOT increment cycle, do NOT run a tail sweep (the cap-out path has no rework pass).\n- 13 single-voice rows were discarded into docs/dev/project-management/reviews/00063-driver-failure-classes-tiers-v1-ledger.json (now 23 entries) and recorded as autonomous decisions.\n- All 9 tasks remain completed; no rework task was created this cycle; rework_task_ids is empty.\n- The loop never pushes; all commits stay local at 9ec3396 and the user pushes by hand.\n\nnext: Phase 9 finalize (references/phase-done.md) -> verified wip->done move, render audit + batch report, then the more-PRDs or batch-end branch.",
+  "loop_entry": {
+    "entered_by": "loop",
+    "prd": "00063-driver-failure-classes-tiers-v1.md",
+    "result": {
+      "stop": null,
+      "detail": "",
+      "prd": "00063-driver-failure-classes-tiers-v1.md",
+      "source": "wip",
+      "parked": null,
+      "custody_pending": 0,
+      "lane_effective": "full",
+      "catchup": "delta",
+      "design": "reuse",
+      "resume_target": "/work continues at first non-completed task 4",
+      "batch": "open"
+    }
+  },
+  "review_lenses": {
+    "consensus": "done",
+    "blind": "done",
+    "doubt": "done",
+    "ui": "failed"
+  },
+  "doubts_rubric_verdicts": [
+    {
+      "rule_id": "D1",
+      "verdict": "pass"
+    },
+    {
+      "rule_id": "D2",
+      "verdict": "pass"
+    },
+    {
+      "rule_id": "D3",
+      "verdict": "pass"
+    },
+    {
+      "rule_id": "D4",
+      "verdict": "pass"
+    },
+    {
+      "rule_id": "D5",
+      "verdict": "pass"
+    }
+  ],
+  "rework_task_ids": [],
+  "autonomous_decisions": [
+    {
+      "cycle": 1,
+      "issue": "The PRD asks to migrate every fixture and fake driver in the files marked \"fixtures off the old tier keys\". Several still use `sonnet`/`opus` tier tables and `PhaseSettings(\"sonnet\"...)`: tests/runtime/test_supervisor_process.py:75, :161, :180; tests/integration/test_observer_terminal_cleanup.py:87, :348; tests/integration/test_supervisor_live_telemetry.py:188, :207. These fixtures still pass because they are self-consistent. Fixtures with the same stale keys outside the PRD's file list are tests/runtime/test_rework_thread_conflict.py:69, tests/integration/test_launcher_outcomes.py:57, tests/integration/test_terminal_lifecycle.py:236 and tests/tui/test_codex_projection.py:165. The ones routing through default phases now ignore the configured `model-s`/`model-o` and use the driver defaults. Migrate the PRD-listed files to `standard`/`deep`, and the others for the same reason.",
+      "severity": "medium",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 1,
+      "issue": "No test proves the Supervisor passes the driver's `default_tiers` to `resolve_phase_route`. All four fake drivers carry an empty table; the `route` stand-in in test_supervisor_preflight defaults `default_tiers` to None; `test_unconfigured_project_routes_through_driver_default_tiers` calls `resolve_phase_route` directly, not through `Supervisor`. Deleting `default_tiers=` at both supervisor call sites would leave every test green, yet this is the PRD happy path. Add a Supervisor-level test with a fake whose `default_tiers` is non-empty and a project with no tier table, asserting preflight passes and `_attempt` launches with the mapped model. Separately, the unconfigured-project test at tests/runtime/test_adapter_launch_routing.py:192 bypasses Supervisor and the edge model-to-tier conversion by passing `route.tier` directly to `build_launch`: add an unconfigured Supervisor test for both drivers that captures build/review/done argv and exercises both route-resolution call sites.",
+      "severity": "high",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 1,
+      "issue": "The breaking-change entry is inaccurate. It says a tiers table naming only models \"no longer resolves the default routes\". In fact the routes resolve silently to the driver's own models (`default_tiers` is merged under the table), so the operator's models are ignored. Task 5 required the note that such a table \"now falls through to the driver's own models\". Reword the entry to describe the silent fallback, and distinguish the built-in neutral keys from custom keys rather than requiring configured keys for neutral frontmatter floors.",
+      "severity": "medium",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 1,
+      "issue": "docs/operations.md is under-documented and self-contradictory on four counts. (1) :82 says a tiers table \"must now define standard and deep\", then says a table with neither key \"silently falls through to the driver's own models instead of failing\"; the drivers merge `{**default_tiers, **settings.tiers}`, so no definition is required and the two sentences disagree. (2) Task 5 asked for the PRD frontmatter floor to be stated there as a rule \u2014 it applies only when its value is a tier key in the table, written with a neutral placeholder \u2014 and the amended sentence at :80-:87 adds no such rule; the existing \"unavailable hint warns and applies no floor\" is the only coverage. (3) The Risks section asks the same file to document the frontmatter-floor risk (a PRD naming a non-neutral default model warns unless the agent tier table maps it); only docs/driver-protocol.md:37-45 shows an example. (4) The explicitly required reserved literal `default` is not named. Fix all four in the generated documentation source `src/ovcaq/workflow_cli.py` and regenerate operations.md, keeping the driver-protocol reference and the provider-neutrality invariant.",
+      "severity": "medium",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 1,
+      "issue": "Test bloat that does not pin this change, in one file. The replay shows 99 new tests in the failure-class file pass against the pre-change code, plus 5 in `test_claude_default_tiers_do_not_bypass_launch_validation`. The PRD requires one table test per driver plus the pinned negatives. The generated carrier-sentence, casing and pairwise-precedence suites exercise old markers such as `unauthorized`, `permission denied`, `timed out` and `agent loop died`. Keep rows that fail at base or that the PRD names as pins; cut the rest (about 300 lines). Separately, `test_codex_diagnostic_table_reaches_every_failure_class` at :384 checks only expected values in its own fixture, never classifier behavior: remove that redundant fixture-only test and retain the parametrized classifier assertions.",
+      "severity": "medium",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "issue": "R1: The PRD asks to migrate every fixture and fake driver in the files marked \"fixtures off the old tier keys\". Several still use `sonnet`/`opus` tier tables and `PhaseSettings(\"sonnet\"...)`: tests/runtime/test_supervisor_process.py:75, :161, :",
+      "severity": "medium",
+      "cycle": 1,
+      "action": "auto-fix (R1 routed into a [D1] rework task)",
+      "reason": "cycle 1 decision gate: multi-voice finding, fix is additive or mechanical, so auto-fix applies without escalation"
+    },
+    {
+      "issue": "R2: No test proves the Supervisor passes the driver's `default_tiers` to `resolve_phase_route`. All four fake drivers carry an empty table; the `route` stand-in in test_supervisor_preflight defaults `default_tiers` to None; `test_unconfigured_p",
+      "severity": "high",
+      "cycle": 1,
+      "action": "auto-fix (R2 routed into a [D1] rework task)",
+      "reason": "cycle 1 decision gate: multi-voice finding, fix is additive or mechanical, so auto-fix applies without escalation"
+    },
+    {
+      "issue": "R3: The breaking-change entry is inaccurate. It says a tiers table naming only models \"no longer resolves the default routes\". In fact the routes resolve silently to the driver's own models (`default_tiers` is merged under the table), so the op",
+      "severity": "medium",
+      "cycle": 1,
+      "action": "auto-fix (R3 routed into a [D1] rework task)",
+      "reason": "cycle 1 decision gate: multi-voice finding, fix is additive or mechanical, so auto-fix applies without escalation"
+    },
+    {
+      "issue": "R4: docs/operations.md is under-documented and self-contradictory on four counts. (1) :82 says a tiers table \"must now define standard and deep\", then says a table with neither key \"silently falls through to the driver's own models instead of f",
+      "severity": "medium",
+      "cycle": 1,
+      "action": "auto-fix (R4 routed into a [D1] rework task)",
+      "reason": "cycle 1 decision gate: multi-voice finding, fix is additive or mechanical, so auto-fix applies without escalation"
+    },
+    {
+      "issue": "R5: Test bloat that does not pin this change, in one file. The replay shows 99 new tests in the failure-class file pass against the pre-change code, plus 5 in `test_claude_default_tiers_do_not_bypass_launch_validation`. The PRD requires one tab",
+      "severity": "medium",
+      "cycle": 1,
+      "action": "auto-fix (R5 routed into a [D1] rework task)",
+      "reason": "cycle 1 decision gate: multi-voice finding, fix is additive or mechanical, so auto-fix applies without escalation"
+    },
+    {
+      "issue": "R6: Possible scope drift. Task 5 said to touch no source file, but `WORKFLOW_INPUT_NOTES` in src/ovcaq/workflow_cli.py:34 was edited. This is the generated source of the operations.md text, so it is likely justified, but the edit should be call",
+      "severity": "medium",
+      "cycle": 1,
+      "action": "discard (R6, no task created)",
+      "reason": "cycle 1 decision gate: single-voice; and already called out: docs/dev/project-management/meta/assumptions.md records the task-5 operations.md edit site as wrong and the WORKFLOW_INPUT_NOTES move as the deliberate fix (step-7 regression 1)"
+    },
+    {
+      "issue": "R7: The docs sentence \"the digit breaks no boundary after `429`\" is muddled. The point is that `\\b` does not hold between `429` and `0`.",
+      "severity": "low",
+      "cycle": 1,
+      "action": "discard (R7, no task created)",
+      "reason": "cycle 1 decision gate: single-voice"
+    },
+    {
+      "issue": "R8: Smaller deviations from the contract. The reserved literal is the private `_PROVIDER_DEFAULT_MODEL` rather than the contract's named constant. `build_launch` sets `model = None` instead of using the contract's conditional on the argv segmen",
+      "severity": "low",
+      "cycle": 1,
+      "action": "discard (R8, no task created)",
+      "reason": "cycle 1 decision gate: single-voice; the reporter states both deviations are behaviour-equivalent"
+    },
+    {
+      "issue": "R9: File sizes are close to the 800-line limit: src/ovcaq/runtime/supervisor.py is 782 lines, tests/runtime/test_supervisor.py 780 and tests/workflow/test_configuration.py 775. All are under the limit.",
+      "severity": "low",
+      "cycle": 1,
+      "action": "discard (R9, no task created)",
+      "reason": "cycle 1 decision gate: single-voice; and not a defect by its own text - every named file is under the limit"
+    },
+    {
+      "issue": "R10: src/ovcaq/config.py:33 adds an unspecified public constant, `NEUTRAL_TIERS`. It is derived from `DEFAULT_PHASE_TIERS` and used only by `workflow_settings`. It is small and harmless, but the PRD does not list it.",
+      "severity": "low",
+      "cycle": 1,
+      "action": "discard (R10, no task created)",
+      "reason": "cycle 1 decision gate: single-voice; the design doc's verbatim contract for task 3 names the NEUTRAL_TIERS union in workflow_settings, so it is specified, just not in the PRD body"
+    },
+    {
+      "issue": "R11: 1 touched test passes against the pre-change code: test_installed_explicit_available_tiers_override_the_active_map",
+      "severity": "medium",
+      "cycle": 1,
+      "action": "discard (R11, no task created)",
+      "reason": "cycle 1 decision gate: mech-check replay on a behavior-preserving fixture migration: this test was touched only to move off the old tier keys, so passing against the pre-change code is expected, not unpinned behavior"
+    },
+    {
+      "issue": "R12: 1 touched test passes against the pre-change code: test_supplied_phase_settings_control_each_workflow_launch",
+      "severity": "medium",
+      "cycle": 1,
+      "action": "discard (R12, no task created)",
+      "reason": "cycle 1 decision gate: mech-check replay on a behavior-preserving fixture migration: touched only to move off the old tier keys"
+    },
+    {
+      "issue": "R13: 1 touched test passes against the pre-change code: test_create_session_os_error_before_session_opens_reverts_a_fresh_batch",
+      "severity": "medium",
+      "cycle": 1,
+      "action": "discard (R13, no task created)",
+      "reason": "cycle 1 decision gate: mech-check replay on a formatting-only change: the only edit to this file in range is the ruff-format reflow at 981342e"
+    },
+    {
+      "issue": "R14: 3 touched tests pass against the pre-change code: test_preflight_resolves_routes_for_the_driver_agent, test_preflight_accepts_a_tier_only_the_agent_override_supplies, test_preflight_reports_the_override_tier_not_the_neutral_one",
+      "severity": "medium",
+      "cycle": 1,
+      "action": "discard (R14, no task created)",
+      "reason": "cycle 1 decision gate: mech-check replay on a behavior-preserving stand-in change: the `route` stand-in gained a defaulted `default_tiers` parameter, which by design leaves existing behavior unchanged. R2 is the finding that this seam is under-tested, and it is being fixed."
+    },
+    {
+      "issue": "R15: 8 touched tests pass against the pre-change code: test_explicit_phase_mapping_rejects_extra_nonroutable_keys, test_explicit_phase_mapping_rejects_untyped_values, test_config_rejects_nonroutable_phase_tables and 5 more",
+      "severity": "medium",
+      "cycle": 1,
+      "action": "discard (R15, no task created)",
+      "reason": "cycle 1 decision gate: mech-check replay on a behavior-preserving fixture migration: these rows assert rejection of malformed phase tables and were touched only to move the arbitrary tier strings off the old keys"
+    },
+    {
+      "issue": "Carl (gemini/copilot) failed twice with 'You have exceeded your monthly quota' (exit 1, not exit 4)",
+      "severity": "low",
+      "cycle": 1,
+      "action": "continued the cycle with Alice, Blake and Bob; no batch unavailability latch written",
+      "reason": "Safety Checks graceful-degradation row: a transient reviewer failure must not break an unattended run, and exit 1 is a runtime failure rather than the exit-4 permanent-configuration class that latches for the batch"
+    },
+    {
+      "issue": "consolidate_findings.py left four pairs of same-defect findings unmerged because each pair named two different file cells, so every one read as single-voice",
+      "severity": "medium",
+      "cycle": 1,
+      "action": "merged the four pairs in the review file's Consolidated Findings table, renumbered refs in row order, and recorded the merge explicitly in the review file",
+      "reason": "the decision gate's documented standard for matching is issue text plus file, and review-close enforces the single-voice discard mechanically off the Consensus cell; leaving the rows split would have discarded four genuinely multi-voice defects on a consolidator artifact"
+    },
+    {
+      "issue": "R3: Claude classification matches by plain substring with no word boundary, so prose mentioning oauth/rate limit/getaddrinfo reroutes (src/ovcaq/drivers/claude_events.py:223)",
+      "severity": "low",
+      "cycle": 2,
+      "action": "discarded",
+      "reason": "single-voice; the PRD specifies the Claude markers as plain substrings, so substring matching is the shipped contract"
+    },
+    {
+      "issue": "R4: HTTP 4290 classifies as rate_limit, locked in as an accepted asymmetry (tests/drivers/test_adapter_failure_classes.py:482)",
+      "severity": "low",
+      "cycle": 2,
+      "action": "discarded",
+      "reason": "single-voice; the pinned hold 00056 rule requires http/status context, which HTTP 4290 satisfies, and the asymmetry is recorded deliberately in the test"
+    },
+    {
+      "issue": "R5: docs claim default_tiers is required at DRIVER_API_VERSION 2 but _register_driver never validates it (src/ovcaq/drivers/base.py:129)",
+      "severity": "low",
+      "cycle": 2,
+      "action": "discarded",
+      "reason": "single-voice; the PRD deliberately does not bump DRIVER_API_VERSION and lists no discovery-validation work, so a registry check is new scope"
+    },
+    {
+      "issue": "R6: fail-silent config path - a model-name-only tiers table resolves through the driver's own models with no runtime warning (src/ovcaq/config.py:657)",
+      "severity": "low",
+      "cycle": 2,
+      "action": "discarded",
+      "reason": "single-voice; the silent fallback is the PRD's chosen migration behavior, documented by cycle 1's R3/R4 fixes; a runtime warning is new scope"
+    },
+    {
+      "issue": "R9: about 40 retained table rows still pass against the pre-change classifiers (tests/drivers/test_adapter_failure_classes.py:337)",
+      "severity": "low",
+      "cycle": 2,
+      "action": "discarded",
+      "reason": "single-voice; cycle 1's R5 trim already removed the generated bloat and the reporter states the residue loses no PRD-named pin"
+    },
+    {
+      "issue": "R10: two fixture sites outside the PRD list still use the old sonnet tier key (tests/integration/test_native_telemetry_identity.py:301)",
+      "severity": "low",
+      "cycle": 2,
+      "action": "discarded",
+      "reason": "single-voice; both files sit outside the PRD's file list and are self-consistent and green - naming consistency only"
+    },
+    {
+      "issue": "R11: the test replaces the harness driver instead of assigning default_tiers on it (tests/runtime/test_adapter_launch_routing.py:249)",
+      "severity": "low",
+      "cycle": 2,
+      "action": "discarded",
+      "reason": "single-voice; a one-statement style preference in a passing test"
+    },
+    {
+      "issue": "R12: explicit --available-tier flags bypass the neutral union, losing standard/deep (src/ovcaq/config.py:315)",
+      "severity": "low",
+      "cycle": 2,
+      "action": "discarded",
+      "reason": "single-voice; an explicit tier list overriding the defaults is the documented meaning of the flag, and warn-and-no-floor is already documented behavior"
+    },
+    {
+      "issue": "R13: DEFAULT_PHASE_TIERS is mutable while NEUTRAL_TIERS snapshots it at import time (src/ovcaq/config.py:32)",
+      "severity": "low",
+      "cycle": 2,
+      "action": "discarded",
+      "reason": "single-voice; nothing in the codebase mutates DEFAULT_PHASE_TIERS, so this guards a caller that does not exist"
+    },
+    {
+      "issue": "R14: NEUTRAL_TIERS is a new public config symbol outside the PRD's declared new-symbol set (src/ovcaq/config.py:33)",
+      "severity": "low",
+      "cycle": 2,
+      "action": "discarded",
+      "reason": "single-voice; and already settled in cycle 1 as this PRD's ledger entry for R10 - the design doc's task-3 contract names the NEUTRAL_TIERS union"
+    },
+    {
+      "issue": "R15: Codex execution records store the literal default as the model for both tiers (src/ovcaq/drivers/codex.py:118)",
+      "severity": "low",
+      "cycle": 2,
+      "action": "discarded",
+      "reason": "single-voice; the reserved default literal with the -m segment omitted is the PRD's explicit task-2 contract, and the spec never states the observability requirement"
+    },
+    {
+      "issue": "R16: build_launch accepts a raw explicit model default without allow_explicit_model and omits -m (src/ovcaq/drivers/codex.py:148)",
+      "severity": "low",
+      "cycle": 2,
+      "action": "discarded",
+      "reason": "single-voice; accepting a legitimate member of the merged tier table is the direct consequence of the PRD's own default_tiers merge"
+    },
+    {
+      "issue": "R17: the frontmatter-floor mapping example lives only in docs/driver-protocol.md because operations.md forbids model names (docs/operations.md:80)",
+      "severity": "low",
+      "cycle": 2,
+      "action": "discarded",
+      "reason": "single-voice; a PRD-internal contradiction already resolved in favor of the binding acceptance grep, and cycle 1's R4 kept the driver-protocol pointer"
+    }
+  ],
+  "deferred_decisions": [
+    {
+      "type": "cap-overflow",
+      "cycle": 2,
+      "ref": "R2",
+      "issue": "Reclassifying 429 as rate_limit makes a Claude rate limit halt the run immediately: with no reset banner summary.rate_limit_reset_at is None, so _failure_decision (src/ovcaq/runtime/decision.py:197) returns HALT \"No bounded rate-limit retry remains\" with zero attempts, where the pre-change agent class got died_retries first. The PRD premise that a 429 should reach the bounded wait is unmet for \"HTTP 429 Too Many Requests\", and no test covers the end-to-end Claude rate-limit outcome.",
+      "severity": "high",
+      "consensus": "1/3",
+      "file": "src/ovcaq/runtime/decision.py:197",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 2,
+      "ref": "R1",
+      "issue": "CHANGELOG.md:51 still ends \"A PRD frontmatter tier floor must also name a key the table defines\", which is false for the neutral keys: workflow_settings unions NEUTRAL_TIERS into available_tiers, so a standard/deep floor applies with no agent tiers table at all. docs/operations.md:84 states it correctly; make the CHANGELOG match.",
+      "severity": "medium",
+      "consensus": "2/3",
+      "file": "CHANGELOG.md:51",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 2,
+      "ref": "R7",
+      "issue": "Prior R2 only partially resolved: the new test verifies both Supervisor call sites but drives the fake Driver, so no unconfigured Supervisor run exercises ClaudeDriver/CodexDriver argv, the edge _map_model_to_tier round trip for the neutral keys (including the Codex default collapse), or the done phase. Coverage gap only; behavior is correct by inspection.",
+      "severity": "medium",
+      "consensus": "2/3",
+      "file": "tests/runtime/test_adapter_launch_routing.py:241",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved"
+    }
+  ]
+}

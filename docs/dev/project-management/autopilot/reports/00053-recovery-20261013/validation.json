@@ -1,0 +1,18 @@
+{
+  "schema": "valid",
+  "tasks_total": 24,
+  "tasks_completed": 24,
+  "phase": "review",
+  "next_phase": "review",
+  "cycle": 3,
+  "rework_cap": 3,
+  "provider_review_route": [
+    "anthropic"
+  ],
+  "repair_commits": [
+    "4106439",
+    "7d03c21",
+    "c119229"
+  ],
+  "full_suite_green": false
+}

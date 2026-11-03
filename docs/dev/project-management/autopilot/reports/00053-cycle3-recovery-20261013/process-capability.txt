@@ -1,0 +1,4 @@
+Default and require_escalated ps -p $$ -o pid= both exited 126: /bin/ps: Operation not permitted.
+Full-suite command used require_escalated, exited 130 after coordinator interruption once repeated blocked runtime tests were established.
+JUnit preserves complete executed-test outcomes and tracebacks; first failure: tests.drivers.test_claude_process::test_scripted_claude_runs_through_launch_and_owned_process[claude], PermissionError: [Errno 1] Operation not permitted: 'ps'.
+No attempt was made to bypass the inherited host restriction.

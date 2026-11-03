@@ -1,0 +1,37 @@
+[
+  {
+    "file": "src/ovcaq/workflow/_files.py",
+    "name": "_verify_directory_chain",
+    "lines": 13
+  },
+  {
+    "file": "src/ovcaq/workflow/_files.py",
+    "name": "_ensure_directory_chain",
+    "lines": 40
+  },
+  {
+    "file": "src/ovcaq/workflow/_files.py",
+    "name": "_open_deferred_ledger",
+    "lines": 47
+  },
+  {
+    "file": "tests/packaging/test_rework_13.py",
+    "name": "_invoke",
+    "lines": 34
+  },
+  {
+    "file": "tests/packaging/test_rework_13.py",
+    "name": "_assert_reparented_result_is_safe",
+    "lines": 35
+  },
+  {
+    "file": "tests/packaging/test_rework_13.py",
+    "name": "_assert_reparented_retry_and_replay",
+    "lines": 30
+  },
+  {
+    "file": "tests/packaging/test_rework_13.py",
+    "name": "test_installed_defer_never_succeeds_through_unconfirmed_reparented_ancestry",
+    "lines": 44
+  }
+]

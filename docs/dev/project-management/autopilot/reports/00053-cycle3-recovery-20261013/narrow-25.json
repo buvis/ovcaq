@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "pytest",
+    "tests/drivers/test_adapter_failure_classes.py",
+    "-q",
+    "--tb=line"
+  ],
+  "exit": 0,
+  "seconds": 0.35
+}

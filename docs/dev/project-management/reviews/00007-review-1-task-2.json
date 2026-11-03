@@ -1,0 +1,21 @@
+{
+  "name": "[D1] Bound all unproductive retries and unify boundary policy (M)",
+  "description": "Bound all unproductive retries and unify boundary policy\n\nLocation: src/ovcaq/runtime/decision.py; src/ovcaq/runtime/supervisor.py; src/ovcaq/state/commands.py; tests/runtime/test_decision.py; tests/runtime/test_supervisor.py; tests/state/test_supervisor_commands.py\n\nReuse: existing StateStore/StateService, pure decisions, shared runtime ownership and test fixtures.\n\nContract (source requirement/design excerpts):\nAgent final prose is never authoritative.\nAll waits/retries/caps come from configuration and injectable time.\nA state failure is fail-closed: do not launch another agent when the\nauthoritative handoff cannot be read or written.\n\nDetails:\nRepair the pure decision algorithm and its persisted shared progress counter. Count every unchanged workflow attempt toward the existing phase_repeat_limit, including alternating failure classes, while preserving separate class budgets and their configured reset semantics. Do not add an arbitrary new retry cap. Reset stale persisted repeats when the stored fingerprint does not match the current snapshot. Put startup/boundary decisions in the pure decision module and enforce attention/pause checks before any launch or completion. Preserve drained required-capability ordering and committed progress over provider exit noise. Boundary resume may clear operator boundary intent; a phase-level paused state must retain its reason/routing key and require its proper recovery decision. Do not silently resume a review-cap or systemic pause. F06 bootstrap PAUSE-versus-HALT policy is deferred; do not change it as a side effect.\n\n### Findings (verbatim)\n- 🟠 Retry budgets can be dodged forever. `Supervisor._decide` resets `RetryState` whenever the failure class changes, and failure-path RETRY/WAIT decisions never advance `phase_repeats`. Alternating failures (agent death, then connectivity, then agent death...) therefore relaunch sessions without limit. This breaks the PRD's \"Retry storms: Bound every wait/retry\" mitigation. Confirmed by tracing `decide` and `_decide` | File: src/ovcaq/runtime/supervisor.py:557 | Consensus: [1/3]\n- 🟡 `StateService.resume` always clears `pause_reason` but leaves `work.phase/next_phase == \"paused\"`. After a systemic park (records.py:445) or a `review_cap` pause, it erases the reason and the review_cap routing key that `workflow/resume.py:17` reads. Meanwhile `_boundary` still returns PAUSE, so `ovcaq run` exits 0 with 0 sessions and no explanation | File: src/ovcaq/state/commands.py:458 | Consensus: [1/3]\n- 🟡 `_boundary` is a second, pre-launch decision table outside decision.py. It imports the private `_capability_decision` and ignores the `control.attention` that `decide` halts on, so a non-drained state with attention launches a session before halting (PRD: every halt is a pure, table-tested decision) | File: src/ovcaq/runtime/supervisor.py:103 | Consensus: [1/3]\n- ⚪ `ProgressSnapshot.phase_fingerprint` is captured and persisted but `decide` never compares it, so repeat counts carry across restarts even when state changed between runs | File: src/ovcaq/runtime/decision.py:127 | Consensus: [1/3]\n\nAcceptance criteria:\n- Every quoted finding no longer reproduces.\n- Every decision is explainable from committed state plus summary.\n- Metrics, pause, stop, retry, park, and halt contracts pass.\n- Required post-drain capability lifecycle and independent retry pass.\n\nVerify: tests fail for the quoted regression before implementation and pass after; run applicable focused tests, source quality gates, and the work skill's mandatory final verification. Do not read live launcher homes in tests.\n",
+  "files": [
+    "src/ovcaq/runtime/decision.py",
+    "src/ovcaq/runtime/supervisor.py",
+    "src/ovcaq/state/commands.py",
+    "tests/runtime/test_decision.py",
+    "tests/runtime/test_supervisor.py",
+    "tests/state/test_supervisor_commands.py"
+  ],
+  "blocked_by": [
+    9
+  ],
+  "model": "opus",
+  "tier_reason": "algorithmic_risk",
+  "estimated_tokens": 90967,
+  "est_context_peak": 110967,
+  "qwen_eligible": false,
+  "qwen_excluded_reason": "tier"
+}

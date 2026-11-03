@@ -1,0 +1,202 @@
+[
+  {
+    "replay": false,
+    "module": "/private/tmp/ovcaq-r14-full/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/_files.py",
+    "module_sha256": "d6adecda0c72cb35f7300347cf236c90df3f35edb1b1f4f300a59ecfd56e63b7",
+    "status": "success",
+    "error": null,
+    "replacement_happened": true,
+    "parent_identity": [
+      16777230,
+      169761813
+    ],
+    "parent_confirmed_before_replacement": true,
+    "parent_confirmed_after_replacement": false,
+    "returned_path_exists": true,
+    "ledger": {
+      "batch_id": "batch",
+      "items": [
+        {
+          "op_id": "handoff-probe",
+          "prd": "00004-a.md"
+        }
+      ]
+    },
+    "displaced_seed_preserved": true,
+    "events": [
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          2
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          107435247
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          107436446
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          169761812
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          169761813
+        ]
+      },
+      {
+        "event": "replace",
+        "old": [
+          16777230,
+          169761814
+        ],
+        "displaced": [
+          16777230,
+          169761814
+        ],
+        "new": [
+          16777230,
+          169761815
+        ],
+        "boundary": "after-chain-before-deferred-mkdir"
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          169761815
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          169761818
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          169761816
+        ]
+      }
+    ],
+    "limit": "Real rename/recreation and actual fsync calls; syscall-order evidence only, no physical power-loss simulation."
+  },
+  {
+    "replay": true,
+    "module": "/private/tmp/ovcaq-r14-full/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/_files.py",
+    "module_sha256": "d6adecda0c72cb35f7300347cf236c90df3f35edb1b1f4f300a59ecfd56e63b7",
+    "status": "success",
+    "error": null,
+    "replacement_happened": true,
+    "parent_identity": [
+      16777230,
+      169761820
+    ],
+    "parent_confirmed_before_replacement": true,
+    "parent_confirmed_after_replacement": false,
+    "returned_path_exists": true,
+    "ledger": {
+      "batch_id": "batch",
+      "items": [
+        {
+          "op_id": "handoff-probe",
+          "prd": "00004-a.md"
+        }
+      ]
+    },
+    "displaced_seed_preserved": true,
+    "events": [
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          2
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          107435247
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          107436446
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          169761819
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          169761820
+        ]
+      },
+      {
+        "event": "replace",
+        "old": [
+          16777230,
+          169761821
+        ],
+        "displaced": [
+          16777230,
+          169761821
+        ],
+        "new": [
+          16777230,
+          169761825
+        ],
+        "boundary": "after-chain-before-deferred-mkdir"
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          169761825
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          169761828
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          169761826
+        ]
+      }
+    ],
+    "limit": "Real rename/recreation and actual fsync calls; syscall-order evidence only, no physical power-loss simulation."
+  }
+]

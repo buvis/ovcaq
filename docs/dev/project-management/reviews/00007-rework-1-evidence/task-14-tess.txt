@@ -1,0 +1,33 @@
+TASK: 00007-14 [D1] Use supplied supervisor phase settings during routing
+
+TEST PATHS:
+- tests/runtime/test_supervisor.py
+
+EXACT TEST NODES:
+- tests/runtime/test_supervisor.py::test_supplied_phase_settings_control_each_workflow_launch
+
+COVERAGE:
+- Supplied SupervisorSettings.phases values control tier/model, effort, and timeout for build, review, and done LaunchRequest objects even when on-disk neutral phase defaults differ.
+- An agent-specific review tier/effort override wins over the supplied neutral review settings while retaining the supplied timeout.
+- Logical tiers resolve to concrete configured model values in LaunchRequest.model.
+- Configured agent identity and literal per-phase prompts, including shell metacharacters, are preserved without shell execution.
+- Existing RuntimeSettings and SupervisorPolicy objects remain unchanged while phase settings are replaced.
+
+RED COMMAND:
+UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache uv run pytest tests/runtime/test_supervisor.py::test_supplied_phase_settings_control_each_workflow_launch --tb=short
+
+ACTUAL RED EVIDENCE:
+- 1 collected, 1 failed in 0.21s.
+- Assertion mismatch at the first launch: actual build route was ("build", "model-s", "high", 7200), expected ("build", "model-c", "medium", 11).
+- This demonstrates the supervisor reads on-disk/default phase routing instead of the complete SupervisorSettings.phases mapping supplied to it.
+- The first sandboxed run was infrastructure-blocked because the supervisor registry invokes `ps`; rerunning with permission produced the behavior failure above.
+
+VALIDATION:
+- `uv run ruff check tests/runtime/test_supervisor.py`: passed.
+- `git diff --check -- tests/runtime/test_supervisor.py`: passed.
+- `ruff format --check` initially identified formatting in the new assertion; the test was adjusted to the formatter's requested shape.
+
+abort_reason: none
+
+ASSUMPTIONS:
+- The configured argv is owned by the already-selected AgentDriver and is outside LaunchRequest; preserving the configured agent is therefore asserted through the unchanged driver identity while the real driver boundary receives each request.

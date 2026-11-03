@@ -1,0 +1,77 @@
+{
+  "head": "39ecaf4f95c79df6a88c30e4626386a352d1505b",
+  "probe": "python3 dev/local/reviews/00004_cycle_12_crash_probe.py /private/tmp/ovcaq-review-12-pytest/ovcaq-installed-wheel0/venv/bin/python",
+  "process_result": 0,
+  "installed_module": "/private/tmp/ovcaq-review-12-pytest/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/_files.py",
+  "cases": [
+    {
+      "boundary": "project",
+      "crash_exit": 73,
+      "surviving_directories": [
+        "new"
+      ],
+      "retry": {
+        "exit": 0,
+        "stderr": "",
+        "fsynced_directories": [
+          "new",
+          "runtime",
+          "deferred"
+        ]
+      },
+      "replay": {
+        "exit": 0,
+        "stderr": "",
+        "fsynced_directories": [
+          "runtime",
+          "deferred"
+        ]
+      },
+      "missing_parent_sync_on_success": true,
+      "missing_parent_sync_on_replay": true,
+      "state_unchanged": true,
+      "ledger_unchanged_by_replay": true,
+      "ledger_items": [
+        {
+          "op_id": "crash-one",
+          "prd": "00004-a.md"
+        }
+      ]
+    },
+    {
+      "boundary": "new",
+      "crash_exit": 73,
+      "surviving_directories": [
+        "new",
+        "new/nested"
+      ],
+      "retry": {
+        "exit": 0,
+        "stderr": "",
+        "fsynced_directories": [
+          "runtime",
+          "deferred"
+        ]
+      },
+      "replay": {
+        "exit": 0,
+        "stderr": "",
+        "fsynced_directories": [
+          "runtime",
+          "deferred"
+        ]
+      },
+      "missing_parent_sync_on_success": true,
+      "missing_parent_sync_on_replay": true,
+      "state_unchanged": true,
+      "ledger_unchanged_by_replay": true,
+      "ledger_items": [
+        {
+          "op_id": "crash-one",
+          "prd": "00004-a.md"
+        }
+      ]
+    }
+  ],
+  "interpretation": "Actual process exit before native parent fsync, fresh installed retry and exact replay omit that parent fsync and return success. Syscall durability gap and consequent data-loss risk; no physical power-loss test or observed loss claimed."
+}

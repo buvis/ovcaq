@@ -1,0 +1,33 @@
+[
+  {
+    "cycle": 2,
+    "finding": "No passing run at HEAD for phase-1 routing acceptance test or full suite",
+    "file": "tests/runtime/test_adapter_launch_routing.py",
+    "command": "mise exec -- uv run pytest -q tests/runtime/test_adapter_launch_routing.py tests/runtime/test_supervisor_adapters.py",
+    "source": "bob",
+    "result": {
+      "exit": 1,
+      "sha": "c1192298cc503392891adc84588afdb7af4bdab7",
+      "passed": 0,
+      "failed": 8,
+      "skipped": 0,
+      "cause": "PermissionError: ps denied even with require_escalated"
+    }
+  },
+  {
+    "cycle": 2,
+    "finding": "No passing run at HEAD for phase-1 routing acceptance test or full suite",
+    "file": "tests/runtime/test_adapter_launch_routing.py",
+    "command": "mise exec -- uv run pytest -q --tb=line",
+    "source": "bob",
+    "result": {
+      "exit": 1,
+      "sha": "c1192298cc503392891adc84588afdb7af4bdab7",
+      "passed": 6425,
+      "failed": 555,
+      "skipped": 0,
+      "errors": 172,
+      "cause": "Host process restriction; full raw run preserved"
+    }
+  }
+]

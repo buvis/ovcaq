@@ -1,0 +1,29 @@
+{
+  "alice": {
+    "receipt": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/alice-output-00051-c2-20261010.txt.receipt.json",
+    "session": "916003ca-85fa-4f2e-9c98-3b6bf6e07d2e",
+    "served_models": [
+      "claude-opus-5-5"
+    ],
+    "requested_model": "opus",
+    "effort": "xhigh"
+  },
+  "blake": {
+    "receipt": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/blake-output-00051-c2-20261010.txt.receipt.json",
+    "session": "338f3828-0af7-4daa-89d8-2756075ffcf1",
+    "served_models": [
+      "claude-opus-5-5"
+    ],
+    "requested_model": "opus",
+    "effort": "xhigh"
+  },
+  "bob": {
+    "receipt": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/bob-output-00051-c2-20261010.txt.receipt.json",
+    "session": "1663d285-f037-4242-8c79-c8355a3c5a6e",
+    "served_models": [
+      "claude-opus-5-5"
+    ],
+    "requested_model": "opus",
+    "effort": "xhigh"
+  }
+}

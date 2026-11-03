@@ -1,0 +1,3 @@
+UNUSED | tests/packaging/packaging_support.py:12 | PROJECT_ROOT | module-level binding never read in this file
+UNUSED | tests/packaging/packaging_support.py:99 | DECLARED_PACKAGE_MEMBERS | module-level binding never read in this file
+UNUSED | tests/packaging/packaging_support.py:100 | DECLARED_RESOURCE_MEMBERS | module-level binding never read in this file

@@ -1,0 +1,8 @@
+{
+  "command": "mise exec -- uv run pytest -q --tb=line",
+  "exit": 0,
+  "counts": {
+    "passed": 7151
+  },
+  "sha": "e75b50ada7b87191491d921f30c82d900d4a91b5"
+}

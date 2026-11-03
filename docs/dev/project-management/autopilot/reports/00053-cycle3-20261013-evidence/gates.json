@@ -1,0 +1,9 @@
+{
+  "state_schema": "passed",
+  "task_counts": "24/24",
+  "review_shape": "passed",
+  "doubt_constraint": "passed",
+  "provider_receipts_and_raw_evidence": "passed",
+  "implementation_snapshot": "unchanged",
+  "host_review_gap": null
+}

@@ -1,0 +1,18 @@
+{
+  "attempt": 2,
+  "model": "sonnet",
+  "actual_model": "gpt-6.1-sol",
+  "actual_provider": "openai",
+  "actual_effort": "medium",
+  "implementor": "codex",
+  "outcome": "aborted",
+  "cause": "contract_conflict",
+  "contributed": false,
+  "final_verification_fix": true,
+  "review_cycle": 1,
+  "dispatch_ids": [
+    "8361e46a"
+  ],
+  "verification": "Named terminal/rework decoder files1failed85passed; fullsuite1failed5590passed; no edits",
+  "blocker": "Existing provisional detail preserves ANSI via sanitize_text; new rework test strips ESC/NUL on same top-level error path. Operator contract decision required; assertions unchanged."
+}

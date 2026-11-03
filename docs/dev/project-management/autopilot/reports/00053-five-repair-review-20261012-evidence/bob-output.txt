@@ -1,0 +1,33 @@
+[BOB] ⚪ `fake_executable` keeps a `name: str = "fixture-agent-health"` parameter that no caller passes. Task 20 removed its only caller, the `command_name` parametrization, so the parameter is now speculative generality | File: tests/runtime/test_adapter_health.py:33 | Task: 20
+[BOB] ⚪ Carried Pat18 LOW: `workflow_fixture` is a noun, but the function writes the Claude wrapper script, so it performs an action and should have a verb-led name. The sibling helper `configured_workflow` in tests/runtime/test_adapter_launch_routing.py:24 has the same shape | File: tests/runtime/test_supervisor_adapters.py:40 | Task: 18
+[BOB] ⚪ `test_claude_probe_rejects_sh_hidden_by_overlay_path` repeats the `[claude]` case of `test_probe_rejects_host_executable_hidden_by_overlay_path` (tests/runtime/test_adapter_health.py:213). Both put the command on the host PATH, use an overlay without it, and hit the same `shutil.which(..., path=overlay) is None` branch, and both fail on the base code. This is the same kind of padding task 20 removed from line 90 | File: tests/runtime/test_adapter_health.py:181 | Task: 3
+
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+FIX:
+- `fake_executable` has an orphaned `name` parameter — tests/runtime/test_adapter_health.py:33 — drop the parameter and inline `directory / "fixture-agent-health"` at line 36.
+- `workflow_fixture` names an action with a noun — tests/runtime/test_supervisor_adapters.py:40 — rename it to a verb-led name such as `make_workflow_fake`, and update the call sites at tests/runtime/test_supervisor_adapters.py:56 and tests/runtime/test_adapter_launch_routing.py:33 plus the import at tests/runtime/test_adapter_launch_routing.py:13.
+- A duplicate Claude hidden-by-overlay test — tests/runtime/test_adapter_health.py:181 — delete `test_claude_probe_rejects_sh_hidden_by_overlay_path`. The parametrized `test_probe_rejects_host_executable_hidden_by_overlay_path[claude]` already pins this behavior.
+VERIFY:
+- (none)
+KNOWN:
+- (none)
+
+```
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```

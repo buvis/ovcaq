@@ -1,0 +1,8 @@
+{
+  "argv": [
+    "uv",
+    "build"
+  ],
+  "exit": 0,
+  "seconds": 0.81
+}

@@ -1,0 +1,36 @@
+[BOB] ⚪ `test_authentication_is_classified_beyond_the_display_detail_limit` repeats `test_failure_classifies_full_text_before_sanitizing_and_capping_detail` (tests/drivers/test_codex_rework_decode.py:136). Both decode a failure for the same two event kinds and check that the class comes from text past the 4096-character display limit. Only the trailing word differs ("Unauthorized" vs "Rate limit reached"). No PRD feature touches this path, and the test passes on the base, so it is padding of the same kind tasks 20, 21 and 23 removed. Delete it. `json` and the `driver` fixture are still used by the capacity test | File: tests/drivers/test_adapter_failure_classes.py:231 | Task: 6
+[BOB] ⚪ The capacity bound test runs `connectivity_retries` 0, 1, 2 and 3. Cases 0, 1 and 2 all take the same `retries.connectivity < policy.connectivity_retries` branch (src/ovcaq/runtime/decision.py:215). Only 2 (the last WAIT) and 3 (HALT) pin the bound. Drop cases 0 and 1 | File: tests/drivers/test_adapter_failure_classes.py:258 | Task: 6
+[BOB] ⚪ `test_numeric_diagnostics_require_an_explicit_status_or_error_context` checks only the positive cases. The "require" half is tested by `test_unrelated_numbers_are_not_failure_diagnostics` (tests/drivers/test_adapter_failure_classes.py:156). Rename it for the rule it enforces, e.g. `test_numeric_codes_classify_with_explicit_status_or_error_context` | File: tests/drivers/test_adapter_failure_classes.py:67 | Task: 6
+[BOB] ⚪ docs/driver-protocol.md:36 says both native adapters fall back to the standard default search path when the host PATH is missing. Only Claude has a test for this (`test_claude_probe_uses_default_search_path_when_host_path_is_absent`). The design says to "reproduce and regress" the existing Codex probe behavior. Parametrize the test over ("claude", "codex") and drop "claude" from its name. As I read `os.get_exec_path`, the patched `os.defpath` also steers the Codex subprocess lookup (not run) | File: tests/runtime/test_adapter_health.py:229 | Task: 3
+[BOB] ⚪ This cycle's incremental diff is 378,503 lines, and only about 1,300 of them are product code, tests and docs. The rest is committed autopilot evidence, including review diffs that git can regenerate: a 169,912-line review-diff.diff and a 16 MB review-diff-00053-postrepair-20261012.diff.gz. Each committed review diff contains the earlier cycles' diffs, so the repo grows faster every cycle | File: docs/dev/project-management/autopilot/reports/00053-cycle3-20261013-evidence/review-diff.diff | Task: general
+
+FIX:
+- Duplicate classify-before-bound test, padding in a new file — tests/drivers/test_adapter_failure_classes.py:231 — delete `test_authentication_is_classified_beyond_the_display_detail_limit`; tests/drivers/test_codex_rework_decode.py:136 already covers the path
+- Capacity bound test runs 0 and 1 through the same WAIT branch as 2 — tests/drivers/test_adapter_failure_classes.py:258 — keep only the `(2, WAIT)` and `(3, HALT)` cases
+- Test name says "require" but the test checks only positives — tests/drivers/test_adapter_failure_classes.py:67 — rename to `test_numeric_codes_classify_with_explicit_status_or_error_context`
+- Codex fallback to the default search path when host PATH is missing is documented but has no test — tests/runtime/test_adapter_health.py:229 — parametrize over `("claude", "codex")` and rename to `test_probe_uses_default_search_path_when_host_path_is_absent`
+VERIFY:
+- (none)
+KNOWN:
+- Committed review diffs that git can regenerate grow with every cycle (docs/dev/project-management/autopilot/reports/) — this is a repo-wide autopilot evidence practice: 23 tracked `.diff`/`.diff.gz` files going back to PRD 00004. It belongs to the autopilot tooling, not to this adapter PRD
+
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+```
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```

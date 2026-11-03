@@ -1,0 +1,362 @@
+[
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "`_abandon_start` swallows a cleanup failure with a bare `except OSError: pass`. The orphan run record can survive and nothing reports it, because the decision reason carries only the publication error. Fold the cleanup error into the decision reason, or record it, while still running the state step",
+    "file": "src/ovcaq/runtime/supervisor.py:241",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "The `cleanup_run_records` leg of `_abandon_start` is effectively unreachable and untested. Nothing after `FleetRegistry.publish` returns can raise, so `_fleet_entry` is only set when no failure follows. The real gap is `publish` raising after it has already replaced the entry file: `_fleet_entry` is still None, the metadata-only branch runs, and the fleet entry is orphaned. Tests only exercise the metadata-only leg, via `fail_fleet_publish`",
+    "file": "src/ovcaq/runtime/supervisor.py:237",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "New early-failure behaviors have no test. These are the removal-failure path (state step must still run), the revert falling back on a `RevisionConflict` or other state error (only the `ValueError` fallback is covered), and `CommandError` or `ValueError` from publication (only `OSError` and `RuntimeError` are covered). The `preflight` state-error branch returning `_state_failure(\"startup\")` is also untested",
+    "file": "tests/runtime/test_supervisor_preflight.py:423",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "Two tests pass against the pre-change code (fail-first replay): `test_cli_retry_of_a_declared_capability_is_not_a_usage_error` and `test_retry_accepts_a_declared_capability_and_runs_only_that_one`. The first uses a weak negative assertion (`code != \"usage\"` and `\"unknown capability\" not in message`). They guard against over-rejection but do not pin the change; assert the concrete outcome (exact envelope code and exit) or fold them into the unknown-name test as controls",
+    "file": "tests/runtime/test_supervisor_cli_capability.py:88",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "`Supervisor.preflight` now skips route validation for paused or drained work positions (task 4, via `boundary_decision`), but docs/operations.md, docs/state-protocol.md and `PROCESS_IDENTITY_NOTES` in src/ovcaq/cli.py still say `ovcaq run` validates the build, review and done routes before any state write. The docs overstate the contract; add the exception",
+    "file": "docs/operations.md:61",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "`preflight()` skips route validation when `boundary_decision` is non-None (paused or drained work position, with pause and attention neutralised). The spec requires `resolve_phase_route` to succeed for build, review and done unconditionally. Commit f80c30d added the skip as a deliberate deviation. It is extra logic beyond the PRD and means a broken route passes preflight in that state.",
+    "file": "src/ovcaq/runtime/supervisor.py:152",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "The attention site written on early failure is \"startup\", not the spec's `_state_failure(\"supervisor.startup\")`. \"startup\" was already the pre-existing site and the tests pin it (tests/runtime/test_supervisor_preflight.py:473). The text still deviates from the spec.",
+    "file": "src/ovcaq/runtime/supervisor.py:244",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "`_abandon_start` calls `revert_batch_start` pinned to `started[\"revision\"]`. If anything commits to state between `start_batch` and the revert (for example an operator pause), the revert raises a revision conflict. The code then falls back to attention, leaving a running batch with no supervisor. The result is acceptable and recorded, but this is a residual gap in the \"never running without a supervisor\" goal.",
+    "file": "src/ovcaq/runtime/supervisor.py:246",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "`_PUBLISH_ERRORS` excludes ordinary exceptions such as `TypeError` and `KeyError`, although the contract requires rollback for any publication exception. Catch `Exception` around `_publish_ownership`; interrupts still propagate.",
+    "file": "src/ovcaq/runtime/supervisor.py:190",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\u26aa",
+    "issue": "`tests/runtime/test_runtime_cli.py` is 1271 lines, over the 800 limit, and this diff grew it by 37. `tests/runtime/test_supervisor_cli.py` is 796 lines, right at the limit. Put the new `process_identity` doctor test in a separate file",
+    "file": "tests/runtime/test_runtime_cli.py:931",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\u26aa",
+    "issue": "Task 4 told the implementer to report anything `process_identity` cannot answer in `ps_field`. `ps_field(\"command\", ...)` still spawns `ps` at three sites, and no report of this is in the diff. This is the source of the sandbox `PermissionError: 'ps'` failures and errors, so it is not a code defect, but the helper is only half converted",
+    "file": "tests/integration/test_terminal_lifecycle.py:106",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\u26aa",
+    "issue": "The `CONTROLLER_CLIENT_NOTES` text in `src/ovcaq/cli.py` was rewritten (PRD 58 artifact and capability wording) and is unrelated to PRD 00062. It appears to be generated-doc drift synced into the source. Keep it, but note it as out of scope",
+    "file": "src/ovcaq/cli.py:277",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\u26aa",
+    "issue": "`forbid_ps` matches any argv[0] whose basename is `ps` (for example /usr/bin/ps). That is broader than the spec's \"ps or /bin/ps\". It is harmless.",
+    "file": "tests/runtime/conftest.py:18",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\u26aa",
+    "issue": "The runtime CLI test module exceeds the 800-line limit; its final function starts at line 1222. The violation predates this PRD, and restructuring the existing suite is outside scope.",
+    "file": "tests/runtime/test_runtime_cli.py:1222",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "For `_sessions > 1`, `_abandon_attempt` records nothing (no attention notice, no revert), while the first session writes attention on a resumed batch. A `CommandError` raised in a later session used to reach the CLI as a typed envelope, for example `process_probe` with exit 12. It is now flattened into exit 1 with \"attempt failed: ...\" and the batch is left running with no notice. Either limit the catch to the first attempt, or record attention for later attempts and keep the typed code.",
+    "file": "src/ovcaq/runtime/supervisor.py:202",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "The rework changed the wrong-size and wrong-pid `process_probe` messages to name the platform and `ovcaq doctor`. `test_incomplete_kernel_record_is_typed_failure` and `test_identity_belonging_to_another_pid_is_typed_failure` only check the code and exit, so the message requirement from cycle-1 R9 is unpinned. Add assertions on `sys.platform` and \"ovcaq doctor\" in both tests.",
+    "file": "tests/runtime/test_process_identity.py:249",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "`Supervisor.preflight` returns early without checking routes when `boundary_decision(position)` is non-None (paused, drained or completed work). The spec says the build, review and done routes must all resolve before `start_batch`. The early return is an unrequested relaxation. A misconfigured tier is therefore not caught in those states.",
+    "file": "src/ovcaq/runtime/supervisor.py:152",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "`_abandon_attempt` changes state before ownership cleanup runs in `finally`. A crash between these operations can leave idle state with surviving ownership records. Perform ownership cleanup before the revert or attention write, preserving the required filesystem-first order.",
+    "file": "src/ovcaq/runtime/supervisor.py:252",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "The order-dependent viewer failure remains unexplained. Run `uv run --locked pytest -q --tb=short` at base `fbadc41511f5` with the same ordering and sandbox, and compare `test_ordinary_fleet_ui_failure_uses_one_bounded_selection` with the HEAD result.",
+    "file": "tests/integration/test_viewer_fallback.py",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "\u26aa",
+    "issue": "`Supervisor.run` grew from 46 to 50 lines, the 50-line cap. The `ConfigurationError`/`CommandError` branch could go into `_loop` or a helper that wraps the first attempt.",
+    "file": "src/ovcaq/runtime/supervisor.py:171",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "\u26aa",
+    "issue": "`_state_failure` is called with site `\"startup\"`, but the spec names `_state_failure(\"supervisor.startup\")`. The tests pin `\"startup\"`, and a repo search found nothing for the spec string, so this looks like a spec wording mismatch.",
+    "file": "src/ovcaq/runtime/supervisor.py:259",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "\u26aa",
+    "issue": "The preflight failure for a missing process identity uses `ErrorCode.USAGE` with a generic message. The spec fixes the code only for the `ConfigurationError` mapping and passes probe errors through as `process_probe`, so this is acceptable but untyped for a None result.",
+    "file": "src/ovcaq/runtime/supervisor.py:148",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "Abandoned reader threads retain threads and pipe descriptors indefinitely when a detached descendant keeps the pipes open. Repeated timeouts accumulate these resources.",
+    "file": "src/ovcaq/workflow_client.py:483",
+    "reason": "out-of-scope reviewed context: work_start_sha spans PRD 00057's already-converged workflow_client commits, which this PRD did not touch"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "The unavailable-library test sets a non-Darwin platform, which rejects the probe before the mocked find_library(None) branch executes. That failure path remains untested.",
+    "file": "tests/runtime/test_process_identity.py:174",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "Two new stage_bundle helpers duplicate predecessor, artifact, bundle and configuration setup. Move their common setup into prerequisites_support.",
+    "file": "tests/workflow_client/test_prerequisites_controller.py:410",
+    "reason": "out-of-scope reviewed context: work_start_sha spans PRD 00057's already-converged workflow_client commits, which this PRD did not touch"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\u26aa",
+    "issue": "The fallback `except _STATE_ERRORS: self._state_failure(\"startup\")` in the session-opened branch is untested. No test makes the attention write itself fail after a session opened. It is low risk, since it mirrors the tested `_revert_fresh_start` fallback.",
+    "file": "src/ovcaq/runtime/supervisor.py:269",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\u26aa",
+    "issue": "`StateService.revert_batch_start` makes `expected_revision` optional (default None). The spec signature is keyword-only and required.",
+    "file": "src/ovcaq/state/commands.py:516",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\u26aa",
+    "issue": "Test placement differs from the spec. The identity tests live in tests/runtime/test_process_identity.py, not test_fleet_registry.py. The early-failure hardening tests live in tests/runtime/test_supervisor_early_failure.py, not test_supervisor_preflight.py. The named tests exist and pass.",
+    "file": "tests/runtime/test_supervisor_early_failure.py",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "2 touched test(s) pass against the pre-change code: test_cli_retry_of_a_declared_capability_is_not_a_usage_error",
+    "file": "tests/runtime/test_supervisor_cli_capability.py",
+    "reason": "fail-first replay row already settled as single-voice in cycle 1 of batch 202610251552 for the same test"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "2 touched test(s) pass against the pre-change code: test_the_published_redaction_constants_keep_their_values, test_detail_keeps_secret_free_and_multibyte_stderr_whole",
+    "file": "tests/workflow_client/test_actor_secret_redaction.py",
+    "reason": "out-of-scope reviewed context: work_start_sha spans PRD 00057's already-converged workflow_client commits, which this PRD did not touch"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "17 touched test(s) pass against the pre-change code: test_apply_raises_outcome_unknown_on_output_bound_overrun, test_apply_raises_outcome_unknown_on_non_json_stdout_after_zero_exit, test_apply_raises_outcome_unknown_on_malformed_response +11 more",
+    "file": "tests/workflow_client/test_apply_outcome_unknown.py",
+    "reason": "out-of-scope reviewed context: work_start_sha spans PRD 00057's already-converged workflow_client commits, which this PRD did not touch"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "3 touched test(s) pass against the pre-change code: test_envelope_rejects_missing_request_or_project_id_on_initial_open",
+    "file": "tests/workflow_client/test_contract.py",
+    "reason": "out-of-scope reviewed context: work_start_sha spans PRD 00057's already-converged workflow_client commits, which this PRD did not touch"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "27 touched test(s) pass against the pre-change code: test_bundle_digest_is_stable_for_the_fixture, test_bundle_digest_matches_byte_copy_at_another_path, test_bundle_digest_detects_single_byte_value_change, test_bundle_digest_rejects_mismatched_artifact +21 more",
+    "file": "tests/workflow_client/test_contract_digest.py",
+    "reason": "out-of-scope reviewed context: work_start_sha spans PRD 00057's already-converged workflow_client commits, which this PRD did not touch"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "3 touched test(s) pass against the pre-change code: test_nonzero_exit_message_keeps_only_a_marked_tail_of_long_prose_stderr",
+    "file": "tests/workflow_client/test_controller_boundary.py",
+    "reason": "out-of-scope reviewed context: work_start_sha spans PRD 00057's already-converged workflow_client commits, which this PRD did not touch"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "5 touched test(s) pass against the pre-change code: test_kill_group_completes_within_bounded_time_when_signal_is_denied, test_kill_group_reports_a_signal_failure_that_is_not_a_denial, test_kill_group_ends_a_grandchild_sharing_the_controller_group, test_capture_completes_within_bounded_time_when_a_pipe_stays_open",
+    "file": "tests/workflow_client/test_kill_group_bounded.py",
+    "reason": "out-of-scope reviewed context: work_start_sha spans PRD 00057's already-converged workflow_client commits, which this PRD did not touch"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "44 touched test(s) pass against the pre-change code: test_contract_rejects_live_controller_missing_a_pinned_operation, test_contract_rejects_live_controller_missing_a_pinned_capability +38 more",
+    "file": "tests/workflow_client/test_negotiation.py",
+    "reason": "out-of-scope reviewed context: work_start_sha spans PRD 00057's already-converged workflow_client commits, which this PRD did not touch"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "5 touched test(s) pass against the pre-change code: test_call_raises_timeout_when_controller_outlives_timeout, test_apply_never_returns_result_when_ack_precedes_timeout",
+    "file": "tests/workflow_client/test_transport.py",
+    "reason": "out-of-scope reviewed context: work_start_sha spans PRD 00057's already-converged workflow_client commits, which this PRD did not touch"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "high",
+    "issue": "Zero-byte results with EINVAL, ENOMEM or EFAULT still return None, allowing probe failures to classify live processes as dead. The PRD permits only ESRCH or zero; the updated tests encode the incorrect fallback.",
+    "file": "src/ovcaq/runtime/registry.py:183",
+    "reason": "contradicts the PRD text (00062:28-29 requires None for a zero-byte result; errno is not among the four enumerated raise causes) and names no reachable path: the call site passes a fixed 136-byte buffer with pinned argtypes, so EINVAL/EFAULT/ENOMEM cannot occur"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "The new `_started` attribute exists only to carry a local from `run` into `_loop`. Pass `started` as a `_loop` argument instead. That removes the field, its reset in `run` and its `__init__` line.",
+    "file": "src/ovcaq/runtime/supervisor.py:196",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "`process_identity` raises `CommandError(process_probe)` when `proc_pidinfo` returns 0 bytes with errno EPERM or EACCES. The spec says a zero-byte result means a pid the kernel does not know, so it must return None.",
+    "file": "src/ovcaq/runtime/registry.py:181",
+    "reason": "single-voice; and the branch is the fix cycle 1's high-severity R2 demanded and task 3 shipped with a test. Recorded as a known one-branch deviation from the PRD enumeration: a zero-byte result with errno EPERM/EACCES raises process_probe instead of returning None"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "Extra changes beyond the spec: `_release_run` extracted from `run`, the `_PUBLISH_ERRORS`/`_ATTEMPT_ERRORS` tuples widening the caught exception set, and `_probe_process_identity` also catching `struct.error` and `OSError`.",
+    "file": "src/ovcaq/runtime/supervisor.py:96",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "A first-attempt failure outside the caught set (ConfigurationError, CommandError, _STATE_ERRORS, AssertionError, RuntimeError, ValueError) would propagate uncaught. Examples are KeyError and TypeError. A fresh batch would then stay running with no supervisor.",
+    "file": "src/ovcaq/runtime/supervisor.py:398",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "`require_process_capabilities` is defined and widened to six facts, but nothing under src/ovcaq calls it. This predates the PRD. The spec does not require a caller.",
+    "file": "src/ovcaq/runtime/capability.py:197",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "The `ConfigurationError` arm of `except (ConfigurationError, CommandError)` in `run` is now dead for anything `_loop` raises. `ConfigurationError` is a `ValueError`, so `_loop` catches it first. Drop it from the outer tuple and keep `CommandError`.",
+    "file": "src/ovcaq/runtime/supervisor.py:211",
+    "reason": "single-voice"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "The session-opened flag is set inside `_open_session`, right after `create_session` returns. The spec says to set it when `_open_session` returns. The earlier timing is safer.",
+    "file": "src/ovcaq/runtime/supervisor.py:549",
+    "reason": "single-voice; also matches cycle 1's settled R3, which accepted the earlier placement and closed it with an explanatory comment"
+  }
+]

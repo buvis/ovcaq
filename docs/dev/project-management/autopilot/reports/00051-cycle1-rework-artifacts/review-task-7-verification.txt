@@ -1,0 +1,5 @@
+Command: mise exec -- uv run --no-sync pytest tests/events/test_unicode_safety.py tests/events/test_unicode_frames.py tests/events/test_tail.py -q --tb=line
+Environment: UV_CACHE_DIR=/private/tmp/ovcaq-rework-uv-cache
+Exit: 0
+1251 passed, 2 warnings in 0.73s
+Micro lane: two noncritical findings, named files clean at claim, two-file diff +15/-10, net 5.

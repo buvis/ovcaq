@@ -1,0 +1,93 @@
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path('/Users/bob/git/src/github.com/buvis/ovcaq')
+PLUGIN = Path('/Users/bob/.claude/plugins/cache/buvis-plugins/autopilot/0.6.0')
+TMP = ROOT / 'docs/dev/tmp'
+REV = ROOT / 'docs/dev/project-management/reviews'
+ID = '00007-1-20261002'
+STATE = ROOT / 'docs/dev/project-management/autopilot/state.json'
+state = json.loads(STATE.read_text())
+prd_path = ROOT / 'docs/dev/project-management/prds/wip' / state['prd']
+base = state['work_start_sha']
+head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+changed = subprocess.check_output(['git', 'diff', '--name-only', base, head], cwd=ROOT, text=True).splitlines()
+
+def read(relative):
+    return (PLUGIN / relative).read_text()
+
+def body(name):
+    source = read(f'agents/{name}.md')
+    match = re.fullmatch(r'---\n(.*?)\n---\n(.*)', source, re.S)
+    assert match and f'name: {name}' in match[1] and 'description:' in match[1] and 'tools:' in match[1]
+    return match[2].strip()
+
+if sys.argv[1] == 'prepare':
+    sys.path.insert(0, str(PLUGIN / 'skills/run-autopilot'))
+    from cli.schema import validate
+    validate(state)
+    assert state['tasks_total'] == len(state['tasks']) == state['tasks_completed']
+    assert all(t['status'] == 'completed' for t in state['tasks'])
+    for name in ('alice', 'blake', 'bob', 'carl', 'eve'):
+        body(name)
+    TMP.mkdir(exist_ok=True, parents=True)
+    tasks = '\n\n'.join(f"## Task {t['id']}: {t['name']}\n\n{t['description']}\n\nAttempts: {json.dumps(t['attempts'])}" for t in state['tasks'])
+    (TMP / f'review-tasks-{ID}.md').write_text(tasks)
+    requirements = prd_path.read_text()
+    for relative in ('docs/dev/project-management/plans/implementation-plan.md', 'docs/dev/project-management/prds/implementation-plan-coverage.md', 'docs/dev/project-management/discovery/00001-ovcaq-v1.md'):
+        requirements += f'\n\n## Mandatory source: {relative}\n\n' + (ROOT / relative).read_text()
+    (TMP / f'review-requirements-{ID}.md').write_text(requirements)
+    (TMP / f'review-prd-{ID}.md').write_text(requirements + '\n\n## Design Doc\n\n' + (ROOT / state['design_doc']).read_text())
+    meta = {'id': ID, 'base': base, 'head': head, 'changed': changed, 'codex_tasks': sum(any(a.get('implementor') == 'codex' for a in t['attempts']) for t in state['tasks'])}
+    (REV / f'00007-review-1-preflight.json').write_text(json.dumps(meta, indent=2) + '\n')
+    print(json.dumps(meta))
+elif sys.argv[1] == 'context':
+    diff = subprocess.check_output(['git', 'diff', base, head], cwd=ROOT, text=True)
+    (TMP / f'review-diff-{ID}.diff').write_text(diff)
+    doubt_diff = subprocess.check_output(['git', 'diff', base, head, '--', '.', ':!docs/dev/project-management/autopilot'], cwd=ROOT, text=True)
+    (TMP / f'bob-diff-{ID}.diff').write_text(doubt_diff)
+    common = f"# Review context\n\nRoot: {ROOT}\nHEAD: {head}\nDiff range: {base}..{head}\n\n### Changed Files\n" + '\n'.join(changed)
+    common += '\n\n## Requirements\n\n' + (TMP / f'review-requirements-{ID}.md').read_text()
+    common += '\n\n## Architecture\n\n' + (ROOT / 'AGENTS.md').read_text()
+    for name in ('mechanical', 'tautology', 'replay'):
+        common += '\n\n' + (TMP / f'{name}-{ID}.md').read_text()
+    common += '\n\n## Recorded build verification (SHA predates current handoff; fresh suite follows)\n\n' + (ROOT / 'docs/dev/project-management/autopilot/last-verification.json').read_text()
+    (TMP / f'bob-context-{ID}.md').write_text(common)
+    common += '\n\n## Tasks\n\n' + (TMP / f'review-tasks-{ID}.md').read_text()
+    common += '\n\n## Design Doc\n\n' + (ROOT / state['design_doc']).read_text()
+    common += '\n\n## Task commits\n\n' + subprocess.check_output(['git', 'log', '--oneline', f'{base}..{head}'], cwd=ROOT, text=True)
+    (TMP / f'review-context-{ID}.md').write_text(common)
+elif sys.argv[1] == 'prompts':
+    output = read('skills/review-work-completion/references/output-formats.md').split('## Agent Output Format (Single Source of Truth)\n', 1)[1].split('\n## Per-Rule Verdict Format', 1)[0]
+    rubric = read('skills/review-work-completion/references/rubric.md')
+    blind_rubric = read('skills/review-blindly/references/rubric.md')
+    checklist = read('skills/review-work-completion/references/review-dimensions.md')
+    pack_path = TMP / f'engram-pack-{ID}.md'
+    pack = str(pack_path) if pack_path.exists() else '(no pack available this cycle)'
+    # Only precedent is included for Bob; pack task/design prose cannot enter doubt inputs.
+    pack_findings = '(no pack available this cycle)'
+    if pack_path.exists():
+        text = pack_path.read_text()
+        match = re.search(r'(?im)^## Findings[- ]precedent.*\n(.*?)(?=^## |\Z)', text, re.S | re.M)
+        pack_findings = match[1] if match else '(pack has no Findings precedent section)'
+    for name in ('alice', 'blake', 'bob', 'carl'):
+        prompt = body(name)
+        if name == 'bob':
+            prompt += '\n\n' + body('eve').split('## Two lenses, applied to every changed file', 1)[1]
+        values = {'CONTEXT_FILE': str(TMP / f'{"bob-context" if name == "bob" else "review-context"}-{ID}.md'), 'DIFF_FILE': str(TMP / f'review-diff-{ID}.diff'), 'PACK_FILE': '(no pack available this cycle)' if name == 'bob' else pack, 'PACK_FINDINGS': pack_findings, 'REVIEW_CHECKLIST': checklist, 'RUBRIC': blind_rubric if name == 'blake' else rubric, 'OUTPUT_FORMAT': output, 'PRD': prd_path.read_text()}
+        for key, value in values.items():
+            prompt = prompt.replace('{' + key + '}', value)
+        if name == 'bob':
+            prompt = prompt.replace(str(TMP / f'review-diff-{ID}.diff'), str(TMP / f'bob-diff-{ID}.diff'))
+        prompt += f'\n\nRepository root: {ROOT}\nReview only. Do not modify files, state, or commits. Return the complete raw review as your final answer; do not save reviewer output yourself.\n'
+        if name in ('alice', 'blake'):
+            prompt += '\nHost adaptation: native Codex reviewer, logical sonnet, actual gpt-5.6-sol. Use exec_command for reads/searches and bounded checks; sed -n may replace Read. exec_command yield limits are not process timeouts. Do not read sibling review outputs, state.json, or review history. Do not spawn subagents.\n'
+        if name == 'blake':
+            prompt += 'Read the PRD-linked plan, coverage manifest, and discovery as specification inputs. Do not read designs, implementation task artifacts, diffs, git history, or review outputs.\n'
+        if name == 'bob':
+            prompt += '\nHost adaptation: external Claude Opus supplies the non-Codex doubt voice. This is a fresh review. Use read-only tools. No design document or task implementation narrative is provided as doubt context. Emit both all consensus R verdicts and D1-D5 verdicts, and exactly one FIX/VERIFY/KNOWN bucket for each residual finding. Include each finding once as a [BOB] issue line so consolidation retains it. Cite files repo-relative as path:line, never absolute and never with a (lines a-b) suffix.\n'
+        (TMP / f'{name}-prompt-{ID}.md').write_text(prompt)
+        print(name, len(prompt), TMP / f'{name}-prompt-{ID}.md')

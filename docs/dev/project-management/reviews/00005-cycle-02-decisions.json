@@ -1,0 +1,611 @@
+[
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F01",
+      "type": "cap-overflow",
+      "issue": "`RuntimePaths._identities` remains a comparison field, so two objects with identical public contract fields compare unequal when their private filesystem snapshots differ; declare it with `compare=False`",
+      "severity": "medium",
+      "consensus": "[2/3]",
+      "file": "src/ovcaq/paths.py:169",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F02",
+      "type": "cap-overflow",
+      "issue": "F31 remains: `_private_directory` still duplicates the two path-layout creators and creates every missing ancestor with mode `0700`; consolidate the descriptor-walk primitive so intermediate project directories retain the established layout policy",
+      "severity": "medium",
+      "consensus": "[2/3]",
+      "file": "src/ovcaq/runtime/session.py:193",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F03",
+      "type": "cap-overflow",
+      "issue": "`_state_attention` still catches `EmergencyStateFailure`, which `acknowledge_emergency_failure` cannot raise, leaving the dead exception branch and import identified by F38",
+      "severity": "medium",
+      "consensus": "[2/3]",
+      "file": "src/ovcaq/runtime_cli.py:142",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F04",
+      "type": "cap-overflow",
+      "issue": "The rework expanded `test_runtime_cli.py` from 666 to 1234 lines, violating the 800-line limit; split status/doctor, log, purge, and emergency command tests into focused modules",
+      "severity": "medium",
+      "consensus": "[2/3]",
+      "file": "tests/runtime/test_runtime_cli.py:1",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F05",
+      "type": "cap-overflow",
+      "issue": "Fleet entry reads are not identity-bound to deletion: `_scan` records a pre-open inode without comparing it to the opened descriptor, while `remove` validates contents and then unlinks the pathname without rechecking its inode; a replacement during either gap can make prune delete a live record or remove delete a new owner’s record",
+      "severity": "high",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/registry.py:317",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved; replacement live-entry deletion reproduced with synthetic data in 00005_fleet_remove_race_proof_2.py. This loses discovery metadata; the authoritative run lock and retained session evidence remain intact.",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F06",
+      "type": "cap-overflow",
+      "issue": "Signal handling only raises an exception; no production runtime path composes group termination, outcome recording, registry cleanup, and lock release, leaving P03-T10’s centralized cleanup contract unimplemented",
+      "severity": "high",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/process.py:50",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved; the source plan section 12.2 requires composed cleanup, while this PRD/design expose primitives and delegate composition to their caller. Preserve the scope ambiguity for operator triage; do not opportunistically implement the later supervisor.",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F07",
+      "type": "cap-overflow",
+      "issue": "Three code paths now pick the state file differently. `workflow_settings` reads a new, undocumented `[workflow] state_file` key (config.py:117) and ignores `[runtime] external_state_root`. `status`, `doctor` and `--acknowledge-emergency` use `runtime_settings`, which honors the external root and ignores `state_file`. `init` and `state` use `state_path(root)` (cli.py:426). With either key set, doctor reports state \"missing\", and acknowledgement can accept a different file than the one workflow commands write (confirmed by reading). The PRD's explicit external-root behavior is still not met.",
+      "severity": "high",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/config.py:117",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved; 00005_runtime_resolution_proof_2.py confirms runtime diagnostics select external/state.json while workflow/state defaults remain project-local.",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F08",
+      "type": "cap-overflow",
+      "issue": "`status` still emits only `run.status`, so the concrete failure retained in `RunObservation.detail` is unavailable when status reports `inconsistent`; F28 remains observable even though doctor exposes the reason",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime_cli.py:312",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F09",
+      "type": "cap-overflow",
+      "issue": "Emergency decoding still reimplements the shared bounded duplicate-key-safe JSON decoder with `json.loads` and `_emergency_fields`; use `decode_json` directly and remove the duplicate parser",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/session.py:431",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F10",
+      "type": "cap-overflow",
+      "issue": "Runtime-root precedence merges internal and external choices independently, so a lower-priority user external root conflicts with a higher-priority project or explicit internal root instead of being overridden",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/config.py:214",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved; per-key merging and mutually exclusive root selectors conflict across layers. Preserve the exact precedence question for repair.",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F11",
+      "type": "cap-overflow",
+      "issue": "Process identity uses `ps lstart` with one-second precision, so a PID recycled within the same second can be misclassified as the original process and escape stale-entry pruning",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/registry.py:109",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F12",
+      "type": "cap-overflow",
+      "issue": "A `ps` timeout raises uncaught `subprocess.TimeoutExpired`, allowing registry discovery and `status`/`doctor` to traceback instead of producing degraded diagnostics",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/registry.py:109",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F13",
+      "type": "cap-overflow",
+      "issue": "`status` embeds `datetime.now()` in its purge preview, so unchanged runtime/state data produces different output despite the required deterministic status contract",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime_cli.py:303",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F14",
+      "type": "cap-overflow",
+      "issue": "`doctor` reports `ok: false` on every newly initialized project. `_directory_health` stats `paths.sessions`, but `init` creates only `dev/local/ovcaq`, and only `create_session` creates `sessions`. The resulting FileNotFoundError fills both the `permissions` and `writability` checks with the error text. Every ok=True test runs `ensure_runtime_layout` first, so none catches this (confirmed by reading).",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime_cli.py:201",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved; isolated init-then-doctor reproduction confirms missing sessions directory makes permission/writability checks fail.",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F15",
+      "type": "cap-overflow",
+      "issue": "The F14 fix landed on `_runtime_timestamp`, which after the refactor only parses `logs purge --before`. Cutoffs with an offset (valid RFC3339, the metavar) are now rejected as usage errors. No test covers this, and the validator label says `metadata.started_at` (metadata already goes through `parse_session_metadata`).",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/cli_io.py:84",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved; cutoff input uses the strict UTC metadata parser despite RFC3339 labeling. Preserve both the behavior and misleading label for API-contract triage.",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F16",
+      "type": "cap-overflow",
+      "issue": "`cleanup_run_records` turns every OSError, ValueError and TypeError into `False`. A caller cannot tell \"record belongs to another run\" from \"unlink or fsync failed\", and the cause is lost.",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/session.py:370",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F17",
+      "type": "cap-overflow",
+      "issue": "`_acquire_purge_locks` re-implements `RunLock.acquire`: O_NOFOLLOW open, S_ISREG check, LOCK_NB flock, samestat recheck, fchmod. Simpler: add `directory: int | None = None` to `RunLock.acquire` (as `run_lock_held` already has) and map DuplicateRunError to ActiveSessionError for run.lock.",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/_retention.py:343",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "autonomous_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F18",
+      "type": "review-discard",
+      "issue": "7 touched test(s) pass against the pre-change code: test_internal_resolution_refuses_existing_symlink_descendants, test_configuration_refuses_symlink_files_with_arbitrary_targets +1 more",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "tests/runtime/test_paths.py",
+      "action": "discarded after verification",
+      "reason": "Computed pass-at-base fact retained, then assessed against the diff: these are pre-existing rejection/containment/byte-preservation cases with narrower expected exceptions, helper refactors, varied inputs, or regression backfill. Correct pre-change behavior should still pass. The replay separately records 113 failing touched cases and three uncollectable files; a passing existing parametrization is not itself a missing behavioral fix.",
+      "status": "discarded",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "autonomous_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F19",
+      "type": "review-discard",
+      "issue": "11 touched test(s) pass against the pre-change code: test_spawn_rejects_invalid_argv_before_starting_any_process +5 more",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "tests/runtime/test_process.py",
+      "action": "discarded after verification",
+      "reason": "Computed pass-at-base fact retained, then assessed against the diff: these are pre-existing rejection/containment/byte-preservation cases with narrower expected exceptions, helper refactors, varied inputs, or regression backfill. Correct pre-change behavior should still pass. The replay separately records 113 failing touched cases and three uncollectable files; a passing existing parametrization is not itself a missing behavioral fix.",
+      "status": "discarded",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "autonomous_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F20",
+      "type": "review-discard",
+      "issue": "31 touched test(s) pass against the pre-change code: test_rejects_nonbytes_without_changing_evidence, test_rejects_invalid_limits +25 more",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "tests/runtime/test_raw_session.py",
+      "action": "discarded after verification",
+      "reason": "Computed pass-at-base fact retained, then assessed against the diff: these are pre-existing rejection/containment/byte-preservation cases with narrower expected exceptions, helper refactors, varied inputs, or regression backfill. Correct pre-change behavior should still pass. The replay separately records 113 failing touched cases and three uncollectable files; a passing existing parametrization is not itself a missing behavioral fix.",
+      "status": "discarded",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "autonomous_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F21",
+      "type": "review-discard",
+      "issue": "1 touched test(s) pass against the pre-change code: test_inode_substitution_during_acquisition_fails_and_releases_old_inode",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "tests/runtime/test_registry.py",
+      "action": "discarded after verification",
+      "reason": "Computed pass-at-base fact retained, then assessed against the diff: these are pre-existing rejection/containment/byte-preservation cases with narrower expected exceptions, helper refactors, varied inputs, or regression backfill. Correct pre-change behavior should still pass. The replay separately records 113 failing touched cases and three uncollectable files; a passing existing parametrization is not itself a missing behavioral fix.",
+      "status": "discarded",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "autonomous_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F22",
+      "type": "review-discard",
+      "issue": "25 touched test(s) pass against the pre-change code: test_invalid_selectors_fail_without_mutating_evidence +19 more",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "tests/runtime/test_retention.py",
+      "action": "discarded after verification",
+      "reason": "Computed pass-at-base fact retained, then assessed against the diff: these are pre-existing rejection/containment/byte-preservation cases with narrower expected exceptions, helper refactors, varied inputs, or regression backfill. Correct pre-change behavior should still pass. The replay separately records 113 failing touched cases and three uncollectable files; a passing existing parametrization is not itself a missing behavioral fix.",
+      "status": "discarded",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "autonomous_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F23",
+      "type": "review-discard",
+      "issue": "25 touched test(s) pass against the pre-change code: test_purge_rejects_parent_log_options_without_removing_evidence, test_runtime_readers_reject_unsafe_ids_non_utc_times_and_empty_required_strings +19 more",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "tests/runtime/test_runtime_cli.py",
+      "action": "discarded after verification",
+      "reason": "Computed pass-at-base fact retained, then assessed against the diff: these are pre-existing rejection/containment/byte-preservation cases with narrower expected exceptions, helper refactors, varied inputs, or regression backfill. Correct pre-change behavior should still pass. The replay separately records 113 failing touched cases and three uncollectable files; a passing existing parametrization is not itself a missing behavioral fix.",
+      "status": "discarded",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "autonomous_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F24",
+      "type": "review-discard",
+      "issue": "34 touched test(s) pass against the pre-change code: test_failed_state_notice_publishes_private_synced_marker_and_persistent_gate, test_invalid_failure_diagnostics_are_rejected_without_publishing_marker +28 more",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "tests/runtime/test_session_emergency.py",
+      "action": "discarded after verification",
+      "reason": "Computed pass-at-base fact retained, then assessed against the diff: these are pre-existing rejection/containment/byte-preservation cases with narrower expected exceptions, helper refactors, varied inputs, or regression backfill. Correct pre-change behavior should still pass. The replay separately records 113 failing touched cases and three uncollectable files; a passing existing parametrization is not itself a missing behavioral fix.",
+      "status": "discarded",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "autonomous_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F25",
+      "type": "review-discard",
+      "issue": "16 touched test(s) pass against the pre-change code: test_rejects_invalid_durations_before_starting_a_worker +10 more",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "tests/runtime/test_watchdog.py",
+      "action": "discarded after verification",
+      "reason": "Computed pass-at-base fact retained, then assessed against the diff: these are pre-existing rejection/containment/byte-preservation cases with narrower expected exceptions, helper refactors, varied inputs, or regression backfill. Correct pre-change behavior should still pass. The replay separately records 113 failing touched cases and three uncollectable files; a passing existing parametrization is not itself a missing behavioral fix.",
+      "status": "discarded",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "autonomous_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F26",
+      "type": "review-discard",
+      "issue": "4 touched test(s) pass against the pre-change code: test_configured_runtime_preserves_containment_and_symlink_refusal, test_workflow_paths_accept_contained_explicit_and_configured_values",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "tests/workflow/test_configuration.py",
+      "action": "discarded after verification",
+      "reason": "Computed pass-at-base fact retained, then assessed against the diff: these are pre-existing rejection/containment/byte-preservation cases with narrower expected exceptions, helper refactors, varied inputs, or regression backfill. Correct pre-change behavior should still pass. The replay separately records 113 failing touched cases and three uncollectable files; a passing existing parametrization is not itself a missing behavioral fix.",
+      "status": "discarded",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "autonomous_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F27",
+      "type": "review-discard",
+      "issue": "The CLI adds unlisted `doctor --acknowledge-emergency` and `logs purge --session` options, expanding both the interface and destructive purge behavior beyond the specified command surface",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/cli.py:167",
+      "action": "discarded after verification",
+      "reason": "The accepted PRD design explicitly specifies both flags as refinements of explicit session purge and emergency recovery; no automatic destructive action or out-of-scope product capability was added. The source command table is not an exhaustive flag inventory.",
+      "status": "discarded",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F28",
+      "type": "cap-overflow",
+      "issue": "`cleanup_run_records` removes the fleet entry before `run.json`. If that unlink fails, or the entry is already gone, `remove()` returns False on every retry. `run.json` is then stranded and `status` stays inconsistent until the next run overwrites it.",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/session.py:361",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F29",
+      "type": "cap-overflow",
+      "issue": "A second concurrent `logs purge --apply` is refused with \"cannot purge while a run is active\", because run.lock is taken first. That message is wrong for this case. retention.lock can never be the contended lock, since its only taker already holds run.lock. If it ever were contended, its DuplicateRunError (a RuntimeError) would escape `_dispatch_logs` and `main` as a traceback.",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/_retention.py:363",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved; preserve the inaccurate contention diagnostic and uncaught retention-lock exception, but do not remove the retention lock required for future aggregate writers.",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "autonomous_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F30",
+      "type": "review-discard",
+      "issue": "The `command` field means opposite things in two outputs. In `status` and `doctor`, `purge_preview.command` removes `--apply` with `plan.command[:-1]`. In `logs purge` output, `command` keeps `--apply`. The slice also silently depends on `--apply` being the last argument.",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime_cli.py:305",
+      "action": "discarded after verification",
+      "reason": "Status/doctor intentionally expose a safe preview command, while explicit purge outputs the documented apply argv. PurgePlan's accepted contract pins --apply last, so slicing that suffix is not an unverified assumption.",
+      "status": "discarded",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "autonomous_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F31",
+      "type": "review-discard",
+      "issue": "`Watchdog.join` signals \"worker still running\" with the builtin `TimeoutError`, which is a subclass of `OSError`. Broad `except OSError` handlers, such as the one in `cli.main`, would report it as an I/O failure.",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/watchdog.py:75",
+      "action": "discarded after verification",
+      "reason": "TimeoutError correctly represents a timed wait; no current production CLI path invokes Watchdog.join. A possible future broad OSError handler is hypothetical and does not justify a new exception API here.",
+      "status": "discarded",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F32",
+      "type": "cap-overflow",
+      "issue": "`workflow_settings` validates the PRD root and the state file with `runtime_directory`. Rejections therefore say \"derived runtime path escapes project root\" even when the path is a PRD root or a state file.",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/config.py:106",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F33",
+      "type": "cap-overflow",
+      "issue": "The rewritten CHANGELOG Added bullets list implementation details (\"identity-pinned fleet records behind inode-stable run locks without launch contention\") rather than what the user sees.",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "file": "CHANGELOG.md:20",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "autonomous_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F34",
+      "type": "verification",
+      "issue": "In the fail-first replay, 154 touched tests pass against the pre-change code. Most are expected, because they cover code that was only moved or refactored. It is not confirmed that this cycle's new-behavior tests fail at the base.",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "file": "N/A",
+      "action": "routed to verification",
+      "reason": "Routed to the exact named project verification command. No work pass runs on the cap-out path, so this check remains unrun. Bob's stated base-worktree and expected-failure interpretation is retained as context; ordinary current-HEAD exit zero alone would not establish that stronger claim.",
+      "status": "unrun",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "command": "mise exec -- uv run pytest tests/runtime/test_session_emergency.py::test_failed_acknowledgement_preserves_or_restores_canonical_blocking_evidence tests/runtime/test_session_emergency.py::test_marker_replacement_during_acknowledgement_preserves_new_failure_and_gate tests/runtime/test_retention.py::test_purge_retains_oversized_newline_free_evidence_using_bounded_reads tests/runtime/test_retention.py::test_runtime_root_swap_cannot_bypass_the_original_live_run_lock tests/runtime/test_watchdog.py::test_join_times_out_during_pending_signal_and_returns_only_after_last_delivery"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F35",
+      "type": "known-limitation",
+      "issue": "Emergency acknowledgement publishes and fsyncs a full archive copy (`_archive_emergency_evidence`), then deletes it on success at session.py:582. The rename plus link-back already keeps the evidence reachable.",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/session.py:582",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "The archive copy is deliberate recovery evidence used by failure-path tests. Removing it is a behavior/design change outside this repair; preserve Bob's KNOWN qualification.",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "deferred_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F36",
+      "type": "known-limitation",
+      "issue": "On normal exit, surviving descendants get an immediate SIGKILL with no TERM grace, so they cannot flush. The PRD describes TERM, then grace, then KILL.",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/process.py:154",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "The previous repair deliberately chose immediate owned-group cleanup after normal agent exit. Adding descendant TERM grace requires a policy/API decision; preserve this KNOWN limitation for later operator triage.",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "autonomous_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F37",
+      "type": "review-discard",
+      "issue": "`run_lock_held` raises on any platform other than darwin. On Linux, `status` and `doctor` will report `inconsistent` whenever run.lock exists.",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/registry.py:40",
+      "action": "discarded after verification",
+      "reason": "The PRD explicitly limits this milestone to macOS and assigns Linux support to a later release gate; reporting unsupported observation is expected.",
+      "status": "discarded",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  },
+  {
+    "sink": "autonomous_decisions",
+    "record": {
+      "cycle": 2,
+      "finding_id": "C2F38",
+      "type": "review-discard",
+      "issue": "`_read_config` refuses a symlinked user `~/.config/ovcaq` directory or `config.toml` file below the trusted anchor. That breaks stow-style dotfile setups.",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/config.py:44",
+      "action": "discarded after verification",
+      "reason": "The accepted trust-boundary repair deliberately resolves the chosen XDG anchor while refusing symlink descendants and config files. Relaxing that tested safety contract is not an automatic fix.",
+      "status": "discarded",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md"
+    }
+  }
+]

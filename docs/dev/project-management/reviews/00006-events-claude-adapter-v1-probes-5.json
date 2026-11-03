@@ -1,0 +1,37 @@
+{
+  "mixed_session_summary": {
+    "success": true,
+    "session_id": "new-session",
+    "failure_class": null,
+    "failure_detail": null,
+    "rate_limit_reset_at": null,
+    "usage": {
+      "input_tokens": 999,
+      "output_tokens": null,
+      "cache_creation_input_tokens": null,
+      "cache_read_input_tokens": null,
+      "tool_uses": null,
+      "cost_usd": null,
+      "estimated": false
+    }
+  },
+  "failure_classes": {
+    "OAuth token expired": {
+      "failure_class": "agent",
+      "detail": "OAuth token expired"
+    },
+    "HTTP 429 Too Many Requests": {
+      "failure_class": "agent",
+      "detail": "HTTP 429 Too Many Requests"
+    },
+    "ECONNRESET": {
+      "failure_class": "agent",
+      "detail": "ECONNRESET"
+    }
+  },
+  "nested_environment": {
+    "environment": {
+      "CONFIG_VALUE": "synthetic-private-value"
+    }
+  }
+}

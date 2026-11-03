@@ -1,0 +1,33 @@
+{
+  "phase": "paused",
+  "next_phase": "paused",
+  "pause_site": "data_loss_risk",
+  "cycle": 14,
+  "cap": 2,
+  "tasks_completed": 16,
+  "tasks_total": 18,
+  "pending_task_ids": [
+    "7",
+    "8"
+  ],
+  "schema": "valid",
+  "review_shape": 0,
+  "doubt_constraint": 0,
+  "host_review_gap": null,
+  "raw_verdicts_and_receipt": "valid",
+  "verbatim_findings_in_tasks": "8/8 exactly once",
+  "checks": "empty",
+  "contract_card_matches": true,
+  "head_sha": "7291d9f80c5b7a55f63c406552e5b3e27025acad",
+  "tracked_worktree": "clean",
+  "cli_dispatches": "closed",
+  "handoff": "review/leave/paused",
+  "original_tasks_preserved": true,
+  "batch_preserved": true,
+  "tests": {
+    "passed": 1359,
+    "failed": 0,
+    "skipped": 0,
+    "source": "fresh suite at reviewed HEAD"
+  }
+}

@@ -1,0 +1,23 @@
+[BLAKE] 🟡 Labeled status forms classify correctly, but HTTP diagnostics without a label now return `unknown` where the old bare-number match classified them. Reproduced: `429 Too Many Requests`, `503 Service Unavailable`, `HTTPS 503`, `{"status":429}`, `"statusCode": 401` and `code: 429` all give `unknown`. So a real 429 or 503 reported in one of these forms no longer gets rate-limit or connectivity WAIT handling. The PRD's "explicit HTTP/status/error-code context" rule allows this, but it narrows "genuine HTTP diagnostics", and there is no negative or positive pin for these forms | File: src/ovcaq/drivers/codex_events.py:300 | Task: P0-T1
+[BLAKE] ⚪ The probe and the real launch can still find executables in different places when PATH has a relative or empty entry. The Codex probe spawns with no `cwd`, so it searches the supervisor's working directory. The launch spawns with `cwd=request.root`, and the CLI never changes into `--root`. The Claude probe reports an empty host PATH as unhealthy, yet the actual spawn would search root. This is an edge case of the "health checks and actual spawn agree" exit criterion. I reasoned it from Python's subprocess path lookup and did not reproduce it | File: src/ovcaq/drivers/codex.py:180 | Task: P1-T2
+[BLAKE] ⚪ Every routine close of an already-completed lane (spawn, wait completed, close_agent shutdown) emits `raw.unknown` with reason "Malformed or unsupported Codex record". That label is wrong for a valid native record, and the test pins it as the contract. The TUI only shows raw evidence when nothing was normalized, so the visible impact is small | File: src/ovcaq/drivers/codex_events.py:233 | Task: P0-T1
+[BLAKE] ⚪ Only the private subclasses built by `build_driver` map a resolved model back to its tier key. A Supervisor given a plain `CodexDriver`/`ClaudeDriver` or an entry-point driver still applies tier lookup to the resolved model, so `LaunchRequest.model` stays ambiguous between tier and model. This follows the PRD's chosen edge pattern; only the CLI path is protected | File: src/ovcaq/drivers/edge.py:16 | Task: P1-T1
+B1: pass
+B2: pass
+B3: pass
+B4: pass
+B5: pass
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: pass
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: pass
+B16: pass
+B17: pass
+B18: pass
+B19: pass

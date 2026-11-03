@@ -1,0 +1,2287 @@
+{
+  "phase": "review",
+  "next_phase": "review",
+  "schema_version": 1,
+  "batch": {
+    "id": "202610092123",
+    "mode": "autopilot",
+    "completed_prds": [
+      {
+        "filename": "00051-triage-a-single-valid-codex-record-can-crash-th-v1.md",
+        "cycles": 2,
+        "autonomous_decisions": 27,
+        "escalated_decisions": 0,
+        "tasks_completed": 9,
+        "tasks_total": 9,
+        "lane": "full",
+        "lane_reason": "design",
+        "lane_effective": "full",
+        "lane_escalated": null
+      }
+    ],
+    "plugin_versions": {
+      "aegis@buvis-plugins": "0.4.1",
+      "warden@buvis-plugins": "0.14.1"
+    },
+    "catchup_completed_at": "2026-10-10T10:29:12+00:00",
+    "catchup_head_sha": "7819970d7f807d6fad07b115af4f0df1fbc4a248",
+    "parks_consecutive": 0,
+    "minted_stubs": [
+      "00055-triage-the-review-1-two-pass-bounded-detail-lea-v1.md"
+    ]
+  },
+  "prd": "00053-adapter-operational-corrections-v1.md",
+  "catchup_mode": "run",
+  "doubt_reviewer": "codex",
+  "consensus_engine": "legacy",
+  "session_model": "sonnet",
+  "rework_cap": 6,
+  "lane": "full",
+  "lane_reason": "design",
+  "lane_effective": "full",
+  "tasks_total": 31,
+  "tasks_completed": 31,
+  "cycle": 6,
+  "applied_review_batches": [
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00051-triage-a-single-valid-codex-record-can-crash-th-v1-review-1.md::decision-gate",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-1.md::decision-gate",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-2.md::decision-gate",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-2.md::tail-sweep",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-2-postrepair-20261012.md::tail-sweep",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-2-five-repair-20261012.md::decision-gate",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-2-five-repair-20261012.md::tail-sweep",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-2-three-repair-20261012.md::decision-gate",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-2-three-repair-20261012.md::tail-sweep",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-3.md::decision-gate",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-4.md::decision-gate",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-5.md::decision-gate"
+  ],
+  "phases_completed": [],
+  "replan_count": 0,
+  "contract_card": "step: Cycle-5 authorized repairs complete; canonical rework transition committed cycle 6, phase/next review, cap 6, 31/31 tasks complete, rework IDs cleared.\ninvariants: Fresh completion review only; every Alice/Blake/Bob source lens and complete rubric remains mandatory. Preserve all historical evidence/deferrals and 60-row actual-model audit; Codex coordinates, Anthropic Opus/xhigh reviews. No Eve/Fable request; Carl disabled.\nauthority: User authorized all five fixes and one full cycle 6. Global AGENTS Autonomy section preauthorizes routine reversible finding dispositions and supersedes older ask-first prose. Explicit scope/cap and normal convergence/deferral rules remain binding; no unbounded loop or routine approval question.\nverification: Narrow tests, Pat closure reviews, style/split checks and five suite gates pass. Full suite incomplete: systemic macOS ps denial survives required escalation. Raw partial log/JUnit and escalated retry retained; null suite counts prevent reuse as green evidence.\nnext: Fresh cycle-6 full review; validate audit/review-route and obtain a valid complete suite in a process-inspection-capable environment before convergence/finalization. See reports/00053-cycle5-recovery-20261014/handoff.md. This work session stops; no wrapper or completion reviewers launched.",
+  "design_mode": "run",
+  "design_doc": "docs/dev/project-management/designs/00053-adapter-operational-corrections-v1-design.md",
+  "tasks": [
+    {
+      "name": "Verify native outcome split completion",
+      "description": "Verify both split native-outcome tasks are completed and narrow tests pass; no production edits.\nContract: Driver API 2, observation protocol 1, state schema 1 unchanged.\nAcceptance criteria:\nAcceptance: `uv run pytest tests/drivers/test_adapter_outcomes.py\n  tests/drivers/test_codex_decode_terminals.py` covers each completed/unfinished\n  lane status, capacity WAIT and retry exhaustion, genuine HTTP diagnostics,\n  unrelated numeric counts, and all failure fixtures with literal expected classes.\nVerify: uv run pytest -q --tb=line tests/drivers/test_adapter_outcomes.py tests/drivers/test_adapter_failure_classes.py tests/drivers/test_codex_decode_terminals.py",
+      "files": [],
+      "blocked_by": [
+        5,
+        6
+      ],
+      "estimated_tokens": 74875,
+      "est_context_peak": 94875,
+      "model": "opus",
+      "tier_reason": "algorithmic_risk",
+      "qwen_eligible": false,
+      "qwen_excluded_reason": "tier",
+      "id": "1",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "opus",
+          "outcome": "aborted",
+          "review_cycle": null,
+          "cause": "context_overrun",
+          "implementor": "codex",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "preflight_outcome": null,
+          "pipeline": "full"
+        }
+      ]
+    },
+    {
+      "name": "Preserve once-resolved supervised models",
+      "description": "Preserve once-resolved supervised models\n\nLocation: /Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/drivers/edge.py, /Users/bob/git/src/github.com/buvis/ovcaq/tests/runtime/test_adapter_launch_routing.py, /Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_codex_launch.py\n\nReuse: existing driver edge inverse-tier adaptation, identity flags, bounded connectivity policy and fake harnesses.\n\nPremise: recheck each finding at execution; if already corrected, retain a\nregression and report it instead of forcing a production edit.\n\n### Contract\nKeep public `CodexDriver.build_launch(request: LaunchRequest) -> LaunchSpec` tier-key precedence unchanged, including explicit-model validation. Add a private `_ResolvedModelCodexDriver(CodexDriver)` in `drivers/edge.py`, mirroring `_ResolvedModelClaudeDriver`: its `build_launch` maps a configured model value back to a corresponding tier key before delegating. `build_driver` constructs this subclass for supervised routes. A resolved `o3` with tiers `{default: o3, o3: o3-pro}` must launch literal `o3`; direct `CodexDriver` given `o3` still launches `o3-pro`. The supervisor passes only selected.tiers[resolved.tier], per config.py:resolve_phase_route, so every supervised model is necessarily a configured tier value. A no-match literal cannot originate from this route; preserve public validation for any direct call rather than inventing a new explicit-model path. No provider strings or special cases enter shared runtime.\n\n`item_lanes(item: object, started_lanes: set[str] | None = None)` retains its signature and return shape. The set passed by `CodexDriver._item_observations` contains only remembered lane identities whose terminal flag is false. `interrupted`, `shutdown`, and `not_found` synthesize `LANE_FAILED` only for those unfinished identities; completed lanes retain their completed observation history. Unsupported terminal statuses otherwise produce raw-unknown evidence. No additional lane state or TUI policy.\n\n`classify_failure(detail: str) -> FailureClass` keeps authentication, permission, rate-limit, connectivity, timeout, agent precedence. Numeric 401/403/429/502/503 require explicit diagnostic context such as HTTP status, status code or error code, including genuine fixture spellings. Ordinary numeric counts remain UNKNOWN. Retain meaningful existing word diagnostics; `Selected model is at capacity` becomes CONNECTIVITY, using existing bounded WAIT/retry exhaustion. Do not change `failure_reset` grammar. Fixture expectations are literal independent oracles, never derived through the production classifier.\n\n`ClaudeDriver.probe() -> DriverHealth` uses effective environment `os.environ` overlaid by configured launch environment when calling `shutil.which(command, path=effective_path)`. Explicit empty PATH stays empty; absent PATH follows subprocess/default PATH semantics. Absolute executable paths retain existing behavior. Codex probes already spawn with `dict(os.environ) | dict(settings.environment)`; reproduce and regress that behavior rather than changing it gratuitously. Both native adapters must fail health before supervisor spawn when command resolution is unhealthy. Fake Codex version/auth commands use the existing reviewed pin, never a live provider or a changed pin.\n\nDetails:\nUse real fake supervisor launch to observe literal selected model argv for colliding tier/value configuration; preserve direct Codex tier-key precedence and opt-in validation.\n\nAcceptance criteria:\nAcceptance: `uv run pytest tests/runtime/test_adapter_launch_routing.py\n  tests/drivers/test_codex_launch.py` proves colliding tier/model values launch the\n  route's model through the real fake supervisor and direct tier-key precedence remains.\n- [ ]\n\nVerify: uv run pytest -q --tb=line tests/runtime/test_adapter_launch_routing.py tests/drivers/test_codex_launch.py",
+      "files": [
+        "src/ovcaq/drivers/edge.py",
+        "CHANGELOG.md"
+      ],
+      "blocked_by": [
+        1
+      ],
+      "estimated_tokens": 58190,
+      "est_context_peak": 78190,
+      "model": "opus",
+      "tier_reason": "algorithmic_risk",
+      "qwen_eligible": false,
+      "qwen_excluded_reason": "tier",
+      "id": "2",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "opus",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "implementor": "codex",
+          "outcome": "completed",
+          "cause": null,
+          "review_cycle": null,
+          "preflight_outcome": null,
+          "pipeline": "full",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean",
+          "devon": "exploit_fixed",
+          "devon_exploit": "Factory model/effort/options/environment/credential injection/explicit opt-in/prompt delimiter/command prefix",
+          "devon_weak_points": 8,
+          "devon_in_contract": [
+            "Three null-valued invalid options remain direct-only; TOML has no null representation"
+          ]
+        },
+        {
+          "attempt": 2,
+          "model": "opus",
+          "actual_model": "gpt-6-astra",
+          "actual_provider": "openai",
+          "implementor": "codex",
+          "outcome": "completed",
+          "cause": null,
+          "review_cycle": null,
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "escalation_reason": "gate_failure",
+          "escalated_from": "opus",
+          "red_check": "n/a:test-only-task",
+          "self_deslop": "skipped:test-only",
+          "style_gate": "clean",
+          "split_hygiene": "clean",
+          "review": "skipped:test-only"
+        }
+      ]
+    },
+    {
+      "name": "Probe effective launch PATH and prevent unhealthy spawn",
+      "description": "Probe effective launch PATH and prevent unhealthy spawn\n\nLocation: /Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/drivers/claude.py, /Users/bob/git/src/github.com/buvis/ovcaq/tests/runtime/test_adapter_health.py\n\nReuse: existing driver edge inverse-tier adaptation, identity flags, bounded connectivity policy and fake harnesses.\n\nPremise: recheck each finding at execution; if already corrected, retain a\nregression and report it instead of forcing a production edit.\n\n### Contract\nKeep public `CodexDriver.build_launch(request: LaunchRequest) -> LaunchSpec` tier-key precedence unchanged, including explicit-model validation. Add a private `_ResolvedModelCodexDriver(CodexDriver)` in `drivers/edge.py`, mirroring `_ResolvedModelClaudeDriver`: its `build_launch` maps a configured model value back to a corresponding tier key before delegating. `build_driver` constructs this subclass for supervised routes. A resolved `o3` with tiers `{default: o3, o3: o3-pro}` must launch literal `o3`; direct `CodexDriver` given `o3` still launches `o3-pro`. The supervisor passes only selected.tiers[resolved.tier], per config.py:resolve_phase_route, so every supervised model is necessarily a configured tier value. A no-match literal cannot originate from this route; preserve public validation for any direct call rather than inventing a new explicit-model path. No provider strings or special cases enter shared runtime.\n\n`item_lanes(item: object, started_lanes: set[str] | None = None)` retains its signature and return shape. The set passed by `CodexDriver._item_observations` contains only remembered lane identities whose terminal flag is false. `interrupted`, `shutdown`, and `not_found` synthesize `LANE_FAILED` only for those unfinished identities; completed lanes retain their completed observation history. Unsupported terminal statuses otherwise produce raw-unknown evidence. No additional lane state or TUI policy.\n\n`classify_failure(detail: str) -> FailureClass` keeps authentication, permission, rate-limit, connectivity, timeout, agent precedence. Numeric 401/403/429/502/503 require explicit diagnostic context such as HTTP status, status code or error code, including genuine fixture spellings. Ordinary numeric counts remain UNKNOWN. Retain meaningful existing word diagnostics; `Selected model is at capacity` becomes CONNECTIVITY, using existing bounded WAIT/retry exhaustion. Do not change `failure_reset` grammar. Fixture expectations are literal independent oracles, never derived through the production classifier.\n\n`ClaudeDriver.probe() -> DriverHealth` uses effective environment `os.environ` overlaid by configured launch environment when calling `shutil.which(command, path=effective_path)`. Explicit empty PATH stays empty; absent PATH follows subprocess/default PATH semantics. Absolute executable paths retain existing behavior. Codex probes already spawn with `dict(os.environ) | dict(settings.environment)`; reproduce and regress that behavior rather than changing it gratuitously. Both native adapters must fail health before supervisor spawn when command resolution is unhealthy. Fake Codex version/auth commands use the existing reviewed pin, never a live provider or a changed pin.\n\nDetails:\nCover overlay-only executable, overlay hiding host executable, absolute command, missing PATH default os.defpath and empty PATH conservative unhealthy lookup, both native health failures preventing supervisor launch; Codex effective environment already exists so retain regression rather than forced edit.\n\nAcceptance criteria:\nAcceptance: `uv run pytest tests/runtime/test_adapter_health.py` covers temporary\n  executable available only on overlay PATH, hidden host executable, absolute\n  executable, and unhealthy launch prevention for both native adapters.\n\nVerify: uv run pytest -q --tb=line tests/runtime/test_adapter_health.py",
+      "files": [
+        "src/ovcaq/drivers/claude.py",
+        "CHANGELOG.md"
+      ],
+      "blocked_by": [
+        1
+      ],
+      "estimated_tokens": 59717,
+      "est_context_peak": 79717,
+      "model": "opus",
+      "tier_reason": "algorithmic_risk",
+      "qwen_eligible": false,
+      "qwen_excluded_reason": "tier",
+      "id": "3",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "opus",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "implementor": "codex",
+          "outcome": "completed",
+          "cause": null,
+          "review_cycle": null,
+          "preflight_outcome": null,
+          "pipeline": "full",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean",
+          "devon": "exploit_fixed",
+          "devon_exploit": "Executable names/absolute validation/execute bits/multiple PATH entries/empty overlay/hidden sh/inherited PATH/symlinks",
+          "devon_weak_points": 8,
+          "devon_in_contract": [
+            "5. Empty configured environment values are rejected by AgentSettings.ConfigurationError; preserve empty host PATH tests instead"
+          ]
+        },
+        {
+          "attempt": 2,
+          "model": "opus",
+          "actual_model": "gpt-6-astra",
+          "actual_provider": "openai",
+          "implementor": "codex",
+          "outcome": "completed",
+          "cause": null,
+          "review_cycle": null,
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "escalation_reason": "gate_failure",
+          "escalated_from": "opus",
+          "red_check": "n/a:test-only-task",
+          "self_deslop": "skipped:test-only",
+          "style_gate": "clean",
+          "split_hygiene": "clean",
+          "review": "skipped:test-only"
+        }
+      ]
+    },
+    {
+      "name": "Document repaired adapter behavior",
+      "description": "Document repaired adapter behavior\n\nLocation: /Users/bob/git/src/github.com/buvis/ovcaq/docs/driver-protocol.md, /Users/bob/git/src/github.com/buvis/ovcaq/CHANGELOG.md\n\nReuse: existing driver edge inverse-tier adaptation, identity flags, bounded connectivity policy and fake harnesses.\n\nPremise: recheck each finding at execution; if already corrected, retain a\nregression and report it instead of forcing a production edit.\n\n### Contract\nKeep public `CodexDriver.build_launch(request: LaunchRequest) -> LaunchSpec` tier-key precedence unchanged, including explicit-model validation. Add a private `_ResolvedModelCodexDriver(CodexDriver)` in `drivers/edge.py`, mirroring `_ResolvedModelClaudeDriver`: its `build_launch` maps a configured model value back to a corresponding tier key before delegating. `build_driver` constructs this subclass for supervised routes. A resolved `o3` with tiers `{default: o3, o3: o3-pro}` must launch literal `o3`; direct `CodexDriver` given `o3` still launches `o3-pro`. The supervisor passes only selected.tiers[resolved.tier], per config.py:resolve_phase_route, so every supervised model is necessarily a configured tier value. A no-match literal cannot originate from this route; preserve public validation for any direct call rather than inventing a new explicit-model path. No provider strings or special cases enter shared runtime.\n\n`item_lanes(item: object, started_lanes: set[str] | None = None)` retains its signature and return shape. The set passed by `CodexDriver._item_observations` contains only remembered lane identities whose terminal flag is false. `interrupted`, `shutdown`, and `not_found` synthesize `LANE_FAILED` only for those unfinished identities; completed lanes retain their completed observation history. Unsupported terminal statuses otherwise produce raw-unknown evidence. No additional lane state or TUI policy.\n\n`classify_failure(detail: str) -> FailureClass` keeps authentication, permission, rate-limit, connectivity, timeout, agent precedence. Numeric 401/403/429/502/503 require explicit diagnostic context such as HTTP status, status code or error code, including genuine fixture spellings. Ordinary numeric counts remain UNKNOWN. Retain meaningful existing word diagnostics; `Selected model is at capacity` becomes CONNECTIVITY, using existing bounded WAIT/retry exhaustion. Do not change `failure_reset` grammar. Fixture expectations are literal independent oracles, never derived through the production classifier.\n\n`ClaudeDriver.probe() -> DriverHealth` uses effective environment `os.environ` overlaid by configured launch environment when calling `shutil.which(command, path=effective_path)`. Explicit empty PATH stays empty; absent PATH follows subprocess/default PATH semantics. Absolute executable paths retain existing behavior. Codex probes already spawn with `dict(os.environ) | dict(settings.environment)`; reproduce and regress that behavior rather than changing it gratuitously. Both native adapters must fail health before supervisor spawn when command resolution is unhealthy. Fake Codex version/auth commands use the existing reviewed pin, never a live provider or a changed pin.\n\nDetails:\nUpdate protocol and changelog for once-resolved models, effective PATH, stable completed lanes and capacity connectivity. No new options, protocols, pins or schemas.\n\nAcceptance criteria:\nAcceptance: documents describe once-resolved models, effective PATH probing,\n  completed-lane stability and capacity connectivity; no new options or schemas.\n\nVerify: Review documentation against implemented behavior; full project verification at phase close.",
+      "files": [
+        "docs/driver-protocol.md",
+        "CHANGELOG.md"
+      ],
+      "blocked_by": [
+        2,
+        3
+      ],
+      "estimated_tokens": 64828,
+      "est_context_peak": 84828,
+      "model": "opus",
+      "tier_reason": "floor",
+      "qwen_eligible": false,
+      "qwen_excluded_reason": "tier",
+      "id": "4",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "opus",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "implementor": "codex",
+          "outcome": "escalated",
+          "cause": "documentation_contract_mismatch",
+          "review_cycle": null,
+          "preflight_outcome": null,
+          "pipeline": "full",
+          "red_check": "n/a:docs-only-task",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "skipped:no-tests"
+        },
+        {
+          "attempt": 2,
+          "model": "opus",
+          "actual_model": "gpt-6-astra",
+          "actual_provider": "openai",
+          "implementor": "codex",
+          "outcome": "completed",
+          "cause": null,
+          "review_cycle": null,
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "escalation_reason": "gate_failure",
+          "escalated_from": "opus",
+          "red_check": "n/a:docs-only-task",
+          "devon": "skipped:prose",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "skipped:no-tests"
+        }
+      ]
+    },
+    {
+      "model": "opus",
+      "tier_reason": "algorithmic_risk",
+      "qwen_eligible": false,
+      "qwen_excluded_reason": "tier",
+      "name": "Repair completed lane terminal stability",
+      "files": [
+        "src/ovcaq/drivers/codex.py",
+        "CHANGELOG.md"
+      ],
+      "description": "Repair native outcomes and independent fixture expectations\n\nLocation: /Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/drivers/codex.py, /Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/drivers/codex_events.py, /Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_outcomes.py, /Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_codex_decode_terminals.py, /Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_codex_failures.py, /Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_codex_rework_decode.py\n\nReuse: existing driver edge inverse-tier adaptation, identity flags, bounded connectivity policy and fake harnesses.\n\nPremise: recheck each finding at execution; if already corrected, retain a\nregression and report it instead of forcing a production edit.\n\n### Contract\nKeep public `CodexDriver.build_launch(request: LaunchRequest) -> LaunchSpec` tier-key precedence unchanged, including explicit-model validation. Add a private `_ResolvedModelCodexDriver(CodexDriver)` in `drivers/edge.py`, mirroring `_ResolvedModelClaudeDriver`: its `build_launch` maps a configured model value back to a corresponding tier key before delegating. `build_driver` constructs this subclass for supervised routes. A resolved `o3` with tiers `{default: o3, o3: o3-pro}` must launch literal `o3`; direct `CodexDriver` given `o3` still launches `o3-pro`. The supervisor passes only selected.tiers[resolved.tier], per config.py:resolve_phase_route, so every supervised model is necessarily a configured tier value. A no-match literal cannot originate from this route; preserve public validation for any direct call rather than inventing a new explicit-model path. No provider strings or special cases enter shared runtime.\n\n`item_lanes(item: object, started_lanes: set[str] | None = None)` retains its signature and return shape. The set passed by `CodexDriver._item_observations` contains only remembered lane identities whose terminal flag is false. `interrupted`, `shutdown`, and `not_found` synthesize `LANE_FAILED` only for those unfinished identities; completed lanes retain their completed observation history. Unsupported terminal statuses otherwise produce raw-unknown evidence. No additional lane state or TUI policy.\n\n`classify_failure(detail: str) -> FailureClass` keeps authentication, permission, rate-limit, connectivity, timeout, agent precedence. Numeric 401/403/429/502/503 require explicit diagnostic context such as HTTP status, status code or error code, including genuine fixture spellings. Ordinary numeric counts remain UNKNOWN. Retain meaningful existing word diagnostics; `Selected model is at capacity` becomes CONNECTIVITY, using existing bounded WAIT/retry exhaustion. Do not change `failure_reset` grammar. Fixture expectations are literal independent oracles, never derived through the production classifier.\n\n`ClaudeDriver.probe() -> DriverHealth` uses effective environment `os.environ` overlaid by configured launch environment when calling `shutil.which(command, path=effective_path)`. Explicit empty PATH stays empty; absent PATH follows subprocess/default PATH semantics. Absolute executable paths retain existing behavior. Codex probes already spawn with `dict(os.environ) | dict(settings.environment)`; reproduce and regress that behavior rather than changing it gratuitously. Both native adapters must fail health before supervisor spawn when command resolution is unhealthy. Fake Codex version/auth commands use the existing reviewed pin, never a live provider or a changed pin.\n\nDetails:\nCover completed and unfinished lane sequences for interrupted/shutdown/not_found; independent literal expected classes for all checked-in failure fixtures; explicit diagnostic context positives and ordinary count negatives; capacity CONNECTIVITY with existing bounded WAIT/exhaustion. Reconcile existing bare-number precedence tests to qualified HTTP diagnostics and existing capacity literals to connectivity without weakening independent assertions.\n\nAcceptance criteria:\nAcceptance: `uv run pytest tests/drivers/test_adapter_outcomes.py\n  tests/drivers/test_codex_decode_terminals.py` covers each completed/unfinished\n  lane status, capacity WAIT and retry exhaustion, genuine HTTP diagnostics,\n  unrelated numeric counts, and all failure fixtures with literal expected classes.\n\nVerify: uv run pytest -q --tb=line tests/drivers/test_adapter_outcomes.py tests/drivers/test_codex_decode_terminals.py tests/drivers/test_codex_failures.py tests/drivers/test_codex_rework_decode.py\nSplit scope: Repair completed lane terminal stability. Only implement src/ovcaq/drivers/codex.py. Test targets: tests/drivers/test_adapter_outcomes.py. Other native-outcome features belong to the sibling split task.\nVerify: uv run pytest -q --tb=line tests/drivers/test_adapter_outcomes.py",
+      "blocked_by": [],
+      "estimated_tokens": 65000,
+      "est_context_peak": 85000,
+      "id": "5",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "opus",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "implementor": "codex",
+          "outcome": "completed",
+          "cause": null,
+          "review_cycle": null,
+          "preflight_outcome": null,
+          "pipeline": "full",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean",
+          "devon": "exploit_fixed",
+          "devon_exploit": "Hardcoded receivers, discriminator bypasses, cross-lane suppression, duplicate transitions, fabricated evidence, terminal reopen and malformed-line crash passed weak tests",
+          "devon_weak_points": 8,
+          "devon_in_contract": []
+        },
+        {
+          "attempt": 2,
+          "model": "opus",
+          "actual_model": "gpt-6-astra",
+          "actual_provider": "openai",
+          "implementor": "codex",
+          "outcome": "completed",
+          "cause": null,
+          "review_cycle": null,
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "escalation_reason": "gate_failure",
+          "escalated_from": "opus",
+          "red_check": "n/a:test-only-task",
+          "self_deslop": "skipped:test-only",
+          "style_gate": "clean",
+          "split_hygiene": "clean",
+          "review": "skipped:test-only"
+        }
+      ]
+    },
+    {
+      "model": "opus",
+      "tier_reason": "algorithmic_risk",
+      "qwen_eligible": false,
+      "qwen_excluded_reason": "tier",
+      "name": "Repair diagnostic classification and independent fixture expectations",
+      "files": [
+        "src/ovcaq/drivers/codex_events.py",
+        "CHANGELOG.md"
+      ],
+      "description": "Repair native outcomes and independent fixture expectations\n\nLocation: /Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/drivers/codex.py, /Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/drivers/codex_events.py, /Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_outcomes.py, /Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_codex_decode_terminals.py, /Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_codex_failures.py, /Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_codex_rework_decode.py\n\nReuse: existing driver edge inverse-tier adaptation, identity flags, bounded connectivity policy and fake harnesses.\n\nPremise: recheck each finding at execution; if already corrected, retain a\nregression and report it instead of forcing a production edit.\n\n### Contract\nKeep public `CodexDriver.build_launch(request: LaunchRequest) -> LaunchSpec` tier-key precedence unchanged, including explicit-model validation. Add a private `_ResolvedModelCodexDriver(CodexDriver)` in `drivers/edge.py`, mirroring `_ResolvedModelClaudeDriver`: its `build_launch` maps a configured model value back to a corresponding tier key before delegating. `build_driver` constructs this subclass for supervised routes. A resolved `o3` with tiers `{default: o3, o3: o3-pro}` must launch literal `o3`; direct `CodexDriver` given `o3` still launches `o3-pro`. The supervisor passes only selected.tiers[resolved.tier], per config.py:resolve_phase_route, so every supervised model is necessarily a configured tier value. A no-match literal cannot originate from this route; preserve public validation for any direct call rather than inventing a new explicit-model path. No provider strings or special cases enter shared runtime.\n\n`item_lanes(item: object, started_lanes: set[str] | None = None)` retains its signature and return shape. The set passed by `CodexDriver._item_observations` contains only remembered lane identities whose terminal flag is false. `interrupted`, `shutdown`, and `not_found` synthesize `LANE_FAILED` only for those unfinished identities; completed lanes retain their completed observation history. Unsupported terminal statuses otherwise produce raw-unknown evidence. No additional lane state or TUI policy.\n\n`classify_failure(detail: str) -> FailureClass` keeps authentication, permission, rate-limit, connectivity, timeout, agent precedence. Numeric 401/403/429/502/503 require explicit diagnostic context such as HTTP status, status code or error code, including genuine fixture spellings. Ordinary numeric counts remain UNKNOWN. Retain meaningful existing word diagnostics; `Selected model is at capacity` becomes CONNECTIVITY, using existing bounded WAIT/retry exhaustion. Do not change `failure_reset` grammar. Fixture expectations are literal independent oracles, never derived through the production classifier.\n\n`ClaudeDriver.probe() -> DriverHealth` uses effective environment `os.environ` overlaid by configured launch environment when calling `shutil.which(command, path=effective_path)`. Explicit empty PATH stays empty; absent PATH follows subprocess/default PATH semantics. Absolute executable paths retain existing behavior. Codex probes already spawn with `dict(os.environ) | dict(settings.environment)`; reproduce and regress that behavior rather than changing it gratuitously. Both native adapters must fail health before supervisor spawn when command resolution is unhealthy. Fake Codex version/auth commands use the existing reviewed pin, never a live provider or a changed pin.\n\nDetails:\nCover completed and unfinished lane sequences for interrupted/shutdown/not_found; independent literal expected classes for all checked-in failure fixtures; explicit diagnostic context positives and ordinary count negatives; capacity CONNECTIVITY with existing bounded WAIT/exhaustion. Reconcile existing bare-number precedence tests to qualified HTTP diagnostics and existing capacity literals to connectivity without weakening independent assertions.\n\nAcceptance criteria:\nAcceptance: `uv run pytest tests/drivers/test_adapter_outcomes.py\n  tests/drivers/test_codex_decode_terminals.py` covers each completed/unfinished\n  lane status, capacity WAIT and retry exhaustion, genuine HTTP diagnostics,\n  unrelated numeric counts, and all failure fixtures with literal expected classes.\n\nVerify: uv run pytest -q --tb=line tests/drivers/test_adapter_outcomes.py tests/drivers/test_codex_decode_terminals.py tests/drivers/test_codex_failures.py tests/drivers/test_codex_rework_decode.py\nSplit scope: Repair diagnostic classification and independent fixture expectations. Only implement src/ovcaq/drivers/codex_events.py. Test targets: tests/drivers/test_adapter_failure_classes.py, tests/drivers/test_codex_decode_terminals.py, tests/drivers/test_codex_failures.py, tests/drivers/test_codex_rework_decode.py. Other native-outcome features belong to the sibling split task.\nVerify: uv run pytest -q --tb=line tests/drivers/test_adapter_failure_classes.py tests/drivers/test_codex_decode_terminals.py tests/drivers/test_codex_failures.py tests/drivers/test_codex_rework_decode.py",
+      "blocked_by": [
+        5
+      ],
+      "estimated_tokens": 65000,
+      "est_context_peak": 85000,
+      "id": "6",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "opus",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "implementor": "codex",
+          "outcome": "completed",
+          "cause": null,
+          "review_cycle": null,
+          "preflight_outcome": null,
+          "pipeline": "full",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean",
+          "devon": "exploit_fixed",
+          "devon_exploit": "Numeric boundaries, case/whitespace, long authentication tail, precedence pairs, isolated auth failure and unrelated model/capacity cooccurrence",
+          "devon_weak_points": 8,
+          "devon_in_contract": []
+        }
+      ]
+    },
+    {
+      "name": "[D1] src/ovcaq/drivers/",
+      "description": "### Findings (verbatim)\n- \ud83d\udfe0 src/ovcaq/drivers/codex_events.py:301: Numeric diagnostics now need \"HTTP\", \"HTTP status\", \"status code\" or \"error code\" (src/ovcaq/drivers/codex_events.py:301), so Codex's own status wording falls to UNKNOWN. I ran `classify_failure` on \"unexpected status 503 Service Unavailable\", \"unexpected status 502 Bad Gateway\", \"unexpected status 403 Forbidden\" and \"exceeded retry limit, last status: 429 Too Many Requests\", and all four return `unknown`. The old code returned connectivity, permission and rate_limit for these. Both prefixes are confirmed as strings in the installed codex 0.162.1 binary; the \"503 Service Unavailable\" suffix is my guess at how Codex renders the code. Effect: 502/503 skip the bounded connectivity WAIT and get an immediate died-retry and then PARK, and 403 retries instead of halting for the operator. The PRD allows \"HTTP/status/error-code\" context, and \"status 503\" is a status context. Fix: accept a bare `status` (e.g. `(?:http(?: status)? | status(?: code)? | error code)`) and add both Codex spellings as literal positives in tests/drivers/test_adapter_failure_classes.py:55 (found by: ALICE, BLAKE, BOB)\n- \ud83d\udfe1 src/ovcaq/drivers/codex.py:372: Only the `continue` at src/ovcaq/drivers/codex.py:383 is pinned by tests. The unfinished-only `started_lanes` filter at src/ovcaq/drivers/codex.py:372 is not: dropping it still suppresses LANE_FAILED through the `continue`, and no test asserts the RAW_UNKNOWN that the design requires for a close status on a completed lane (I ran it: completed then shutdown gives `raw.unknown`; that the tests miss its removal comes from reading them, not a run). Add a RAW_UNKNOWN assertion on `closed` in `test_completed_lane_remains_completed_after_close_status` (tests/drivers/test_adapter_outcomes.py:89) (found by: ALICE)\n- \ud83d\udfe1 src/ovcaq/drivers/edge.py: `_ResolvedModelCodexDriver.build_launch` copies `_ResolvedModelClaudeDriver.build_launch` line for line. A module helper `_tier_request(settings, request)` would leave each override as one line: `return super().build_launch(_tier_request(self._settings, request))` (found by: BOB)\n- \u26aa src/ovcaq/drivers/codex.py:383: The `continue` at codex.py:383 freezes failed lanes as well as completed ones, and silently drops late `errored`/`running`/`completed` updates with no raw-unknown evidence (I ran it: completed then errored gives only `tool.completed`, while completed then shutdown gives `raw.unknown`). docs/driver-protocol.md:242 describes only completed lanes. Document that failed lanes also stay terminal, or emit raw evidence consistently (found by: ALICE)\n- \u26aa src/ovcaq/drivers/codex_events.py:307: The new `authentication failed` pattern goes beyond \"retain existing word diagnostics\". The authentication fixture already classifies through \"invalid credentials\", and the new pattern widens the authentication HALT to messages like \"MCP server authentication failed\" (found by: ALICE)\n- \u26aa src/ovcaq/drivers/codex_events.py:233: A normal Codex sub-agent run (spawn running, then wait completed, then close_agent shutdown) now emits `raw.unknown` on every close of a completed lane. I confirmed this with a real decode run. It sets the TUI's raw-evidence flag (src/ovcaq/tui/model.py:548). The doc at docs/driver-protocol.md:244 says only unstarted receivers and missing attribution produce raw unknown evidence. (found by: BLAKE)\n",
+      "model": "sonnet",
+      "id": "7",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "implementor": "codex",
+          "outcome": "completed",
+          "cause": null,
+          "review_cycle": 1,
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean"
+        }
+      ]
+    },
+    {
+      "name": "[D1] tests/drivers/",
+      "description": "### Findings (verbatim)\n- \ud83d\udfe1 tests/drivers/test_adapter_outcomes.py:1: The Phase 0 acceptance command (`tests/drivers/test_adapter_outcomes.py tests/drivers/test_codex_decode_terminals.py`) does not test the capacity WAIT and retry exhaustion, the unrelated-number negatives, or HTTP positives that rely on the number alone. Those tests live in tests/drivers/test_adapter_failure_classes.py, a file the PRD does not list, so the stated acceptance run passes without proving them. (found by: BLAKE)\n- \ud83d\udfe1 tests/drivers/test_adapter_outcomes.py: The normal sequence spawn \u2192 wait(completed) \u2192 close_agent(shutdown) now emits raw.unknown for every completed lane, which sets the TUI raw-evidence flag (tui/model.py:548). Late running/errored/completed updates for a finished lane are dropped with no trace (codex.py:383). No test asserts either outcome, so the design's \"raw-unknown evidence\" rule is unpinned (found by: BOB)\n- \ud83d\udfe1 tests/drivers/test_adapter_outcomes.py: 40 of the 49 new outcome test cases pass on the pre-change code and repeat existing tests: test_codex_rework_decode.py:201 already covers an unfinished lane failing on close, and test_codex_decode_lanes.py:257 covers an unstarted receiver staying raw. The 3-way receiver-name parametrization exercises no extra code path, and `test_non_json_output_retains_raw_unknown` has nothing to do with lanes (found by: BOB)\n- \u26aa tests/drivers/test_codex_launch.py: `test_configured_factory_rejects_unknown_or_invalid_options` re-tests `CodexDriver.__init__`, which the new subclass does not override, and passes on the pre-change code. Its `pytest.raises(ValueError)` also accepts `ConfigurationError` (a ValueError subclass) raised by config parsing, so it can pass for the wrong reason (found by: BOB)\n",
+      "model": "sonnet",
+      "id": "8",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "implementor": "codex",
+          "outcome": "completed",
+          "cause": null,
+          "review_cycle": 1,
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:test-only-task",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean"
+        }
+      ]
+    },
+    {
+      "name": "[D1] prose",
+      "description": "### Findings (verbatim)\n- \ud83d\udfe1 docs/driver-protocol.md:37: The docs say an empty host PATH \"searches the current directory\" for both native adapters, but `ClaudeDriver.probe` passes `path=\"\"` to `shutil.which`, which returns None (checked on Python 3.13). tests/runtime/test_adapter_health.py:263 asserts unhealthy. So the Claude probe treats an empty host PATH as unhealthy, while only the Codex subprocess probe searches the current directory. Fix the sentence to say this (found by: ALICE, BLAKE)\n",
+      "model": "sonnet",
+      "id": "9",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "implementor": "orchestrator",
+          "outcome": "completed",
+          "cause": null,
+          "review_cycle": 1,
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:micro-lane",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "skipped:no-tests"
+        }
+      ]
+    },
+    {
+      "name": "[D1] tests/runtime/test_adapter_health.py",
+      "description": "### Findings (verbatim)\n- \ud83d\udfe1 tests/runtime/test_adapter_health.py:263: The \"fixture\" case in `test_claude_probe_keeps_empty_host_path_unhealthy` puts the executable in tmp_path/bin while the working directory is tmp_path. It cannot tell the conservative empty-PATH handling apart from a current-directory search. Put the executable in the working directory to pin the choice (found by: ALICE, BOB)\n",
+      "model": "sonnet",
+      "id": "10",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "implementor": "orchestrator",
+          "outcome": "completed",
+          "cause": null,
+          "review_cycle": 1,
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:micro-lane",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean"
+        }
+      ]
+    },
+    {
+      "name": "[D2] Tail sweep: src/ovcaq/drivers/",
+      "description": "### Findings (verbatim)\n- \ud83d\udfe1 src/ovcaq/drivers/codex_events.py:301: Codex's HTTP client (reqwest) reports status errors as \"HTTP status client error (429 Too Many Requests) for url (...)\". The new numeric check still returns `unknown` for that form. I ran `classify_failure` on that string, on \"HTTP status server error (503 Service Unavailable) for url (...)\", on \"HTTP status client error (403 Forbidden) ...\" and on \"HTTP/1.1 503 Service Unavailable\", and all four give `unknown`. The pre-change code returned rate_limit, connectivity and permission for them. Both \"HTTP status client error\" and \"HTTP status server error\" are present as strings in the installed codex-cli 0.162.1 binary (confirmed with `rg -a`). Whether they ever reach a `turn.failed` message is my guess, not something I checked. If they do, a real 429 skips the rate-limit wait and a real 502/503 skips the bounded connectivity WAIT, just like the cycle-1 HIGH. This also contradicts docs/driver-protocol.md:271 (\"require HTTP, status or error-code context\"). Fix: also accept the code when the standard reason phrase follows it (e.g. `(?:403 forbidden | 429 too many requests | 502 bad gateway | 503 service unavailable)`). Add the reqwest and HTTP/1.1 forms as literal positives in tests/drivers/test_adapter_failure_classes.py:63, and keep the ordinary-count negatives (found by: ALICE, BLAKE, BOB)\n- \u26aa src/ovcaq/drivers/codex_events.py:300: `classify_failure` now collapses whitespace (`\" \".join(detail.split())`), so \"Rate\\tlimit reached\" becomes rate_limit. The pre-change code returned unknown for it. That widens matching beyond \"retain existing word diagnostics\", and neither the CHANGELOG nor the protocol doc mentions it. The test `test_native_word_diagnostics_retain_case_and_whitespace_variants` calls it \"retain\" even though the whitespace case is new behavior. Either document the widening and rename the test, or drop line 300 and the tab case (found by: ALICE)\n- \u26aa src/ovcaq/drivers/edge.py:23: No supervisor-level regression covers the Claude model-collision path. The Claude edge wrapper behaves correctly: I checked directly that `{default: o3, o3: o3-pro, x: o3}` launches `o3` and `o3-pro`. But tests/runtime/test_adapter_launch_routing.py runs only the Codex fake through the supervisor, so a regression in `_ResolvedModelClaudeDriver` would go unnoticed. (found by: BLAKE)\n",
+      "model": "sonnet",
+      "id": "11",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "implementor": "codex",
+          "outcome": "aborted",
+          "cause": "commit_rejected",
+          "review_cycle": 2,
+          "preflight_outcome": null,
+          "pipeline": "lean"
+        },
+        {
+          "attempt": 2,
+          "model": "sonnet",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "implementor": "codex",
+          "outcome": "aborted",
+          "cause": "commit_rejected",
+          "review_cycle": 2,
+          "preflight_outcome": null,
+          "pipeline": "lean"
+        },
+        {
+          "attempt": 3,
+          "model": "sonnet",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "implementor": "codex",
+          "outcome": "completed",
+          "cause": null,
+          "review_cycle": 2,
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean"
+        }
+      ]
+    },
+    {
+      "name": "[D2] Tail sweep: prose",
+      "description": "### Findings (verbatim)\n- \u26aa CHANGELOG.md:43: The CHANGELOG PATH entry says the change checks \"both native adapters' executables\" and preserves \"standard missing/empty host PATH lookup\". In fact only the Claude probe changed (Codex already used the merged environment). With an empty host PATH, the Claude probe is unhealthy while the Codex probe searches the current directory, which docs/driver-protocol.md:37 now says correctly. Reword the entry to say the fix is for Claude and to name that split (found by: ALICE)\n- \u26aa CHANGELOG.md:43: CHANGELOG says \"preserving standard missing ... host PATH lookup\", but the Claude probe changed. With no host PATH it now falls back to `os.defpath` (`/bin:/usr/bin`, src/ovcaq/drivers/claude.py:82). The old `shutil.which(command)` used `CS_PATH` (`/usr/bin:/bin:/usr/sbin:/sbin` here, confirmed with `getconf PATH` and the stdlib source). The new value matches the subprocess spawn, as the design asks, so only the wording is wrong (found by: BOB)\n",
+      "model": "sonnet",
+      "id": "12",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "implementor": "orchestrator",
+          "outcome": "completed",
+          "cause": null,
+          "review_cycle": 2,
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:micro-lane",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "skipped:no-tests"
+        }
+      ]
+    },
+    {
+      "name": "[D2] Tail sweep: tests/drivers/",
+      "description": "### Findings (verbatim)\n- \u26aa tests/drivers/test_codex_launch.py:140: `INVALID_OPTIONS` was moved up to module level so the now-deleted factory test could share it. It has a single user again (`test_constructor_rejects_unknown_or_invalid_options`). Inline it back into that test's `@pytest.mark.parametrize`, so the only change left in that test is the `raised.type is ValueError` line (found by: ALICE, BOB)\n- \u26aa tests/drivers/test_adapter_failure_classes.py:225: `assert retries.rate_limit == 0` can never fail. It checks the frozen `RetryState` the test built with `rate_limit=0`, and `decide` cannot change it (src/ovcaq/runtime/decision.py:84). Lines 200-201 already pin the non-rate-limit path (found by: BOB)\n",
+      "model": "sonnet",
+      "id": "13",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "implementor": "orchestrator",
+          "outcome": "completed",
+          "cause": null,
+          "review_cycle": 2,
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:micro-lane",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean"
+        }
+      ]
+    },
+    {
+      "name": "[D2] Tail sweep: tests/runtime/test_adapter_health.py",
+      "description": "### Findings (verbatim)\n- \u26aa tests/runtime/test_adapter_health.py:250: The test for an absent host PATH probes `sh`, which is in both `os.defpath` and `CS_PATH`. It cannot tell the design's spawn-matching `os.defpath` fallback from the old `CS_PATH` one, so going back to `shutil.which(command, path=None)` would still pass (found by reading, not run) (found by: BOB)\n",
+      "model": "sonnet",
+      "id": "14",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "implementor": "orchestrator",
+          "outcome": "completed",
+          "cause": null,
+          "review_cycle": 2,
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:micro-lane",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean"
+        }
+      ]
+    },
+    {
+      "name": "[D2] Tail sweep: src/ovcaq/drivers/ (post-sweep)",
+      "model": "sonnet",
+      "description": "### Findings (verbatim, post-sweep review 2026-10-12; authorization reports/00053-postsweep-repair-authorization.md)\n- \ud83d\udfe1 src/ovcaq/drivers/codex_events.py:301: The HTTP-version prefix `http/\\d+\\.\\d+` requires a minor version, so \"HTTP/2 503 Service Unavailable\" and \"HTTP/2 429 Too Many Requests\" classify as `unknown` (pre-PRD: connectivity and rate_limit). Fix: make the minor version optional (`http(?:/\\d+(?:\\.\\d+)?| status...)`) and add HTTP/2 503 and HTTP/2 429 positives at tests/drivers/test_adapter_failure_classes.py:103. Do NOT widen to `status=N` or `Error N:` forms (out of scope by operator decision) (found by: ALICE, BLAKE)\n- \u26aa src/ovcaq/drivers/edge.py:16: helper `_tier_request` is a noun phrase; rename to a verb-led name such as `_map_model_to_tier` (call sites edge.py:27, edge.py:34) (found by: ALICE)\n",
+      "id": "15",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "outcome": "completed",
+          "review_cycle": 2,
+          "cause": null,
+          "implementor": "codex",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean",
+          "review": "closures resolved; LOW signature wrapping addressed by formatter",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai"
+        }
+      ]
+    },
+    {
+      "name": "[D2] Tail sweep: CHANGELOG.md and docs/driver-protocol.md (post-sweep)",
+      "model": "haiku",
+      "description": "### Findings (verbatim, post-sweep review 2026-10-12; authorization reports/00053-postsweep-repair-authorization.md)\n- \u26aa CHANGELOG.md:43: entry about reqwest/HTTP-version forms and literal whitespace describes no change from the pre-PRD base and overlaps the numeric-context entry. Delete it, and add \"including bare-status, reqwest and HTTP-version forms\" to the numeric-context entry at CHANGELOG.md:46 (found by: ALICE, BOB)\n- \u26aa docs/driver-protocol.md:243: claims completed and failed lanes stay terminal \"under all late receiver updates\", but identity eviction (src/ovcaq/drivers/codex.py:413) removes terminal lanes first. Change to \"Remembered completed and failed lanes remain terminal under late receiver updates\" (found by: BOB)\n",
+      "id": "16",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "haiku",
+          "outcome": "completed",
+          "review_cycle": 2,
+          "cause": null,
+          "implementor": "orchestrator",
+          "preflight_outcome": null,
+          "pipeline": "minimal",
+          "red_check": "n/a:micro-lane",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "skipped:tier",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai"
+        }
+      ]
+    },
+    {
+      "name": "[D2] Tail sweep: tests/ (post-sweep)",
+      "model": "sonnet",
+      "description": "### Findings (verbatim, post-sweep review 2026-10-12; authorization reports/00053-postsweep-repair-authorization.md)\n- \u26aa tests/runtime/test_adapter_launch_routing.py:114-115: Claude routing cases set every phase effort to \"high\" with no reason; config accepts low/medium/high/xhigh (src/ovcaq/config.py:364) and ClaudeDriver passes effort through, so pass-through is tested with one value only. Cover at least two distinct effort values, or keep the override with a one-line comment giving the reason if removing it fails (found by: BOB)\n- \u26aa tests/drivers/test_codex_launch.py:32: `configured_driver` is annotated `-> CodexDriver` but returns `build_driver(...)` typed `AgentDriver`; annotate `-> AgentDriver` imported from `ovcaq.drivers.base` (found by: BOB)\n",
+      "id": "17",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "outcome": "completed",
+          "review_cycle": 2,
+          "cause": null,
+          "implementor": "orchestrator",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:micro-lane",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean",
+          "review": "closures resolved; NO FINDINGS",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai"
+        }
+      ]
+    },
+    {
+      "name": "[D2] Tail sweep: tests/runtime/test_adapter_launch_routing.py",
+      "description": "### Findings (verbatim)\n- \ud83d\udfe1 tests/runtime/test_adapter_launch_routing.py: tests/runtime/test_adapter_launch_routing.py:30 re-implements the runpy Claude wrapper from tests/runtime/test_supervisor_adapters.py:44. The wrapper rebinds `fake_codex.workflow.__globals__['__file__']` to the Claude fixture, and the new copy adds only an `edge['emit_invocation'](sys.argv[1:])` call. That leaves two copies of a hack tied to fake_codex.py internals, and they will drift apart. Keep one wrapper builder in test_supervisor_adapters.py that always emits the invocation (Codex `main()` already emits it unconditionally) and call it from both files (found by: BOB)\n",
+      "model": "sonnet",
+      "id": "18",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "outcome": "completed",
+          "review_cycle": 2,
+          "cause": null,
+          "implementor": "orchestrator",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:micro-lane",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean",
+          "review": "closures resolved; LOW workflow_fixture naming carried to fresh full review; prior permission denial resolved by operator",
+          "commit": "693e7ae",
+          "verification": "8 passed; approved ps-access retry",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai"
+        }
+      ]
+    },
+    {
+      "name": "[D2] Tail sweep: prose",
+      "description": "### Findings (verbatim)\n- \u26aa CHANGELOG.md: CHANGELOG.md:46 still says completed and failed Codex receiver lanes stay terminal \"under late updates\", with no qualifier. Task 16 fixed this same overclaim in docs/driver-protocol.md:243, which now says \"Remembered completed and failed lanes\". Lanes stop being remembered once they are evicted (src/ovcaq/drivers/codex.py:413 evicts finished identities first, at 4096 identities). After that, a late `running` update starts the lane again. Add \"remembered\" to the CHANGELOG entry so it matches the protocol doc (found by: ALICE)\n- \u26aa docs/driver-protocol.md: docs/driver-protocol.md:185 says \"the driver preserves that resolved value\", but only drivers built by `build_driver` do that. A `CodexDriver` constructed directly and passed to `Supervisor` (as in tests/runtime/test_rework_thread_conflict.py:108) still remaps a colliding value through tier-key precedence. Reword to \"the driver built by `build_driver` preserves that resolved value\" (found by: BOB)\n- \u26aa CHANGELOG.md: CHANGELOG.md:45 puts two fixes in one entry. Its clause \"retry model capacity as connectivity through bounded WAIT/retry exhaustion\" does not read as a sentence, and \"reqwest\" is implementation jargon. Split it into a numeric-context entry and a separate entry: \"classify 'Selected model is at capacity' as connectivity so it gets bounded WAIT retries instead of rate-limit handling\" (found by: BOB)\n",
+      "model": "sonnet",
+      "id": "19",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "outcome": "completed",
+          "review_cycle": 2,
+          "cause": null,
+          "implementor": "codex",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:docs-only-task",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "skipped:no-tests",
+          "review": "skipped:docs-only",
+          "commit": "c5b3d9a",
+          "requested_model": "gpt-6.1-sol",
+          "requested_provider": "openai",
+          "requested_effort": "medium",
+          "dispatch_id": "79134e5f",
+          "verification": "git diff --check HEAD~1..HEAD: exit 0",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai"
+        }
+      ]
+    },
+    {
+      "name": "[D2] Tail sweep: tests/runtime/test_adapter_health.py",
+      "description": "### Findings (verbatim)\n- \u26aa tests/runtime/test_adapter_health.py: tests/runtime/test_adapter_health.py:90 runs `command_name` over three names (\"fixture-agent-health\", \"overlay-runner\", \"queue-worker\"). In both probes all three take the same code path, so there are 6 cases where 2 would do. R8 removed the same kind of padding from test_adapter_outcomes.py. Keep one name (found by: BOB)\n",
+      "model": "sonnet",
+      "id": "20",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "outcome": "completed",
+          "review_cycle": 2,
+          "cause": null,
+          "implementor": "orchestrator",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:micro-lane",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean",
+          "review": "closures resolved; NO FINDINGS; prior permission denial resolved by operator",
+          "commit": "deb7300",
+          "verification": "2 passed; both providers retained",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai"
+        }
+      ]
+    },
+    {
+      "name": "[D2] Tail sweep: tests/runtime/test_adapter_health.py",
+      "description": "### Findings (verbatim)\n- \ud83d\udfe1 tests/runtime/test_adapter_health.py:33: Task 20 stopped passing a name to `fake_executable`, so its `name: str = \"fixture-agent-health\"` parameter is now dead: all 9 callers use the default. This file is new in this PRD, so the leftover comes from the repair itself. Fix: drop the parameter and write `executable = directory / \"fixture-agent-health\"` (found by: ALICE, BOB)\n- \u26aa tests/runtime/test_adapter_health.py:181: `test_claude_probe_rejects_sh_hidden_by_overlay_path` repeats the `[claude]` case of `test_probe_rejects_host_executable_hidden_by_overlay_path` (tests/runtime/test_adapter_health.py:213). Both put the command on the host PATH, use an overlay without it, and hit the same `shutil.which(..., path=overlay) is None` branch, and both fail on the base code. This is the same kind of padding task 20 removed from line 90 (found by: BOB)\n",
+      "model": "sonnet",
+      "id": "21",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "outcome": "completed",
+          "review_cycle": 2,
+          "cause": null,
+          "implementor": "codex",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:test-only-task",
+          "self_deslop": "skipped:test-only",
+          "style_gate": "clean",
+          "split_hygiene": "clean",
+          "commit": "d395915",
+          "verification": "23 passed; two pytest temporary-directory cleanup warnings"
+        }
+      ]
+    },
+    {
+      "name": "[D2] Tail sweep: tests/runtime/test_supervisor_adapters.py",
+      "description": "### Findings (verbatim)\n- \u26aa tests/runtime/test_supervisor_adapters.py:40: Carried Pat18 LOW: `workflow_fixture` writes the Claude wrapper file and returns its path, but its name is a noun. Action functions should start with a verb, e.g. `write_workflow_fixture` (call sites tests/runtime/test_supervisor_adapters.py:56 and tests/runtime/test_adapter_launch_routing.py:33). The new helpers `configured_workflow` (tests/runtime/test_adapter_launch_routing.py:24) and `configured_driver` (tests/drivers/test_codex_launch.py:30) have the same shape. Against renaming: the older helpers in the same file (`adapter_harness`, `workflow_agent`) also use nouns, so a rename would break from the file's current style (found by: ALICE, BOB)\n",
+      "model": "sonnet",
+      "id": "22",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "outcome": "completed",
+          "review_cycle": 2,
+          "cause": null,
+          "implementor": "codex",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:test-only-task",
+          "self_deslop": "skipped:test-only",
+          "style_gate": "clean",
+          "split_hygiene": "clean",
+          "commit": "7fbcfd0",
+          "verification": "skipped:host denies ps; executed narrow run has 73 passed, 8 PermissionError failures, 2 warnings; escalated retries unchanged"
+        }
+      ]
+    },
+    {
+      "name": "[D2] Tail sweep: tests/drivers/test_adapter_outcomes.py",
+      "description": "### Findings (verbatim)\n- \ud83d\udfe1 tests/drivers/test_adapter_outcomes.py: `test_unrelated_item_type_does_not_transition_lane` (tests/drivers/test_adapter_outcomes.py:204) and `test_unrelated_event_type_does_not_transition_lane` (tests/drivers/test_adapter_outcomes.py:231) are line-for-line copies. They differ only in one `collab_record` keyword: `item_type=\"command_execution\"` in one, `event_type=\"thread.started\"` in the other. Merge them into one test parametrized over that keyword dict (passed as `**override`). That cuts about 24 lines and keeps the same coverage (found by: ALICE)\n- \u26aa tests/drivers/test_adapter_outcomes.py: Test padding in a new file: `test_unrelated_item_type_does_not_transition_lane` and `test_unrelated_event_type_does_not_transition_lane` each run once per close status (interrupted, shutdown, not_found). The command_execution record and the `thread.started` record both turn into raw unknown before `item_lanes` is ever called (`item_tool` returns None because the record has no `command` field, and the decode branch has no `thread_id`). The follow-up close assertion repeats `test_unfinished_lane_fails_after_close_status`. So 6 cases run where 2 would do. Task 20 removed the same kind of padding. Fix: drop the `child_status` parametrize from both tests and use \"shutdown\" (found by: BOB)\n",
+      "model": "sonnet",
+      "id": "23",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "outcome": "completed",
+          "review_cycle": 2,
+          "cause": null,
+          "implementor": "codex",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:test-only-task",
+          "self_deslop": "skipped:test-only",
+          "style_gate": "clean",
+          "split_hygiene": "clean",
+          "commit": "4106439569693fb1ecb8ec376c28114da729ba2a",
+          "verification": "32 passed; exit 0",
+          "review": "Pat: both closures resolved; no findings"
+        }
+      ]
+    },
+    {
+      "name": "[D2] Tail sweep: src/ovcaq/drivers/codex_events.py",
+      "description": "### Findings (verbatim)\n- \ud83d\udfe1 src/ovcaq/drivers/codex_events.py: The new status prefix in `classify_failure` (src/ovcaq/drivers/codex_events.py:302) ends in `\\s*:?\\s*`. That is two whitespace runs side by side, so a native error with \"status\", \"HTTP\" or \"error code\" followed by a long run of whitespace backtracks in quadratic time. Measured at HEAD: 16k spaces took 0.55 s and 64k spaces took 8.34 s. The old bare-number regex had no such run. Decode runs inline in the supervisor read loop (src/ovcaq/runtime/supervisor.py:516) on frames up to 1 MiB (src/ovcaq/events/tail.py:60). Python's `re` holds the GIL, so the watchdog cannot fire while it runs. A full 1 MiB frame extrapolates to roughly 35 minutes (a guess, not run). The trigger needs tens of thousands of whitespace characters right after the keyword, so it is unlikely to happen. Fix: use `\\s*(?::\\s*)?` instead. It took 1.2 ms at 64k and matched the same way on \"HTTP status: 429\", \"status code: 429\", \"last status: 429\", \"HTTP 429\" and \"status=429\". Also add a regression test that expects \"status\" + 200,000 spaces + \"x\" to classify as unknown (found by: ALICE)\n",
+      "model": "sonnet",
+      "id": "24",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "outcome": "completed",
+          "review_cycle": 2,
+          "cause": null,
+          "implementor": "codex",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean",
+          "commit": "c1192298cc503392891adc84588afdb7af4bdab7",
+          "verification": "89 passed; exit 0; fail-first regression timed out before repair",
+          "review": "Pat: resolved backtracking and regression closures; no findings"
+        }
+      ]
+    },
+    {
+      "name": "[D3] src/ovcaq/drivers/codex_events.py",
+      "description": "### Contract\nProduction: /Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/drivers/codex_events.py\nTests: /Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_failure_classes.py\nChangelog: /Users/bob/git/src/github.com/buvis/ovcaq/CHANGELOG.md\nPublic API: classify_failure(detail: str) -> FailureClass.\n\n### Operator scope resolution\nOnly explicit diagnostic prefixes are in scope: status=<code>, Error <code>:, and HTTP error <code>, for existing codes 401, 403, 429, 502, 503. Preserve case-insensitivity, existing diagnostic precedence, existing supported forms, ordinary-number negatives, complete-code boundaries, and bounded whitespace behavior. Bare numbers/reason phrases acquire no new contract. Update the existing numeric-classification changelog entry, not a new intra-PRD fix entry. Prior mixed diagnostic-prefix/count grammar, lifecycle and PATH/cwd deferrals remain settled.\n\nVerify: mise exec -- uv run pytest tests/drivers/test_adapter_failure_classes.py -q --tb=line\nAcceptance criteria:\n- Each explicit spelling maps 401 to authentication, 403 to permission, 429 to rate_limit, and 502/503 to connectivity.\n- Existing negative controls, precedence and long-whitespace behavior remain intact.\n- No reset grammar, provider-independent runtime, schema or API changes.\n\n### Findings (verbatim)\n- \ud83d\udfe1 src/ovcaq/drivers/codex_events.py:300: Some explicit status-code messages now classify as `unknown`. Before this change they classified correctly. Probed: `status=429`, `Error 429: Too Many Requests`, `HTTP error 503`, and bare reason-phrase forms like `429 Too Many Requests` and `503 Service Unavailable`. The spec allows numbers only in explicit HTTP/status/error-code context, and `status=429` and `Error 429:` are exactly that. Worse, tests/drivers/test_adapter_failure_classes.py:115 locks `status=429` and `Error 429:` in as `unknown`, so the wrong answer is now enforced as the expected class. Impact: a real 429 or 503 in these forms goes to the generic retry-then-PARK path instead of the bounded WAIT or rate-limit path. The native Codex forms (\"unexpected status N\", reqwest, HTTP/x) are covered. (found by: BLAKE)\n",
+      "model": "sonnet",
+      "id": "25",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "outcome": "completed",
+          "review_cycle": 3,
+          "cause": null,
+          "implementor": "codex",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean"
+        }
+      ]
+    },
+    {
+      "name": "[D3] prose",
+      "description": "### Contract\nEditable file: /Users/bob/git/src/github.com/buvis/ovcaq/CHANGELOG.md\nAcceptance criteria:\n- Delete the unreleased quadratic-backtracking entry: the bug was introduced and repaired within this same unshipped PRD.\n- Rewrite the adjacent Claude PATH entry in user-facing terms: Claude health checks honor configured executable search paths, avoid rejecting an executable available on that path, and retain existing missing/empty-host-PATH behavior without exposing implementation identifiers.\n- Preserve all other entries; do not add tests for wording or alter runtime code.\nVerify: git diff --check\n\n### Findings (verbatim)\n- \u26aa CHANGELOG.md: CHANGELOG.md:43 says the change will \"avoid quadratic backtracking when Codex failure diagnostics contain long whitespace runs after a status prefix\". That status prefix was added earlier in this same unreleased PRD (codex_events.py:300), and the pre-PRD base had no such regex. Compared with the base, users see no change. Task 16 deleted an earlier entry of the same kind (\"describes no change from the pre-PRD base\"). Delete this entry too. The `fix` commit type seems to have forced the entry, so a follow-up `docs` commit can remove it (found by: ALICE, BLAKE, BOB)\n",
+      "model": "sonnet",
+      "id": "26",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "outcome": "completed",
+          "review_cycle": 3,
+          "cause": null,
+          "implementor": "codex",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:docs-only-task",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "skipped:no-tests"
+        }
+      ]
+    },
+    {
+      "name": "[D4] src/ovcaq/drivers/codex_events.py",
+      "description": "### Findings (verbatim)\n- \ud83d\udfe1 src/ovcaq/drivers/codex_events.py:301: The ` error` branch inside the `http(...)` group of the `status` prefix can never change a result, so it is dead code. The new bare `error(?: code)?` branch already matches every string it catches, because a word boundary always sits between \"http \" and \"error\". I checked this by running both regexes on 4,288,305 generated token strings: 0 differences. Simpler version with the same behavior: `r\"(?:http(?:/\\d+(?:\\.\\d+)?| status(?: (?:client|server) error \\()?)?\"`, keeping line 302 as it is. \"HTTP error 503\" still returns connectivity through the bare `error` branch, so the `hTtP ErRoR {code}` tests keep passing (found by: ALICE, BOB)\n",
+      "model": "sonnet",
+      "id": "27",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "outcome": "completed",
+          "review_cycle": 4,
+          "cause": null,
+          "implementor": "codex",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:micro-lane",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "skipped:no-tests",
+          "commit": "ca59071c06d971684e618e0686654cdb0579ac97",
+          "verification": "140 passed in 0.22s; exit 0",
+          "review": "Pat: resolved R2, NO FINDINGS; parsed output valid",
+          "host_adaptation": "Eligible micro repair delegated to native Ivan at logical sonnet, gpt-6.1-sol/medium; coordinator did not edit production."
+        }
+      ]
+    },
+    {
+      "name": "[D4] prose",
+      "description": "### Findings (verbatim)\n- \u26aa docs/driver-protocol.md:273: The protocol doc still says numeric codes \"require HTTP, status or error-code context\". Since task 25, bare `Error 429:` and `status=429` also count. CHANGELOG.md:45 says \"HTTP/status/error context\", so the two documents disagree. Change the doc to \"HTTP, status or error context\" to match the code and the changelog (found by: ALICE, BOB)\n- \u26aa CHANGELOG.md: CHANGELOG.md:45 lists regex branch names (\"equals-delimited status, bare error, HTTP error, native bare-status and HTTP-version forms\"). It also restates unchanged behavior (\"retain existing authentication word diagnostics and genuine rate/quota limits\"). That describes the implementation, not what users see (found by: BOB)\n",
+      "model": "sonnet",
+      "id": "28",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "outcome": "completed",
+          "review_cycle": 4,
+          "cause": null,
+          "implementor": "codex",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:docs-only-task",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "skipped:no-tests",
+          "commit": "dbd7e1f9c089837f7af8ec4aee18e70bad39f53b",
+          "verification": "git diff --check: exit 0; exact approved wording inspected",
+          "review": "skipped:docs-only (work skill step 5.7)",
+          "host_adaptation": "Eligible micro repair delegated to native Ivan at logical sonnet, gpt-6.1-sol/medium; coordinator did not edit product documentation."
+        }
+      ]
+    },
+    {
+      "name": "[D5] tests/drivers/test_adapter_failure_classes.py",
+      "description": "### Findings (verbatim)\n- \u26aa tests/drivers/test_adapter_failure_classes.py:231: `test_authentication_is_classified_beyond_the_display_detail_limit` repeats `test_failure_classifies_full_text_before_sanitizing_and_capping_detail` (tests/drivers/test_codex_rework_decode.py:136). Both decode a failure for the same two event kinds and check that the class comes from text past the 4096-character display limit. Only the trailing word differs (\"Unauthorized\" vs \"Rate limit reached\"). No PRD feature touches this path, and the test passes on the base, so it is padding of the same kind tasks 20, 21 and 23 removed. Delete it. `json` and the `driver` fixture are still used by the capacity test (found by: BOB)\n- \u26aa tests/drivers/test_adapter_failure_classes.py:258: The capacity bound test runs `connectivity_retries` 0, 1, 2 and 3. Cases 0, 1 and 2 all take the same `retries.connectivity < policy.connectivity_retries` branch (src/ovcaq/runtime/decision.py:215). Only 2 (the last WAIT) and 3 (HALT) pin the bound. Drop cases 0 and 1 (found by: BOB)\n- \u26aa tests/drivers/test_adapter_failure_classes.py:67: `test_numeric_diagnostics_require_an_explicit_status_or_error_context` checks only the positive cases. The \"require\" half is tested by `test_unrelated_numbers_are_not_failure_diagnostics` (tests/drivers/test_adapter_failure_classes.py:156). Rename it for the rule it enforces, e.g. `test_numeric_codes_classify_with_explicit_status_or_error_context` (found by: BOB)\n",
+      "model": "sonnet",
+      "id": "29",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "outcome": "completed",
+          "review_cycle": 5,
+          "cause": null,
+          "implementor": "codex",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:test-only-task",
+          "self_deslop": "skipped:test-only",
+          "style_gate": "clean",
+          "split_hygiene": "clean",
+          "commit": "18b500c",
+          "verification": "136 passed in 0.25s; exit 0",
+          "review": "Pat: 3 resolved CLOSURE verdicts, NO FINDINGS; parsed output valid",
+          "host_adaptation": "Test-only native Ivan logical sonnet mapped to observed gpt-6.1-sol/medium; coordinator did not edit tests. Tess/Devon skipped per test-only task rule."
+        }
+      ]
+    },
+    {
+      "name": "[D5] prose",
+      "description": "### Findings (verbatim)\n- \u26aa docs/driver-protocol.md: The task-28 and task-19 edits left the prose wrapping uneven. docs/driver-protocol.md:274 is 103 characters long, the only long line in the file that is not a link or a table row. Line 272 also runs past the file's ~80-column wrap. Lines 186-191 break after \"tier-key precedence:\", which makes the next sentence look like the start of a list, and line 191 stops at \"`low`,\". Fix: reflow both paragraphs to ~80 columns without changing any words (found by: ALICE)\n",
+      "model": "sonnet",
+      "id": "30",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "outcome": "completed",
+          "review_cycle": 5,
+          "cause": null,
+          "implementor": "codex",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:docs-only-task",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "skipped:no-tests",
+          "commit": "4e81508",
+          "verification": "Full-file whitespace-normalized comparison against task base: exit 0; git diff --check: exit 0",
+          "review": "skipped:docs-only (work skill step 5.7)",
+          "host_adaptation": "Eligible micro repair delegated to native Ivan at logical sonnet, observed gpt-6.1-sol/medium; coordinator did not edit product documentation."
+        }
+      ]
+    },
+    {
+      "name": "[D5] tests/runtime/test_adapter_health.py",
+      "description": "### Findings (verbatim)\n- \u26aa tests/runtime/test_adapter_health.py:229: docs/driver-protocol.md:36 says both native adapters fall back to the standard default search path when the host PATH is missing. Only Claude has a test for this (`test_claude_probe_uses_default_search_path_when_host_path_is_absent`). The design says to \"reproduce and regress\" the existing Codex probe behavior. Parametrize the test over (\"claude\", \"codex\") and drop \"claude\" from its name. As I read `os.get_exec_path`, the patched `os.defpath` also steers the Codex subprocess lookup (not run) (found by: BOB)\n",
+      "model": "sonnet",
+      "id": "31",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "sonnet",
+          "outcome": "completed",
+          "review_cycle": 5,
+          "cause": null,
+          "implementor": "codex",
+          "actual_model": "gpt-6.1-sol",
+          "actual_provider": "openai",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:test-only-task",
+          "self_deslop": "skipped:test-only",
+          "style_gate": "clean",
+          "split_hygiene": "clean",
+          "commit": "cf48315",
+          "verification": "2 passed, 22 deselected, 2 pytest cleanup warnings in 1.06s; exit 0",
+          "review": "Pat: resolved CLOSURE verdict, NO FINDINGS; parsed output valid",
+          "host_adaptation": "Eligible micro repair delegated to native Ivan at logical sonnet, observed gpt-6.1-sol/medium; coordinator did not edit tests. Tess/Devon skipped per test-only task rule."
+        }
+      ]
+    }
+  ],
+  "work_start_sha": "7819970d7f807d6fad07b115af4f0df1fbc4a248",
+  "repo_root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+  "autonomous_decisions": [
+    {
+      "issue": "00053 design and task routing",
+      "action": "Use reviewed minimal adapter-edge design and four logical opus tasks",
+      "reason": "Three design dispatches passed; non-blockers retained. Risk eligibility-split exemption; no inference preflight under operator fixture/fake scope",
+      "cycle": 1,
+      "severity": "n/a"
+    },
+    {
+      "issue": "Native outcome task exceeded test-author read budget",
+      "action": "Split task 1 into sequential lane task 5 and diagnostic task 6; task 1 now verifies split completion",
+      "reason": "First Tess stopped without edits at 134661 input bytes; narrowed self-contained prompts preserve full pipeline and original acceptance",
+      "cycle": 1,
+      "severity": "n/a"
+    },
+    {
+      "issue": "Original task1 aborted before implementation and was split into task5 lanes/task6 diagnostics",
+      "action": "After both replacement tasks complete, verify combined narrow contract and mark original coordination umbrella completed through task-set-status; retain aborted attempt without fabricating a successful implementation attempt",
+      "reason": "Installed task-splitting procedure permits original completed/blocked carrier; all substantive implementation provenance remains in split tasks",
+      "cycle": 1,
+      "severity": "n/a"
+    },
+    {
+      "cycle": 1,
+      "issue": "Numeric diagnostics now need \"HTTP\", \"HTTP status\", \"status code\" or \"error code\" (src/ovcaq/drivers/codex_events.py:301), so Codex's own status wording falls to UNKNOWN. I ran `classify_failure` on \"unexpected status 503 Service Unavailable\", \"unexpected status 502 Bad Gateway\", \"unexpected status 403 Forbidden\" and \"exceeded retry limit, last status: 429 Too Many Requests\", and all four return `unknown`. The old code returned connectivity, permission and rate_limit for these. Both prefixes are confirmed as strings in the installed codex 0.162.1 binary; the \"503 Service Unavailable\" suffix is my guess at how Codex renders the code. Effect: 502/503 skip the bounded connectivity WAIT and get an immediate died-retry and then PARK, and 403 retries instead of halting for the operator. The PRD allows \"HTTP/status/error-code\" context, and \"status 503\" is a status context. Fix: accept a bare `status` (e.g. `(?:http(?: status)? | status(?: code)? | error code)`) and add both Codex spellings as literal positives in tests/drivers/test_adapter_failure_classes.py:55",
+      "severity": "high",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 1,
+      "issue": "The docs say an empty host PATH \"searches the current directory\" for both native adapters, but `ClaudeDriver.probe` passes `path=\"\"` to `shutil.which`, which returns None (checked on Python 3.13). tests/runtime/test_adapter_health.py:263 asserts unhealthy. So the Claude probe treats an empty host PATH as unhealthy, while only the Codex subprocess probe searches the current directory. Fix the sentence to say this",
+      "severity": "medium",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 1,
+      "issue": "The \"fixture\" case in `test_claude_probe_keeps_empty_host_path_unhealthy` puts the executable in tmp_path/bin while the working directory is tmp_path. It cannot tell the conservative empty-PATH handling apart from a current-directory search. Put the executable in the working directory to pin the choice",
+      "severity": "medium",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 1,
+      "issue": "Only the `continue` at src/ovcaq/drivers/codex.py:383 is pinned by tests. The unfinished-only `started_lanes` filter at src/ovcaq/drivers/codex.py:372 is not: dropping it still suppresses LANE_FAILED through the `continue`, and no test asserts the RAW_UNKNOWN that the design requires for a close status on a completed lane (I ran it: completed then shutdown gives `raw.unknown`; that the tests miss its removal comes from reading them, not a run). Add a RAW_UNKNOWN assertion on `closed` in `test_completed_lane_remains_completed_after_close_status` (tests/drivers/test_adapter_outcomes.py:89)",
+      "severity": "medium",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 1,
+      "issue": "The Phase 0 acceptance command (`tests/drivers/test_adapter_outcomes.py tests/drivers/test_codex_decode_terminals.py`) does not test the capacity WAIT and retry exhaustion, the unrelated-number negatives, or HTTP positives that rely on the number alone. Those tests live in tests/drivers/test_adapter_failure_classes.py, a file the PRD does not list, so the stated acceptance run passes without proving them.",
+      "severity": "medium",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 1,
+      "issue": "The normal sequence spawn \u2192 wait(completed) \u2192 close_agent(shutdown) now emits raw.unknown for every completed lane, which sets the TUI raw-evidence flag (tui/model.py:548). Late running/errored/completed updates for a finished lane are dropped with no trace (codex.py:383). No test asserts either outcome, so the design's \"raw-unknown evidence\" rule is unpinned",
+      "severity": "medium",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 1,
+      "issue": "`_ResolvedModelCodexDriver.build_launch` copies `_ResolvedModelClaudeDriver.build_launch` line for line. A module helper `_tier_request(settings, request)` would leave each override as one line: `return super().build_launch(_tier_request(self._settings, request))`",
+      "severity": "medium",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 1,
+      "issue": "40 of the 49 new outcome test cases pass on the pre-change code and repeat existing tests: test_codex_rework_decode.py:201 already covers an unfinished lane failing on close, and test_codex_decode_lanes.py:257 covers an unstarted receiver staying raw. The 3-way receiver-name parametrization exercises no extra code path, and `test_non_json_output_retains_raw_unknown` has nothing to do with lanes",
+      "severity": "medium",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 1,
+      "issue": "The `continue` at codex.py:383 freezes failed lanes as well as completed ones, and silently drops late `errored`/`running`/`completed` updates with no raw-unknown evidence (I ran it: completed then errored gives only `tool.completed`, while completed then shutdown gives `raw.unknown`). docs/driver-protocol.md:242 describes only completed lanes. Document that failed lanes also stay terminal, or emit raw evidence consistently",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 1,
+      "issue": "The new `authentication failed` pattern goes beyond \"retain existing word diagnostics\". The authentication fixture already classifies through \"invalid credentials\", and the new pattern widens the authentication HALT to messages like \"MCP server authentication failed\"",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 1,
+      "issue": "A normal Codex sub-agent run (spawn running, then wait completed, then close_agent shutdown) now emits `raw.unknown` on every close of a completed lane. I confirmed this with a real decode run. It sets the TUI's raw-evidence flag (src/ovcaq/tui/model.py:548). The doc at docs/driver-protocol.md:244 says only unstarted receivers and missing attribution produce raw unknown evidence.",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 1,
+      "issue": "`test_configured_factory_rejects_unknown_or_invalid_options` re-tests `CodexDriver.__init__`, which the new subclass does not override, and passes on the pre-change code. Its `pytest.raises(ValueError)` also accepts `ConfigurationError` (a ValueError subclass) raised by config parsing, so it can pass for the wrong reason",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 1,
+      "ref": "R1",
+      "issue": "Numeric diagnostics now need \"HTTP\", \"HTTP status\", \"status code\" or \"error code\" (src/ovcaq/drivers/codex_events.py:301), so Codex's own status wording falls to UNKNOWN. I ran `classify_failure` on \"unexpected status 503 Service Unavailable\", \"unexpected status 502 Bad Gateway\", \"unexpected status 403 Forbidden\" and \"exceeded retry limit, last status: 429 Too Many Requests\", and all four return `unknown`. The old code returned connectivity, permission and rate_limit for these. Both prefixes are confirmed as strings in the installed codex 0.162.1 binary; the \"503 Service Unavailable\" suffix is my guess at how Codex renders the code. Effect: 502/503 skip the bounded connectivity WAIT and get an immediate died-retry and then PARK, and 403 retries instead of halting for the operator. The PRD allows \"HTTP/status/error-code\" context, and \"status 503\" is a status context. Fix: accept a bare `status` (e.g. `(?:http(?: status)? | status(?: code)? | error code)`) and add both Codex spellings as literal positives in tests/drivers/test_adapter_failure_classes.py:55",
+      "severity": "high",
+      "consensus": "[3/3]",
+      "action": "fix",
+      "reason": "Bounded in-scope correction; complete verbatim finding retained for rework.",
+      "research": {
+        "category": "D",
+        "verdict": "proceed",
+        "checks": [
+          {
+            "check": "prd-requires-status-context",
+            "pass": true,
+            "evidence": "PRD: Numeric 401/403/429/502/503 classify only in explicit HTTP/status/error-code diagnostic contexts"
+          },
+          {
+            "check": "signature-preserved",
+            "pass": true,
+            "evidence": "Existing classify_failure(detail: str) -> FailureClass; no new API, enum or schema"
+          }
+        ],
+        "evidence_summary": "Bounded provider-edge matching repair directly required by PRD; preserve ordinary-count negatives and unchanged precedence."
+      }
+    },
+    {
+      "cycle": 1,
+      "ref": "R2",
+      "issue": "The docs say an empty host PATH \"searches the current directory\" for both native adapters, but `ClaudeDriver.probe` passes `path=\"\"` to `shutil.which`, which returns None (checked on Python 3.13). tests/runtime/test_adapter_health.py:263 asserts unhealthy. So the Claude probe treats an empty host PATH as unhealthy, while only the Codex subprocess probe searches the current directory. Fix the sentence to say this",
+      "severity": "medium",
+      "consensus": "[2/3]",
+      "action": "fix",
+      "reason": "Bounded in-scope correction; complete verbatim finding retained for rework."
+    },
+    {
+      "cycle": 1,
+      "ref": "R3",
+      "issue": "The \"fixture\" case in `test_claude_probe_keeps_empty_host_path_unhealthy` puts the executable in tmp_path/bin while the working directory is tmp_path. It cannot tell the conservative empty-PATH handling apart from a current-directory search. Put the executable in the working directory to pin the choice",
+      "severity": "medium",
+      "consensus": "[2/3]",
+      "action": "fix",
+      "reason": "Bounded in-scope correction; complete verbatim finding retained for rework."
+    },
+    {
+      "cycle": 1,
+      "ref": "R4",
+      "issue": "Only the `continue` at src/ovcaq/drivers/codex.py:383 is pinned by tests. The unfinished-only `started_lanes` filter at src/ovcaq/drivers/codex.py:372 is not: dropping it still suppresses LANE_FAILED through the `continue`, and no test asserts the RAW_UNKNOWN that the design requires for a close status on a completed lane (I ran it: completed then shutdown gives `raw.unknown`; that the tests miss its removal comes from reading them, not a run). Add a RAW_UNKNOWN assertion on `closed` in `test_completed_lane_remains_completed_after_close_status` (tests/drivers/test_adapter_outcomes.py:89)",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "action": "fix",
+      "reason": "Bounded in-scope correction; complete verbatim finding retained for rework."
+    },
+    {
+      "cycle": 1,
+      "ref": "R5",
+      "issue": "The Phase 0 acceptance command (`tests/drivers/test_adapter_outcomes.py tests/drivers/test_codex_decode_terminals.py`) does not test the capacity WAIT and retry exhaustion, the unrelated-number negatives, or HTTP positives that rely on the number alone. Those tests live in tests/drivers/test_adapter_failure_classes.py, a file the PRD does not list, so the stated acceptance run passes without proving them.",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "action": "fix",
+      "reason": "Bounded in-scope correction; complete verbatim finding retained for rework."
+    },
+    {
+      "cycle": 1,
+      "ref": "R6",
+      "issue": "The normal sequence spawn \u2192 wait(completed) \u2192 close_agent(shutdown) now emits raw.unknown for every completed lane, which sets the TUI raw-evidence flag (tui/model.py:548). Late running/errored/completed updates for a finished lane are dropped with no trace (codex.py:383). No test asserts either outcome, so the design's \"raw-unknown evidence\" rule is unpinned",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "action": "fix",
+      "reason": "Bounded in-scope correction; complete verbatim finding retained for rework."
+    },
+    {
+      "cycle": 1,
+      "ref": "R7",
+      "issue": "`_ResolvedModelCodexDriver.build_launch` copies `_ResolvedModelClaudeDriver.build_launch` line for line. A module helper `_tier_request(settings, request)` would leave each override as one line: `return super().build_launch(_tier_request(self._settings, request))`",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "action": "fix",
+      "reason": "Bounded in-scope correction; complete verbatim finding retained for rework."
+    },
+    {
+      "cycle": 1,
+      "ref": "R8",
+      "issue": "40 of the 49 new outcome test cases pass on the pre-change code and repeat existing tests: test_codex_rework_decode.py:201 already covers an unfinished lane failing on close, and test_codex_decode_lanes.py:257 covers an unstarted receiver staying raw. The 3-way receiver-name parametrization exercises no extra code path, and `test_non_json_output_retains_raw_unknown` has nothing to do with lanes",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "action": "fix",
+      "reason": "Bounded in-scope correction; complete verbatim finding retained for rework."
+    },
+    {
+      "cycle": 1,
+      "ref": "R9",
+      "issue": "The `continue` at codex.py:383 freezes failed lanes as well as completed ones, and silently drops late `errored`/`running`/`completed` updates with no raw-unknown evidence (I ran it: completed then errored gives only `tool.completed`, while completed then shutdown gives `raw.unknown`). docs/driver-protocol.md:242 describes only completed lanes. Document that failed lanes also stay terminal, or emit raw evidence consistently",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "fix",
+      "reason": "Bounded in-scope correction; complete verbatim finding retained for rework."
+    },
+    {
+      "cycle": 1,
+      "ref": "R10",
+      "issue": "`_ResolvedModelCodexDriver.build_launch` is identical to `_ResolvedModelClaudeDriver.build_launch` (inverse tier map plus `replace`). A shared module function such as `_tier_key_request(settings, request)` called by both overrides would remove the copy. The design asked for mirroring, so this is low",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "discard",
+      "reason": "Duplicate of R7: both cite the identical inverse-tier overrides. R7 is fixed; no second task is needed. Raw findings remain preserved."
+    },
+    {
+      "cycle": 1,
+      "ref": "R11",
+      "issue": "The new `authentication failed` pattern goes beyond \"retain existing word diagnostics\". The authentication fixture already classifies through \"invalid credentials\", and the new pattern widens the authentication HALT to messages like \"MCP server authentication failed\"",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "fix",
+      "reason": "Bounded in-scope correction; complete verbatim finding retained for rework."
+    },
+    {
+      "cycle": 1,
+      "ref": "R12",
+      "issue": "A normal Codex sub-agent run (spawn running, then wait completed, then close_agent shutdown) now emits `raw.unknown` on every close of a completed lane. I confirmed this with a real decode run. It sets the TUI's raw-evidence flag (src/ovcaq/tui/model.py:548). The doc at docs/driver-protocol.md:244 says only unstarted receivers and missing attribution produce raw unknown evidence.",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "fix",
+      "reason": "Bounded in-scope correction; complete verbatim finding retained for rework."
+    },
+    {
+      "cycle": 1,
+      "ref": "R13",
+      "issue": "`test_configured_factory_rejects_unknown_or_invalid_options` re-tests `CodexDriver.__init__`, which the new subclass does not override, and passes on the pre-change code. Its `pytest.raises(ValueError)` also accepts `ConfigurationError` (a ValueError subclass) raised by config parsing, so it can pass for the wrong reason",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "fix",
+      "reason": "Bounded in-scope correction; complete verbatim finding retained for rework."
+    },
+    {
+      "cycle": 1,
+      "ref": "R14",
+      "issue": "Cannot statically verify: phase-2 exit gate (pytest, ruff check, ruff format --check, mypy, uv build). The test gate reports exit 0 but gives no counts",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "discard",
+      "reason": "Resolved by current-HEAD verification: 7165 passed, 0 failed, 0 skipped; sync, Ruff lint/format, mypy and build all exit 0. See 00053-review-1-verification.json. Bob VERIFY command uses &&, so not queued: command shape; each required gate already ran separately."
+    },
+    {
+      "cycle": 1,
+      "ref": "R15",
+      "issue": "The Codex probe runs in the caller's working directory, while the launch runs in request.root. A relative command or an empty-PATH lookup can therefore succeed in the probe and fail at launch, or the reverse (existing behavior)",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "defer",
+      "reason": "Known pre-existing caller/request-root cwd disagreement. PRD explicitly excludes probe descendant/ownership redesign and preserves Codex probe behavior. Defer outside this repair; do not change the current scope."
+    },
+    {
+      "cycle": 1,
+      "ref": "R16",
+      "issue": "33 touched test(s) pass against the pre-change code: test_numeric_diagnostics_require_an_explicit_status_or_error_context +27 more",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "action": "discard",
+      "reason": "Existing valid HTTP/word diagnostics, precedence and reset parsing are compatibility controls the PRD explicitly requires retaining. New false-positive negatives and capacity cases fail at base; literal oracle expectations are independently pinned. Passing preservation cases are not tautologies."
+    },
+    {
+      "cycle": 1,
+      "ref": "R17",
+      "issue": "40 touched test(s) pass against the pre-change code: test_unfinished_lane_fails_after_close_status +34 more",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "action": "discard",
+      "reason": "New completed-lane regressions fail at base; running/unstarted/unknown preservation cases deliberately cover unchanged behavior. R8 separately fixes actual redundant test padding; it is not silently dismissed by this characterization decision."
+    },
+    {
+      "cycle": 1,
+      "ref": "R18",
+      "issue": "10 touched test(s) pass against the pre-change code: test_native_failure_emits_classified_terminal_with_receipt_identity +4 more",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "action": "discard",
+      "reason": "Existing terminal fixture outcomes remain unchanged; only the independent literal oracle replaces a production-derived expected class. Such an oracle correction is expected to pass base."
+    },
+    {
+      "cycle": 1,
+      "ref": "R19",
+      "issue": "7 touched test(s) pass against the pre-change code: test_failure_classification_uses_documented_precedence +1 more",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "action": "discard",
+      "reason": "Existing failure fixtures and reset behavior are compatibility controls; independent literal oracles replace classifier-derived expectations without requiring changed production outcomes."
+    },
+    {
+      "cycle": 1,
+      "ref": "R20",
+      "issue": "81 touched test(s) pass against the pre-change code: test_launch_has_exact_order_and_omits_unconfigured_flags +75 more",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "action": "discard",
+      "reason": "Direct tier precedence, explicit-model validation, safe flags and ordinary config remain unchanged by contract; supervised collision regressions fail at base. R13 separately fixes the broad factory exception check."
+    },
+    {
+      "cycle": 1,
+      "ref": "R21",
+      "issue": "14 touched test(s) pass against the pre-change code: test_native_diagnostics_have_independent_failure_classification +8 more",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "action": "discard",
+      "reason": "Existing diagnostic fixture is deliberately unchanged, with expected CONNECTIVITY now a literal independent oracle. Passing at base is required characterization."
+    },
+    {
+      "cycle": 1,
+      "ref": "R22",
+      "issue": "21 touched test(s) pass against the pre-change code: test_probe_finds_executable_available_only_on_overlay_path, test_probe_rejects_absolute_command_that_is_not_an_executable_file +15 more",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "action": "discard",
+      "reason": "Codex effective PATH already behaved correctly and PRD requires regression rather than forced production edits; inherited/absolute/default health controls preserve behavior. Claude overlay failures fail at base. R3 separately repairs the empty-PATH test discrimination."
+    },
+    {
+      "cycle": 1,
+      "ref": "R23",
+      "issue": "1 touched test(s) pass against the pre-change code: test_configured_supervisor_launches_each_selected_literal_model_and_effort",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "action": "discard",
+      "reason": "This parametrized test includes unchanged non-colliding routes as compatibility controls; colliding Codex route cases fail at base. A passing invocation of the same test function does not negate its failing cases."
+    },
+    {
+      "cycle": 2,
+      "issue": "Codex's HTTP client (reqwest) reports status errors as \"HTTP status client error (429 Too Many Requests) for url (...)\". The new numeric check still returns `unknown` for that form. I ran `classify_failure` on that string, on \"HTTP status server error (503 Service Unavailable) for url (...)\", on \"HTTP status client error (403 Forbidden) ...\" and on \"HTTP/1.1 503 Service Unavailable\", and all four give `unknown`. The pre-change code returned rate_limit, connectivity and permission for them. Both \"HTTP status client error\" and \"HTTP status server error\" are present as strings in the installed codex-cli 0.162.1 binary (confirmed with `rg -a`). Whether they ever reach a `turn.failed` message is my guess, not something I checked. If they do, a real 429 skips the rate-limit wait and a real 502/503 skips the bounded connectivity WAIT, just like the cycle-1 HIGH. This also contradicts docs/driver-protocol.md:271 (\"require HTTP, status or error-code context\"). Fix: also accept the code when the standard reason phrase follows it (e.g. `(?:403 forbidden | 429 too many requests | 502 bad gateway | 503 service unavailable)`). Add the reqwest and HTTP/1.1 forms as literal positives in tests/drivers/test_adapter_failure_classes.py:63, and keep the ordinary-count negatives",
+      "severity": "medium",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 2,
+      "issue": "`INVALID_OPTIONS` was moved up to module level so the now-deleted factory test could share it. It has a single user again (`test_constructor_rejects_unknown_or_invalid_options`). Inline it back into that test's `@pytest.mark.parametrize`, so the only change left in that test is the `raised.type is ValueError` line",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 2,
+      "issue": "The CHANGELOG PATH entry says the change checks \"both native adapters' executables\" and preserves \"standard missing/empty host PATH lookup\". In fact only the Claude probe changed (Codex already used the merged environment). With an empty host PATH, the Claude probe is unhealthy while the Codex probe searches the current directory, which docs/driver-protocol.md:37 now says correctly. Reword the entry to say the fix is for Claude and to name that split",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 2,
+      "issue": "`classify_failure` now collapses whitespace (`\" \".join(detail.split())`), so \"Rate\\tlimit reached\" becomes rate_limit. The pre-change code returned unknown for it. That widens matching beyond \"retain existing word diagnostics\", and neither the CHANGELOG nor the protocol doc mentions it. The test `test_native_word_diagnostics_retain_case_and_whitespace_variants` calls it \"retain\" even though the whitespace case is new behavior. Either document the widening and rename the test, or drop line 300 and the tab case",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 2,
+      "issue": "No supervisor-level regression covers the Claude model-collision path. The Claude edge wrapper behaves correctly: I checked directly that `{default: o3, o3: o3-pro, x: o3}` launches `o3` and `o3-pro`. But tests/runtime/test_adapter_launch_routing.py runs only the Codex fake through the supervisor, so a regression in `_ResolvedModelClaudeDriver` would go unnoticed.",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 2,
+      "issue": "`assert retries.rate_limit == 0` can never fail. It checks the frozen `RetryState` the test built with `rate_limit=0`, and `decide` cannot change it (src/ovcaq/runtime/decision.py:84). Lines 200-201 already pin the non-rate-limit path",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 2,
+      "issue": "CHANGELOG says \"preserving standard missing ... host PATH lookup\", but the Claude probe changed. With no host PATH it now falls back to `os.defpath` (`/bin:/usr/bin`, src/ovcaq/drivers/claude.py:82). The old `shutil.which(command)` used `CS_PATH` (`/usr/bin:/bin:/usr/sbin:/sbin` here, confirmed with `getconf PATH` and the stdlib source). The new value matches the subprocess spawn, as the design asks, so only the wording is wrong",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 2,
+      "issue": "The test for an absent host PATH probes `sh`, which is in both `os.defpath` and `CS_PATH`. It cannot tell the design's spawn-matching `os.defpath` fallback from the old `CS_PATH` one, so going back to `shutil.which(command, path=None)` would still pass (found by reading, not run)",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 2,
+      "round": "post-sweep-20261012",
+      "ref": "R1",
+      "issue": "The new HTTP-version prefix `http/\\d+\\.\\d+` (src/ovcaq/drivers/codex_events.py:301) needs a minor version. So `HTTP/1.1 503` classifies, but HTTP/2 and HTTP/3 status lines do not, because they are written with no minor version. I ran `classify_failure`: \"HTTP/2 503 Service Unavailable\" and \"HTTP/2 429\" both return `unknown`, and the pre-change code returned connectivity and rate_limit. This also contradicts the CHANGELOG.md:43 claim that \"HTTP-version status diagnostics\" are recognized. If such a line reaches a Codex `turn.failed` (a guess, the same guess behind the HTTP/1.1 fix), a 503 skips the bounded connectivity WAIT and goes to died-retry then PARK, and a 429 retries instead of halting. Fix: make the minor version optional (`http(?:/\\d+(?:\\.\\d+)?| status\u2026)`) and add the \"HTTP/2 503 Service Unavailable\" and \"HTTP/2 429 Too Many Requests\" positives at tests/drivers/test_adapter_failure_classes.py:103. \"HTTP Error 503: Service Unavailable\" also returns `unknown`; that is lower likelihood, so decide whether it is in scope",
+      "file": "src/ovcaq/drivers/codex_events.py:301",
+      "severity": "medium",
+      "consensus": "[2/3]",
+      "action": "auto-fixed",
+      "reason": "Operator authorized Fix all 6, re-review on 2026-10-12; implemented by task 15. Fresh full provider review required before finalization."
+    },
+    {
+      "cycle": 2,
+      "round": "post-sweep-20261012",
+      "ref": "R2",
+      "issue": "CHANGELOG.md:43 reads as a separate fix, but it only patches this PRD's own unreleased change at CHANGELOG.md:46. The reqwest and HTTP/1.1 forms always classified before this PRD (bare numbers matched), and \"literal whitespace in word diagnostics\" describes something that did not change. Fold the user-visible part into CHANGELOG.md:46 and drop line 43",
+      "file": "CHANGELOG.md:43",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "auto-fixed",
+      "reason": "Operator authorized Fix all 6, re-review on 2026-10-12; implemented by task 16. Fresh full provider review required before finalization."
+    },
+    {
+      "cycle": 2,
+      "round": "post-sweep-20261012",
+      "ref": "R3",
+      "issue": "The new helper `_tier_request` is named with a noun phrase. The coding-style rule wants action-named functions to start with a verb. Rename it to, for example, `_map_model_to_tier` (both call sites are at src/ovcaq/drivers/edge.py:27 and src/ovcaq/drivers/edge.py:34)",
+      "file": "src/ovcaq/drivers/edge.py:16",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "auto-fixed",
+      "reason": "Operator authorized Fix all 6, re-review on 2026-10-12; implemented by task 15. Fresh full provider review required before finalization."
+    },
+    {
+      "cycle": 2,
+      "round": "post-sweep-20261012",
+      "ref": "R4",
+      "issue": "Every routine close of a completed lane (wait completed, then close_agent shutdown) now emits raw.unknown. The TUI then marks ordinary multi-agent sessions as having raw evidence. Late running or completed updates for terminal lanes emit nothing, so the two cases behave differently. This is documented and tested as intended, but it adds noise.",
+      "file": "src/ovcaq/drivers/codex_events.py:233",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "discard",
+      "reason": "Previously settled and intentionally pinned raw-evidence behavior; no contract change authorized."
+    },
+    {
+      "cycle": 2,
+      "round": "post-sweep-20261012",
+      "ref": "R6",
+      "issue": "The Claude routing cases set every phase effort to \"high\" and give no reason. Config accepts low/medium/high/xhigh for any agent (src/ovcaq/config.py:364), and ClaudeDriver passes effort through unchanged, so Claude effort pass-through is only tested with one value",
+      "file": "tests/runtime/test_adapter_launch_routing.py",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "auto-fixed",
+      "reason": "Operator authorized Fix all 6, re-review on 2026-10-12; implemented by task 17. Fresh full provider review required before finalization."
+    },
+    {
+      "cycle": 2,
+      "round": "post-sweep-20261012",
+      "ref": "R7",
+      "issue": "The protocol doc says completed and failed lanes stay terminal \"under all late receiver updates\". But identity eviction removes terminal lanes first (src/ovcaq/drivers/codex.py:413). Once a lane is evicted, a late running update for it emits `lane.started` again",
+      "file": "docs/driver-protocol.md",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "auto-fixed",
+      "reason": "Operator authorized Fix all 6, re-review on 2026-10-12; implemented by task 16. Fresh full provider review required before finalization."
+    },
+    {
+      "cycle": 2,
+      "round": "post-sweep-20261012",
+      "ref": "R8",
+      "issue": "The CHANGELOG entry about reqwest/HTTP-version forms and literal whitespace describes no change from the pre-PRD base. Bare codes already matched those forms there, and whitespace was already literal. The entry records rework done inside this PRD and overlaps the numeric-context entry three lines below",
+      "file": "CHANGELOG.md",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "discard",
+      "reason": "Duplicate of R2 changelog finding; one distinct repair request, both raw outputs preserved."
+    },
+    {
+      "cycle": 2,
+      "round": "post-sweep-20261012",
+      "ref": "R9",
+      "issue": "`configured_driver` is annotated `-> CodexDriver` but returns `build_driver(...)`, which is typed `AgentDriver`. mypy only checks src/ovcaq, so nothing reports the mismatch",
+      "file": "tests/drivers/test_codex_launch.py",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "auto-fixed",
+      "reason": "Operator authorized Fix all 6, re-review on 2026-10-12; implemented by task 17. Fresh full provider review required before finalization."
+    },
+    {
+      "cycle": 2,
+      "round": "post-repair-20261012",
+      "ref": "R3",
+      "issue": "The bare word \"status\" counts as an HTTP context, so ordinary counts after it still get a failure class. Confirmed: \"status 401 files processed\" and \"exit status 401\" both return `authentication`. Inside the PRD's wording, but no negative control is pinned for it",
+      "severity": "low",
+      "action": "defer",
+      "reason": "Existing mixed diagnostic-prefix/count precedence limitation; requires later explicit contract."
+    },
+    {
+      "cycle": 2,
+      "round": "post-repair-20261012",
+      "ref": "R4",
+      "issue": "A late update for a lane that already finished is now dropped with no `raw_unknown` record, while a late close status for the same lane does emit one. So a contradictory late \"errored\" after \"completed\" leaves no trace in the normalized stream; only raw.jsonl keeps it. `item_lanes(started_lanes=None)` also keeps its optional default: a caller that leaves it out never fails a lane on close (review R1 asked for it to be required)",
+      "severity": "low",
+      "action": "discard",
+      "reason": "Existing remembered-terminal identity contract; raw session evidence survives. Production decoder supplies unfinished identities; no new required helper signature."
+    },
+    {
+      "cycle": 2,
+      "issue": "tests/runtime/test_adapter_launch_routing.py:30 re-implements the runpy Claude wrapper from tests/runtime/test_supervisor_adapters.py:44. The wrapper rebinds `fake_codex.workflow.__globals__['__file__']` to the Claude fixture, and the new copy adds only an `edge['emit_invocation'](sys.argv[1:])` call. That leaves two copies of a hack tied to fake_codex.py internals, and they will drift apart. Keep one wrapper builder in test_supervisor_adapters.py that always emits the invocation (Codex `main()` already emits it unconditionally) and call it from both files",
+      "severity": "medium",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 2,
+      "issue": "CHANGELOG.md:46 still says completed and failed Codex receiver lanes stay terminal \"under late updates\", with no qualifier. Task 16 fixed this same overclaim in docs/driver-protocol.md:243, which now says \"Remembered completed and failed lanes\". Lanes stop being remembered once they are evicted (src/ovcaq/drivers/codex.py:413 evicts finished identities first, at 4096 identities). After that, a late `running` update starts the lane again. Add \"remembered\" to the CHANGELOG entry so it matches the protocol doc",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 2,
+      "issue": "docs/driver-protocol.md:185 says \"the driver preserves that resolved value\", but only drivers built by `build_driver` do that. A `CodexDriver` constructed directly and passed to `Supervisor` (as in tests/runtime/test_rework_thread_conflict.py:108) still remaps a colliding value through tier-key precedence. Reword to \"the driver built by `build_driver` preserves that resolved value\"",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 2,
+      "issue": "CHANGELOG.md:45 puts two fixes in one entry. Its clause \"retry model capacity as connectivity through bounded WAIT/retry exhaustion\" does not read as a sentence, and \"reqwest\" is implementation jargon. Split it into a numeric-context entry and a separate entry: \"classify 'Selected model is at capacity' as connectivity so it gets bounded WAIT retries instead of rate-limit handling\"",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 2,
+      "issue": "tests/runtime/test_adapter_health.py:90 runs `command_name` over three names (\"fixture-agent-health\", \"overlay-runner\", \"queue-worker\"). In both probes all three take the same code path, so there are 6 cases where 2 would do. R8 removed the same kind of padding from test_adapter_outcomes.py. Keep one name",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 2,
+      "round": "post-repair-recovery-20261012",
+      "severity": "n/a",
+      "issue": "Five actionable post-repair findings R1/R2/R5/R6/R7",
+      "action": "operator-authorized",
+      "reason": "Operator said \"fix all five and re-review\". One bounded repair pass via tasks 18-20, then fresh full provider review; cycle/cap remain 2. Scope: reports/00053-postrepair-repair-authorization.md."
+    },
+    {
+      "cycle": 2,
+      "round": "approved-task-reviews",
+      "severity": "low",
+      "issue": "Pat18: workflow_fixture naming; rename to a verb-led helper name.",
+      "action": "carry-to-review",
+      "reason": "Operator approved task18/20 prompt export and read-only reviews. Both original closures resolved; new LOW carried to fresh full review. No additional repair authorized. Evidence: reports/00053-approved-task-reviews-handoff.md."
+    },
+    {
+      "cycle": 2,
+      "round": "five-repair-20261012",
+      "ref": "R1",
+      "issue": "Task 20 stopped passing a name to `fake_executable`, so its `name: str = \"fixture-agent-health\"` parameter is now dead: all 9 callers use the default. This file is new in this PRD, so the leftover comes from the repair itself. Fix: drop the parameter and write `executable = directory / \"fixture-agent-health\"`",
+      "file": "tests/runtime/test_adapter_health.py:33",
+      "severity": "medium",
+      "consensus": "[2/3]",
+      "action": "operator-decision-required",
+      "reason": "Unused fake_executable name parameter confirmed; bounded authorization prohibits further repairs."
+    },
+    {
+      "cycle": 2,
+      "round": "five-repair-20261012",
+      "ref": "R2",
+      "issue": "Carried Pat18 LOW: `workflow_fixture` writes the Claude wrapper file and returns its path, but its name is a noun. Action functions should start with a verb, e.g. `write_workflow_fixture` (call sites tests/runtime/test_supervisor_adapters.py:56 and tests/runtime/test_adapter_launch_routing.py:33). The new helpers `configured_workflow` (tests/runtime/test_adapter_launch_routing.py:24) and `configured_driver` (tests/drivers/test_codex_launch.py:30) have the same shape. Against renaming: the older helpers in the same file (`adapter_harness`, `workflow_agent`) also use nouns, so a rename would break from the file's current style",
+      "file": "tests/runtime/test_supervisor_adapters.py:40",
+      "severity": "low",
+      "consensus": "[2/3]",
+      "action": "operator-decision-required",
+      "reason": "Carried action-helper naming finding confirmed; further cleanup requires operator authorization."
+    },
+    {
+      "cycle": 2,
+      "round": "five-repair-20261012",
+      "ref": "R3",
+      "issue": "The numeric grammar only accepts `HTTP[/x.y]`, `HTTP status [client|server error (]`, `status [code][:]` and `error code[:]`. Other explicit HTTP or error forms used to classify through the bare number and now return `unknown`. Confirmed by running the classifier: \"HTTP Error 503: Service Unavailable\" gives unknown (was connectivity), \"HTTP Error 429: Too Many Requests\" gives unknown (was rate_limit), \"Error 403: Forbidden\" gives unknown (was permission), \"status=429\" gives unknown. The tests pin `status=429` and `Error 429:` as UNKNOWN. Codex's own Rust forms (`unexpected status N ...`, `last status: N`, reqwest `HTTP status ... error (N ...)`) are covered, so the risk is limited to non-native formats.",
+      "file": "src/ovcaq/drivers/codex_events.py:300",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "defer",
+      "reason": "Additional non-native diagnostic grammar needs explicit scope; preserve pinned unknown forms and current production behavior."
+    },
+    {
+      "cycle": 2,
+      "round": "five-repair-20261012",
+      "ref": "R4",
+      "issue": "With an empty host PATH, the Claude probe reports unhealthy because `shutil.which(path=\"\")` returns None. The launch would still find the command in the project root, because subprocess treats an empty PATH as the current directory. The Codex probe reports healthy in the same environment, so the two adapters disagree. This is documented as intentional and fails safe (false unhealthy), but it does not \"resolve under the launch environment\".",
+      "file": "src/ovcaq/drivers/claude.py:82",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "settled-deferral",
+      "reason": "Intentional pinned empty-PATH behavior; preserve existing directory-dependent probe/launch limitation."
+    },
+    {
+      "cycle": 2,
+      "round": "five-repair-20261012",
+      "ref": "R5",
+      "issue": "Flaky test: `test_installed_foreground_signals_return_shell_status_and_stop_the_driver[15]` failed once under full-suite load (returncode 1, expected 143). It passed in isolation (3/3) and in a second full run (7155 passed). Not traced to this diff, but this PRD's exit gate depends on `uv run pytest` passing.",
+      "file": "tests/packaging/test_installed_supervisor_cli.py:591",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "defer",
+      "reason": "Existing signal-test flake not traced to this PRD; isolation and second full suite passed; preserve raw evidence for separate work."
+    },
+    {
+      "cycle": 2,
+      "round": "five-repair-20261012",
+      "ref": "R6",
+      "issue": "A 16 MB binary review artifact is committed to the tracked project-management tree. This is permanent history bloat for evidence that could be regenerated or summarized.",
+      "file": "docs/dev/project-management/autopilot/reports/00053-postrepair-review-20261012-evidence/review-diff-00053-postrepair-20261012.diff.gz",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "discard",
+      "reason": "Operator requires preserving prior raw evidence and receipts; no history/evidence cleanup authorized."
+    },
+    {
+      "cycle": 2,
+      "round": "five-repair-20261012",
+      "ref": "R7",
+      "issue": "`test_claude_probe_rejects_sh_hidden_by_overlay_path` repeats the `[claude]` case of `test_probe_rejects_host_executable_hidden_by_overlay_path` (tests/runtime/test_adapter_health.py:213). Both put the command on the host PATH, use an overlay without it, and hit the same `shutil.which(..., path=overlay) is None` branch, and both fail on the base code. This is the same kind of padding task 20 removed from line 90",
+      "file": "tests/runtime/test_adapter_health.py:181",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "operator-decision-required",
+      "reason": "Overlapping hidden-by-overlay Claude tests confirmed; retain both-provider coverage in any authorized cleanup."
+    },
+    {
+      "cycle": 2,
+      "issue": "Task 20 stopped passing a name to `fake_executable`, so its `name: str = \"fixture-agent-health\"` parameter is now dead: all 9 callers use the default. This file is new in this PRD, so the leftover comes from the repair itself. Fix: drop the parameter and write `executable = directory / \"fixture-agent-health\"`",
+      "severity": "medium",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 2,
+      "issue": "Carried Pat18 LOW: `workflow_fixture` writes the Claude wrapper file and returns its path, but its name is a noun. Action functions should start with a verb, e.g. `write_workflow_fixture` (call sites tests/runtime/test_supervisor_adapters.py:56 and tests/runtime/test_adapter_launch_routing.py:33). The new helpers `configured_workflow` (tests/runtime/test_adapter_launch_routing.py:24) and `configured_driver` (tests/drivers/test_codex_launch.py:30) have the same shape. Against renaming: the older helpers in the same file (`adapter_harness`, `workflow_agent`) also use nouns, so a rename would break from the file's current style",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 2,
+      "issue": "`test_claude_probe_rejects_sh_hidden_by_overlay_path` repeats the `[claude]` case of `test_probe_rejects_host_executable_hidden_by_overlay_path` (tests/runtime/test_adapter_health.py:213). Both put the command on the host PATH, use an overlay without it, and hit the same `shutil.which(..., path=overlay) is None` branch, and both fail on the base code. This is the same kind of padding task 20 removed from line 90",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 2,
+      "issue": "R1/R2/R7 in fresh five-repair review",
+      "severity": "medium",
+      "action": "Operator approved bounded repair of all three findings",
+      "reason": "User replied yes, approved on 2026-10-12; preserve cycle/cap=2, all evidence and settled decisions; fresh review required after work, no further repairs/finalization authorized."
+    },
+    {
+      "cycle": 2,
+      "issue": "R1 regex backtracking; R2/R8 test cleanup; R4 cache eviction",
+      "severity": "medium",
+      "action": "operator-authorized bounded recovery",
+      "reason": "2026-10-13: user approved R1 and combined R2/R8 repairs, R4 deferral, cap 3 and one fresh complete review; authorization at reports/00053-recovery-20261013/authorization.md."
+    },
+    {
+      "cycle": 2,
+      "issue": "The new status prefix in `classify_failure` (src/ovcaq/drivers/codex_events.py:302) ends in `\\s*:?\\s*`. That is two whitespace runs side by side, so a native error with \"status\", \"HTTP\" or \"error code\" followed by a long run of whitespace backtracks in quadratic time. Measured at HEAD: 16k spaces took 0.55 s and 64k spaces took 8.34 s. The old bare-number regex had no such run. Decode runs inline in the supervisor read loop (src/ovcaq/runtime/supervisor.py:516) on frames up to 1 MiB (src/ovcaq/events/tail.py:60). Python's `re` holds the GIL, so the watchdog cannot fire while it runs. A full 1 MiB frame extrapolates to roughly 35 minutes (a guess, not run). The trigger needs tens of thousands of whitespace characters right after the keyword, so it is unlikely to happen. Fix: use `\\s*(?::\\s*)?` instead. It took 1.2 ms at 64k and matched the same way on \"HTTP status: 429\", \"status code: 429\", \"last status: 429\", \"HTTP 429\" and \"status=429\". Also add a regression test that expects \"status\" + 200,000 spaces + \"x\" to classify as unknown",
+      "severity": "medium",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 2,
+      "issue": "`test_unrelated_item_type_does_not_transition_lane` (tests/drivers/test_adapter_outcomes.py:204) and `test_unrelated_event_type_does_not_transition_lane` (tests/drivers/test_adapter_outcomes.py:231) are line-for-line copies. They differ only in one `collab_record` keyword: `item_type=\"command_execution\"` in one, `event_type=\"thread.started\"` in the other. Merge them into one test parametrized over that keyword dict (passed as `**override`). That cuts about 24 lines and keeps the same coverage",
+      "severity": "medium",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 2,
+      "issue": "Test padding in a new file: `test_unrelated_item_type_does_not_transition_lane` and `test_unrelated_event_type_does_not_transition_lane` each run once per close status (interrupted, shutdown, not_found). The command_execution record and the `thread.started` record both turn into raw unknown before `item_lanes` is ever called (`item_tool` returns None because the record has no `command` field, and the decode branch has no `thread_id`). The follow-up close assertion repeats `test_unfinished_lane_fails_after_close_status`. So 6 cases run where 2 would do. Task 20 removed the same kind of padding. Fix: drop the `child_status` parametrize from both tests and use \"shutdown\"",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 3,
+      "issue": "R2 phase-2 exit gate and prior queued routing/full checks",
+      "severity": "low",
+      "action": "resolved by fresh verification",
+      "reason": "Approved runs at e75b50a: full suite 7151 passed; exact routing/supervisor queue 8 passed; sync/Ruff/format/mypy/build pass. Raw evidence retained."
+    },
+    {
+      "cycle": 3,
+      "issue": "R3 diagnostic spellings auto-dismissed by an unrelated authentication-failed ledger row",
+      "severity": "medium",
+      "action": "restored for operator decision",
+      "reason": "The matched reason does not cover status=429, Error 429 or HTTP error 503. Preserve the raw dismissal but reverse its disposition; no new repair authorized."
+    },
+    {
+      "cycle": 3,
+      "issue": "R4-R11 passing-base replay controls",
+      "severity": "medium",
+      "action": "discarded as compatibility controls",
+      "reason": "PRD explicitly preserves fixture, direct precedence, Codex PATH, reset grammar and ordinary-route behavior. Existing same-file ledger reasons still hold; 56 touched tests fail at base. All eight computed rows preserved."
+    },
+    {
+      "cycle": 3,
+      "issue": "CHANGELOG.md:43 says the change will \"avoid quadratic backtracking when Codex failure diagnostics contain long whitespace runs after a status prefix\". That status prefix was added earlier in this same unreleased PRD (codex_events.py:300), and the pre-PRD base had no such regex. Compared with the base, users see no change. Task 16 deleted an earlier entry of the same kind (\"describes no change from the pre-PRD base\"). Delete this entry too. The `fix` commit type seems to have forced the entry, so a follow-up `docs` commit can remove it",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 3,
+      "issue": "Some explicit status-code messages now classify as `unknown`. Before this change they classified correctly. Probed: `status=429`, `Error 429: Too Many Requests`, `HTTP error 503`, and bare reason-phrase forms like `429 Too Many Requests` and `503 Service Unavailable`. The spec allows numbers only in explicit HTTP/status/error-code context, and `status=429` and `Error 429:` are exactly that. Worse, tests/drivers/test_adapter_failure_classes.py:115 locks `status=429` and `Error 429:` in as `unknown`, so the wrong answer is now enforced as the expected class. Impact: a real 429 or 503 in these forms goes to the generic retry-then-PARK path instead of the bounded WAIT or rate-limit path. The native Codex forms (\"unexpected status N\", reqwest, HTTP/x) are covered.",
+      "severity": "medium",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 3,
+      "issue": "Review-3 R1 changelog and R3 explicit diagnostic spellings",
+      "severity": "medium",
+      "action": "operator-authorized repair and clean-review finalization",
+      "reason": "User agreed on 2026-10-13: repair both, cap 3\u21924 for one fresh full Alice/Blake/Bob review, normal finalization if clean. Preserve settled deferrals; no automatic new repairs/cap increases. reports/00053-cycle3-recovery-20261013/authorization.md."
+    },
+    {
+      "cycle": 4,
+      "issue": "R6 fresh full verification",
+      "severity": "low",
+      "action": "resolved by fresh verification",
+      "reason": "7202 tests passed, zero failed/skipped at badf378; all six gates pass; raw full-suite.log retained."
+    },
+    {
+      "cycle": 4,
+      "issue": "The protocol doc still says numeric codes \"require HTTP, status or error-code context\". Since task 25, bare `Error 429:` and `status=429` also count. CHANGELOG.md:45 says \"HTTP/status/error context\", so the two documents disagree. Change the doc to \"HTTP, status or error context\" to match the code and the changelog",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 4,
+      "issue": "The ` error` branch inside the `http(...)` group of the `status` prefix can never change a result, so it is dead code. The new bare `error(?: code)?` branch already matches every string it catches, because a word boundary always sits between \"http \" and \"error\". I checked this by running both regexes on 4,288,305 generated token strings: 0 differences. Simpler version with the same behavior: `r\"(?:http(?:/\\d+(?:\\.\\d+)?| status(?: (?:client|server) error \\()?)?\"`, keeping line 302 as it is. \"HTTP error 503\" still returns connectivity through the bare `error` branch, so the `hTtP ErRoR {code}` tests keep passing",
+      "severity": "medium",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 4,
+      "issue": "CHANGELOG.md:45 lists regex branch names (\"equals-delimited status, bare error, HTTP error, native bare-status and HTTP-version forms\"). It also restates unchanged behavior (\"retain existing authentication word diagnostics and genuine rate/quota limits\"). That describes the implementation, not what users see",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 4,
+      "issue": "Review-4 R1 protocol wording, R2 redundant regex alternatives, R5 changelog wording",
+      "severity": "medium",
+      "action": "operator-authorized repairs completed; one fresh cycle-5 full review and clean-review finalization authorized",
+      "reason": "Five separate I agree replies; reports/00053-cycle4-recovery-20261013/authorization.md. New actionable findings or a cap above 5 require operator disposition. Full verification remains required after host ps denial."
+    },
+    {
+      "cycle": 5,
+      "issue": "Only the private subclasses built by `build_driver` map a resolved model back to its tier key. A Supervisor given a plain `CodexDriver`/`ClaudeDriver` or an entry-point driver still applies tier lookup to the resolved model, so `LaunchRequest.model` stays ambiguous between tier and model. This follows the PRD's chosen edge pattern; only the CLI path is protected",
+      "severity": "low",
+      "action": "discard",
+      "reason": "Compatibility boundary required by PRD: preserve direct build_launch tier-key precedence and use the existing edge adaptation pattern. Plain-driver and third-party-driver route semantics are outside this correction; Blake explicitly acknowledges the chosen edge pattern. No new behavior or interface authorized."
+    },
+    {
+      "cycle": 5,
+      "issue": "This cycle's incremental diff is 378,503 lines, and only about 1,300 of them are product code, tests and docs. The rest is committed autopilot evidence, including review diffs that git can regenerate: a 169,912-line review-diff.diff and a 16 MB review-diff-00053-postrepair-20261012.diff.gz. Each committed review diff contains the earlier cycles' diffs, so the repo grows faster every cycle",
+      "severity": "low",
+      "action": "known",
+      "reason": "KNOWN tooling limitation: historical tracked review diffs recursively include prior evidence. This belongs to external autopilot tooling, outside the adapter PRD. No historical evidence deleted; this cycle keeps its reproducible diff in docs/dev/tmp only."
+    },
+    {
+      "cycle": 5,
+      "issue": "Labeled status forms classify correctly, but HTTP diagnostics without a label now return `unknown` where the old bare-number match classified them. Reproduced: `429 Too Many Requests`, `503 Service Unavailable`, `HTTPS 503`, `{\"status\":429}`, `\"statusCode\": 401` and `code: 429` all give `unknown`. So a real 429 or 503 reported in one of these forms no longer gets rate-limit or connectivity WAIT handling. The PRD's \"explicit HTTP/status/error-code context\" rule allows this, but it narrows \"genuine HTTP diagnostics\", and there is no negative or positive pin for these forms",
+      "severity": "medium",
+      "action": "discard",
+      "reason": "The automatic mixed-count ledger match is unrelated and is reversed. Correct disposition: previously settled bare reason phrases, JSON/SDK labels, and additional diagnostic grammar require separately specified forms/fixtures. Cycle-4 ledger explicitly excludes bare phrases and JSON labels. HTTPS and a generic code label gain no new contract. Preserve every reported example as KNOWN; no broader grammar authorized."
+    },
+    {
+      "cycle": 5,
+      "issue": "111 touched test(s) pass against the pre-change code: test_numeric_diagnostics_require_an_explicit_status_or_error_context +105 more",
+      "severity": "medium",
+      "action": "discard",
+      "reason": "Required PRD compatibility controls: fixtures, direct tier/argv precedence, existing Codex probe and normal paths must remain unchanged. Fresh replay: 296 touched tests ran; 54 fail at base, 242 pass. Same-file historical ledger reasons still hold. These eight computed rows are retained, not silently dropped."
+    },
+    {
+      "cycle": 5,
+      "issue": "17 touched test(s) pass against the pre-change code: test_unfinished_lane_fails_after_close_status +11 more",
+      "severity": "medium",
+      "action": "discard",
+      "reason": "Required PRD compatibility controls: fixtures, direct tier/argv precedence, existing Codex probe and normal paths must remain unchanged. Fresh replay: 296 touched tests ran; 54 fail at base, 242 pass. Same-file historical ledger reasons still hold. These eight computed rows are retained, not silently dropped."
+    },
+    {
+      "cycle": 5,
+      "issue": "10 touched test(s) pass against the pre-change code: test_native_failure_emits_classified_terminal_with_receipt_identity +4 more",
+      "severity": "medium",
+      "action": "discard",
+      "reason": "Required PRD compatibility controls: fixtures, direct tier/argv precedence, existing Codex probe and normal paths must remain unchanged. Fresh replay: 296 touched tests ran; 54 fail at base, 242 pass. Same-file historical ledger reasons still hold. These eight computed rows are retained, not silently dropped."
+    },
+    {
+      "cycle": 5,
+      "issue": "7 touched test(s) pass against the pre-change code: test_failure_classification_uses_documented_precedence +1 more",
+      "severity": "medium",
+      "action": "discard",
+      "reason": "Required PRD compatibility controls: fixtures, direct tier/argv precedence, existing Codex probe and normal paths must remain unchanged. Fresh replay: 296 touched tests ran; 54 fail at base, 242 pass. Same-file historical ledger reasons still hold. These eight computed rows are retained, not silently dropped."
+    },
+    {
+      "cycle": 5,
+      "issue": "61 touched test(s) pass against the pre-change code: test_launch_has_exact_order_and_omits_unconfigured_flags +55 more",
+      "severity": "medium",
+      "action": "discard",
+      "reason": "Required PRD compatibility controls: fixtures, direct tier/argv precedence, existing Codex probe and normal paths must remain unchanged. Fresh replay: 296 touched tests ran; 54 fail at base, 242 pass. Same-file historical ledger reasons still hold. These eight computed rows are retained, not silently dropped."
+    },
+    {
+      "cycle": 5,
+      "issue": "14 touched test(s) pass against the pre-change code: test_native_diagnostics_have_independent_failure_classification +8 more",
+      "severity": "medium",
+      "action": "discard",
+      "reason": "Required PRD compatibility controls: fixtures, direct tier/argv precedence, existing Codex probe and normal paths must remain unchanged. Fresh replay: 296 touched tests ran; 54 fail at base, 242 pass. Same-file historical ledger reasons still hold. These eight computed rows are retained, not silently dropped."
+    },
+    {
+      "cycle": 5,
+      "issue": "18 touched test(s) pass against the pre-change code: test_probe_finds_executable_available_only_on_overlay_path, test_probe_rejects_absolute_command_that_is_not_an_executable_file, test_probe_rejects_file_without_execute_permission +12 more",
+      "severity": "medium",
+      "action": "discard",
+      "reason": "Required PRD compatibility controls: fixtures, direct tier/argv precedence, existing Codex probe and normal paths must remain unchanged. Fresh replay: 296 touched tests ran; 54 fail at base, 242 pass. Same-file historical ledger reasons still hold. These eight computed rows are retained, not silently dropped."
+    },
+    {
+      "cycle": 5,
+      "issue": "4 touched test(s) pass against the pre-change code: test_configured_supervisor_launches_each_selected_literal_model_and_effort",
+      "severity": "medium",
+      "action": "discard",
+      "reason": "Required PRD compatibility controls: fixtures, direct tier/argv precedence, existing Codex probe and normal paths must remain unchanged. Fresh replay: 296 touched tests ran; 54 fail at base, 242 pass. Same-file historical ledger reasons still hold. These eight computed rows are retained, not silently dropped."
+    },
+    {
+      "cycle": 5,
+      "type": "operator-authorization",
+      "date": "2026-10-14",
+      "decision": "Fix all five cycle-5 findings R1/R3/R4/R5/R6; raise rework_cap from 5 to 6; run one more full all-lens cycle 6 in a fresh session and normal finalization only if all review gates pass. New authorization supersedes earlier limits only for these repairs and cycle 6. Preserve historical evidence and settled deferrals; no broader contract changes.",
+      "issue": "Cycle-5 R1/R3/R4/R5/R6 and cap 5 require operator authorization",
+      "severity": "low",
+      "action": "fix",
+      "reason": "Fix all five cycle-5 findings R1/R3/R4/R5/R6; raise rework_cap from 5 to 6; run one more full all-lens cycle 6 in a fresh session and normal finalization only if all review gates pass. New authorization supersedes earlier limits only for these repairs and cycle 6. Preserve historical evidence and settled deferrals; no broader contract changes."
+    },
+    {
+      "cycle": 5,
+      "issue": "The task-28 and task-19 edits left the prose wrapping uneven. docs/driver-protocol.md:274 is 103 characters long, the only long line in the file that is not a link or a table row. Line 272 also runs past the file's ~80-column wrap. Lines 186-191 break after \"tier-key precedence:\", which makes the next sentence look like the start of a list, and line 191 stops at \"`low`,\". Fix: reflow both paragraphs to ~80 columns without changing any words",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 5,
+      "issue": "`test_authentication_is_classified_beyond_the_display_detail_limit` repeats `test_failure_classifies_full_text_before_sanitizing_and_capping_detail` (tests/drivers/test_codex_rework_decode.py:136). Both decode a failure for the same two event kinds and check that the class comes from text past the 4096-character display limit. Only the trailing word differs (\"Unauthorized\" vs \"Rate limit reached\"). No PRD feature touches this path, and the test passes on the base, so it is padding of the same kind tasks 20, 21 and 23 removed. Delete it. `json` and the `driver` fixture are still used by the capacity test",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 5,
+      "issue": "The capacity bound test runs `connectivity_retries` 0, 1, 2 and 3. Cases 0, 1 and 2 all take the same `retries.connectivity < policy.connectivity_retries` branch (src/ovcaq/runtime/decision.py:215). Only 2 (the last WAIT) and 3 (HALT) pin the bound. Drop cases 0 and 1",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 5,
+      "issue": "`test_numeric_diagnostics_require_an_explicit_status_or_error_context` checks only the positive cases. The \"require\" half is tested by `test_unrelated_numbers_are_not_failure_diagnostics` (tests/drivers/test_adapter_failure_classes.py:156). Rename it for the rule it enforces, e.g. `test_numeric_codes_classify_with_explicit_status_or_error_context`",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 5,
+      "issue": "docs/driver-protocol.md:36 says both native adapters fall back to the standard default search path when the host PATH is missing. Only Claude has a test for this (`test_claude_probe_uses_default_search_path_when_host_path_is_absent`). The design says to \"reproduce and regress\" the existing Codex probe behavior. Parametrize the test over (\"claude\", \"codex\") and drop \"claude\" from its name. As I read `os.get_exec_path`, the patched `os.defpath` also steers the Codex subprocess lookup (not run)",
+      "severity": "low",
+      "action": "auto-fixed",
+      "reason": "fixed by review-close"
+    },
+    {
+      "cycle": 5,
+      "type": "standing-authorization",
+      "issue": "Routine reversible recovery and review dispositions",
+      "severity": "low",
+      "action": "apply",
+      "reason": "User-global ~/.claude/AGENTS.md Autonomy section updated 2026-10-14: own the outcome, fix supported in-scope findings, reject false positives with evidence, durably defer out-of-scope items without cosmetic/routine questions. Supersedes older ask-first skill/host prose. Every required review lens, gate, fresh-session boundary, scope and explicit cycle6 cap remains binding."
+    },
+    {
+      "cycle": 5,
+      "issue": "Full-suite verification blocked by inherited macOS process-inspection restriction",
+      "severity": "low",
+      "action": "handoff",
+      "reason": "Raw partial full suite retained (85 failed,3299 passed,27 errors; interrupted exit130). ps denied exit126; required escalated representative retry confirms PermissionError errno1 ps at process_identity. No product suppression or policy change. Parent directed fresh cycle6 handoff with full-suite gate explicitly pending; no claim of green completion or finalization."
+    }
+  ],
+  "review_lenses": {
+    "consensus": "done",
+    "blind": "done",
+    "doubt": "done",
+    "ui": "skipped",
+    "fable": "failed"
+  },
+  "rework_task_ids": [],
+  "deferred_decisions": [
+    {
+      "issue": "The Codex probe runs in the caller's working directory, while the launch runs in request.root. A relative command or an empty-PATH lookup can therefore succeed in the probe and fail at launch, or the reverse (existing behavior)",
+      "severity": "low",
+      "file": "src/ovcaq/drivers/codex.py",
+      "reason": "Known pre-existing caller/request-root cwd disagreement; PRD preserves Codex probe behavior and excludes probe ownership redesign. Requires later approved scope; unresolved limitation retained."
+    },
+    {
+      "issue": "The `continue` at codex.py:383 drops every native update for a lane that has already finished. codex-cli 0.162.1 ships a `resume_agent` tool (\"Resume a previously closed agent by id so it can receive send_input\"; I confirmed the string in the binary). So a lane can legitimately go completed \u2192 close \u2192 resume \u2192 running \u2192 errored. With the `continue`, the resumed run's running and errored updates disappear with no trace, and a later interrupt or shutdown of the resumed run becomes raw unknown instead of `lane.failed`. The pre-change code reported these. The TUI already handles a restart, because the last write wins (src/ovcaq/tui/model.py:607). The PRD only requires that close statuses do not fail a completed lane, and the unfinished-only filter at src/ovcaq/drivers/codex.py:372 already does that on its own. Fix: delete lines 383-384. Then flip `test_finished_lane_late_update_retains_only_non_lane_observations` (tests/drivers/test_adapter_outcomes.py:266) so it expects running \u2192 `lane.progress` and errored \u2192 `lane.failed`, and reword docs/driver-protocol.md:243. Confidence: the tool is confirmed; the exact `agents_states` sequence after a resume is my guess",
+      "severity": "medium",
+      "file": "src/ovcaq/drivers/codex.py:383",
+      "reason": "Requirements ambiguity: resume/restart generation semantics are not specified by this PRD. The existing contract deliberately freezes completed/failed identities and pins late updates. A binary tool name does not prove a native status sequence; changing this would undo reviewed stability without a fixture. Preserve for separately specified adapter lifecycle work.",
+      "cycle": 2,
+      "consensus": "[1/3]"
+    },
+    {
+      "issue": "A status prefix followed by an ordinary count still classifies. `status: 401 tests passed` returns `authentication` and `error code: 503 records` returns `connectivity` (confirmed by probe). The negative tests only cover counts with no status word in front.",
+      "severity": "low",
+      "file": "src/ovcaq/drivers/codex_events.py:301",
+      "reason": "Requirements ambiguity: mixed diagnostic-prefix/ordinary-count messages need an explicit precedence contract. Existing scope requires diagnostic status contexts and ordinary count negatives; do not invent a broader prose grammar or silently change precedence. Keep the confirmed counterexamples for later specified work.",
+      "cycle": 2,
+      "consensus": "[1/3]"
+    },
+    {
+      "cycle": 2,
+      "round": "post-sweep-20261012",
+      "ref": "R5",
+      "issue": "Probe and launch can disagree on relative lookups. Both probes resolve relative PATH entries and relative command paths against the supervisor's own working directory, but launch runs with `cwd=request.root`. Absolute paths and normal PATH entries are unaffected.",
+      "file": "src/ovcaq/drivers/claude.py:82",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "defer",
+      "reason": "Existing out-of-scope relative-path/cwd limitation; probe ownership redesign excluded by PRD. New Claude citation retained."
+    },
+    {
+      "cycle": 2,
+      "round": "five-repair-20261012",
+      "ref": "R3",
+      "issue": "The numeric grammar only accepts `HTTP[/x.y]`, `HTTP status [client|server error (]`, `status [code][:]` and `error code[:]`. Other explicit HTTP or error forms used to classify through the bare number and now return `unknown`. Confirmed by running the classifier: \"HTTP Error 503: Service Unavailable\" gives unknown (was connectivity), \"HTTP Error 429: Too Many Requests\" gives unknown (was rate_limit), \"Error 403: Forbidden\" gives unknown (was permission), \"status=429\" gives unknown. The tests pin `status=429` and `Error 429:` as UNKNOWN. Codex's own Rust forms (`unexpected status N ...`, `last status: N`, reqwest `HTTP status ... error (N ...)`) are covered, so the risk is limited to non-native formats.",
+      "file": "src/ovcaq/drivers/codex_events.py:300",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "reason": "Additional non-native diagnostic grammar needs explicit scope; preserve pinned unknown forms and current production behavior. Superseded for explicit HTTP/status/error spellings by operator authorization 2026-10-13 and completed task 25; earlier deferral retained as history. Bare numbers/reason phrases gain no new contract."
+    },
+    {
+      "cycle": 2,
+      "round": "five-repair-20261012",
+      "ref": "R5",
+      "issue": "Flaky test: `test_installed_foreground_signals_return_shell_status_and_stop_the_driver[15]` failed once under full-suite load (returncode 1, expected 143). It passed in isolation (3/3) and in a second full run (7155 passed). Not traced to this diff, but this PRD's exit gate depends on `uv run pytest` passing.",
+      "file": "tests/packaging/test_installed_supervisor_cli.py:591",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "reason": "Existing signal-test flake not traced to this PRD; isolation and second full suite passed; preserve raw evidence for separate work."
+    },
+    {
+      "issue": "A completed lane can still turn into a failure after the identity cache fills. At 4096 entries, eviction drops finished entries first, so long sessions lose finished lanes before anything else. Reproduced: start lane `child`, complete it, decode 4096 command items, then send a late `errored` update for `child`. The decoder emits `lane.failed` for `child`, alongside the raw capacity-gap evidence. Native Codex is unlikely to send `errored` after `completed`, so the practical risk is low.",
+      "severity": "\u26aa",
+      "file": "src/ovcaq/drivers/codex.py:414",
+      "reason": "Operator approved deferral on 2026-10-13: pre-existing bounded identity-cache policy; completed-lane retention after eviction needs separately scoped lifecycle work. R4 from review-2-three-repair-20261012; preserve raw capacity-gap evidence."
+    }
+  ],
+  "doubts_rubric_verdicts": [
+    {
+      "rule_id": "D1",
+      "verdict": "pass"
+    },
+    {
+      "rule_id": "D2",
+      "verdict": "pass"
+    },
+    {
+      "rule_id": "D3",
+      "verdict": "pass"
+    },
+    {
+      "rule_id": "D4",
+      "verdict": "pass"
+    },
+    {
+      "rule_id": "D5",
+      "verdict": "pass"
+    }
+  ],
+  "review_cycles": [
+    {
+      "cycle": 1,
+      "review_file": "docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-1.md",
+      "agents": {
+        "alice": "available",
+        "blake": "available",
+        "bob": "available",
+        "carl": "disabled"
+      },
+      "issues_found": 23,
+      "follow_up_tasks": 4,
+      "deferred": 1,
+      "recurring_issues": [],
+      "provider_review_guard": "satisfied",
+      "reviewed_head": "bade6a5d9eae960f515eeffda84349eb7a50bc81",
+      "findings": {
+        "critical": 0,
+        "high": 1,
+        "medium": 15,
+        "low": 7
+      },
+      "rework_task_ids": [
+        "7",
+        "8",
+        "9",
+        "10"
+      ]
+    },
+    {
+      "cycle": 2,
+      "review_file": "docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-2.md",
+      "agents": {
+        "alice": "available",
+        "blake": "available",
+        "bob": "available",
+        "carl": "disabled"
+      },
+      "issues_found": 12,
+      "follow_up_tasks": 4,
+      "deferred": 2,
+      "recurring_issues": [],
+      "provider_review_guard": "satisfied",
+      "reviewed_head": "307b7921355885221e8f8e4f66ba2a678b9f43c5",
+      "findings": {
+        "critical": 0,
+        "high": 0,
+        "medium": 2,
+        "low": 10
+      },
+      "rework_task_ids": [
+        "11",
+        "12",
+        "13",
+        "14"
+      ]
+    },
+    {
+      "cycle": 2,
+      "round": "post-sweep-20261012",
+      "review_file": "docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-2-postsweep-20261012.md",
+      "agents": {
+        "alice": "available",
+        "blake": "available",
+        "bob": "available",
+        "carl": "disabled"
+      },
+      "issues_found": 9,
+      "follow_up_tasks": 0,
+      "deferred": 1,
+      "recurring_issues": [],
+      "provider_review_guard": "satisfied",
+      "reviewed_head": "4382d83eb48323204a920b555be04ea8deb1acc6",
+      "findings": {
+        "critical": 0,
+        "high": 0,
+        "medium": 1,
+        "low": 8
+      },
+      "rework_task_ids": [],
+      "actionable_findings": 6,
+      "outcome": "operator-decision-required"
+    },
+    {
+      "cycle": 2,
+      "round": "post-repair-20261012",
+      "review_file": "docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-2-postrepair-20261012.md",
+      "agents": {
+        "alice": "available",
+        "blake": "available",
+        "bob": "available",
+        "carl": "disabled"
+      },
+      "issues_found": 7,
+      "actionable_findings": 5,
+      "follow_up_tasks": 0,
+      "deferred": 0,
+      "recurring_issues": [],
+      "provider_review_guard": "satisfied",
+      "reviewed_head": "b1fab1866840c21ba0b091b7c676472aab961f12",
+      "findings": {
+        "critical": 0,
+        "high": 0,
+        "medium": 1,
+        "low": 6
+      },
+      "rework_task_ids": [],
+      "outcome": "operator-decision-required"
+    },
+    {
+      "cycle": 2,
+      "round": "five-repair-20261012",
+      "review_file": "docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-2-five-repair-20261012.md",
+      "agents": {
+        "alice": "available",
+        "blake": "available",
+        "bob": "available",
+        "carl": "disabled"
+      },
+      "issues_found": 7,
+      "actionable_findings": 3,
+      "follow_up_tasks": 0,
+      "deferred": 2,
+      "recurring_issues": [],
+      "provider_review_guard": "satisfied",
+      "reviewed_head": "eb1065f7fd21b8b39ccd1d07274d571959bdcaae",
+      "findings": {
+        "critical": 0,
+        "high": 0,
+        "medium": 1,
+        "low": 6
+      },
+      "rework_task_ids": [],
+      "outcome": "operator-decision-required"
+    },
+    {
+      "cycle": 2,
+      "review_file": "docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-2-three-repair-20261012.md",
+      "head_sha": "6761a37d52b1363dc7d8d3a8ce44e17e9246287c",
+      "reviewers": [
+        "alice",
+        "blake",
+        "bob"
+      ],
+      "findings": {
+        "critical": 0,
+        "high": 0,
+        "medium": 2,
+        "low": 6
+      },
+      "verdict": "8 findings",
+      "scope": "full",
+      "operator_decision_pending": [
+        "R1",
+        "R2",
+        "R4",
+        "R8"
+      ]
+    },
+    {
+      "cycle": 3,
+      "review_file": "docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-3.md",
+      "reviewed_head": "e75b50ada7b87191491d921f30c82d900d4a91b5",
+      "agents": {
+        "alice": "available",
+        "blake": "available",
+        "bob": "available",
+        "carl": "disabled"
+      },
+      "issues_found": 11,
+      "actionable_findings": 2,
+      "findings": {
+        "critical": 0,
+        "high": 0,
+        "medium": 9,
+        "low": 2
+      },
+      "follow_up_tasks": 0,
+      "provider_review_guard": "satisfied",
+      "scope": "full",
+      "operator_decision_pending": [],
+      "outcome": "operator-approved-repairs-completed-awaiting-fresh-review",
+      "rework_task_ids": [
+        "25",
+        "26"
+      ]
+    },
+    {
+      "cycle": 4,
+      "review_file": "docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-4.md",
+      "reviewed_head": "badf378ae80592ec9cf1ec023350e55b9090d1ab",
+      "agents": {
+        "alice": "available",
+        "blake": "available",
+        "bob": "available",
+        "carl": "disabled"
+      },
+      "issues_found": 16,
+      "actionable_findings": 3,
+      "follow_up_tasks": 2,
+      "provider_review_guard": "satisfied",
+      "scope": "full",
+      "operator_decision_pending": [],
+      "outcome": "operator-authorized-rework-completed",
+      "findings": {
+        "critical": 0,
+        "high": 0,
+        "medium": 9,
+        "low": 7
+      }
+    },
+    {
+      "cycle": 5,
+      "review_file": "docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-5.md",
+      "reviewed_head": "93fd36f5da3138d8a0d52be7560e9aebb15ec12c",
+      "agents": {
+        "alice": "available",
+        "blake": "available",
+        "bob": "available",
+        "carl": "disabled"
+      },
+      "issues_found": 16,
+      "actionable_findings": 5,
+      "findings": {
+        "critical": 0,
+        "high": 0,
+        "medium": 9,
+        "low": 7
+      },
+      "follow_up_tasks": 3,
+      "provider_review_guard": "satisfied",
+      "scope": "full",
+      "operator_decision_pending": [],
+      "outcome": "operator-authorized-rework-completed",
+      "rework_task_ids": [
+        "29",
+        "30",
+        "31"
+      ]
+    }
+  ],
+  "needs_attention": false
+}

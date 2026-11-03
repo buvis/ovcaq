@@ -1,0 +1,54 @@
+[
+  {
+    "task": "25",
+    "role": "implementation",
+    "agent": "/root/ivan_25",
+    "session": "01a136a6-9bb5-7ce0-ba55-c501f27b7536",
+    "parent": "01a13697-2d2b-7d70-9254-bea61e0fd9b6",
+    "model": "gpt-6.1-sol",
+    "effort": "medium",
+    "provider": "openai",
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle3-recovery-20261013/ivan_25-rollout-2026-10-13T21-04-10-01a136a6-9bb5-7ce0-ba55-c501f27b7536.jsonl",
+    "line": 8,
+    "sha256": "25a3f9e05d1c8e940b9026ac44b270cf46fd06cc4b4f04ca92dfb807f6be90e4"
+  },
+  {
+    "task": "25",
+    "role": "implementation",
+    "agent": "/root/tess_25",
+    "session": "01a136a4-43e9-7581-abc2-ace0c155f040",
+    "parent": "01a13697-2d2b-7d70-9254-bea61e0fd9b6",
+    "model": "gpt-6.1-sol",
+    "effort": "medium",
+    "provider": "openai",
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle3-recovery-20261013/tess_25-rollout-2026-10-13T21-01-37-01a136a4-43e9-7581-abc2-ace0c155f040.jsonl",
+    "line": 8,
+    "sha256": "b3e0407169fc4a98f253827f55ee22c9c591720b4bd9b63c7ada21432050ab36"
+  },
+  {
+    "task": "25",
+    "role": "implementation",
+    "agent": "/root/tess_25",
+    "session": "01a136a4-43e9-7581-abc2-ace0c155f040",
+    "parent": "01a13697-2d2b-7d70-9254-bea61e0fd9b6",
+    "model": "gpt-6.1-sol",
+    "effort": "medium",
+    "provider": "openai",
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle3-recovery-20261013/tess_25-rollout-2026-10-13T21-01-37-01a136a4-43e9-7581-abc2-ace0c155f040.jsonl",
+    "line": 47,
+    "sha256": "4d8d0da1cba32345ea87e826f90110f9b9c3bbed729c764dd4e270c49be607c8"
+  },
+  {
+    "task": "26",
+    "role": "implementation",
+    "agent": "/root/ivan_26",
+    "session": "01a136a9-8c04-73e0-b58d-26cddba0ec77",
+    "parent": "01a13697-2d2b-7d70-9254-bea61e0fd9b6",
+    "model": "gpt-6.1-sol",
+    "effort": "medium",
+    "provider": "openai",
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle3-recovery-20261013/ivan_26-rollout-2026-10-13T21-07-23-01a136a9-8c04-73e0-b58d-26cddba0ec77.jsonl",
+    "line": 8,
+    "sha256": "8004f946dc0c7e3894a5d358c2d803461792249e6004e823861733b1dea50384"
+  }
+]

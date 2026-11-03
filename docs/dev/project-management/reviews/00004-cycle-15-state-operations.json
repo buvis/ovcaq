@@ -1,0 +1,397 @@
+[
+  [
+    "set",
+    "doubts_rubric_verdicts",
+    [
+      {
+        "rule_id": "D1",
+        "verdict": "pass",
+        "source": "claude"
+      },
+      {
+        "rule_id": "D2",
+        "verdict": "pass",
+        "source": "claude"
+      },
+      {
+        "rule_id": "D3",
+        "verdict": "pass",
+        "source": "claude"
+      },
+      {
+        "rule_id": "D4",
+        "verdict": "pass",
+        "source": "claude"
+      },
+      {
+        "rule_id": "D5",
+        "verdict": "pass",
+        "source": "claude"
+      }
+    ]
+  ],
+  [
+    "append",
+    "autonomous_decisions",
+    {
+      "cycle": 15,
+      "issue": "Replacing an already confirmed ancestor and reparenting the same runtime inode beneath its replacement before ledger open is accepted by direct append and exact replay, without any later fsync of the ancestor's parent or the replacement ancestor. Runtime-only identity checks do not preserve the confirmed ancestry through successful publication.",
+      "severity": "high",
+      "consensus": "1/3 (Alice adjudication of coordinator evidence)",
+      "action": "queued for operator-authorized recovery",
+      "reason": "Installed-wheel direct/replay probe reproduces successful return after ancestor replacement and reparenting of the same runtime inode, with no later confirmation of the replacement directory entries. Detected data-loss risk mandates pause. Final parent descriptor remains open, but no ancestor identity is reverified after yield.",
+      "research": {
+        "category": "recurring issue",
+        "verdict": "escalate",
+        "previous_fix": "Cycle 12 confirms existing ancestors; cycle 13 checks identity between adjacent reopens; cycle 14 keeps runtime descriptor through publication.",
+        "root_cause": "Only runtime identity is retained in the publication verifier. An ancestor can be replaced while moving the same runtime inode below it, leaving final-path runtime identity unchanged.",
+        "proposed_new_approach": "Carry and revalidate all confirmed ancestor identities through publication/replay, or durably confirm each newly adopted directory entry.",
+        "recurrence_count": 5,
+        "checks": [
+          {
+            "check": "root cause identified",
+            "pass": true
+          },
+          {
+            "check": "alternative available",
+            "pass": true
+          },
+          {
+            "check": "recurrence count below three",
+            "pass": false
+          }
+        ],
+        "evidence_summary": "Installed module hash matches reviewed checkout; two fresh subprocesses demonstrate real ancestor replacement/reparent, successful return, no later parent fsync. Safety pause takes precedence over ordinary cap deferral."
+      }
+    }
+  ],
+  [
+    "append",
+    "doubts",
+    {
+      "cycle": 15,
+      "id": "R15-01",
+      "issue": "Replacing an already confirmed ancestor and reparenting the same runtime inode beneath its replacement before ledger open is accepted by direct append and exact replay, without any later fsync of the ancestor's parent or the replacement ancestor. Runtime-only identity checks do not preserve the confirmed ancestry through successful publication.",
+      "bucket": "FIX",
+      "severity": "high",
+      "source": "Coordinator; Alice after initial report",
+      "consensus": "1/3 (Alice adjudication of coordinator evidence)",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-15.md"
+    }
+  ],
+  [
+    "append",
+    "autonomous_decisions",
+    {
+      "cycle": 15,
+      "issue": "F1: per-result installed-origin verification dropped from test_rework_12 `_invoke`/`_await_event`/`_finish` and test_rework_13 `_invoke`; actor results still carry `origins` but nothing asserts them, contrary to task 6 (\"on every subprocess result and event\") and task 7/8 (\"preserve installed-wheel origin coverage\")",
+      "severity": "high",
+      "consensus": "2/3",
+      "action": "queued for operator-authorized recovery",
+      "reason": "Alice and Bob independently found removed assert_installed calls; coordinator verified all four result/event consumers. Initialization retains a check, but it does not establish the origin of every later subprocess."
+    }
+  ],
+  [
+    "append",
+    "doubts",
+    {
+      "cycle": 15,
+      "id": "R15-02",
+      "issue": "F1: per-result installed-origin verification dropped from test_rework_12 `_invoke`/`_await_event`/`_finish` and test_rework_13 `_invoke`; actor results still carry `origins` but nothing asserts them, contrary to task 6 (\"on every subprocess result and event\") and task 7/8 (\"preserve installed-wheel origin coverage\")",
+      "bucket": "FIX",
+      "severity": "high",
+      "source": "Alice, Bob",
+      "consensus": "2/3",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-15.md"
+    }
+  ],
+  [
+    "append",
+    "autonomous_decisions",
+    {
+      "cycle": 15,
+      "issue": "F2: `_open_deferred_ledger` opens `deferred` via dir_fd with no wrapping, so a symlink/regular-file `deferred` (ELOOP/ENOTDIR) or a vanished dir on the second open surfaces raw errno text with the bare name 'deferred'; pre-change `_open_lifecycle_directory` reported \"deferred directory is not a real directory: <full path>\"",
+      "severity": "medium",
+      "consensus": "1/3",
+      "action": "queued for operator-authorized recovery",
+      "reason": "Coordinator source-runtime probe reproduces symlink and regular-file refusal as bare \"deferred\" ENOTDIR, omitting the configured path. Both objects remain untouched. Restore diagnostic context while preserving safe refusal and causal errno."
+    }
+  ],
+  [
+    "append",
+    "doubts",
+    {
+      "cycle": 15,
+      "id": "R15-03",
+      "issue": "F2: `_open_deferred_ledger` opens `deferred` via dir_fd with no wrapping, so a symlink/regular-file `deferred` (ELOOP/ENOTDIR) or a vanished dir on the second open surfaces raw errno text with the bare name 'deferred'; pre-change `_open_lifecycle_directory` reported \"deferred directory is not a real directory: <full path>\"",
+      "bucket": "FIX",
+      "severity": "medium",
+      "source": "Bob",
+      "consensus": "1/3",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-15.md"
+    }
+  ],
+  [
+    "append",
+    "autonomous_decisions",
+    {
+      "cycle": 15,
+      "issue": "F3: `test_installed_defer_refuses_runtime_replacement_before_deferred_creation` and `..._during_ledger_publication` are ~50-line near-duplicates (only mode string and assertion helper differ), both at the 50-line ceiling",
+      "severity": "medium",
+      "consensus": "1/3",
+      "action": "queued for operator-authorized recovery",
+      "reason": "Two newly added direct/replay tests have the same setup/action/assert/retry flow with different injection mode and boundary assertion helper. Parametrize the shared flow while retaining scenario-specific chronology and state/record assertions."
+    }
+  ],
+  [
+    "append",
+    "doubts",
+    {
+      "cycle": 15,
+      "id": "R15-04",
+      "issue": "F3: `test_installed_defer_refuses_runtime_replacement_before_deferred_creation` and `..._during_ledger_publication` are ~50-line near-duplicates (only mode string and assertion helper differ), both at the 50-line ceiling",
+      "bucket": "FIX",
+      "severity": "medium",
+      "source": "Bob",
+      "consensus": "1/3",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-15.md"
+    }
+  ],
+  [
+    "append",
+    "autonomous_decisions",
+    {
+      "cycle": 15,
+      "issue": "F4: B6 unresolved: `opened` reused for parent fstat then level fstat despite \"keep parent and child identities legible\" acceptance",
+      "severity": "low",
+      "consensus": "1/3",
+      "action": "queued for operator-authorized recovery",
+      "reason": "Previous R14-06 remains open: the implementation still assigns parent and child fstat results to opened. Rename the two identities without altering behavior."
+    }
+  ],
+  [
+    "append",
+    "doubts",
+    {
+      "cycle": 15,
+      "id": "R15-05",
+      "issue": "F4: B6 unresolved: `opened` reused for parent fstat then level fstat despite \"keep parent and child identities legible\" acceptance",
+      "bucket": "FIX",
+      "severity": "low",
+      "source": "Bob",
+      "consensus": "1/3",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-15.md"
+    }
+  ],
+  [
+    "append",
+    "autonomous_decisions",
+    {
+      "cycle": 15,
+      "issue": "F5: distance-1 (runtime.parent) replacement coverage removed when parametrize moved to (3, 5)",
+      "severity": "low",
+      "consensus": "1/3",
+      "action": "queued for operator-authorized recovery",
+      "reason": "Changing distances to (3, 5) removed the former immediate-parent case. The runtime-replacement cases target the runtime itself; restore distance 1 alongside the new distant cases."
+    }
+  ],
+  [
+    "append",
+    "doubts",
+    {
+      "cycle": 15,
+      "id": "R15-06",
+      "issue": "F5: distance-1 (runtime.parent) replacement coverage removed when parametrize moved to (3, 5)",
+      "bucket": "FIX",
+      "severity": "low",
+      "source": "Bob",
+      "consensus": "1/3",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-15.md"
+    }
+  ],
+  [
+    "append",
+    "autonomous_decisions",
+    {
+      "cycle": 15,
+      "issue": "F6: `search_capability()` still returns `euid`, `read_denied`, `search_fsync` constants no test reads",
+      "severity": "low",
+      "consensus": "1/3",
+      "action": "queued for operator-authorized recovery",
+      "reason": "Actor capability metadata euid/read_denied/search_fsync is no longer consumed; remove these emitted keys while retaining real permission and fsync checks."
+    }
+  ],
+  [
+    "append",
+    "doubts",
+    {
+      "cycle": 15,
+      "id": "R15-07",
+      "issue": "F6: `search_capability()` still returns `euid`, `read_denied`, `search_fsync` constants no test reads",
+      "bucket": "FIX",
+      "severity": "low",
+      "source": "Bob",
+      "consensus": "1/3",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-15.md"
+    }
+  ],
+  [
+    "append",
+    "deferred_decisions",
+    {
+      "cycle": 15,
+      "issue": "F7: `_O_SEARCH` falls back to `os.O_EXEC`; on musl Linux O_EXEC == O_PATH, whose descriptors reject fsync, so every ancestor open in `_ensure_directory_chain` would fail even when readable (suspected, pre-existing via os.O_SEARCH there)",
+      "severity": "low",
+      "consensus": "1/3",
+      "action": "deferred as known limitation",
+      "reason": "Linux is explicitly excluded from the current personal-cutover milestone. Bob's musl-specific concern is unverified here and attributed as a suspected pre-existing limitation, not a confirmed host defect."
+    }
+  ],
+  [
+    "append",
+    "doubts",
+    {
+      "cycle": 15,
+      "id": "R15-08",
+      "issue": "F7: `_O_SEARCH` falls back to `os.O_EXEC`; on musl Linux O_EXEC == O_PATH, whose descriptors reject fsync, so every ancestor open in `_ensure_directory_chain` would fail even when readable (suspected, pre-existing via os.O_SEARCH there)",
+      "bucket": "KNOWN",
+      "severity": "low",
+      "source": "Bob",
+      "consensus": "1/3",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-15.md"
+    }
+  ],
+  [
+    "append",
+    "deferred_decisions",
+    {
+      "cycle": 15,
+      "issue": "F8: Cannot statically verify: suite/ruff/format/mypy/build and fail-first replay for packaging tests (base collection failed on missing packaging_support helpers); host reports 1364 passed / 0 skipped at 7b41798",
+      "severity": "low",
+      "consensus": "1/3",
+      "action": "deferred as known limitation",
+      "reason": "Fresh suite passes 1364/0/0; other required gates reuse same-HEAD successful records. Approved replay produced two red tests but two packaging files failed collection at base, so their behavioral fail-first binding remains limited. No broad rebuild is queued solely to repeat already recorded gates."
+    }
+  ],
+  [
+    "append",
+    "doubts",
+    {
+      "cycle": 15,
+      "id": "R15-09",
+      "issue": "F8: Cannot statically verify: suite/ruff/format/mypy/build and fail-first replay for packaging tests (base collection failed on missing packaging_support helpers); host reports 1364 passed / 0 skipped at 7b41798",
+      "bucket": "KNOWN",
+      "severity": "low",
+      "source": "Bob",
+      "consensus": "1/3",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-15.md"
+    }
+  ],
+  [
+    "append",
+    "autonomous_decisions",
+    {
+      "cycle": 15,
+      "issue": "Effective `catchup`, `design`, `design_gate`, and `pause_on_ambiguity` frontmatter values are returned to the caller but discarded from committed state; only the review cap and tier survive, so restart/resume cannot reproduce the declared workflow policy and `catchup: skip` still follows `batch.catchup`",
+      "severity": "high",
+      "consensus": "1/3",
+      "action": "discarded",
+      "reason": "Retracted by Blake after source-only adjudication: docs/state-protocol.md:321-323,327 and frozen inventory classify these controls as derived and allocate ownership to existing v1 fields. No new evidence invalidates the prior ledger decision."
+    }
+  ],
+  [
+    "append",
+    "autonomous_decisions",
+    {
+      "cycle": 15,
+      "issue": "PRD discovery converts missing, unreadable, symlinked, or non-directory lifecycle roots into empty candidate lists, allowing an inaccessible `wip` to fall through to backlog or an invalid tree to report `drained`; this can skip higher-priority work or prematurely terminate a batch instead of surfacing the invalid-directory error required by the selection test strategy",
+      "severity": "high",
+      "consensus": "1/3",
+      "action": "discarded",
+      "reason": "Retracted by Blake: mandatory selection source specifies WIP priority/fallback/drain but no required error outcome for absent/invalid/symlink directories. PermissionError from iterdir is not caught. Test strategy naming these cases is not an error contract."
+    }
+  ],
+  [
+    "append",
+    "autonomous_decisions",
+    {
+      "cycle": 15,
+      "issue": "`defer_record` validates active batch/PRD with an unlocked read and then publishes the external ledger independently, without revision CAS or durable recovery intent; a concurrent completion/reset can therefore leave a successfully written deferred record attributed from stale state",
+      "severity": "high",
+      "consensus": "1/3",
+      "action": "discarded",
+      "reason": "Retracted by Blake: CMD-010 and STATE-112/113 define an independently locked PRD/batch-attributed append; recovery.operation supports park/stall only. A later state change does not invalidate immutable attribution from the validated invocation."
+    }
+  ],
+  [
+    "append",
+    "review_cycles",
+    {
+      "cycle": 15,
+      "review_file": "dev/local/reviews/00004-workflow-core-v1-review-15.md",
+      "agents": {
+        "alice": "available",
+        "blake": "available",
+        "bob": "available",
+        "carl": "unavailable"
+      },
+      "issues_found": 12,
+      "follow_up_tasks": 2,
+      "follow_up_task_ids": [
+        "9",
+        "10"
+      ],
+      "deferred": 2,
+      "recurring_issues": [
+        "Ancestry confirmation family: replacing an ancestor while reparenting the same runtime inode bypasses runtime-only verification",
+        "R14-06: parent/child fstat name reuse still unresolved"
+      ],
+      "outcome": "paused_data_loss_risk",
+      "head_sha": "7b41798c80e06a2c341d75116a09c752203797f4",
+      "artifact_status": "complete",
+      "provider_provenance": {
+        "alice": {
+          "provider": "openai",
+          "model": "gpt-5.6-sol",
+          "logical_tier": "sonnet",
+          "agent": "/root/alice_r15",
+          "isolated": true
+        },
+        "blake": {
+          "provider": "openai",
+          "model": "gpt-5.6-sol",
+          "logical_tier": "sonnet",
+          "agent": "/root/blake_r15",
+          "isolated": true
+        },
+        "bob": {
+          "provider": "claude",
+          "model": "opus",
+          "actual_model": "claude-opus-5",
+          "logical_tier": "opus",
+          "receipt": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/bob-output-00004-15-20260913.txt.receipt.json",
+          "helper_exit": 0,
+          "host_substitution": "external Claude Bob replaces former external Codex doubt role and supplies non-Codex doubt voice; no Eve/Fable dispatch claimed"
+        },
+        "carl": {
+          "exit": 3,
+          "reason": "refusing nested dispatch (already inside a CLI agent)",
+          "provider_inference": false
+        }
+      },
+      "verification": {
+        "source": "suite run this cycle",
+        "sha": "7b41798c80e06a2c341d75116a09c752203797f4",
+        "passed": 1364,
+        "failed": 0,
+        "skipped": 0,
+        "other_gates": "same-HEAD exit-0 records"
+      },
+      "gates": {
+        "shape": "pending",
+        "doubt_constraint": "pending"
+      },
+      "probe": "dev/local/reviews/00004-cycle-15-installed-reparent-probe.json"
+    }
+  ]
+]

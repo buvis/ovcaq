@@ -1,0 +1,62 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index f802472..1a5b447 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+ 
+ ### Fixed
+ 
++- **drivers**: avoid quadratic backtracking when Codex failure diagnostics contain long whitespace runs after a status prefix.
+ - **drivers**: check Claude's executable against the effective host-plus-configured PATH, matching subprocess lookup with `os.defpath` when host PATH is absent and treating an empty host PATH as unhealthy. Codex already uses the merged environment and searches the current directory with an empty host PATH; empty configured PATH remains invalid.
+ - **drivers**: preserve once-resolved supervised Codex models when their names also match tier keys, retaining direct tier-key precedence and explicit-model validation.
+ - **drivers**: require HTTP/status/error-code context, including native bare-status and HTTP-version forms, for Codex numeric failures; retain existing authentication word diagnostics and genuine rate/quota limits.
+diff --git a/src/ovcaq/drivers/codex_events.py b/src/ovcaq/drivers/codex_events.py
+index 2b73ae9..b1a7411 100644
+--- a/src/ovcaq/drivers/codex_events.py
++++ b/src/ovcaq/drivers/codex_events.py
+@@ -299,7 +299,7 @@ def classify_failure(detail: str) -> FailureClass:
+     """Match native diagnostics in authentication-to-agent precedence order."""
+     status = (
+         r"(?:http(?:/\d+(?:\.\d+)?| status(?: (?:client|server) error \()?)?"
+-        r"|status(?: code)?|error code)\s*:?\s*"
++        r"|status(?: code)?|error code)\s*+:?\s*+"
+     )
+     for failure, pattern in (
+         (
+diff --git a/tests/drivers/test_adapter_failure_classes.py b/tests/drivers/test_adapter_failure_classes.py
+index 4adcd75..b8dfbdd 100644
+--- a/tests/drivers/test_adapter_failure_classes.py
++++ b/tests/drivers/test_adapter_failure_classes.py
+@@ -1,4 +1,6 @@
+ import json
++import subprocess
++import sys
+ from datetime import UTC, datetime, timedelta
+ from pathlib import Path
+ 
+@@ -115,6 +117,25 @@ def test_unsupported_numeric_status_forms_remain_unknown(detail: str) -> None:
+     assert classify_failure(detail) is FailureClass.UNKNOWN
+ 
+ 
++def test_long_whitespace_status_diagnostic_returns_unknown_without_hanging() -> None:
++    script = (
++        "from ovcaq.drivers.codex_events import classify_failure\n"
++        'print(classify_failure("status" + " " * 200_000 + "x").value)\n'
++    )
++    try:
++        result = subprocess.run(
++            [sys.executable, "-c", script],
++            capture_output=True,
++            text=True,
++            timeout=5,
++            check=False,
++        )
++    except subprocess.TimeoutExpired:
++        pytest.fail("Failure classification exceeded the 5-second child timeout")
++    assert result.returncode == 0, result.stderr
++    assert result.stdout.strip() == FailureClass.UNKNOWN.value
++
++
+ @pytest.mark.parametrize("code", ["401", "403", "429", "502", "503"])
+ @pytest.mark.parametrize(
+     "template",

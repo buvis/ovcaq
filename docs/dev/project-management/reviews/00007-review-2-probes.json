@@ -1,0 +1,36 @@
+{
+  "capability_stop": {
+    "exit": 1,
+    "decision": "halt",
+    "pause_requested": false,
+    "pause_reason": null,
+    "capability_status": "failed",
+    "attention": {
+      "created_at": "2026-10-02T12:00:00Z",
+      "detail": "capability 'audit' failed: runner raised SupervisorSignal: Supervisor received signal 15; retry audit explicitly",
+      "site": "capability:audit"
+    }
+  },
+  "restart_retry_budget": {
+    "configured_connectivity_retries": 1,
+    "phase_repeat_limit": 6,
+    "decisions": [
+      "wait",
+      "wait"
+    ],
+    "persisted_phase_repeats": 2
+  },
+  "launch_exception": {
+    "exit": 1,
+    "reason": "Supervisor state operation failed; inspect state before restarting.",
+    "metrics": [
+      "halt"
+    ],
+    "attention": {
+      "created_at": "2026-10-02T12:00:00Z",
+      "detail": "Supervisor state operation failed; inspect state before restarting.",
+      "site": "supervisor.loop"
+    },
+    "phase_repeats": 0
+  }
+}

@@ -1,0 +1,1 @@
+Make controlled report contention assertions exact: exit 2, state_io code and exact report-specific publication message. Preserve legitimate non-contention paths and installed-origin checks.

@@ -10,4 +10,16 @@ dist/
 .coverage
 coverage.xml
 docs/dev/tmp/
-docs/dev/project-management/
+# Runtime and session dumps inside the tracked project-management tree
+# (the rest of the tree is durable; see structure-git-repo layout.md).
+docs/dev/project-management/autopilot/autocodex-*
+docs/dev/project-management/autopilot/implementation-logs/
+docs/dev/project-management/autopilot/reviewer-sessions/
+docs/dev/project-management/autopilot/worker-sessions/
+docs/dev/project-management/autopilot-prd*-preserved/signal
+docs/dev/project-management/autopilot-prd*-preserved/state.json*
+docs/dev/project-management/autopilot-prd*-preserved/*.lock
+docs/dev/project-management/autopilot-prd*-preserved/contract-card.md
+# Review diffs over GitHub's 50 MB file warning; kept on disk only.
+docs/dev/project-management/autopilot/reports/00053-cycle3-20261013-evidence/review-diff.diff
+docs/dev/project-management/autopilot/reports/00053-five-repair-review-20261012-evidence/review-diff-00053-five-repair-20261012.diff

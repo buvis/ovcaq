@@ -1,0 +1,26 @@
+[ALICE] 🟠 `status` never consults `FleetRegistry`, so registry-only evidence is reported as `idle` instead of required `inconsistent` | File: src/ovcaq/runtime_cli.py:146 | Task: 11
+[ALICE] 🟠 Active-session detection validates metadata shape but never calls `process_matches`, so stale or recycled process metadata can mark a session active | File: src/ovcaq/runtime/session.py:471 | Task: 10
+[ALICE] 🟠 `doctor` omits required permission, writability, retained-budget, and free-space checks, allowing `ok=true` when production should be blocked | File: src/ovcaq/runtime_cli.py:191 | Task: 11
+[ALICE] 🟠 Aggregate purge reads each newline-delimited row into memory before enforcing `MAX_STATE_BYTES`, so a malformed newline-free aggregate can exhaust memory | File: src/ovcaq/runtime/session.py:720 | Task: 10
+[ALICE] 🟠 Fleet registry reads follow symlinks, the mutation lock is unverified, and prune unlinks paths without a final identity check, violating the descriptor-relative race contract | File: src/ovcaq/runtime/registry.py:146 | Task: 3
+[ALICE] 🟠 Session publication checks paths and then reopens them by pathname, so parent replacement can redirect durable metadata outside the validated runtime tree | File: src/ovcaq/runtime/session.py:178 | Task: 4
+[ALICE] 🟡 Runtime metadata reads accept non-UTC timestamps and do not validate run/session IDs as basenames; use the shared `validate_timestamp` and identifier validation | File: src/ovcaq/cli_io.py:89 | Task: 11
+[ALICE] 🟡 Metadata publication accepts empty `agent` and `process_start` values that the CLI’s own reader later rejects | File: src/ovcaq/runtime/session.py:165 | Task: 4
+[ALICE] 🟡 Emergency acknowledgement discards the returned archive path, although `doctor --acknowledge-emergency` must report it | File: src/ovcaq/runtime_cli.py:128 | Task: 11
+[ALICE] 🟡 `status` discards `evidence_health`, silently presenting empty evidence when inventory fails | File: src/ovcaq/runtime_cli.py:169 | Task: 11
+[ALICE] 🟡 The collision test’s final `is_dir() or is_symlink()` assertion is mechanically tautological for its parameter setup; assert the exact expected obstacle per case | File: tests/state/test_cli.py:379 | Task: general
+[ALICE] 🟡 `runtime_settings` is 51 lines; extract numeric-limit selection and validation into a helper | File: src/ovcaq/config.py:142 | Task: 1
+[ALICE] 🟡 `resolve_runtime_paths` is 51 lines; extract existing-directory identity snapshot collection into a helper | File: src/ovcaq/paths.py:171 | Task: 1
+[ALICE] 🟡 `session.py` is 810 lines, exceeding the 800-line limit; move retention internals into a focused private module while preserving the public API | File: src/ovcaq/runtime/session.py:1 | Task: general
+R1: fail
+R2: fail
+R3: pass
+R4: fail
+R6: pass
+R7: fail
+R8: pass
+R9: fail
+R10: fail
+R11: pass
+R12: fail
+R13: fail

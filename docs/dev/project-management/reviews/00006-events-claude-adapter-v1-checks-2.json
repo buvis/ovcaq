@@ -1,0 +1,18 @@
+[
+  {
+    "cycle": 2,
+    "finding": "The full suite and packaging are green at HEAD; prior queued full pytest exited 1, focused packaging rerun passed.",
+    "file": null,
+    "command": "uv run pytest",
+    "source": "bob",
+    "result": {"exit": 0}
+  },
+  {
+    "cycle": 2,
+    "finding": "The full suite and packaging are green at HEAD; confirm clean sdist after removal of untracked placeholder.",
+    "file": null,
+    "command": "uv build",
+    "source": "bob",
+    "result": {"exit": 0}
+  }
+]

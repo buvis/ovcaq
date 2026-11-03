@@ -1,0 +1,1 @@
+{"command": "mise exec -- uv run mypy src/ovcaq", "exit": 0}

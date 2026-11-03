@@ -1,0 +1,1 @@
+{"command": "mise exec -- uv run ruff check .", "exit": 0}

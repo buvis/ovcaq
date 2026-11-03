@@ -1,0 +1,26 @@
+{
+  "schema": "pass",
+  "tasks": "28/28 complete",
+  "source_review_gate": "pass",
+  "host_review_gap": null,
+  "provider_routing": [
+    "anthropic"
+  ],
+  "quality_gates": "all six pass",
+  "tests": {
+    "passed": 7202,
+    "failed": 0,
+    "skipped": 0
+  },
+  "phase": "paused",
+  "cycle": 5,
+  "cap": 5,
+  "pending_refs": [
+    "R1",
+    "R3",
+    "R4",
+    "R5",
+    "R6"
+  ],
+  "implementation_fingerprint": "671cd4603c61d3291134ed97aeeada6fd04419377826cab997f4985c232e1f9f"
+}

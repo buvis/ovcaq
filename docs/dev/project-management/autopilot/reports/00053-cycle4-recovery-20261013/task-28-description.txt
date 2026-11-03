@@ -1,0 +1,3 @@
+### Findings (verbatim)
+- ⚪ docs/driver-protocol.md:273: The protocol doc still says numeric codes "require HTTP, status or error-code context". Since task 25, bare `Error 429:` and `status=429` also count. CHANGELOG.md:45 says "HTTP/status/error context", so the two documents disagree. Change the doc to "HTTP, status or error context" to match the code and the changelog (found by: ALICE, BOB)
+- ⚪ CHANGELOG.md: CHANGELOG.md:45 lists regex branch names ("equals-delimited status, bare error, HTTP error, native bare-status and HTTP-version forms"). It also restates unchanged behavior ("retain existing authentication word diagnostics and genuine rate/quota limits"). That describes the implementation, not what users see (found by: BOB)

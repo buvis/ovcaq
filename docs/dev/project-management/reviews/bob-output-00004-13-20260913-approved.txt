@@ -1,0 +1,60 @@
+## Findings
+
+```
+[BOB] 🟡 B1: _ensure_directory_chain walks from `/` and read-opens, mkdirs, fsyncs and identity-verifies every ancestor of the runtime root (`/`, `/Users`, `$HOME`, ...) that OVCAQ can never have left unconfirmed; adds a fail-closed dependency on O_RDONLY access and directory-fsync support for every ancestor filesystem, and an EACCES ancestor is misreported as "runtime directory is not a real directory" (line 393). `_validated_runtime_path` (paths.py:37) already guarantees the runtime root sits below the resolved project root, so bounding the walk there keeps the abrupt-exit guarantee: the project root is fsynced as parent of the first level below it and every lower level is confirmed regardless of existence | File: src/ovcaq/workflow/_files.py:255 | Task: 1
+[BOB] ⚪ B2: First iteration is a self-step: Path("/").parent == Path("/"), so root is opened twice, `mkdir(exist_ok=True)` is issued against `/`, `/` is fsynced and verified against itself, then fsynced again as parent of the next level | File: src/ovcaq/workflow/_files.py:255 | Task: 1
+[BOB] 🟡 B3: _assert_retry_error hedges: the else branch (any nonzero code with "retry" anywhere in the JSON) is unreachable in the overlap scenario (REPORT_ACTOR pauses inside _publish_file while holding the flock, so B can only fail with the state_io busy error; cli.py:456 maps every OSError to state_io) and keeps the pre-fix loose assertion alive, so a changed code or message still passes | File: tests/packaging/test_rework_11.py:317 | Task: 2
+[BOB] ⚪ B4: ORIGIN_CHECK.installed_origins asserts in-child (sys.prefix, site-packages) what every consumer re-asserts test-side through _assert_installed against installed.root; the in-child asserts are redundant | File: tests/packaging/rework_12_scripts.py:84 | Task: 1
+[BOB] 🟡 B5: Suspected sandbox break: defer/stall/park now issue mkdir and open(O_RDONLY|O_DIRECTORY) against `/`, `/Users`, `$HOME` from inside launcher sessions that run under `codex exec --sandbox workspace-write` (plan §10.4); Path.mkdir(exist_ok=True) swallows only FileExistsError, so a seatbelt EPERM ahead of the kernel EEXIST fails every ledger write | File: src/ovcaq/workflow/_files.py:257 | Task: 1
+[BOB] ⚪ B6: paths.ensure_runtime_directory (`ovcaq init`) creates the project root and runtime chain with mkdir(parents=True) and no directory fsync; the durability this diff adds does not cover init-created levels (today the unbounded walk confirms them incidentally on the first ledger write) | File: src/ovcaq/paths.py:94 | Task: general
+[BOB] ⚪ B7: level.mkdir(exist_ok=True) creates the runtime root with default umask mode while ensure_runtime_directory gives the runtime leaf 0o700 (plan §15 restrictive permissions) | File: src/ovcaq/workflow/_files.py:257 | Task: 1
+[BOB] ⚪ B8: Cannot statically verify: suite/ruff/format/mypy/build and fail-first replay of the rework_12 crash/racer tests and the two exact-message asserts (replay skipped: worktree denied); recorded gates at HEAD be5e385 (1352 passed) taken from last-verification.json | File: N/A | Task: general
+```
+
+```
+FIX:
+- B1 — src/ovcaq/workflow/_files.py:255 — thread the validated project root (`root` in _dispatch_workflow -> defer_record; `paths`/state in _record_and_commit) into _open_deferred_ledger; iterate only the levels of `runtime_root.relative_to(root)` with the root as first parent; drop `path.resolve()` (needed only because ancestors above the root such as `/tmp` are symlinks). test_rework_12 _assert_confirmed (project, new, nested) stays valid.
+- B2 — src/ovcaq/workflow/_files.py:255 — disappears with B1; standalone: `for level in (*reversed(path.parents[:-1]), path)`.
+- B3 — tests/packaging/test_rework_11.py:317 — assert unconditionally `error["code"] == "state_io"`, `returncode == 2`, `message == f"publication busy; retry: {report_path}"`; delete the else branch.
+- B4 — tests/packaging/rework_12_scripts.py:84 — drop the three in-child asserts, keep the origins dict.
+VERIFY:
+- B5 — run `ovcaq workflow defer --record ...` (or tests/packaging/test_rework_12.py) inside `codex exec --sandbox workspace-write -C <repo under $HOME>` and inside Claude Code's sandbox; expect exit 0 and no PermissionError from Path.mkdir on `/`, `/Users`, `$HOME`.
+- B8 — `git archive 39ecaf4 | tar -x -C /tmp/base`, overlay HEAD's tests/, run `uv run pytest tests/packaging/test_rework_12.py tests/packaging/test_rework_11.py tests/workflow/test_ledger_publication.py`; expect the crash/racer tests and both `publication busy; retry:` asserts to fail there and pass at HEAD.
+KNOWN:
+- B6 — init/P03-T01 territory (paths.py unchanged in this diff); fresh-state extraction excludes a durability repair of init.
+- B7 — mode retained from the pre-change line; runtime-root permission policy belongs to ensure_runtime_directory/P03-T01, not this cycle's repair tasks.
+```
+
+## Prior findings against code
+
+R12-01 fixed (every level's parent fsynced on every call; os._exit crash regression for `new` and `new/nested`, retry and replay confirm project/new/nested with identity preserved). F1 fixed (reports.py:707 passes report_path; message exact in two tests). F2 fixed (exist_ok, no rmdir; racer/racer-fail preserve the peer's inode). F3 fixed (always-true compare gone). F5 fixed (line 278 reads the key). F4, K1, K2, R8-K1, R8-K2, R9-K3, R9-K4, `--ceiling`: settled, not re-raised.
+
+## P02 reconciliation (incremental scope)
+
+- P02-T06: touched; evidence test_rework_12 (crash x2, concurrent x2), exactly-once record and state bytes asserted. P02-T08: touched; busy message carries the report path. P02-T09: touched; residual B1/B5.
+- P02-T01–T05, T07, T10: zero lines in this diff (6-file stat); rest on prior accepted evidence, not re-reviewed (limit).
+- Phase A exit: untouched. Phase B exit: strengthened (abrupt-exit retry/replay, peer preservation); B1/B5 are a new retry-failure mode, not lost work. Phase C exit: _files.py imports only ovcaq.state.schema and ovcaq.workflow.paths (lines 16–23); installed gates recorded, not re-run.
+
+```
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```
+
+**Status**: Done.
+**Changed**: nothing (review only). 8 findings: 4 FIX (2 Medium, 2 Low), 2 VERIFY, 2 KNOWN; R1–R13 and D1–D5 all pass.
+**Next**: Task complete. Suggested next: queue B1+B3 as one rework task and run the B5 sandbox check before accepting.

@@ -1,0 +1,9 @@
+{
+  "argv": [
+    "/Users/bob/git/src/github.com/buvis/ovcaq/.venv/bin/python3",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00004-cycle-09-publication-probes.py"
+  ],
+  "exit": 0,
+  "stdout": "[\n  {\n    \"surface\": \"report\",\n    \"error\": \"output directory identity changed: /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r9-publish-6avhgt4n/reports\",\n    \"returned_success\": false,\n    \"returned_path_exists\": false,\n    \"retained_files\": [\n      \"review-09-report.md\"\n    ],\n    \"configured_files\": []\n  },\n  {\n    \"surface\": \"audit\",\n    \"error\": \"output directory identity changed: /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r9-publish-_i5q8epb/dev/local/reviews\",\n    \"returned_success\": false,\n    \"returned_path_exists\": false,\n    \"retained_files\": [\n      \"00004-audit.md\"\n    ],\n    \"configured_files\": []\n  },\n  {\n    \"surface\": \"archive\",\n    \"error\": \"output directory identity changed: /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r9-publish-1q3jux7x/reports\",\n    \"returned_success\": false,\n    \"returned_path_exists\": false,\n    \"retained_files\": [\n      \"review-09-state-final.json\"\n    ],\n    \"configured_files\": []\n  }\n]\n",
+  "stderr": ""
+}

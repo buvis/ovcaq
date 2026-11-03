@@ -1,0 +1,5 @@
+At test commit 7d03c21a1bb78c8491bef48054d60348b120f369
+Command: mise exec -- uv run pytest -q --tb=line tests/drivers/test_adapter_failure_classes.py::test_long_whitespace_status_diagnostic_returns_unknown_without_hanging
+Exit: 1
+Failure classification exceeded the 5-second child timeout
+1 failed in 5.05s

@@ -1,0 +1,1 @@
+{"attempt":1,"model":"sonnet","actual_model":"gpt-6.1-sol","actual_provider":"openai","outcome":"completed","review_cycle":1,"cause":null,"implementor":"codex","preflight_outcome":null,"pipeline":"lean","self_deslop":"noop","style_gate":"clean","split_hygiene":"clean"}

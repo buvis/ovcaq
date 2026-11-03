@@ -1,0 +1,10 @@
+[
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "`--json` is only accepted before `state`, contradicting the accepted `ovcaq state show [--json]` interface",
+    "file": "src/ovcaq/cli.py",
+    "reason": "contradicts the reviewed design at lines 531-547, which specifies --json as a top-level option before subcommands"
+  }
+]

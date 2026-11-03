@@ -1,0 +1,74 @@
+{
+  "batch_id": "202610272211",
+  "items": [
+    {
+      "type": "assumed-ambiguity",
+      "issue": "Task 3 (R5) says _redact must pick a construction safe without reading the actor credential, but does not name the observable contract tests must pin.",
+      "question": "Task 3 (R5) says _redact must pick a construction safe without reading the actor credential, but does not name the observable contract tests must pin.",
+      "assumption": "Redaction becomes length-based and credential-agnostic: every whitespace-delimited token of at least MIN_SECRET_CHARS characters in controller output is replaced with REDACTED_MARKER, so no actor-file read is needed and any embedded credential of credential-plausible length is masked. MIN_SECRET_CHARS stays live as that threshold; _actor_secrets and _json_strings become dead and are removed. _bounded keeps redact-then-tail-truncate.",
+      "prd": "00057-autopilot-controller-client-v1.md"
+    },
+    {
+      "type": "residual-finding",
+      "issue": "short credential inside a larger actor file is still echoed in controller diagnostics",
+      "finding": "short credential inside a larger actor file is still echoed in controller diagnostics",
+      "detail": "Task 6 cycle 1: _can_mask_credential settles credential safety from the actor file st_size, which bounds the credential only from above. A credential under MIN_SECRET_CHARS wrapped in a larger actor document (JSON, trailing bytes) therefore reads as maskable and survives _redact. Pat kept his CLOSURE verdict unresolved for this reason after one retry. Closing it needs the credential length or a redaction token declared in configuration; reading the actor file is forbidden by R5. Recorded in the _can_mask_credential docstring and the CHANGELOG instead.",
+      "owner": "review gate",
+      "prd": "00057-autopilot-controller-client-v1.md"
+    },
+    {
+      "type": "residual-finding",
+      "issue": "resolve_phase_route default_tiers is never shape-validated: a list, an empty-string model or a non-string model passes straight into ResolvedPhaseRoute.model (no __post_init__), and a non-mapping raises AttributeError rather than ConfigurationError. Found by the task-3 adversarial pass. Deliberately out of scope: the design types it Mapping[str, str] | None with no validation, and it is an internal supervisor call, not a system boundary. Revisit only if default_tiers ever becomes operator-supplied.",
+      "detail": "resolve_phase_route default_tiers is never shape-validated: a list, an empty-string model or a non-string model passes straight into ResolvedPhaseRoute.model (no __post_init__), and a non-mapping raises AttributeError rather than ConfigurationError. Found by the task-3 adversarial pass. Deliberately out of scope: the design types it Mapping[str, str] | None with no validation, and it is an internal supervisor call, not a system boundary. Revisit only if default_tiers ever becomes operator-supplied.",
+      "prd": "00063-driver-failure-classes-tiers-v1.md"
+    },
+    {
+      "type": "residual-finding",
+      "issue": "tests/packaging/test_distribution.py::test_artifact_text_excludes_personal_paths_and_likely_secrets is RED, introduced by this PRD commit 8353336 (task 1 strengthen), not by task 3. The sdist ships tests/drivers/test_adapter_failure_classes.py, whose redaction fixtures contain the literal Authorization: Bearer sk-ant-api03-live-secret-value at lines 556/593/595; that text matches SECRET_PATTERNS, so the distribution scanner fails. These are synthetic placeholders, NOT real credentials - nothing to rotate. Minimal fix preserving the redaction tests intent: build the secret-shaped value at runtime by concatenation so no secret-shaped literal exists in the source text. To be resolved in step 7 final verification under its identify-the-task repair loop.",
+      "detail": "tests/packaging/test_distribution.py::test_artifact_text_excludes_personal_paths_and_likely_secrets is RED, introduced by this PRD commit 8353336 (task 1 strengthen), not by task 3. The sdist ships tests/drivers/test_adapter_failure_classes.py, whose redaction fixtures contain the literal Authorization: Bearer sk-ant-api03-live-secret-value at lines 556/593/595; that text matches SECRET_PATTERNS, so the distribution scanner fails. These are synthetic placeholders, NOT real credentials - nothing to rotate. Minimal fix preserving the redaction tests intent: build the secret-shaped value at runtime by concatenation so no secret-shaped literal exists in the source text. To be resolved in step 7 final verification under its identify-the-task repair loop.",
+      "prd": "00063-driver-failure-classes-tiers-v1.md"
+    },
+    {
+      "type": "residual-finding",
+      "issue": "uv run ruff format --check is RED on master at tests/runtime/test_supervisor_early_failure.py:250 (ruff would join a 3-line monkeypatch.setattr call into one 87-char line). Pre-existing and NOT from PRD 00063: the file was last touched by f6f652f, PRD 00062 task 5, which is this PRD work_start_sha base and therefore outside the work_start_sha..HEAD review range. The file is not in any task-3 allowlist and is unmodified in the working tree. It blocks a fully green tools/check, so step 7 must either fix it as an explicitly disclosed out-of-task one-line reformat or report it as named residue.",
+      "detail": "uv run ruff format --check is RED on master at tests/runtime/test_supervisor_early_failure.py:250 (ruff would join a 3-line monkeypatch.setattr call into one 87-char line). Pre-existing and NOT from PRD 00063: the file was last touched by f6f652f, PRD 00062 task 5, which is this PRD work_start_sha base and therefore outside the work_start_sha..HEAD review range. The file is not in any task-3 allowlist and is unmodified in the working tree. It blocks a fully green tools/check, so step 7 must either fix it as an explicitly disclosed out-of-task one-line reformat or report it as named residue.",
+      "prd": "00063-driver-failure-classes-tiers-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 2,
+      "ref": "R2",
+      "issue": "Reclassifying 429 as rate_limit makes a Claude rate limit halt the run immediately: with no reset banner summary.rate_limit_reset_at is None, so _failure_decision (src/ovcaq/runtime/decision.py:197) returns HALT \"No bounded rate-limit retry remains\" with zero attempts, where the pre-change agent class got died_retries first. The PRD premise that a 429 should reach the bounded wait is unmet for \"HTTP 429 Too Many Requests\", and no test covers the end-to-end Claude rate-limit outcome.",
+      "severity": "high",
+      "consensus": "1/3",
+      "file": "src/ovcaq/runtime/decision.py:197",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "prd": "00063-driver-failure-classes-tiers-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 2,
+      "ref": "R1",
+      "issue": "CHANGELOG.md:51 still ends \"A PRD frontmatter tier floor must also name a key the table defines\", which is false for the neutral keys: workflow_settings unions NEUTRAL_TIERS into available_tiers, so a standard/deep floor applies with no agent tiers table at all. docs/operations.md:84 states it correctly; make the CHANGELOG match.",
+      "severity": "medium",
+      "consensus": "2/3",
+      "file": "CHANGELOG.md:51",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "prd": "00063-driver-failure-classes-tiers-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 2,
+      "ref": "R7",
+      "issue": "Prior R2 only partially resolved: the new test verifies both Supervisor call sites but drives the fake Driver, so no unconfigured Supervisor run exercises ClaudeDriver/CodexDriver argv, the edge _map_model_to_tier round trip for the neutral keys (including the Codex default collapse), or the done phase. Coverage gap only; behavior is correct by inspection.",
+      "severity": "medium",
+      "consensus": "2/3",
+      "file": "tests/runtime/test_adapter_launch_routing.py:241",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "prd": "00063-driver-failure-classes-tiers-v1.md"
+    }
+  ]
+}

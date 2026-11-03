@@ -1,0 +1,1 @@
+Preserve normalized activity output. item_activity belongs to codex_events, not a third module.

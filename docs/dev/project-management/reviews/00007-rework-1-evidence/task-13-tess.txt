@@ -1,0 +1,70 @@
+Task: [D1] Separate capability metrics from workflow-session reports (Task 13)
+Mode: requirements-only Tess test authoring
+Dispatch: ad8b14fe
+
+Files changed
+- tests/workflow/test_canonical_metrics.py
+- docs/dev/tmp/00007-13-tess-report.txt
+
+Production access
+- No production implementation files were read or edited.
+- No commits or workflow state edits were made.
+
+Authorized references read
+- docs/dev/tmp/00007-13-tess-prompt-2.txt
+- /Users/bob/.agents/skills/python-testing/SKILL.md
+- tests/workflow/test_canonical_metrics.py
+- tests/workflow/conftest.py
+- tests/fixtures/claude/legacy-metrics.jsonl
+
+Added behavior coverage
+
+1. tests/workflow/test_canonical_metrics.py::test_capabilities_are_retained_but_excluded_from_workflow_totals
+   - Writes and reloads one mixed JSONL stream containing:
+     - one canonical kind=phase row for the selected batch;
+     - one canonical kind=capability row for the selected batch, with null phase/model/usage;
+     - one characterized legacy workflow-session row for the selected batch;
+     - one characterized legacy review_converged row for the selected batch;
+     - one canonical phase row for another batch.
+   - Asserts load_metric_rows retains every row exactly and in input order.
+   - Asserts reduce_metrics excludes the capability from workflow sessions, wall time, cost, and output-token totals while preserving canonical phase, legacy session, and convergence semantics.
+   - Asserts render_metrics batch filtering and render_report produce the same selected-batch totals: 2 sessions, 20 wall seconds, USD 0.75, 10 output tokens.
+   - Asserts repeated render_metrics/render_report calls are deterministic.
+   - Asserts the original canonical/legacy evidence objects are unchanged after loading, reducing, and rendering.
+
+2. tests/workflow/test_canonical_metrics.py::test_malformed_canonical_usage_retains_session_with_unknown_totals
+   - Supplies a canonical kind=phase row whose usage is the non-Mapping string "malformed".
+   - Asserts it remains a workflow session with 12 wall seconds.
+   - Asserts cost and output tokens are unknown in reduce_metrics, render_metrics, and render_report.
+   - Asserts the input row is not mutated.
+
+Exact RED command
+env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache timeout 300s uv run pytest tests/workflow/test_canonical_metrics.py::test_capabilities_are_retained_but_excluded_from_workflow_totals tests/workflow/test_canonical_metrics.py::test_malformed_canonical_usage_retains_session_with_unknown_totals --tb=short
+
+RED result
+- Exit status: 1
+- Collected: 2
+- Failed: 2
+- test_capabilities_are_retained_but_excluded_from_workflow_totals failed at the session assertion: expected sessions=2, observed sessions=3. The returned summary also showed wall_secs=32, cost_usd=None, tokens_out=None, review_convergences=1, cycles_to_converge=2. This demonstrates that the capability row is counted as a workflow session and contributes its 12 wall seconds; its null usage also changes otherwise-known aggregate usage totals to unknown.
+- test_malformed_canonical_usage_retains_session_with_unknown_totals failed at the session assertion: expected sessions=1, observed sessions=0. The returned summary showed wall_secs=0, cost_usd=0, tokens_out=0. This demonstrates that a canonical phase row with non-Mapping usage is silently dropped.
+- Pytest emitted two unrelated temporary-directory cleanup warnings after the failures (OSError 66, directory not empty under pytest garbage paths).
+
+Structural checks
+- env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache timeout 300s uv run ruff check tests/workflow/test_canonical_metrics.py
+  Result: pass, "All checks passed!"
+- env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache timeout 300s uv run ruff format --check tests/workflow/test_canonical_metrics.py
+  Result: pass, "1 file already formatted"
+- git diff --check -- tests/workflow/test_canonical_metrics.py
+  Result: pass
+- Test file length after changes: 222 lines, below 800.
+- New test function lengths: 44 lines and 13 lines, below 50.
+
+Assumptions
+- The task's explicit canonical kind values ("phase" and "capability"), null phase/model/usage requirement for capability rows, and supplied canonical field names are the complete canonical contract needed by these tests.
+- "Retained" means load_metric_rows returns the capability row unchanged and in stream order; workflow reducers/renderers may omit it from workflow totals.
+- A string is a representative malformed non-Mapping usage value. Existing coverage already exercises usage=None and a Mapping with unknown fields.
+- The characterized legacy session shape follows the supplied existing test pattern; the convergence shape follows tests/fixtures/claude/legacy-metrics.jsonl.
+- Known workflow usage remains known when an excluded capability has usage=None.
+- Batch filtering applies to canonical batch_id and legacy batch fields using their established semantics.
+
+abort_reason: none

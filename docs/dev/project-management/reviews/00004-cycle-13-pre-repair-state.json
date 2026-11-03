@@ -1,0 +1,900 @@
+{
+  "prd": "00004-workflow-core-v1.md",
+  "phase": "paused",
+  "next_phase": "paused",
+  "schema_version": 1,
+  "batch": {
+    "id": "202609062243",
+    "mode": "autopilot",
+    "parks_consecutive": 0,
+    "completed_prds": [],
+    "plugin_versions": {
+      "aegis@buvis-plugins": "0.3.2",
+      "warden@buvis-plugins": "0.14.0"
+    }
+  },
+  "catchup_mode": "run",
+  "design_mode": "run",
+  "doubt_reviewer": "codex",
+  "consensus_engine": "legacy",
+  "rework_cap": 2,
+  "tasks": [
+    {
+      "id": "P02-T01",
+      "name": "Port PRD selection and lifecycle directory resolution",
+      "status": "completed",
+      "description": "Accepted source task; implementation and evidence are recorded in the FT-04 build, verification, review, and repair handoffs."
+    },
+    {
+      "id": "P02-T02",
+      "name": "Port frontmatter parsing/defaults and overwrite warnings",
+      "status": "completed",
+      "description": "Accepted source task; implementation and evidence are recorded in the FT-04 build, verification, review, and repair handoffs."
+    },
+    {
+      "id": "P02-T03",
+      "name": "Port transition table and compound phase-complete command",
+      "status": "completed",
+      "description": "Accepted source task; implementation and evidence are recorded in the FT-04 build, verification, review, and repair handoffs."
+    },
+    {
+      "id": "P02-T04",
+      "name": "Port resume mapping and plan-size policy",
+      "status": "completed",
+      "description": "Accepted source task; implementation and evidence are recorded in the FT-04 build, verification, review, and repair handoffs."
+    },
+    {
+      "id": "P02-T05",
+      "name": "Port reset and completed-PRD summary derivation",
+      "status": "completed",
+      "description": "Accepted source task; implementation and evidence are recorded in the FT-04 build, verification, review, and repair handoffs."
+    },
+    {
+      "id": "P02-T06",
+      "name": "Port defer ledger with idempotent operation IDs",
+      "status": "completed",
+      "description": "Accepted source task, including FT-04F11 complete prospective-ledger validation and durable runtime-ancestor creation; evidence is in rework-11.md."
+    },
+    {
+      "id": "P02-T07",
+      "name": "Port stall/park filesystem saga and every existing failpoint",
+      "status": "completed",
+      "description": "Accepted source task; implementation and preservation evidence are recorded in the FT-04 review and repair handoffs."
+    },
+    {
+      "id": "P02-T08",
+      "name": "Port deterministic audit/report/metrics rendering",
+      "status": "completed",
+      "description": "Accepted source task, including FT-04F11 serialized report read/compose/publish; evidence is in rework-11.md."
+    },
+    {
+      "id": "P02-T09",
+      "name": "Replace hardcoded legacy runtime root with configured runtime paths",
+      "status": "completed",
+      "description": "Accepted source task, including FT-04F11 top-down durable runtime-ancestor creation; evidence is in rework-11.md."
+    },
+    {
+      "id": "P02-T10",
+      "name": "Generate workflow command documentation from the parser",
+      "status": "completed",
+      "description": "Accepted source task; implementation and evidence are recorded in the FT-04 build, verification, review, and repair handoffs."
+    },
+    {
+      "name": "[C12] Repair runtime ancestor confirmation after abrupt exit (M)",
+      "description": "Repair the remaining R11-03 interruption gap, recorded as R12-01.\n\n### Findings (verbatim)\n- High: A process exit after creating a runtime ancestor but before fsyncing its parent leaves an existing, unconfirmed directory. A fresh installed defer retry and exact replay return success without fsyncing that parent. | File: src/ovcaq/workflow/_files.py:252 | Task: P02-T06/P02-T09 | Found by: coordinator installed crash probe.\n[BOB] \ud83d\udfe1 F2: _ensure_directory_chain dropped exist_ok, so a peer creating the same missing runtime ancestor makes defer fail with a bare FileExistsError; the sibling helper paths.ensure_runtime_directory:102 handles that case | File: src/ovcaq/workflow/_files.py:265 | Task: P02-T06\n\n### Evidence\nReview HEAD: 39ecaf4f95c79df6a88c30e4626386a352d1505b. See dev/local/reviews/00004_cycle_12_crash_probe.py and 00004-cycle-12-crash-probe.json. Both injected process exits return 73. Retry/replay return 0 with unchanged authoritative state and one ledger item, but project/new parent fsync is omitted. This is syscall durability evidence and consequent data-loss risk, not observed physical power-loss loss.\n\n### Acceptance\nEvery quoted finding no longer reproduces. Add a chronological failing installed regression that actually terminates a child before parent fsync, then retries in a fresh process; cover both the first missing ancestor and the configured runtime leaf. Confirm every potentially unconfirmed ancestor entry before successful ledger publication or exact replay. Do not rely on exception cleanup to prove crash recovery. Preserve caught-fsync-error behavior, existing confirmed ancestors, directory identity checks, serialization/sidecar ownership, prospective ledger depth validation, report overlap preservation, complete returned text, state-byte preservation and exactly-once records. All subprocesses must be reaped. Run bounded regression, preservation cases and required full gates. No importer, aliases, provider policy, rollback/abort API, new public knobs, or broad state restructuring. This task is queued only; no implementation is authorized within this review session.\n\nAlso preserve safe concurrency when a peer creates the same missing ancestor: verify the resulting directory and confirm its parent, without deleting another writer's directory on a failed sync. Retain a separate installed concurrent-creation regression.",
+      "id": "1",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "inherited",
+          "outcome": "completed",
+          "review_cycle": 12,
+          "cause": null,
+          "implementor": "codex",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean",
+          "review": "medium-retry:unfixed"
+        }
+      ]
+    },
+    {
+      "name": "[D12] Correct publication contention context (S)",
+      "description": "### Findings (verbatim)\n[BOB] \ud83d\udfe1 F1: Report publication contention reuses the deferred ledger's message and the generic state_io code, so a supervisor can only tell \"retry me\" from a real disk failure by string-matching the word \"retry\" | File: src/ovcaq/workflow/_files.py:75 | Task: P02-T08\n\n### Acceptance\nRemove the inaccurate deferred-ledger label when report publication is busy; report a precise publication path and contextual retry. The optional proposal to remap contention into revision_conflict is not adopted: this finding establishes misleading context, not a new runtime retry-policy contract. Preserve the current public error taxonomy and state_io exit unless the accepted CLI contract provides a specific existing mapping. This is a bounded diagnostic fix. Keep publication serialization and all behavior intact.",
+      "id": "2",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "inherited",
+          "outcome": "completed",
+          "review_cycle": 12,
+          "cause": null,
+          "implementor": "codex",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean"
+        }
+      ]
+    },
+    {
+      "name": "[D12] Make directory durability assertions meaningful (S)",
+      "description": "### Findings (verbatim)\n[BOB] \ud83d\udfe1 F3: Assertion cannot fail as written: delegated_calls counts every fsync and directories counts a labeled subset, so the inequality holds by construction | File: tests/packaging/test_rework_11.py:278 | Task: P02-T06\n[BOB] \u26aa F5: FSYNC_SCENARIO emits state_changed_while_interrupted; no assertion reads it | File: tests/packaging/rework_11_scripts.py:202 | Task: P02-T06\n\n### Acceptance\nEvery quoted finding no longer reproduces. Replace/remove the always-true count comparison; bind any retained assertion to required ordered fsync events. Assert the recorded state_changed_while_interrupted value to pin preservation of authoritative state on the failed call, or remove the unused key if another exact assertion already establishes it. Preserve the existing installed fault injection controls and all child cleanup. Do not add framework tests or unrelated coverage.",
+      "id": "3",
+      "status": "completed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "model": "inherited",
+          "outcome": "completed",
+          "review_cycle": 12,
+          "cause": null,
+          "implementor": "orchestrator",
+          "preflight_outcome": null,
+          "pipeline": "lean",
+          "red_check": "n/a:micro-lane",
+          "self_deslop": "skipped:trivial",
+          "style_gate": "clean",
+          "split_hygiene": "clean"
+        }
+      ]
+    },
+    {
+      "name": "[D13] Preserve confirmed ancestry across replacement and access boundaries (M)",
+      "description": "Review cycle 13 follow-up. PAUSED: no execution is authorized by the connectivity recovery or this artifact. Operator recovery must authorize repairs; preserve the fresh work/review boundary.\n\n### Findings (verbatim)\n- high: An ancestor replaced after its confirmation is silently adopted as the next level's parent; defer returns success without fsyncing the replacement ancestor's parent | File: src/ovcaq/workflow/_files.py:255 | Consensus: coordinator; Alice adjudication confirms\n- medium: `_ensure_directory_chain` now opens every absolute ancestor with `O_RDONLY`, so a configured runtime below a search-only directory can be traversable and writable yet defer fails with `EACCES`; preserve crash confirmation while opening only directories OVCAQ must confirm or use a descriptor mode compatible with execute-only traversal | File: src/ovcaq/workflow/_files.py:256 | Consensus: 2/3\n- medium: The ancestry loop treats the filesystem root as its own child, opening `/` twice, calling `mkdir(exist_ok=True)` on it, and fsyncing it even though OVCAQ can never create that anchor; exclude the root self-step while retaining parent confirmation for every potentially interrupted runtime ancestor | File: src/ovcaq/workflow/_files.py:255 | Consensus: 2/3\n- medium: B5: Suspected sandbox break: defer/stall/park now issue mkdir and open(O_RDONLY|O_DIRECTORY) against `/`, `/Users`, `$HOME` from inside launcher sessions that run under `codex exec --sandbox workspace-write` (plan \u00a710.4); Path.mkdir(exist_ok=True) swallows only FileExistsError, so a seatbelt EPERM ahead of the kernel EEXIST fails every ledger write | File: src/ovcaq/workflow/_files.py:257 | Consensus: 1/3\n\n### Acceptance criteria\nEvery quoted defect no longer reproduces. Before successful publication or exact replay, an ancestor inode adopted after a prior confirmation must either be refused with a retryable identity error or have its own parent confirmed again. Preserve existing abrupt-exit retries, peer creation, identity checks, exactly-once records, and state/backup bytes. Preserve search-only path access without dropping required confirmations. Remove only the redundant root self-step. Resolve the launcher-sandbox VERIFY finding with a concrete supported check; do not launch nested Codex, strip guards, or claim coverage from a different sandbox.\n\n### Evidence\nReview: dev/local/reviews/00004-workflow-core-v1-review-13.md\nProbe: dev/local/reviews/00004-cycle-13-approved-installed-probe.json\nOriginal work base, cycle 13 and cap 2 remain unchanged.\n",
+      "blocked_by": [],
+      "id": "4",
+      "status": "pending"
+    },
+    {
+      "name": "[D13] Make report contention assertions exact (S)",
+      "description": "Review cycle 13 follow-up. PAUSED: no execution is authorized by the connectivity recovery or this artifact. Operator recovery must authorize repairs; preserve the fresh work/review boundary.\n\n### Findings (verbatim)\n- medium: B3: _assert_retry_error hedges: the else branch (any nonzero code with \"retry\" anywhere in the JSON) is unreachable in the overlap scenario (REPORT_ACTOR pauses inside _publish_file while holding the flock, so B can only fail with the state_io busy error; cli.py:456 maps every OSError to state_io) and keeps the pre-fix loose assertion alive, so a changed code or message still passes | File: tests/packaging/test_rework_11.py:317 | Consensus: 1/3\n\n### Acceptance criteria\nEvery quoted finding no longer reproduces. The controlled overlap contention must assert the established state_io code, exit 2, and exact report-specific publication message. Preserve legitimate non-contention paths and installed-origin checks.\n\n### Evidence\nReview: dev/local/reviews/00004-workflow-core-v1-review-13.md\nProbe: dev/local/reviews/00004-cycle-13-approved-installed-probe.json\nOriginal work base, cycle 13 and cap 2 remain unchanged.\n",
+      "blocked_by": [],
+      "id": "5",
+      "status": "pending"
+    },
+    {
+      "name": "[D13] Remove redundant child origin assertions (S)",
+      "description": "Review cycle 13 follow-up. PAUSED: no execution is authorized by the connectivity recovery or this artifact. Operator recovery must authorize repairs; preserve the fresh work/review boundary.\n\n### Findings (verbatim)\n- low: B4: ORIGIN_CHECK.installed_origins asserts in-child (sys.prefix, site-packages) what every consumer re-asserts test-side through _assert_installed against installed.root; the in-child asserts are redundant | File: tests/packaging/rework_12_scripts.py:84 | Consensus: 1/3\n\n### Acceptance criteria\nEvery quoted finding no longer reproduces. Keep the parent-side installed-root/site-packages/module-origin verification on every subprocess result and event; remove only proven redundant child assertions.\n\n### Evidence\nReview: dev/local/reviews/00004-workflow-core-v1-review-13.md\nProbe: dev/local/reviews/00004-cycle-13-approved-installed-probe.json\nOriginal work base, cycle 13 and cap 2 remain unchanged.\n",
+      "blocked_by": [],
+      "id": "6",
+      "status": "pending"
+    }
+  ],
+  "tasks_total": 16,
+  "tasks_completed": 13,
+  "cycle": 13,
+  "phases_completed": [],
+  "work_start_sha": "b43bf2c94d5eb0fddafca55542ef2570b45e8d52",
+  "repo_root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+  "contract_card": "step: cycle-13 REVIEW completed; PAUSED for detected data-loss risk | PRD: 00004-workflow-core-v1.md\ninvariants: sole statectl writer; cycle 13/cap 2/batch 202609062243/original work base unchanged; preserve all reviewer evidence and fresh work/review boundary\nfinding: R13-01 installed probe returns success after ancestor replacement without confirming its parent; no physical power-loss claim\nreview: dev/local/reviews/00004-workflow-core-v1-review-13.md; Alice/Blake/Bob complete, Claude receipt verified; 5 FIX + 1 VERIFY + 3 KNOWN + 1 discarded\nwork: original 13 tasks remain complete; follow-ups 4/5/6 pending, 13/16 complete; no repairs or cap increase\nhandoff: dev/local/plans/fast-track-handoffs/00004-workflow-core-v1/review-13-approved-pause.md\nnext: STOP; interactive recovery must inspect data_loss_risk and obtain the operator decision before any repair; then preserve a fresh complete review session",
+  "review_lenses": {
+    "consensus": "done",
+    "blind": "done",
+    "doubt": "done",
+    "ui": "failed"
+  },
+  "doubts_rubric_verdicts": [
+    {
+      "rule_id": "D1",
+      "verdict": "pass",
+      "source": "claude"
+    },
+    {
+      "rule_id": "D2",
+      "verdict": "pass",
+      "source": "claude"
+    },
+    {
+      "rule_id": "D3",
+      "verdict": "pass",
+      "source": "claude"
+    },
+    {
+      "rule_id": "D4",
+      "verdict": "pass",
+      "source": "claude"
+    },
+    {
+      "rule_id": "D5",
+      "verdict": "pass",
+      "source": "claude"
+    }
+  ],
+  "review_cycles": [
+    {
+      "cycle": 12,
+      "review_file": "dev/local/reviews/00004-workflow-core-v1-review-12.md",
+      "agents": {
+        "alice": "available",
+        "blake": "available",
+        "bob": "available",
+        "carl": "unavailable"
+      },
+      "issues_found": 13,
+      "follow_up_tasks": 3,
+      "deferred": 6,
+      "recurring_issues": [
+        "R11-03 (abrupt-exit branch)"
+      ],
+      "outcome": "paused_data_loss_risk",
+      "head_sha": "39ecaf4f95c79df6a88c30e4626386a352d1505b",
+      "provider_provenance": {
+        "alice": {
+          "provider": "openai",
+          "model": "gpt-5.6-sol",
+          "logical_tier": "sonnet",
+          "agent": "/root/alice_r12",
+          "isolated": true
+        },
+        "blake": {
+          "provider": "openai",
+          "model": "gpt-5.6-sol",
+          "logical_tier": "sonnet",
+          "agent": "/root/blake_r12",
+          "isolated": true
+        },
+        "bob": {
+          "provider": "claude",
+          "model": "opus",
+          "actual_model": "claude-opus-5",
+          "logical_tier": "opus",
+          "receipt": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00004-cycle-12-bob-retry-output.txt.receipt.json",
+          "host_substitution": "external Claude Bob replaces former external Codex doubt role"
+        },
+        "carl": {
+          "exit": 3,
+          "reason": "refusing nested dispatch (already inside a CLI agent)",
+          "provider_dispatched": false
+        }
+      }
+    },
+    {
+      "cycle": 13,
+      "review_file": "dev/local/reviews/00004-workflow-core-v1-cycle-13-incomplete.md",
+      "agents": {
+        "alice": "available",
+        "blake": "available",
+        "bob": "unavailable",
+        "carl": "unavailable"
+      },
+      "issues_found": 3,
+      "follow_up_tasks": 0,
+      "deferred": 1,
+      "recurring_issues": [
+        "cycle-12 Pat restricted-ancestor permission concern"
+      ],
+      "outcome": "paused_reviewer_unavailable",
+      "head_sha": "be5e385bd9714952b4803ee30f7c72e661c278f2",
+      "provider_provenance": {
+        "alice": {
+          "provider": "openai",
+          "model": "gpt-5.6-sol",
+          "logical_tier": "sonnet",
+          "agent": "/root/alice_r13",
+          "isolated": true
+        },
+        "blake": {
+          "provider": "openai",
+          "model": "gpt-5.6-sol",
+          "logical_tier": "sonnet",
+          "agent": "/root/blake_r13",
+          "isolated": true
+        },
+        "bob": {
+          "cycle": 13,
+          "provider": "claude",
+          "requested_model": "opus",
+          "actual_model": null,
+          "logical_tier": "opus",
+          "provider_inference": false,
+          "exit": 1,
+          "api_status": 429,
+          "reason": "You've hit your session limit \u00b7 resets 7:50pm (Europe/Prague)",
+          "reset_at": "2026-09-07T19:50:00+02:00",
+          "rate_limit": {
+            "status": "rejected",
+            "resetsAt": 1788803400,
+            "rateLimitType": "five_hour",
+            "overageStatus": "rejected",
+            "overageDisabledReason": "out_of_credits",
+            "isUsingOverage": false,
+            "unifiedWindows": {
+              "five_hour": {
+                "utilization": 1.04,
+                "resetsAt": 1788803400
+              },
+              "seven_day": {
+                "utilization": 0.8,
+                "resetsAt": 1789290000
+              }
+            }
+          },
+          "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00004-cycle-13-bob-output-8e22f932bdb843f896b7c570679c4ab6.jsonl",
+          "raw_sha256": "05fd83bf9f356f44802ad4d4aab80064ae2d015d84e9d5ad08f8a981019329fa",
+          "stderr": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00004-cycle-13-bob-output-8e22f932bdb843f896b7c570679c4ab6.stderr",
+          "receipt": null,
+          "retry": "not attempted: confirmed quota rejection; retrying unchanged quota is forbidden by dispatch error taxonomy",
+          "carl": {
+            "exit": 3,
+            "reason": "refusing nested dispatch (already inside a CLI agent)",
+            "provider_inference": false
+          },
+          "watcher": {
+            "status": "terminated",
+            "session_id": 39333,
+            "result": "WAITING; command completed and no active wait process remains"
+          },
+          "host_substitution": "external Claude Bob replaces former external Codex doubt role; unavailable before inference"
+        },
+        "carl": {
+          "exit": 3,
+          "reason": "refusing nested dispatch (already inside a CLI agent)",
+          "provider_inference": false
+        }
+      }
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-resumed",
+      "review_file": "dev/local/reviews/00004-workflow-core-v1-cycle-13-resumed-incomplete.md",
+      "agents": {
+        "alice": "available",
+        "blake": "available",
+        "bob": "unavailable",
+        "carl": "unavailable"
+      },
+      "issues_found": 2,
+      "follow_up_tasks": 0,
+      "deferred": 0,
+      "recurring_issues": [
+        "cycle-12 Pat / incomplete cycle-13 search-only ancestor concern"
+      ],
+      "outcome": "paused_reviewer_unavailable",
+      "head_sha": "be5e385bd9714952b4803ee30f7c72e661c278f2",
+      "provider_provenance": {
+        "alice": {
+          "provider": "openai",
+          "model": "gpt-5.6-sol",
+          "logical_tier": "sonnet",
+          "agent": "/root/alice_r13_resumed",
+          "isolated": true
+        },
+        "blake": {
+          "provider": "openai",
+          "model": "gpt-5.6-sol",
+          "logical_tier": "sonnet",
+          "agent": "/root/blake_r13_resumed",
+          "isolated": true
+        },
+        "bob": {
+          "provider": "claude",
+          "requested_model": "opus",
+          "actual_model": null,
+          "logical_tier": "opus",
+          "provider_inference": false,
+          "helper_exit": 1,
+          "receipt": null,
+          "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/bob-output-00004-13-20260913-resumed-ab1765a9c908456a99e50ce3456ae5f8.jsonl",
+          "raw_sha256": "527a109ba505e642a2d1aee7c1eabf7ec918c88b58a5e7627e8a1b6d39c4e16c",
+          "raw_bytes": 14479,
+          "stderr": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/bob-output-00004-13-20260913-resumed-ab1765a9c908456a99e50ce3456ae5f8.stderr",
+          "stderr_bytes": 0,
+          "error": "API Error: Can't reach the API server \u2014 check your internet or DNS (ENOTFOUND)",
+          "api_error_status": null,
+          "is_error": true,
+          "terminal_reason": "api_error",
+          "duration_ms": 180581,
+          "usage": {
+            "output_tokens_details": {
+              "thinking_tokens": 0
+            },
+            "input_tokens": 0,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 0,
+            "output_tokens": 0,
+            "server_tool_use": {
+              "web_search_requests": 0,
+              "web_fetch_requests": 0
+            },
+            "service_tier": "standard",
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 0
+            },
+            "inference_geo": "",
+            "iterations": [],
+            "speed": "standard"
+          },
+          "model_usage": {},
+          "thread_id": "82b69ce8-8722-4ce1-83d7-16c199507ceb",
+          "host_substitution": "external Claude Bob replaces former external Codex doubt role; unavailable before inference",
+          "retry": "not attempted: host requires pause after helper terminal failure"
+        },
+        "carl": {
+          "exit": 3,
+          "reason": "refusing nested dispatch (already inside a CLI agent)",
+          "provider_inference": false
+        }
+      },
+      "verification": {
+        "source": "last-verification.json",
+        "sha": "be5e385bd9714952b4803ee30f7c72e661c278f2",
+        "passed": 1352,
+        "failed": 0,
+        "skipped": 0
+      },
+      "gates": {
+        "shape": 0,
+        "doubt_constraint": 2
+      },
+      "artifact_status": "incomplete"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "review_file": "dev/local/reviews/00004-workflow-core-v1-review-13.md",
+      "agents": {
+        "alice": "available",
+        "blake": "available",
+        "bob": "available",
+        "carl": "unavailable"
+      },
+      "issues_found": 10,
+      "follow_up_tasks": 3,
+      "follow_up_task_ids": [
+        "4",
+        "5",
+        "6"
+      ],
+      "deferred": 3,
+      "recurring_issues": [
+        "Ancestry confirmation family: replacement between steps remains unconfirmed"
+      ],
+      "outcome": "paused_data_loss_risk",
+      "head_sha": "be5e385bd9714952b4803ee30f7c72e661c278f2",
+      "artifact_status": "complete",
+      "provider_provenance": {
+        "alice": {
+          "provider": "openai",
+          "model": "gpt-5.6-sol",
+          "logical_tier": "sonnet",
+          "agent": "/root/alice_r13_approved",
+          "isolated": true
+        },
+        "blake": {
+          "provider": "openai",
+          "model": "gpt-5.6-sol",
+          "logical_tier": "sonnet",
+          "agent": "/root/blake_r13_approved",
+          "isolated": true
+        },
+        "bob": {
+          "provider": "claude",
+          "model": "opus",
+          "actual_model": "claude-opus-5",
+          "logical_tier": "opus",
+          "receipt": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/bob-output-00004-13-20260913-approved.txt.receipt.json",
+          "helper_exit": 0,
+          "host_substitution": "external Claude Bob replaces former external Codex doubt role and supplies the non-Codex doubt voice; no Eve/Fable dispatch claimed"
+        },
+        "carl": {
+          "exit": 3,
+          "reason": "refusing nested dispatch (already inside a CLI agent)",
+          "provider_inference": false
+        }
+      },
+      "verification": {
+        "source": "last-verification.json",
+        "sha": "be5e385bd9714952b4803ee30f7c72e661c278f2",
+        "passed": 1352,
+        "failed": 0,
+        "skipped": 0
+      },
+      "gates": {
+        "shape": 0,
+        "doubt_constraint": 0
+      },
+      "probe": "dev/local/reviews/00004-cycle-13-approved-installed-probe.json"
+    }
+  ],
+  "autonomous_decisions": [
+    {
+      "cycle": 12,
+      "issue": "F1: Report publication contention reuses the deferred ledger's message and the generic state_io code, so a supervisor can only tell \"retry me\" from a real disk failure by string-matching the word \"retry\"",
+      "severity": "medium",
+      "consensus": "1/3",
+      "action": "queued",
+      "reason": "Task 2 corrects misleading publication context; optional error-code redesign is declined as unestablished by the current contract."
+    },
+    {
+      "cycle": 12,
+      "issue": "F2: _ensure_directory_chain dropped exist_ok, so a peer creating the same missing runtime ancestor makes defer fail with a bare FileExistsError; the sibling helper paths.ensure_runtime_directory:102 handles that case",
+      "severity": "medium",
+      "consensus": "1/3",
+      "action": "queued",
+      "reason": "Task 1 also covers safe concurrent ancestor creation."
+    },
+    {
+      "cycle": 12,
+      "issue": "F3: Assertion cannot fail as written: delegated_calls counts every fsync and directories counts a labeled subset, so the inequality holds by construction",
+      "severity": "medium",
+      "consensus": "1/3",
+      "action": "queued",
+      "reason": "Task 3 replaces redundant evidence with meaningful assertions."
+    },
+    {
+      "cycle": 12,
+      "issue": "F4: reports.publish_report has no production caller; workflow_cli reaches into the module-private reports._publish_report instead",
+      "severity": "medium",
+      "consensus": "1/3",
+      "action": "discarded",
+      "reason": "The R10 repair explicitly retains the public Path-returning publish_report contract while CLI consumes complete composed text from the shared publication. Both paths have callers; removal/renaming offers no required simplification."
+    },
+    {
+      "cycle": 12,
+      "issue": "F5: FSYNC_SCENARIO emits state_changed_while_interrupted; no assertion reads it",
+      "severity": "low",
+      "consensus": "1/3",
+      "action": "queued",
+      "reason": "Task 3 replaces redundant evidence with meaningful assertions."
+    },
+    {
+      "cycle": 12,
+      "issue": "V1: Cannot statically verify: suite, ruff, format, mypy, and build gates at the reviewed head",
+      "severity": "low",
+      "consensus": "1/3",
+      "action": "verified",
+      "reason": "All five gates ran successfully at reviewed HEAD using the mise-managed uv; recorded verification queue avoids duplicate execution."
+    },
+    {
+      "cycle": 12,
+      "issue": "R12-01: process exit after runtime ancestor mkdir but before parent fsync leaves a retry/replay durability gap",
+      "severity": "high",
+      "consensus": "coordinator",
+      "action": "pause",
+      "reason": "Detected data-loss risk: installed fresh retry and exact replay return success without confirming interrupted parent entries.",
+      "research": {
+        "category": "recurring-issue",
+        "previous_fix": "R11-03 created missing ancestors top-down and removed a newly created child when parent fsync raised OSError.",
+        "root_cause": "An abrupt process exit bypasses exception cleanup; existence on restart is incorrectly treated as durable confirmation.",
+        "proposed_approach": "Confirm potentially unconfirmed ancestry on restart and exact replay, with fresh-process crash regressions and safe peer-creation ownership.",
+        "recurrence_count": 2,
+        "verdict": "bounded repair identified; source-mandated data-loss-risk pause"
+      }
+    },
+    {
+      "cycle": 13,
+      "issue": "External Claude Bob unavailable before inference",
+      "severity": "high",
+      "consensus": "coordinator",
+      "action": "pause",
+      "reason": "Cycle 13 incomplete: external Claude Bob was rejected before inference (API 429, five-hour quota exhausted; reset 2026-09-07 19:50 Europe/Prague). No receipt or D1-D5 verdict; independent doubt voice unavailable. Two Medium ancestry findings retained. See dev/local/reviews/00004-workflow-core-v1-cycle-13-incomplete.md. Interactive recovery required; preserve cycle 13 and cap 2."
+    },
+    {
+      "cycle": 13,
+      "disposition": "discarded",
+      "severity": "high",
+      "issue": "`check-plan` exposes an unspecified `--ceiling` override, letting callers bypass the fixed 15-task plan-size policy with a large value and accepting nonsensical negative ceilings instead of rejecting invalid input",
+      "file": "src/ovcaq/workflow_cli.py",
+      "reason": "Withdrawn by Blake: frozen source inventory TEST-012 explicitly requires override semantics, and CMD-012/DEC-071/TEST-012 migrate under PRD 00004. No positive-only domain or fixed non-overridable policy is specified.",
+      "action": "discarded",
+      "consensus": "1/2; withdrawn by reviewer"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-resumed",
+      "issue": "External Claude Bob unavailable before inference: API connectivity/DNS ENOTFOUND",
+      "severity": "high",
+      "consensus": "coordinator",
+      "action": "pause",
+      "reason": "Host requires pause after mandatory Bob helper terminal failure. Helper exit 1; zero tokens, no output/receipt/D verdicts. No quota rejection or reset time. Native review retains two Medium ancestry findings; cap and cycle unchanged."
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-resumed",
+      "disposition": "discarded",
+      "severity": "medium",
+      "issue": "`workflow check-plan` exposes an extra `--ceiling` option absent from the specified command and accepts zero or negative values, allowing a valid empty plan to be rejected as oversized",
+      "file": "src/ovcaq/workflow_cli.py:88",
+      "reason": "Blake retracted after verifying TEST-012 requires override semantics/CLI exposure and DEC-071 specifies no positive-only domain. Mandatory migration assigns these source rows to PRD 00004/P02-T04.",
+      "action": "discarded",
+      "consensus": "1/2; withdrawn by reviewer"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-interactive-connectivity-recovery",
+      "issue": "Cycle 13 external reviewer connectivity recovered",
+      "severity": "low",
+      "consensus": "operator",
+      "action": "resume",
+      "reason": "Operator explicitly said \"ok, resume\" after the successful Claude Opus probe and installed host network-approval guidance. Queue a fresh full cycle-13 review; preserve cap 2, both open Medium ancestry findings, all tasks, and historical review evidence.",
+      "evidence": "dev/local/reviews/00004-cycle-13-connectivity-recovery.md"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "An ancestor replaced after its confirmation is silently adopted as the next level's parent; defer returns success without fsyncing the replacement ancestor's parent",
+      "severity": "high",
+      "consensus": "coordinator; Alice adjudication confirms",
+      "file": "src/ovcaq/workflow/_files.py:255",
+      "reason": "Installed-wheel probe succeeds with no parent fsync after replacement. Detected data-loss risk requires pause before repairs.",
+      "action": "pause",
+      "research": {
+        "category": "recurring-issue",
+        "previous_fix": "Cycle 12 repair confirms every existing/missing ancestor on retry and replay, preserving peer-created directories.",
+        "root_cause": "Each iteration forgets the just-confirmed identity; reopening that pathname as the next level's parent silently adopts a replacement whose entry was not confirmed.",
+        "proposed_approach": "Retain confirmed identities between steps and refuse a replacement or confirm its parent again before success; add chronological regression and preserve crash/replay/peer coverage.",
+        "recurrence_count": 3,
+        "recurrence_scope": "Ancestry-confirmation family across cycles 11,12,13; this exact replacement interleaving is first detected in cycle 13.",
+        "verdict": "pause: detected data-loss risk; repair requires operator recovery decision",
+        "evidence": "dev/local/reviews/00004-cycle-13-approved-installed-probe.json"
+      }
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "`_ensure_directory_chain` now opens every absolute ancestor with `O_RDONLY`, so a configured runtime below a search-only directory can be traversable and writable yet defer fails with `EACCES`; preserve crash confirmation while opening only directories OVCAQ must confirm or use a descriptor mode compatible with execute-only traversal",
+      "severity": "medium",
+      "consensus": "2/3",
+      "file": "src/ovcaq/workflow/_files.py:256",
+      "reason": "Alice and Bob B1 identify the same search-only ancestor access failure. Local O_SEARCH probe supplies a bounded alternative; preserve crash and identity confirmation.",
+      "action": "queued_pending_operator_recovery"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "The ancestry loop treats the filesystem root as its own child, opening `/` twice, calling `mkdir(exist_ok=True)` on it, and fsyncing it even though OVCAQ can never create that anchor; exclude the root self-step while retaining parent confirmation for every potentially interrupted runtime ancestor",
+      "severity": "medium",
+      "consensus": "2/3",
+      "file": "src/ovcaq/workflow/_files.py:255",
+      "reason": "Alice and Bob B2 identify the same root self-step; retain the higher reported severity.",
+      "action": "queued_pending_operator_recovery"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "B3: _assert_retry_error hedges: the else branch (any nonzero code with \"retry\" anywhere in the JSON) is unreachable in the overlap scenario (REPORT_ACTOR pauses inside _publish_file while holding the flock, so B can only fail with the state_io busy error; cli.py:456 maps every OSError to state_io) and keeps the pre-fix loose assertion alive, so a changed code or message still passes",
+      "severity": "medium",
+      "consensus": "1/3",
+      "file": "tests/packaging/test_rework_11.py:317",
+      "reason": "Exact contention error assertions can replace the weak fallback in the controlled overlap scenario.",
+      "action": "queued_pending_operator_recovery"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "B4: ORIGIN_CHECK.installed_origins asserts in-child (sys.prefix, site-packages) what every consumer re-asserts test-side through _assert_installed against installed.root; the in-child asserts are redundant",
+      "severity": "low",
+      "consensus": "1/3",
+      "file": "tests/packaging/rework_12_scripts.py:84",
+      "reason": "The parent-side installed-origin check already validates the returned module origins; the duplicate child-side assertions are removable within these tests.",
+      "action": "queued_pending_operator_recovery"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "B5: Suspected sandbox break: defer/stall/park now issue mkdir and open(O_RDONLY|O_DIRECTORY) against `/`, `/Users`, `$HOME` from inside launcher sessions that run under `codex exec --sandbox workspace-write` (plan \u00a710.4); Path.mkdir(exist_ok=True) swallows only FileExistsError, so a seatbelt EPERM ahead of the kernel EEXIST fails every ledger write",
+      "severity": "medium",
+      "consensus": "1/3",
+      "file": "src/ovcaq/workflow/_files.py:257",
+      "reason": "Not queued: suggested command uses placeholders and a nested Codex CLI; host prohibits nested Codex simulation. The source and installed probes succeeded in this host sandbox, refuting a universal failure here. Actual launcher sandbox coverage remains unverified.",
+      "action": "verification_pending"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "Frontmatter application silently discards the effective catchup, design, design-gate, and pause-on-ambiguity controls: `apply_to_store` parses and returns them but removes their extension keys and persists only rework cap and tier, violating CMD-014\u2019s requirement to transactionally apply derived state fields",
+      "severity": "high",
+      "consensus": "1/3",
+      "file": "src/ovcaq/workflow/frontmatter.py:191",
+      "reason": "The cycle-9 adjudication already settled returned-control/downstream ownership, repeated in cycle-10 and cycle-11 source evidence. The v1 state crosswalk derives controls rather than duplicating policy; tests/workflow/test_applications.py pins returned controls and durable cap/tier/CAS behavior. No new evidence invalidates that boundary.",
+      "action": "discarded"
+    }
+  ],
+  "deferred_decisions": [
+    {
+      "cycle": 12,
+      "disposition": "settled-deferral",
+      "severity": "low",
+      "issue": "K1: A ledger written past the reader's depth limit by a pre-fix build stays unreadable and unappendable; the repair is prospective only",
+      "file": "src/ovcaq/workflow/_files.py:82",
+      "reason": "Fresh-state one-way extraction explicitly excludes an importer or historical corrupt-ledger repair.",
+      "type": "known",
+      "consensus": "1/3",
+      "status": "known"
+    },
+    {
+      "cycle": 12,
+      "disposition": "settled-deferral",
+      "severity": "low",
+      "issue": "K2: render report requires runtime_root to already exist while defer now creates its chain",
+      "file": "src/ovcaq/workflow/reports.py:507",
+      "reason": "Render requires an existing configured runtime root and fails loudly; no accepted clause requires render to provision it.",
+      "type": "known",
+      "consensus": "1/3",
+      "status": "known"
+    },
+    {
+      "cycle": 12,
+      "disposition": "settled-deferral",
+      "severity": "medium",
+      "issue": "R8-K1: inherited config-collision test retains the mechanically flagged either-or assertion",
+      "file": "tests/state/test_cli.py:372",
+      "reason": "Inherited collision assertion is a settled exception; broad state-test restructuring excluded.",
+      "type": "known",
+      "consensus": "1/3",
+      "status": "known"
+    },
+    {
+      "cycle": 12,
+      "disposition": "settled-deferral",
+      "severity": "low",
+      "issue": "R8-K2: inherited 53-line add_task and three unchanged packaging functions exceed R12",
+      "file": "src/ovcaq/state/commands.py:148",
+      "reason": "Inherited function-size exceptions are settled; retain existing API and test boundaries.",
+      "type": "known",
+      "consensus": "1/3",
+      "status": "known"
+    },
+    {
+      "cycle": 12,
+      "disposition": "settled-deferral",
+      "severity": "low",
+      "issue": "R9-K3: inherited state schema remains 933 lines, over R13",
+      "file": "src/ovcaq/state/schema.py:1",
+      "reason": "Inherited schema-size exception is settled; broad state restructuring excluded.",
+      "type": "known",
+      "consensus": "1/3",
+      "status": "known"
+    },
+    {
+      "cycle": 12,
+      "disposition": "settled-deferral",
+      "severity": "low",
+      "issue": "R9-K4: universal implementation-base fail-first binding remains unproven; this cycle's replay was skipped outright (worktree creation denied)",
+      "file": "N/A",
+      "reason": "Universal full-base fail-first binding remains unproven; current replay collection fails on missing packaging_support. Retain narrower chronological regressions.",
+      "type": "known",
+      "consensus": "1/3",
+      "status": "known"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "B6: paths.ensure_runtime_directory (`ovcaq init`) creates the project root and runtime chain with mkdir(parents=True) and no directory fsync; the durability this diff adds does not cover init-created levels (today the unbounded walk confirms them incidentally on the first ledger write)",
+      "severity": "low",
+      "consensus": "1/3",
+      "file": "src/ovcaq/paths.py:94",
+      "reason": "Unchanged init ancestry provisioning belongs to P03-T01/PRD 00005. No init durability guarantee is newly asserted here; retain the limitation for its owning phase.",
+      "type": "known",
+      "status": "known",
+      "disposition": "settled-deferral"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "B7: level.mkdir(exist_ok=True) creates the runtime root with default umask mode while ensure_runtime_directory gives the runtime leaf 0o700 (plan \u00a715 restrictive permissions)",
+      "severity": "low",
+      "consensus": "1/3",
+      "file": "src/ovcaq/workflow/_files.py:257",
+      "reason": "Inherited runtime-root mode behavior belongs to P03-T01 provisioning policy. Existing record/lock permissions remain checked; no new policy is introduced in this review.",
+      "type": "known",
+      "status": "known",
+      "disposition": "settled-deferral"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "B8: Cannot statically verify: suite/ruff/format/mypy/build and fail-first replay of the rework_12 crash/racer tests and the two exact-message asserts (replay skipped: worktree denied); recorded gates at HEAD be5e385 (1352 passed) taken from last-verification.json",
+      "severity": "low",
+      "consensus": "1/3",
+      "file": "N/A",
+      "reason": "Same-HEAD suite/lint/format/types/build are verified by last-verification.json. Residual full fail-first binding is the settled R9-K4 limitation. Not queued: archive/pipe/overlay instructions violate the single verification-command shape.",
+      "type": "known",
+      "status": "known",
+      "disposition": "settled-deferral"
+    }
+  ],
+  "rework_task_ids": [],
+  "doubts": [
+    {
+      "cycle": 12,
+      "issue": "R12-01: successful retry/replay omits interrupted runtime-parent fsync",
+      "bucket": "FIX",
+      "severity": "high",
+      "source": "coordinator",
+      "evidence": "dev/local/reviews/00004-cycle-12-crash-probe.json"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "An ancestor replaced after its confirmation is silently adopted as the next level's parent; defer returns success without fsyncing the replacement ancestor's parent",
+      "bucket": "FIX",
+      "severity": "high",
+      "source": "coordinator",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-13.md"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "`_ensure_directory_chain` now opens every absolute ancestor with `O_RDONLY`, so a configured runtime below a search-only directory can be traversable and writable yet defer fails with `EACCES`; preserve crash confirmation while opening only directories OVCAQ must confirm or use a descriptor mode compatible with execute-only traversal",
+      "bucket": "FIX",
+      "severity": "medium",
+      "source": "ALICE",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-13.md"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "The ancestry loop treats the filesystem root as its own child, opening `/` twice, calling `mkdir(exist_ok=True)` on it, and fsyncing it even though OVCAQ can never create that anchor; exclude the root self-step while retaining parent confirmation for every potentially interrupted runtime ancestor",
+      "bucket": "FIX",
+      "severity": "medium",
+      "source": "ALICE",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-13.md"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "B3: _assert_retry_error hedges: the else branch (any nonzero code with \"retry\" anywhere in the JSON) is unreachable in the overlap scenario (REPORT_ACTOR pauses inside _publish_file while holding the flock, so B can only fail with the state_io busy error; cli.py:456 maps every OSError to state_io) and keeps the pre-fix loose assertion alive, so a changed code or message still passes",
+      "bucket": "FIX",
+      "severity": "medium",
+      "source": "BOB",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-13.md"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "B4: ORIGIN_CHECK.installed_origins asserts in-child (sys.prefix, site-packages) what every consumer re-asserts test-side through _assert_installed against installed.root; the in-child asserts are redundant",
+      "bucket": "FIX",
+      "severity": "low",
+      "source": "BOB",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-13.md"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "B5: Suspected sandbox break: defer/stall/park now issue mkdir and open(O_RDONLY|O_DIRECTORY) against `/`, `/Users`, `$HOME` from inside launcher sessions that run under `codex exec --sandbox workspace-write` (plan \u00a710.4); Path.mkdir(exist_ok=True) swallows only FileExistsError, so a seatbelt EPERM ahead of the kernel EEXIST fails every ledger write",
+      "bucket": "VERIFY",
+      "severity": "medium",
+      "source": "BOB",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-13.md"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "B6: paths.ensure_runtime_directory (`ovcaq init`) creates the project root and runtime chain with mkdir(parents=True) and no directory fsync; the durability this diff adds does not cover init-created levels (today the unbounded walk confirms them incidentally on the first ledger write)",
+      "bucket": "KNOWN",
+      "severity": "low",
+      "source": "BOB",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-13.md"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "B7: level.mkdir(exist_ok=True) creates the runtime root with default umask mode while ensure_runtime_directory gives the runtime leaf 0o700 (plan \u00a715 restrictive permissions)",
+      "bucket": "KNOWN",
+      "severity": "low",
+      "source": "BOB",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-13.md"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "B8: Cannot statically verify: suite/ruff/format/mypy/build and fail-first replay of the rework_12 crash/racer tests and the two exact-message asserts (replay skipped: worktree denied); recorded gates at HEAD be5e385 (1352 passed) taken from last-verification.json",
+      "bucket": "KNOWN",
+      "severity": "low",
+      "source": "BOB",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-13.md"
+    }
+  ],
+  "pause_reason": {
+    "site": "data_loss_risk",
+    "detail": "Cycle 13 completed all mandatory lenses, including external Claude Opus Bob with a valid receipt. Installed-wheel probe proves defer can return success after an ancestor replacement without confirming that ancestor's parent. R13-01 is an unresolved High data-loss risk. No repairs dispatched; tasks 4/5/6 pending, 13/16 complete. Preserve cycle 13, cap 2 and all evidence. Interactive operator recovery required before repair."
+  }
+}

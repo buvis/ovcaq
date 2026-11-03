@@ -1,0 +1,4 @@
+Operator explicitly authorized repairs of tasks 4–6; the PAUSED statement in the historical task description is superseded by that recorded authorization. Task 5 qualifies for the installed work skill's micro lane: one MEDIUM finding in one clean file. Coordinator edited the test assertions, net -4 lines in one file.
+
+mise exec -- uv run --offline --no-sync pytest tests/packaging/test_rework_11.py::test_installed_report_overlap_preserves_every_successful_publication -q --basetemp /private/tmp/ovcaq-r13-task5
+Exit 0: 1 passed in 1.02s. The existing installed-wheel overlap test drives the locked report publisher and exercises this exact helper. Style-limit and split-hygiene checks both passed.

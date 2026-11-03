@@ -1,0 +1,5 @@
+Command: mise exec -- uv run --no-sync pytest tests/drivers/test_codex_detail_safety.py -q --tb=line
+Environment: UV_CACHE_DIR=/private/tmp/ovcaq-rework-uv-cache
+Exit: 0
+180 passed, 2 warnings in 0.14s
+Micro lane: two noncritical findings, named files clean at claim, two-file diff +8/-6, net 2. Documentation manually compared against bounded_detail and publication boundary.

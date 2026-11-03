@@ -1,0 +1,17 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.16, pytest-9.1.1, pluggy-1.6.0 -- /Users/bob/git/src/github.com/buvis/ovcaq/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/bob/git/src/github.com/buvis/ovcaq
+configfile: pyproject.toml
+collecting ... collected 1 item
+
+tests/integration/test_observer_terminal_viewers.py::test_plain_keeps_live_pause_or_attention_until_the_selected_run_ends[attention] PASSED [100%]
+
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-e1acafc4-3a59-4b92-b4cf-2e048ad3e439
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-e1acafc4-3a59-4b92-b4cf-2e048ad3e439'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+========================= 1 passed, 1 warning in 0.73s =========================

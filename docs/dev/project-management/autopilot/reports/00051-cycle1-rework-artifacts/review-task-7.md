@@ -1,0 +1,5 @@
+CLOSURE | resolved | "tests/events/test_unicode_frames.py:1: The raw-first regressions ... live in `tests/events/test_unicode_frames.py`. The PRD's Task 2 acceptance command ... does not run them. Fix: record the file in the PRD or design acceptance text" | The design doc's Test strategy section now says "The Phase 1 acceptance command is `mise exec -- uv run pytest tests/events/test_unicode_safety.py tests/events/test_unicode_frames.py tests/events/test_tail.py`". The task text allows the design doc to carry this and bars rewriting the PRD. The recorded run of that same three-file command exits 0 with 1251 passed.
+
+CLOSURE | resolved | "tests/events/test_unicode_safety.py:314: Duplicated test tables: the completion construct and record-decode tests repeat the same `additions` dict and body. Hoist it to one module constant or merge them into one test" | The diff adds a module-level `completion_additions(scalar)` that both tests call. This removes the duplicated dict and keeps the two test functions, their parametrizations and their assertions.
+
+NO FINDINGS

@@ -1,0 +1,103 @@
+{
+  "sha": "fd6d9a1a8933ea08c6f178f96c86e73382945b4e",
+  "cycle": 2,
+  "commands": [
+    {
+      "command": "mise exec -- uv sync --all-groups",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv run ruff check .",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv run ruff format --check .",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv run mypy src/ovcaq",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv build",
+      "exit": 0
+    }
+  ],
+  "suite_attempts": [
+    {
+      "command": "mise exec -- uv run pytest -q --tb=line",
+      "exit": 1,
+      "passed": 7152,
+      "failed": 1,
+      "skipped": 0,
+      "warnings": 2,
+      "seconds": 238.36,
+      "failure": "tests/tui/test_app.py::test_project_completion_exits_without_stopping: app.return_value None != AttachResult(reason='completed', exit_code=0)"
+    },
+    {
+      "command": "mise exec -- uv run pytest tests/tui/test_app.py::test_project_completion_exits_without_stopping -q --tb=short",
+      "exit": 0,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "warnings": 2,
+      "seconds": 0.26
+    },
+    {
+      "command": "mise exec -- uv run pytest -q --tb=line",
+      "exit": 0,
+      "passed": 7153,
+      "failed": 0,
+      "skipped": 0,
+      "warnings": 2,
+      "seconds": 248.9
+    }
+  ],
+  "receipt_hashes_before": {
+    "docs/dev/project-management/reviews/00007-review-1-bob.txt.receipt.json": "803b5b49143edae76fcce0f8aae703c585345705fb4611069263f99801f111a8",
+    "docs/dev/project-management/reviews/bob-output-00004-13-20260913-approved.txt.receipt.json": "ba18d4ac3043b78c9244ad593a4840fe41da7e39ad0967ebbeef7e8d594a4d38",
+    "docs/dev/project-management/reviews/00005-bob-output-c1-20260914.txt.receipt.json": "3ab4654eeb9097e78691656c0fff38adcd563f44dcc3e4caf37aed1c5819e2fc",
+    "docs/dev/project-management/reviews/bob-output-00004-15-20260913.txt.receipt.json": "34fbf990c56b6df2bd045fa18b291771953a71f99866b5ca59b8de1291a1ebcf",
+    "docs/dev/project-management/reviews/00004-cycle-12-bob-retry-output.txt.receipt.json": "053ceef7a45f039bcf08e5ac2d7fc52be5abdbe014916dc1d29922903e7ded8c",
+    "docs/dev/project-management/reviews/alice-output-00053-c1-20261010.txt.receipt.json": "5586430fbc416d852dae47ae1970860dff59d97662de44c81acc14efc8920532",
+    "docs/dev/project-management/reviews/bob-output-00053-c2-20261010.txt.receipt.json": "b305611cfe5bc0d610789bcaaa72753da63fecc402fb61e4cbd337e1cd009a8f",
+    "docs/dev/project-management/reviews/bob-output-00004-16-20260914.txt.receipt.json": "2e600baf695738e24180575d90e52b5ea8d3f3cbb084179dfd002492dd87cfff",
+    "docs/dev/project-management/reviews/blake-output-00053-c2-20261010-isolated.txt.receipt.json": "172bc35e23179a21974b550f4857673c9b2d1b43804501127ade1f52a354f577",
+    "docs/dev/project-management/reviews/00005-bob-output-c2-20260925.txt.receipt.json": "96d509bc0b9197617f6482369e5315dc4793dc49903578201ec9710b1c03f33f",
+    "docs/dev/project-management/reviews/blake-output-00053-c1-20261010.txt.receipt.json": "ea332c9f6ce8412fb203152e7745d454854e3004bd8aeb8b758e310c4c9ef6ae",
+    "docs/dev/project-management/reviews/bob-output-00004-14-20260913.txt.receipt.json": "e9c1b43118d8f79019a0c974bdf6405cf3449649c6c31165885454439aa014ce",
+    "docs/dev/project-management/reviews/bob-output-00053-c1-20261010.txt.receipt.json": "5b35d02fa3863b3c17f3b1bea058d88a6a72fae9dd166b2f2890f50916ebb620",
+    "docs/dev/project-management/reviews/00007-review-2-bob.txt.receipt.json": "57c008807edbf2e9fbe573834749e739b6c04ebb4289d114f7c4268211816ef6",
+    "docs/dev/project-management/reviews/00006-review-2-bob.receipt.json": "bbf388369e56178435a4a466a5e0ec633ed5d7136ebce37d796735bfdd233818",
+    "docs/dev/project-management/reviews/alice-output-00053-c2-20261010.txt.receipt.json": "6574d4f1f271469cb7484ce7ee3481ab04670365bce4ad63a48fb8887359e0d6",
+    "docs/dev/project-management/reviews/bob-output-00053-c1-20261010-isolated.txt.receipt.json": "e66f2785385a4fd58d4f5f25b9fa6cabb47ad821545bbd5a84c4f905160e88d9",
+    "docs/dev/project-management/reviews/00008-tui-python-launcher-v1-cycle-2-evidence/bob-output-00008-c2-e454253ecd58445aae6fbf7d78969e75.txt.receipt.json": "85e87f1e80ba86cc3bb0abd294e898f5fd8fd58cf3293751668a06e6ff8ac163",
+    "docs/dev/project-management/reviews/00006-cycle-5-evidence/bob.receipt.json": "9fd883469024fbb549a502148b1ed88c4232543bc33883257301cfeac69ef70f",
+    "docs/dev/project-management/reviews/00008-tui-python-launcher-v1-cycle-1-evidence/bob-output-00008-c1-20261003.txt.receipt.json": "63fdac09ba793a8df7d0a82dd3f98b2f2254260f5facebe41485d29543311911",
+    "docs/dev/project-management/autopilot/reports/00053-review-2-evidence/bob-output-00053-c2-20261010.txt.receipt.json": "b305611cfe5bc0d610789bcaaa72753da63fecc402fb61e4cbd337e1cd009a8f",
+    "docs/dev/project-management/autopilot/reports/00053-review-2-evidence/blake-output-00053-c2-20261010.txt.receipt.json": "c55cd29a95376792d49dedd1ecd1cd2b4fad5fa2ace85bde1c009be8ee6754ab",
+    "docs/dev/project-management/autopilot/reports/00053-review-2-evidence/blake-output-00053-c2-20261010-isolated.txt.receipt.json": "172bc35e23179a21974b550f4857673c9b2d1b43804501127ade1f52a354f577",
+    "docs/dev/project-management/autopilot/reports/00053-review-2-evidence/alice-output-00053-c2-20261010.txt.receipt.json": "6574d4f1f271469cb7484ce7ee3481ab04670365bce4ad63a48fb8887359e0d6",
+    "docs/dev/project-management/autopilot/reports/00051-cycle2-review-evidence/alice-output-00051-c2-20261010.txt.receipt.json": "5504da8751394a75f346ab9671d289f3dbb4ec6c19fec2f47857b0092fa5641d",
+    "docs/dev/project-management/autopilot/reports/00051-cycle2-review-evidence/blake-output-00051-c2-20261010.txt.receipt.json": "4a3e97953e45e48eedb935245596387f7c69d8c853c7d45fe23f40231d382c83",
+    "docs/dev/project-management/autopilot/reports/00051-cycle2-review-evidence/bob-output-00051-c2-20261010.txt.receipt.json": "8f23cd57e0547eba77dcec7ff680c21efdd0b05f32722cb826c76c24d59b5229",
+    "docs/dev/project-management/autopilot/reports/00051-cycle1-review-evidence/bob-output-00051-c1-20261010.txt.receipt.json": "43336565ed18d7e6d99a465ebe75394e129686bc50ff3a5d6fcc675a44b6eb8c",
+    "docs/dev/project-management/autopilot/reports/00051-cycle1-review-evidence/blake-output-00051-c1-20261010.txt.receipt.json": "925ef30715d45e7e32593bee06c6e40aa59c39217f9168711689f8fa203e67db",
+    "docs/dev/project-management/autopilot/reports/00051-cycle1-review-evidence/alice-output-00051-c1-20261010.txt.receipt.json": "6c699686e167322d76f29f556acf11f4e79894d9ba41eaa0508d4375af7dff1a",
+    "docs/dev/project-management/autopilot/reports/00009-cycle2-review-evidence/alice-output-00009-c2-20261006.txt.receipt.json": "2076f3c5b858824b9101bb2020604e28a4df262869412a8e876bbbde5afb7ecf",
+    "docs/dev/project-management/autopilot/reports/00009-cycle2-review-evidence/bob-output-00009-c2-20261006.txt.receipt.json": "ee2a3992e00c6973f84cfce38fcb98cdfbdf93e3f9b0b82e191325d1209c85a1",
+    "docs/dev/project-management/autopilot/reports/00009-cycle2-review-evidence/blake-output-00009-c2-20261006.txt.receipt.json": "def1172c1389ec4277638f278e039b5b91d035ff0b7a42a29709c7492509d46d"
+  },
+  "pause_reason_before": {
+    "site": "host_process_inspection",
+    "detail": "PRD00053 tail tasks 11–14 complete (14/14), cycle/cap 2 unchanged. Mandatory full verification blocked: ps execution denied with EPERM even after require_escalated approval; interrupted suite exit 2, 3249 passed, 88 failed, 27 errors. Restore host process-inspection capability, finish full checks, then hand off to fresh post-sweep provider review. Evidence: reports/00053-tail-sweep-20261011.md. No further repair loop or finalization authorized."
+  },
+  "host_process_inspection": {
+    "shell_ps_exit": 0,
+    "python_subprocess_ps_exit": 0
+  },
+  "schema_valid": true,
+  "tasks_completed": 14,
+  "tasks_total": 14,
+  "rework_cap": 2
+}

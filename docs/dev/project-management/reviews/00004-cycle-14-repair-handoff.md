@@ -1,0 +1,22 @@
+# PRD 00004: authorized Resume for tasks 7–8
+
+The operator's 2026-09-13 continuation explicitly authorizes resuming the existing cycle-14 repair tasks and preparing a fresh autocodex work session. This recovery session performs no implementation or review. The decision blocking repair is resolved; the independently confirmed ledger durability defect remains open.
+
+Verified starting state: master at `7291d9f80c5b7a55f63c406552e5b3e27025acad`, clean tracked worktree, no stashes. PRD `00004-workflow-core-v1.md` remains in `dev/local/prds/wip/`. Cycle 14, cap 2, batch `202609062243`, work base `b43bf2c94d5eb0fddafca55542ef2570b45e8d52`, all 18 task entries and all review history are preserved. Tasks 7 and 8 remain pending; 16 tasks are complete. Task 8 depends on task 7.
+
+Read the resolved host contract at `/Users/bob/.config/autocodex/host.md` and installed `/Users/bob/.claude/plugins/cache/buvis-plugins/autopilot/0.5.2/skills/run-autopilot/SKILL.md`. This is interactive recovery of a data-loss pause, with no `cap_pause_reason`. The cap-pause handler's review restart does not apply. The installed `phase-done` table has no paused recovery outcome: this bounded Resume uses supported `statectl` field operations, retaining the durable pause reason until the queue, phase pair and contract card are ready.
+
+The next session follows committed `build` state and `resume-target`: `/work continues at first non-completed task 7`. Read the installed work skill and its `references/rework-mode.md`; `rework_task_ids` limits work to `7`, then `8`. Reuse the existing tasks and accepted architecture. Do not restart selection, design or planning, recapture the work base, change the cap, or repeat the completed cycle-14 review.
+
+- Task 7: bind confirmed ancestry through ledger publication; close R14-01, R14-02 and R14-06. Preserve the actual runtime-replacement boundary and direct/replay chronology; retain distance-3/5 regressions.
+- Task 8: pin fallback diagnostics and simplify existing test scaffolding; close R14-03, R14-04, R14-05, R14-07 and R14-08. Preserve real permissions, errno/cause/path, Darwin flags and scenario-specific preparation.
+
+Full authoritative task descriptions remain unchanged in state. Findings and evidence: [cycle-14 review](00004-workflow-core-v1-review-14.md), [installed handoff probe](00004-cycle-14-installed-handoff-probe.json), [saved final review audit](00004-cycle-14-final-audit.json), and [metrics recovery report](autocodex-metrics-recovery-20260913.md). The probe establishes syscall ordering, not a physical power-loss simulation. Known and discarded findings remain settled.
+
+Run every required work gate and preserve host model/role mappings. After both repairs complete and verification passes, use the installed canonical transitions to leave build (`phase-done --outcome tasks_done`), then advance the completed rework (`phase-done --outcome rework`). The latter increments cycle to 15 and clears the rework queue atomically. Write the required handoff record/card and END the work session. Cycle stays 14 until that repair completion; cap stays 2. The fresh review must run every mandatory Alice consensus, Blake blind/PRD-only, and external Claude Bob doubt/de-slop lens, with complete rubrics and receipt evidence. Never review the completed repair in its work session or infer convergence from old findings.
+
+Recovery checks reuse project verification only at the unchanged HEAD: 1359 tests passed, zero failures/skips; Ruff lint/format, mypy and build passed. No new project test run or reviewer dispatch belongs to this recovery. Preflight and post-Resume audits validate the state schema/counts, saved review/receipt, plugin pins, metrics signature, loop lock and unchanged historical artifacts. Prior dotfiles edits and four unrelated stashes remain untouched.
+
+Recovery evidence: [original paused state](00004-cycle-14-resume-before.json), [preflight](00004-cycle-14-resume-preflight.json), and [final Resume audit](00004-cycle-14-resume-audit.json). Interactive recovery is not a completed build/review gate; the installed telemetry procedure does not require a leave row for this abort-handler handoff. The next build session writes its normal resume row.
+
+Restart from the repository root with `autocodex`. The recovery session must stop without launching it. No cap increase or further operator decision is needed for these two queued repairs.

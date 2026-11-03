@@ -1,0 +1,10 @@
+[
+  {
+    "cycle": 1,
+    "finding": "Suites pass at review HEAD 4c84d4d",
+    "file": null,
+    "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache mise exec -- uv run pytest -q --tb=line tests/events/test_unicode_safety.py tests/events/test_unicode_frames.py tests/events/test_tail.py tests/drivers/test_codex_detail_safety.py tests/drivers/test_codex_decode_terminals.py tests/runtime/test_unicode_continuity.py",
+    "source": "bob",
+    "result": {"exit": 0}
+  }
+]

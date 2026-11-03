@@ -1,0 +1,71 @@
+{
+  "alice_R": {
+    "R1": "fail",
+    "R2": "fail",
+    "R3": "pass",
+    "R4": "pass",
+    "R6": "pass",
+    "R7": "pass",
+    "R8": "pass",
+    "R9": "fail",
+    "R10": "pass",
+    "R11": "pass",
+    "R12": "pass",
+    "R13": "pass"
+  },
+  "blake_B": {
+    "B1": "fail",
+    "B2": "fail",
+    "B3": "fail",
+    "B4": "fail",
+    "B5": "fail",
+    "B6": "pass",
+    "B7": "pass",
+    "B8": "pass",
+    "B9": "pass",
+    "B10": "pass",
+    "B11": "fail",
+    "B12": "fail",
+    "B13": "pass",
+    "B14": "pass",
+    "B15": "fail",
+    "B16": "fail",
+    "B17": "fail",
+    "B18": "pass",
+    "B19": "pass"
+  },
+  "bob_R": {
+    "R1": "fail",
+    "R2": "fail",
+    "R3": "pass",
+    "R4": "fail",
+    "R6": "pass",
+    "R7": "fail",
+    "R8": "pass",
+    "R9": "fail",
+    "R10": "fail",
+    "R11": "pass",
+    "R12": "pass",
+    "R13": "pass"
+  },
+  "bob_D": {
+    "D1": "pass",
+    "D2": "pass",
+    "D3": "pass",
+    "D4": "pass",
+    "D5": "pass"
+  },
+  "receipt_hashes": "valid",
+  "source_review_gate": "passed --require-codex-guard --assert-constraint-met",
+  "autocodex_host_review_gate": "passed adapter.review_gap",
+  "state_schema_and_task_counts": "valid; 15/15",
+  "reviewed_sha": "3f5a0bdd3e3268eb08bbef2240beb3f6733eda59",
+  "tasks": "15/15",
+  "reviewers": [
+    "alice",
+    "blake",
+    "bob"
+  ],
+  "findings": 28,
+  "cap_deferrals": 16
+}

@@ -1,0 +1,6 @@
+{
+  "command": "UV_CACHE_DIR=/private/tmp/ovcaq-final-cache mise exec -- uv build",
+  "exit": 0,
+  "budget_seconds": 600,
+  "log": "docs/dev/tmp/00007-rework-final-build.txt"
+}

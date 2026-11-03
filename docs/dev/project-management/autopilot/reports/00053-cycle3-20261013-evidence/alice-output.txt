@@ -1,0 +1,21 @@
+The second full-suite run also passed, so nothing in my review changes. Here is the output again:
+
+[ALICE] ⚪ CHANGELOG.md:43 says the change will "avoid quadratic backtracking when Codex failure diagnostics contain long whitespace runs after a status prefix". That status prefix was added earlier in this same unreleased PRD (codex_events.py:300), and the pre-PRD base had no such regex. Compared with the base, users see no change. Task 16 deleted an earlier entry of the same kind ("describes no change from the pre-PRD base"). Delete this entry too. The `fix` commit type seems to have forced the entry, so a follow-up `docs` commit can remove it | File: CHANGELOG.md | Task: 24
+[ALICE] ⚪ The cycle-3 test gate's "exit 2, no summary line" comes from a cut-off run, not from failing tests. full-suite.log stops at 71%, at the slow watchdog tests in tests/runtime/test_supervisor_process.py. The cycle-2 host verification at c119229 also never went green: it reported 555 failures, all from the sandbox blocking `ps`. Until my runs, HEAD had no green full-suite evidence for the PRD's exit criteria. I re-ran everything at HEAD with `ps` available:
+- `uv run pytest`, run twice: 7151 passed, 0 failed, 0 skipped, exit 0 both times (263 s and 252 s)
+- `ruff check`, `ruff format --check`, `mypy src/ovcaq` and `uv build`: all exit 0
+
+Record these runs as the phase-2 gate evidence, and give the gate's pytest step a longer limit than it has now | File: N/A | Task: general
+
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass

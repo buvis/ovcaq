@@ -1,0 +1,3147 @@
+{
+  "batch_id": "202609062243",
+  "items": [
+    {
+      "cycle": 12,
+      "issue": "R12-01: process exit after runtime ancestor mkdir but before parent fsync leaves a retry/replay durability gap",
+      "severity": "high",
+      "consensus": "coordinator",
+      "action": "pause",
+      "reason": "Detected data-loss risk: installed fresh retry and exact replay return success without confirming interrupted parent entries.",
+      "research": {
+        "category": "recurring-issue",
+        "previous_fix": "R11-03 created missing ancestors top-down and removed a newly created child when parent fsync raised OSError.",
+        "root_cause": "An abrupt process exit bypasses exception cleanup; existence on restart is incorrectly treated as durable confirmation.",
+        "proposed_approach": "Confirm potentially unconfirmed ancestry on restart and exact replay, with fresh-process crash regressions and safe peer-creation ownership.",
+        "recurrence_count": 2,
+        "verdict": "bounded repair identified; source-mandated data-loss-risk pause"
+      },
+      "type": "autonomous_research",
+      "prd": "00004-workflow-core-v1.md"
+    },
+    {
+      "cycle": 13,
+      "attempt": "20260913-approved",
+      "issue": "An ancestor replaced after its confirmation is silently adopted as the next level's parent; defer returns success without fsyncing the replacement ancestor's parent",
+      "severity": "high",
+      "consensus": "coordinator; Alice adjudication confirms",
+      "file": "src/ovcaq/workflow/_files.py:255",
+      "reason": "Installed-wheel probe succeeds with no parent fsync after replacement. Detected data-loss risk requires pause before repairs.",
+      "action": "pause",
+      "research": {
+        "category": "recurring-issue",
+        "previous_fix": "Cycle 12 repair confirms every existing/missing ancestor on retry and replay, preserving peer-created directories.",
+        "root_cause": "Each iteration forgets the just-confirmed identity; reopening that pathname as the next level's parent silently adopts a replacement whose entry was not confirmed.",
+        "proposed_approach": "Retain confirmed identities between steps and refuse a replacement or confirm its parent again before success; add chronological regression and preserve crash/replay/peer coverage.",
+        "recurrence_count": 3,
+        "recurrence_scope": "Ancestry-confirmation family across cycles 11,12,13; this exact replacement interleaving is first detected in cycle 13.",
+        "verdict": "pause: detected data-loss risk; repair requires operator recovery decision",
+        "evidence": "dev/local/reviews/00004-cycle-13-approved-installed-probe.json"
+      },
+      "type": "autonomous_research",
+      "prd": "00004-workflow-core-v1.md"
+    },
+    {
+      "cycle": 14,
+      "id": "R14-01",
+      "issue": "Confirmed ancestor identities are discarded when `_ensure_directory_chain` returns; replacing `runtime_root` before `deferred.mkdir()` lets publication or replay succeed in a replacement tree whose parent entry was never fsynced, leaving R13-01\u2019s durability risk open. Keep the confirmed runtime ancestry bound through ledger creation/publication and reverify before success.",
+      "severity": "high",
+      "consensus": "2/3",
+      "file": "src/ovcaq/workflow/_files.py:288",
+      "reason": "Both independent reviewers identify the same handoff gap. Installed-wheel direct append and replay succeed after real runtime replacement without a later parent fsync; detected data-loss risk mandates pause.",
+      "action": "pause",
+      "evidence": "dev/local/reviews/00004-workflow-core-v1-review-14.md",
+      "research": {
+        "category": "recurring-issue",
+        "previous_fix": "Cycle 12 confirmed existing and interrupted ancestors; cycle 13 retained device/inode between adjacent directory reopens.",
+        "root_cause": "The confirmed identity lifetime ends before deferred-directory creation and publication, so the final runtime-to-deferred handoff silently adopts a replacement.",
+        "proposed_approach": "Retain confirmed handles/identities through child creation/publication, use relative operations as appropriate, and verify before success. Add caller-boundary and deeper installed regressions.",
+        "recurrence_count": 4,
+        "recurrence_scope": "Ancestry-confirmation family across cycles 11\u201314; exact post-chain runtime replacement first proved in cycle 14.",
+        "verdict": "pause: detected data-loss risk; operator recovery decision required",
+        "evidence": "dev/local/reviews/00004-cycle-14-installed-handoff-probe.json"
+      },
+      "type": "autonomous_research",
+      "prd": "00004-workflow-core-v1.md"
+    },
+    {
+      "cycle": 15,
+      "issue": "Replacing an already confirmed ancestor and reparenting the same runtime inode beneath its replacement before ledger open is accepted by direct append and exact replay, without any later fsync of the ancestor's parent or the replacement ancestor. Runtime-only identity checks do not preserve the confirmed ancestry through successful publication.",
+      "severity": "high",
+      "consensus": "1/3 (Alice adjudication of coordinator evidence)",
+      "action": "queued for operator-authorized recovery",
+      "reason": "Installed-wheel direct/replay probe reproduces successful return after ancestor replacement and reparenting of the same runtime inode, with no later confirmation of the replacement directory entries. Detected data-loss risk mandates pause. Final parent descriptor remains open, but no ancestor identity is reverified after yield.",
+      "research": {
+        "category": "recurring issue",
+        "verdict": "escalate",
+        "previous_fix": "Cycle 12 confirms existing ancestors; cycle 13 checks identity between adjacent reopens; cycle 14 keeps runtime descriptor through publication.",
+        "root_cause": "Only runtime identity is retained in the publication verifier. An ancestor can be replaced while moving the same runtime inode below it, leaving final-path runtime identity unchanged.",
+        "proposed_new_approach": "Carry and revalidate all confirmed ancestor identities through publication/replay, or durably confirm each newly adopted directory entry.",
+        "recurrence_count": 5,
+        "checks": [
+          {
+            "check": "root cause identified",
+            "pass": true
+          },
+          {
+            "check": "alternative available",
+            "pass": true
+          },
+          {
+            "check": "recurrence count below three",
+            "pass": false
+          }
+        ],
+        "evidence_summary": "Installed module hash matches reviewed checkout; two fresh subprocesses demonstrate real ancestor replacement/reparent, successful return, no later parent fsync. Safety pause takes precedence over ordinary cap deferral."
+      },
+      "type": "autonomous_research",
+      "prd": "00004-workflow-core-v1.md"
+    },
+    {
+      "type": "assumed-ambiguity",
+      "issue": "What exact runtime TOML keys, leaf paths, and inode-substitution boundary should task 1 use?",
+      "question": "What exact runtime TOML keys, leaf paths, and inode-substitution boundary should task 1 use?",
+      "assumption": "Preserve optional version=1 and [workflow].runtime_root; add [runtime] external-state and limit keys; use the accepted runtime tree names; reject inode swaps both before and during layout creation.",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "type": "assumed-ambiguity",
+      "issue": "Pin emergency marker version/path/bounds and malformed acknowledgement behavior.",
+      "question": "Pin emergency marker version/path/bounds and malformed acknowledgement behavior.",
+      "assumption": "schema_version 1 at runtime_root/state-write-failed.json; site/detail bounded by MAX_STRING_BYTES and preserved; malformed markers cannot be acknowledged.",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "type": "assumed-ambiguity",
+      "issue": "Define the RawSessionWriter free-space floor boundary.",
+      "question": "Define the RawSessionWriter free-space floor boundary.",
+      "assumption": "Reject when available_bytes minus chunk length is below min_free_bytes; equality is allowed.",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "category": "assumption",
+      "issue": "Task 10 retention schema/reporting choices",
+      "summary": "Task 10 retention schema/reporting choices",
+      "detail": "Use exact SessionMetadata for run.json; exact envelope keys schema_version/session_id/payload with MAX_STATE_BYTES bound; RuntimeWarning for preserved invalid aggregate rows; tests may use resolve_runtime_paths and ensure_runtime_layout.",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "category": "assumption",
+      "issue": "Task 11 runtime_format exit code",
+      "summary": "Task 11 runtime_format exit code",
+      "detail": "Use symbolic runtime_format with numeric exit 1 because the reviewed design does not pin its exit number.",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F01",
+      "type": "cap-overflow",
+      "issue": "`RuntimePaths._identities` remains a comparison field, so two objects with identical public contract fields compare unequal when their private filesystem snapshots differ; declare it with `compare=False`",
+      "severity": "medium",
+      "consensus": "[2/3]",
+      "file": "src/ovcaq/paths.py:169",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F02",
+      "type": "cap-overflow",
+      "issue": "F31 remains: `_private_directory` still duplicates the two path-layout creators and creates every missing ancestor with mode `0700`; consolidate the descriptor-walk primitive so intermediate project directories retain the established layout policy",
+      "severity": "medium",
+      "consensus": "[2/3]",
+      "file": "src/ovcaq/runtime/session.py:193",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F03",
+      "type": "cap-overflow",
+      "issue": "`_state_attention` still catches `EmergencyStateFailure`, which `acknowledge_emergency_failure` cannot raise, leaving the dead exception branch and import identified by F38",
+      "severity": "medium",
+      "consensus": "[2/3]",
+      "file": "src/ovcaq/runtime_cli.py:142",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F04",
+      "type": "cap-overflow",
+      "issue": "The rework expanded `test_runtime_cli.py` from 666 to 1234 lines, violating the 800-line limit; split status/doctor, log, purge, and emergency command tests into focused modules",
+      "severity": "medium",
+      "consensus": "[2/3]",
+      "file": "tests/runtime/test_runtime_cli.py:1",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F05",
+      "type": "cap-overflow",
+      "issue": "Fleet entry reads are not identity-bound to deletion: `_scan` records a pre-open inode without comparing it to the opened descriptor, while `remove` validates contents and then unlinks the pathname without rechecking its inode; a replacement during either gap can make prune delete a live record or remove delete a new owner\u2019s record",
+      "severity": "high",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/registry.py:317",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved; replacement live-entry deletion reproduced with synthetic data in 00005_fleet_remove_race_proof_2.py. This loses discovery metadata; the authoritative run lock and retained session evidence remain intact.",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F06",
+      "type": "cap-overflow",
+      "issue": "Signal handling only raises an exception; no production runtime path composes group termination, outcome recording, registry cleanup, and lock release, leaving P03-T10\u2019s centralized cleanup contract unimplemented",
+      "severity": "high",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/process.py:50",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved; the source plan section 12.2 requires composed cleanup, while this PRD/design expose primitives and delegate composition to their caller. Preserve the scope ambiguity for operator triage; do not opportunistically implement the later supervisor.",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F07",
+      "type": "cap-overflow",
+      "issue": "Three code paths now pick the state file differently. `workflow_settings` reads a new, undocumented `[workflow] state_file` key (config.py:117) and ignores `[runtime] external_state_root`. `status`, `doctor` and `--acknowledge-emergency` use `runtime_settings`, which honors the external root and ignores `state_file`. `init` and `state` use `state_path(root)` (cli.py:426). With either key set, doctor reports state \"missing\", and acknowledgement can accept a different file than the one workflow commands write (confirmed by reading). The PRD's explicit external-root behavior is still not met.",
+      "severity": "high",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/config.py:117",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved; 00005_runtime_resolution_proof_2.py confirms runtime diagnostics select external/state.json while workflow/state defaults remain project-local.",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F08",
+      "type": "cap-overflow",
+      "issue": "`status` still emits only `run.status`, so the concrete failure retained in `RunObservation.detail` is unavailable when status reports `inconsistent`; F28 remains observable even though doctor exposes the reason",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime_cli.py:312",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F09",
+      "type": "cap-overflow",
+      "issue": "Emergency decoding still reimplements the shared bounded duplicate-key-safe JSON decoder with `json.loads` and `_emergency_fields`; use `decode_json` directly and remove the duplicate parser",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/session.py:431",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F10",
+      "type": "cap-overflow",
+      "issue": "Runtime-root precedence merges internal and external choices independently, so a lower-priority user external root conflicts with a higher-priority project or explicit internal root instead of being overridden",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/config.py:214",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved; per-key merging and mutually exclusive root selectors conflict across layers. Preserve the exact precedence question for repair.",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F11",
+      "type": "cap-overflow",
+      "issue": "Process identity uses `ps lstart` with one-second precision, so a PID recycled within the same second can be misclassified as the original process and escape stale-entry pruning",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/registry.py:109",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F12",
+      "type": "cap-overflow",
+      "issue": "A `ps` timeout raises uncaught `subprocess.TimeoutExpired`, allowing registry discovery and `status`/`doctor` to traceback instead of producing degraded diagnostics",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/registry.py:109",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F13",
+      "type": "cap-overflow",
+      "issue": "`status` embeds `datetime.now()` in its purge preview, so unchanged runtime/state data produces different output despite the required deterministic status contract",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime_cli.py:303",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F14",
+      "type": "cap-overflow",
+      "issue": "`doctor` reports `ok: false` on every newly initialized project. `_directory_health` stats `paths.sessions`, but `init` creates only `dev/local/ovcaq`, and only `create_session` creates `sessions`. The resulting FileNotFoundError fills both the `permissions` and `writability` checks with the error text. Every ok=True test runs `ensure_runtime_layout` first, so none catches this (confirmed by reading).",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime_cli.py:201",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved; isolated init-then-doctor reproduction confirms missing sessions directory makes permission/writability checks fail.",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F15",
+      "type": "cap-overflow",
+      "issue": "The F14 fix landed on `_runtime_timestamp`, which after the refactor only parses `logs purge --before`. Cutoffs with an offset (valid RFC3339, the metavar) are now rejected as usage errors. No test covers this, and the validator label says `metadata.started_at` (metadata already goes through `parse_session_metadata`).",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/cli_io.py:84",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved; cutoff input uses the strict UTC metadata parser despite RFC3339 labeling. Preserve both the behavior and misleading label for API-contract triage.",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F16",
+      "type": "cap-overflow",
+      "issue": "`cleanup_run_records` turns every OSError, ValueError and TypeError into `False`. A caller cannot tell \"record belongs to another run\" from \"unlink or fsync failed\", and the cause is lost.",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/session.py:370",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F17",
+      "type": "cap-overflow",
+      "issue": "`_acquire_purge_locks` re-implements `RunLock.acquire`: O_NOFOLLOW open, S_ISREG check, LOCK_NB flock, samestat recheck, fchmod. Simpler: add `directory: int | None = None` to `RunLock.acquire` (as `run_lock_held` already has) and map DuplicateRunError to ActiveSessionError for run.lock.",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/_retention.py:343",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F28",
+      "type": "cap-overflow",
+      "issue": "`cleanup_run_records` removes the fleet entry before `run.json`. If that unlink fails, or the entry is already gone, `remove()` returns False on every retry. `run.json` is then stranded and `status` stays inconsistent until the next run overwrites it.",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/session.py:361",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F29",
+      "type": "cap-overflow",
+      "issue": "A second concurrent `logs purge --apply` is refused with \"cannot purge while a run is active\", because run.lock is taken first. That message is wrong for this case. retention.lock can never be the contended lock, since its only taker already holds run.lock. If it ever were contended, its DuplicateRunError (a RuntimeError) would escape `_dispatch_logs` and `main` as a traceback.",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/_retention.py:363",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved; preserve the inaccurate contention diagnostic and uncaught retention-lock exception, but do not remove the retention lock required for future aggregate writers.",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F32",
+      "type": "cap-overflow",
+      "issue": "`workflow_settings` validates the PRD root and the state file with `runtime_directory`. Rejections therefore say \"derived runtime path escapes project root\" even when the path is a PRD root or a state file.",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/config.py:106",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F33",
+      "type": "cap-overflow",
+      "issue": "The rewritten CHANGELOG Added bullets list implementation details (\"identity-pinned fleet records behind inode-stable run locks without launch contention\") rather than what the user sees.",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "file": "CHANGELOG.md:20",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F35",
+      "type": "known-limitation",
+      "issue": "Emergency acknowledgement publishes and fsyncs a full archive copy (`_archive_emergency_evidence`), then deletes it on success at session.py:582. The rename plus link-back already keeps the evidence reachable.",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/session.py:582",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "The archive copy is deliberate recovery evidence used by failure-path tests. Removing it is a behavior/design change outside this repair; preserve Bob's KNOWN qualification.",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "C2F36",
+      "type": "known-limitation",
+      "issue": "On normal exit, surviving descendants get an immediate SIGKILL with no TERM grace, so they cannot flush. The PRD describes TERM, then grace, then KILL.",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "file": "src/ovcaq/runtime/process.py:154",
+      "action": "deferred to batch end; no repair dispatched",
+      "reason": "The previous repair deliberately chose immediate owned-group cleanup after normal agent exit. Adding descendant TERM grace requires a policy/API decision; preserve this KNOWN limitation for later operator triage.",
+      "status": "deferred",
+      "review_file": "dev/local/reviews/00005-runtime-substrate-v1-review-02.md",
+      "prd": "00005-runtime-substrate-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F50",
+      "task_id": "12",
+      "issue": "apply_purge opens the original runtime directory but acquires run.lock and retention.lock through its replaceable pathname; swapping that directory lets purge delete active evidence while the original run.lock remains held.",
+      "file": "src/ovcaq/runtime/session.py:787",
+      "consensus": "[1/3]",
+      "severity": "critical",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD requires explicit active-run-safe purge and raw-byte retention. Bind ownership and deletion to the same verified ancestry; retain malformed evidence and enforce bounded reads. F50 has saved synthetic proof at the current HEAD.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD requires explicit active-run-safe purge and raw-byte retention. Bind ownership and deletion to the same verified ancestry; retain malformed evidence and enforce bounded reads. F50 has saved synthetic proof at the current HEAD.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F06",
+      "task_id": "12",
+      "issue": "Aggregate purge reads each newline-delimited row into memory before enforcing `MAX_STATE_BYTES`, so a malformed newline-free aggregate can exhaust memory",
+      "file": "src/ovcaq/runtime/session.py:720",
+      "consensus": "[1/3]",
+      "severity": "high",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD requires explicit active-run-safe purge and raw-byte retention. Bind ownership and deletion to the same verified ancestry; retain malformed evidence and enforce bounded reads. F50 has saved synthetic proof at the current HEAD.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD requires explicit active-run-safe purge and raw-byte retention. Bind ownership and deletion to the same verified ancestry; retain malformed evidence and enforce bounded reads. F50 has saved synthetic proof at the current HEAD.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F07",
+      "task_id": "13",
+      "issue": "Fleet registry reads follow symlinks, the mutation lock is unverified, and prune unlinks paths without a final identity check, violating the descriptor-relative race contract",
+      "file": "src/ovcaq/runtime/registry.py:146",
+      "consensus": "[1/3]",
+      "severity": "high",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD and design require atomic private fleet records, no-follow opens, and identity-checked mutation; retain the project run lock as authority.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD and design require atomic private fleet records, no-follow opens, and identity-checked mutation; retain the project run lock as authority.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F10",
+      "task_id": "13",
+      "issue": "Fleet operations follow a replaced or symlinked registry root and open the mutation lock without `O_NOFOLLOW`, allowing prune to delete JSON files outside the resolved fleet root",
+      "file": "src/ovcaq/runtime/registry.py",
+      "consensus": "[1/3]",
+      "severity": "high",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD and design require atomic private fleet records, no-follow opens, and identity-checked mutation; retain the project run lock as authority.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD and design require atomic private fleet records, no-follow opens, and identity-checked mutation; retain the project run lock as authority.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F02",
+      "task_id": "14",
+      "issue": "Normal exit collection closes the group anchor without terminating surviving descendants, after which ownership checks refuse further group signals and the processes leak",
+      "file": "src/ovcaq/runtime/process.py",
+      "consensus": "[1/3]",
+      "severity": "critical",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD requires owned-tree cleanup and signal exits. Current wait closes the anchor without cleaning descendants. Preserve ownership until bounded cleanup completes; test real processes and watchdog completion.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD requires owned-tree cleanup and signal exits. Current wait closes the anchor without cleaning descendants. Preserve ownership until bounded cleanup completes; test real processes and watchdog completion.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F09",
+      "task_id": "15",
+      "issue": "Workflow PRD and state paths bypass containment and symlink validation, so `--prd-root` and `--state` can escape the project without an explicit external state root",
+      "file": "src/ovcaq/config.py",
+      "consensus": "[1/3]",
+      "severity": "high",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD requires resolved roots and configured-path containment; the design also explicitly rejects existing symlink components and inode substitutions. Verify anchor behavior against both, preserving the safety policy rather than broadly resolving configured symlinks.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD requires resolved roots and configured-path containment; the design also explicitly rejects existing symlink components and inode substitutions. Verify anchor behavior against both, preserving the safety policy rather than broadly resolving configured symlinks.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F12",
+      "task_id": "15",
+      "issue": "Symlink rejection extends to trust anchors: `_checked_path` walks from `/`, so `--root /tmp/x` or `/var/...` fails on macOS (`/tmp`\u2192`/private/tmp`) and a symlinked `~/.config` (stow/chezmoi) makes `_read_config` raise even when no config file exists; this now breaks every pre-existing workflow command too",
+      "file": "src/ovcaq/paths.py:63, src/ovcaq/config.py:43",
+      "consensus": "[1/3]",
+      "severity": "high",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD requires resolved roots and configured-path containment; the design also explicitly rejects existing symlink components and inode substitutions. Verify anchor behavior against both, preserving the safety policy rather than broadly resolving configured symlinks.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD requires resolved roots and configured-path containment; the design also explicitly rejects existing symlink components and inode substitutions. Verify anchor behavior against both, preserving the safety policy rather than broadly resolving configured symlinks.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F08",
+      "task_id": "16",
+      "issue": "Session publication checks paths and then reopens them by pathname, so parent replacement can redirect durable metadata outside the validated runtime tree",
+      "file": "src/ovcaq/runtime/session.py:178",
+      "consensus": "[1/3]",
+      "severity": "high",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The design explicitly specifies version-1 exact-key metadata, UTC timestamps, basename IDs, and ancestry-safe publication. Repair consistency within that existing schema.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The design explicitly specifies version-1 exact-key metadata, UTC timestamps, basename IDs, and ancestry-safe publication. Repair consistency within that existing schema.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F14",
+      "task_id": "16",
+      "issue": "Runtime metadata reads accept non-UTC timestamps and do not validate run/session IDs as basenames; use the shared `validate_timestamp` and identifier validation",
+      "file": "src/ovcaq/cli_io.py:89",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The design explicitly specifies version-1 exact-key metadata, UTC timestamps, basename IDs, and ancestry-safe publication. Repair consistency within that existing schema.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The design explicitly specifies version-1 exact-key metadata, UTC timestamps, basename IDs, and ancestry-safe publication. Repair consistency within that existing schema.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F15",
+      "task_id": "16",
+      "issue": "Metadata publication accepts empty `agent` and `process_start` values that the CLI\u2019s own reader later rejects",
+      "file": "src/ovcaq/runtime/session.py:165",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The design explicitly specifies version-1 exact-key metadata, UTC timestamps, basename IDs, and ancestry-safe publication. Repair consistency within that existing schema.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The design explicitly specifies version-1 exact-key metadata, UTC timestamps, basename IDs, and ancestry-safe publication. Repair consistency within that existing schema.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F22",
+      "task_id": "16",
+      "issue": "Session summaries can declare a different session ID from their containing session directory and metadata",
+      "file": "src/ovcaq/runtime/session.py",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The design explicitly specifies version-1 exact-key metadata, UTC timestamps, basename IDs, and ancestry-safe publication. Repair consistency within that existing schema.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The design explicitly specifies version-1 exact-key metadata, UTC timestamps, basename IDs, and ancestry-safe publication. Repair consistency within that existing schema.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F31",
+      "task_id": "16",
+      "issue": "Directory creation exists three times: `ensure_runtime_directory` (init), `ensure_runtime_layout` (new, no production caller), `_private_directory` (creates every missing ancestor at 0o700, including `dev/`)",
+      "file": "src/ovcaq/runtime/session.py:178, src/ovcaq/paths.py:224",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The design explicitly specifies version-1 exact-key metadata, UTC timestamps, basename IDs, and ancestry-safe publication. Repair consistency within that existing schema.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The design explicitly specifies version-1 exact-key metadata, UTC timestamps, basename IDs, and ancestry-safe publication. Repair consistency within that existing schema.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F03",
+      "task_id": "17",
+      "issue": "`status` never consults `FleetRegistry`, so registry-only evidence is reported as `idle` instead of required `inconsistent`",
+      "file": "src/ovcaq/runtime_cli.py:146",
+      "consensus": "[1/3]",
+      "severity": "high",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD/design require shared run-lock/process/metadata/fleet observations and doctor resource checks. Verify the lock-contention claim using real processes; do not adopt untested F_GETLK behavior or a second liveness policy.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD/design require shared run-lock/process/metadata/fleet observations and doctor resource checks. Verify the lock-contention claim using real processes; do not adopt untested F_GETLK behavior or a second liveness policy.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F04",
+      "task_id": "17",
+      "issue": "Active-session detection validates metadata shape but never calls `process_matches`, so stale or recycled process metadata can mark a session active",
+      "file": "src/ovcaq/runtime/session.py:471",
+      "consensus": "[1/3]",
+      "severity": "high",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD/design require shared run-lock/process/metadata/fleet observations and doctor resource checks. Verify the lock-contention claim using real processes; do not adopt untested F_GETLK behavior or a second liveness policy.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD/design require shared run-lock/process/metadata/fleet observations and doctor resource checks. Verify the lock-contention claim using real processes; do not adopt untested F_GETLK behavior or a second liveness policy.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F05",
+      "task_id": "17",
+      "issue": "`doctor` omits required permission, writability, retained-budget, and free-space checks, allowing `ok=true` when production should be blocked",
+      "file": "src/ovcaq/runtime_cli.py:191",
+      "consensus": "[1/3]",
+      "severity": "high",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD/design require shared run-lock/process/metadata/fleet observations and doctor resource checks. Verify the lock-contention claim using real processes; do not adopt untested F_GETLK behavior or a second liveness policy.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD/design require shared run-lock/process/metadata/fleet observations and doctor resource checks. Verify the lock-contention claim using real processes; do not adopt untested F_GETLK behavior or a second liveness policy.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F13",
+      "task_id": "17",
+      "issue": "Read-only observations take the exclusive run lock (`_run_health` via `RunLock.acquire`, `_active_session_id` via `flock LOCK_EX|LOCK_NB`, plus `plan_purge` in doctor); a supervisor starting inside that window is refused as a duplicate; TUI polling widens it",
+      "file": "src/ovcaq/runtime_cli.py:146, src/ovcaq/runtime/session.py:471",
+      "consensus": "[1/3]",
+      "severity": "high",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD/design require shared run-lock/process/metadata/fleet observations and doctor resource checks. Verify the lock-contention claim using real processes; do not adopt untested F_GETLK behavior or a second liveness policy.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD/design require shared run-lock/process/metadata/fleet observations and doctor resource checks. Verify the lock-contention claim using real processes; do not adopt untested F_GETLK behavior or a second liveness policy.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F23",
+      "task_id": "18",
+      "issue": "`status` reports evidence location but omits the exact purge preview required alongside status/doctor diagnostics",
+      "file": "src/ovcaq/runtime_cli.py",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD requires exact purge previews in status/doctor. Correct the existing representations and parser semantics, reusing the purge representation and stable top-level envelopes; unrelated public error-code changes remain deferred.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD requires exact purge previews in status/doctor. Correct the existing representations and parser semantics, reusing the purge representation and stable top-level envelopes; unrelated public error-code changes remain deferred.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F24",
+      "task_id": "18",
+      "issue": "`_purge_payload` prepends a second `--root`: `plan.command` already carries `--root <project>`, so preview/doctor/human output renders `ovcaq --root X --root X logs purge \u2026`; argparse last-wins hides it from the round-trip tests",
+      "file": "src/ovcaq/runtime_cli.py:46",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD requires exact purge previews in status/doctor. Correct the existing representations and parser semantics, reusing the purge representation and stable top-level envelopes; unrelated public error-code changes remain deferred.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD requires exact purge previews in status/doctor. Correct the existing representations and parser semantics, reusing the purge representation and stable top-level envelopes; unrelated public error-code changes remain deferred.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F25",
+      "task_id": "18",
+      "issue": "`RuntimePaths._identities` is a dataclass field: `asdict(paths)` in `_doctor_payload` emits a stringified device/inode tuple under `paths._identities`, and it participates in `==`",
+      "file": "src/ovcaq/paths.py:159, src/ovcaq/runtime_cli.py:222",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD requires exact purge previews in status/doctor. Correct the existing representations and parser semantics, reusing the purge representation and stable top-level envelopes; unrelated public error-code changes remain deferred.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD requires exact purge previews in status/doctor. Correct the existing representations and parser semantics, reusing the purge representation and stable top-level envelopes; unrelated public error-code changes remain deferred.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F37",
+      "task_id": "18",
+      "issue": "`logs` and `logs purge` share `dest=\"session\"`; the subparser default overwrites a parent `--session`, and `--kind`/`--follow` before `purge` are silently ignored",
+      "file": "src/ovcaq/cli.py:209-216",
+      "consensus": "[1/3]",
+      "severity": "low",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD requires exact purge previews in status/doctor. Correct the existing representations and parser semantics, reusing the purge representation and stable top-level envelopes; unrelated public error-code changes remain deferred.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD requires exact purge previews in status/doctor. Correct the existing representations and parser semantics, reusing the purge representation and stable top-level envelopes; unrelated public error-code changes remain deferred.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F38",
+      "task_id": "18",
+      "issue": "`_state_attention` catches `EmergencyStateFailure` from `acknowledge_emergency_failure`, which never raises it, and reads the state store twice on acknowledgement",
+      "file": "src/ovcaq/runtime_cli.py:126-132",
+      "consensus": "[1/3]",
+      "severity": "low",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD requires exact purge previews in status/doctor. Correct the existing representations and parser semantics, reusing the purge representation and stable top-level envelopes; unrelated public error-code changes remain deferred.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD requires exact purge previews in status/doctor. Correct the existing representations and parser semantics, reusing the purge representation and stable top-level envelopes; unrelated public error-code changes remain deferred.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F47",
+      "task_id": "18",
+      "issue": "PRD \"make `status`/`doctor` show location and exact purge preview\": `status` shows location only; `purge_preview` is doctor-only",
+      "file": "N/A",
+      "consensus": "[1/3]",
+      "severity": "low",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD requires exact purge previews in status/doctor. Correct the existing representations and parser semantics, reusing the purge representation and stable top-level envelopes; unrelated public error-code changes remain deferred.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD requires exact purge previews in status/doctor. Correct the existing representations and parser semantics, reusing the purge representation and stable top-level envelopes; unrelated public error-code changes remain deferred.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F11",
+      "task_id": "19",
+      "issue": "No completion operation removes ephemeral `run.json` and fleet entries, leaving a normally completed run reported as inconsistent until external cleanup occurs",
+      "file": "N/A",
+      "consensus": "[1/3]",
+      "severity": "high",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD explicitly requires normal completion to remove only owner-specific ephemeral entries. Provide the substrate cleanup effect; do not implement the future supervisor or delete persistent locks/evidence.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD explicitly requires normal completion to remove only owner-specific ephemeral entries. Provide the substrate cleanup effect; do not implement the future supervisor or delete persistent locks/evidence.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F26",
+      "task_id": "19",
+      "issue": "No completion counterpart for `publish_run_metadata`: nothing removes `run.json`, so after a normal run ends `status` reports `run: \"inconsistent\"` indefinitely (PRD: completion removes ephemeral entries)",
+      "file": "src/ovcaq/runtime/session.py:244",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "action": "operator-authorized repair; verify before closing",
+      "reason": "The PRD explicitly requires normal completion to remove only owner-specific ephemeral entries. Provide the substrate cleanup effect; do not implement the future supervisor or delete persistent locks/evidence.",
+      "research": {
+        "category": "local PRD/design contract check (Protocols C/D where applicable)",
+        "verdict": "proceed within authorized existing repair scope",
+        "checks": [
+          {
+            "check": "PRD scope",
+            "pass": true,
+            "result": "Existing runtime substrate requirement; no new dependency or future supervisor work."
+          },
+          {
+            "check": "schema and API boundary",
+            "pass": true,
+            "result": "Preserve existing durable schemas and stable top-level CLI envelopes; new error-code policy remains deferred."
+          }
+        ],
+        "evidence_summary": "The PRD explicitly requires normal completion to remove only owner-specific ephemeral entries. Provide the substrate cleanup effect; do not implement the future supervisor or delete persistent locks/evidence.",
+        "sources": [
+          "dev/local/prds/wip/00005-runtime-substrate-v1.md",
+          "dev/local/designs/00005-runtime-substrate-v1-design.md",
+          "dev/local/reviews/00005-runtime-substrate-v1-review-01.md"
+        ]
+      },
+      "prd": "00005-runtime-substrate-v1.md",
+      "type": "autonomous_research"
+    },
+    {
+      "type": "assumed-ambiguity",
+      "issue": "What exact payload value types, text-redaction patterns, detail/preview bounds, and non-UTC timestamp behavior complete the normalized event model contract?",
+      "question": "What exact payload value types, text-redaction patterns, detail/preview bounds, and non-UTC timestamp behavior complete the normalized event model contract?",
+      "assumption": "Use serialized Usage mapping and nullable identity; string failure/raw fields; RFC3339 UTC nullable reset; reject non-UTC timestamps; 4096-character failure detail; 512-character preview; redact Bearer credentials and sensitive-key assignments only.",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "type": "assumed-ambiguity",
+      "issue": "If a later session.completed observation reports lower cumulative usage than an earlier completion or usage snapshot, should the last completion replace the usage total or only select the terminal outcome?",
+      "question": "If a later session.completed observation reports lower cumulative usage than an earlier completion or usage snapshot, should the last completion replace the usage total or only select the terminal outcome?",
+      "assumption": "All completion usage snapshots participate in the same fieldwise monotonic-maximum fold; the last completion selects terminal success but cannot lower cumulative counters.",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "type": "assumed-ambiguity",
+      "issue": "How must driver discovery surface invalid names, entry-point load/factory/probe failures, and unhealthy probes when the accepted design only states that failures remain visible by driver name?",
+      "question": "How must driver discovery surface invalid names, entry-point load/factory/probe failures, and unhealthy probes when the accepted design only states that failures remain visible by driver name?",
+      "assumption": "Use a fail-closed DriverDiscoveryError hierarchy: incompatible and duplicate cases have named subclasses; load, construction, name mismatch, probe exceptions, and unhealthy results raise driver-named discovery errors; built-ins retain input order and third-party entry points are sorted by name.",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "type": "assumed-ambiguity",
+      "issue": "Which exception classes should task 3 validation use for invalid dataclass fields and loaded objects that are not DriverPlugin?",
+      "question": "Which exception classes should task 3 validation use for invalid dataclass fields and loaded objects that are not DriverPlugin?",
+      "assumption": "Raise TypeError for wrong Python field types, ValueError for correctly typed empty or non-positive values, and DriverDiscoveryError when built-in or entry-point discovery receives an object that is not DriverPlugin.",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "cycle": 1,
+      "issue": "The prompt is the last positional argument with no `--` before it, so a prompt starting with \"-\" would be parsed as a CLI option",
+      "severity": "low",
+      "consensus": "1/3",
+      "file": "src/ovcaq/drivers/claude.py:84",
+      "action": "Defer leading-hyphen prompt hardening",
+      "reason": "Exact argv matches the characterized runner and this phase's accepted launch contract; the built-in workflow prompts begin with '/'. General arbitrary leading-hyphen prompt handling is outside the current exact-port contract. Preserve the limitation for batch-end review rather than change argv without that contract decision.",
+      "status": "deferred",
+      "review_finding": "O18",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "type": "review-deferral",
+      "issue": "Failure classification is substring-based and can misclassify benign text",
+      "severity": "low",
+      "file": "src/ovcaq/drivers/claude_events.py:223",
+      "reason": "Marker substrings are the characterized classification contract; needs real failure captures",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "cycle": 1,
+      "issue": "The prompt is the last positional argument with no `--` before it, so a prompt starting with \"-\" would be parsed as a CLI option",
+      "severity": "low",
+      "consensus": "1/3",
+      "file": "src/ovcaq/drivers/claude.py:84",
+      "action": "Defer leading-hyphen prompt hardening",
+      "reason": "Exact argv matches the characterized runner and this phase's accepted launch contract; the built-in workflow prompts begin with '/'. General arbitrary leading-hyphen prompt handling is outside the current exact-port contract. Preserve the limitation for batch-end review rather than change argv without that contract decision.",
+      "status": "deferred",
+      "review_finding": "O18",
+      "type": "deferred_decision",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "cycle": 4,
+      "issue": "Failure classification is substring-based and can misclassify benign text",
+      "severity": "low",
+      "consensus": "1/5",
+      "file": "src/ovcaq/drivers/claude_events.py:223",
+      "action": "Defer classifier hardening",
+      "reason": "Marker substrings are the characterized classification contract; replacing them needs real failure captures (PRD scope question), not a blind rewrite.",
+      "status": "deferred",
+      "review_finding": "L1",
+      "type": "deferred_decision",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "cycle": 4,
+      "issue": "ruff check . and ruff format --check . fail on untracked docs/dev/project-management probe scripts after the dev/local -> docs/dev migration (no longer gitignored or ruff-excluded)",
+      "severity": "medium",
+      "file": "pyproject.toml:41",
+      "action": "Defer repo hygiene",
+      "reason": "Not PRD code; src/tests are clean. Needs a decision: ruff extend-exclude docs/dev, or prune/track the probe scripts.",
+      "status": "deferred",
+      "type": "deferred_decision",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 5,
+      "issue": "`_preview` still preserves a whitespace-free truncated window unless it contains `sk-`, contrary to Task 22\u2019s unconditional empty-preview contract; replace the conditional with `end = 0` and update the older test that expects an `x` preview.",
+      "severity": "medium",
+      "consensus": "2/3",
+      "file": "src/ovcaq/events/tail.py:148",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_finding": "C5-01",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 5,
+      "issue": "The reducer binds identity only on start or terminal events, allowing earlier observations from another session to contaminate a successful summary and its usage",
+      "severity": "high",
+      "consensus": "1/3",
+      "file": "src/ovcaq/events/reducer.py:42",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_finding": "C5-02",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 5,
+      "issue": "Failure classification misses standard authentication, rate-limit, and connectivity forms such as expired OAuth tokens, HTTP 429, and ECONNRESET, classifying them as generic agent failures",
+      "severity": "high",
+      "consensus": "1/3",
+      "file": "src/ovcaq/drivers/claude_events.py:223",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_finding": "C5-03",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 5,
+      "issue": "The provider-neutral events layer imports both the downstream driver layer and runtime persistence, reversing the mandated `events <- drivers <- runtime` dependency direction",
+      "severity": "medium",
+      "consensus": "1/3",
+      "file": "src/ovcaq/events/tail.py:8",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_finding": "C5-04",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 5,
+      "issue": "Claude process conformance exercises only normal completion and does not verify the specified live TERM/KILL response",
+      "severity": "medium",
+      "consensus": "1/3",
+      "file": "tests/drivers/test_claude_process.py:119",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_finding": "C5-06",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 5,
+      "issue": "Authorization values that use a scheme other than Bearer still leak. sanitize_text(\"Authorization: Basic dXNlcjpwYXNzd29yZA==\") gives \"Authorization: [REDACTED] dXNlcjpwYXNzd29yZA==\": only the scheme word is redacted. The same happens with `token ghp_\u2026` and `Digest \u2026`. This gap already existed at 82a12fe, but the diff rewrote this exact clause as `(?:bearer\\s+)?`. No test covers it",
+      "severity": "medium",
+      "consensus": "1/3",
+      "file": "src/ovcaq/events/model.py:29",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_finding": "C5-07",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 5,
+      "issue": "Once `continue` became `return None`, the `for \u2026 else: return None` branch can no longer run: the year+1 pass either raises or builds a time later than `local`. The loop can become one constructor plus `replace(year=local.year + 1)`, which raises ValueError for Feb 29 and gives the same results",
+      "severity": "medium",
+      "consensus": "1/3",
+      "file": "src/ovcaq/drivers/claude_events.py:200",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_finding": "C5-08",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 5,
+      "issue": "JSON keys with escaped quotes inside raw previews are not redacted. In `{\\\"apiKey\\\": \\\"v\\\"}` the key is followed by a backslash, so `[\"']?\\s*[:=]` fails and `v` survives in raw.unknown previews (claude.py:151, tail.py:152). This already existed at 82a12fe. It matters most when stream records change shape and many records fall back to raw.unknown",
+      "severity": "low",
+      "consensus": "1/3",
+      "file": "src/ovcaq/events/model.py:29",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_finding": "C5-09",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 5,
+      "issue": "The protocol doc describes the preview wrongly. It says \"512-byte window\", but the window is _PREVIEW_WINDOW_BYTES = 4096 (or the frame-buffer cap if smaller). It says a trailing CR \"never\" reaches the preview, but finish() on an unterminated `\u2026\\r` frame keeps it (trim_cr needs `terminated`)",
+      "severity": "low",
+      "consensus": "1/3",
+      "file": "docs/driver-protocol.md:77",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_finding": "C5-10",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 5,
+      "issue": "Two asserts are redundant: each `not any(...)` / `\"ABCDE\" not in preview` check follows `assert preview == \"\"` and can never add anything",
+      "severity": "low",
+      "consensus": "1/3",
+      "file": "tests/events/test_tail.py:668",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_finding": "C5-11",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 5,
+      "issue": "Normalized sanitization preserves arbitrary values nested under `environment`, so credentials with non-sensitive variable names can leak into normalized logs",
+      "severity": "high",
+      "consensus": "1/3",
+      "file": "src/ovcaq/events/model.py:95",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "review_finding": "C5-13",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "cycle": 1,
+      "issue": "High The Claude adapter implements `fallback_tier` and emits raw format `stream-json`, while the accepted contract specifies the `fallback_model` option and `claude-stream-json-v1`; existing tests pin the divergent behavior",
+      "severity": "high",
+      "consensus": "1/3",
+      "action": "Queue bounded rework",
+      "reason": "Bounded correction within PRD 00006; preserve the exact finding in its rework task and verify with regression coverage.",
+      "review_finding": "A3",
+      "research": {
+        "category": "C/D",
+        "verdict": "proceed",
+        "checks": [
+          {
+            "check": "explicit contract",
+            "result": "Design names fallback_model and claude-stream-json-v1; task omitted those exact fields",
+            "pass": true
+          },
+          {
+            "check": "scope",
+            "result": "PRD-driven pre-stability internal driver contract; no released consumer",
+            "pass": true
+          }
+        ],
+        "evidence_summary": "Correct the spec-transmission gap without changing the PRD auto-only unattended behavior"
+      },
+      "type": "autonomous_research",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "cycle": 2,
+      "issue": "H1/H4/H5/M1 rate-limit semantics (allowed_warning clears limit; banner overwrites event reset; real clock+zone banners unparsed; window only in prose)",
+      "severity": "high",
+      "action": "Queue rework task 16 (opus, same tier)",
+      "reason": "Cycle 2, cap 3 authorized. Protocol B (recurring A4/O2): spec-transmission gap (task 13 omitted real banner shape and event-wins precedence); exact contract now transcribed. Same tier, no escalation.",
+      "research": {
+        "category": "B",
+        "verdict": "proceed",
+        "evidence_summary": "Legacy usage_limit.py pins banner shape and resetsAt precedence"
+      },
+      "type": "autonomous_research",
+      "prd": "00006-events-claude-adapter-v1.md"
+    },
+    {
+      "type": "assumed-ambiguity",
+      "issue": "CapabilityService constructor and retry idempotency were unspecified",
+      "question": "CapabilityService constructor and retry idempotency were unspecified",
+      "assumption": "Construct with root, StateStore, RuntimePaths, run_id, clock, and timeout; ownership uses retained SessionMetadata plus process_matches. One retry call creates one attempt; success or live ownership rejects a repeat, while a later explicit retry after failure is a new request.",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F02",
+      "issue": "`ovcaq run --no-tui` and `ovcaq capability retry agoge` always select an unavailable capability runner, so required capabilities can never succeed through the installed public commands",
+      "file": "src/ovcaq/supervisor_cli.py:49",
+      "severity": "high",
+      "consensus": "2/3",
+      "action": "cycle 1: defer",
+      "reason": "Confirmed limitation, owned by PRD 00010. PRD 00007 P05-T06 explicitly requires the lifecycle against a fake; the coverage manifest assigns required real agoge execution and independent retry to 00010, whose provisioned execution proof integrates the real launcher runner. Keep the failure visible; do not introduce launcher-specific execution before that phase.",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F06",
+      "issue": "A bootstrap repeat-stall (no PRD) returns PAUSE with exit 0 and writes no pause intent; the plan (\u00a712.3 step 11) says halt. CI reads it as success, and every rerun burns another session before pausing again (test asserts `(0, PAUSE, 3)`)",
+      "file": "src/ovcaq/runtime/decision.py:276",
+      "severity": "medium",
+      "consensus": "1/3",
+      "action": "cycle 1: defer",
+      "reason": "Requirements conflict: accepted design and task 1 explicitly specify bootstrap repeat PAUSE, while plan section 12.3 says bootstrap halt. The implementation matches the reviewed design. Preserve the existing behavior until the plan/design policy is reconciled; record the zero exit and missing durable intent limitation.",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F23",
+      "issue": "`ovcaq run` never calls `driver.probe()` (`build_driver` skips discovery and probe), so a missing agent binary shows up as a spawn exception after session evidence already exists",
+      "file": "src/ovcaq/supervisor_cli.py:57",
+      "severity": "low",
+      "consensus": "1/3",
+      "action": "cycle 1: defer",
+      "reason": "Driver readiness/provisioning preflight belongs to PRD 00010 P08-T05/P08-T06 and must compose binary/auth/plugin readiness together. Current spawn failure remains explicit and preserves evidence. Retain this requirement for that owning PRD rather than inventing a partial live connectivity preflight in the fake-focused Phase 5.",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "type": "assumed-ambiguity",
+      "cycle": 1,
+      "finding_id": "F06",
+      "issue": "A bootstrap repeat-stall (no PRD) returns PAUSE with exit 0 and writes no pause intent; the plan (\u00a712.3 step 11) says halt. CI reads it as success, and every rerun burns another session before pausing again (test asserts `(0, PAUSE, 3)`)",
+      "severity": "medium",
+      "action": "cycle 1: retain accepted design pending policy reconciliation",
+      "reason": "Conservative existing behavior; this choice blocks none of the seven repairs.",
+      "question": "Bootstrap repeat PAUSE in accepted design conflicts with HALT in the umbrella plan.",
+      "assumption": "Keep PAUSE in this bounded rework, and defer the PAUSE/HALT policy decision; do not silently redefine bootstrap exit semantics.",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F01",
+      "issue": "A stop signal raised during a capability run is recorded as an ordinary capability failure and then swallowed, producing exit 1 without durable stop intent instead of the required signal exit and immediate-stop behavior.",
+      "file": "src/ovcaq/runtime/supervisor.py:309",
+      "severity": "high",
+      "consensus": "2/3",
+      "action": "cycle 2: cap-overflow",
+      "reason": "rework cap reached with this finding unresolved; Confirmed with a real SIGTERM inside a fake capability runner: exit 1, failed capability, pause_requested=false and pause_reason=null. The broad failed-capability catch swallows SupervisorSignal and may also hide post-commit evidence errors. Expected signal exit 143 and durable operator-stop intent are absent.",
+      "type": "cap-overflow",
+      "status": "open",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F02",
+      "issue": "`_loop` now wraps `_attempt` and `apply` in `except _STATE_ERRORS`, and that tuple includes bare `OSError` (supervisor.py:80). So these all become the durable attention \"Supervisor state operation failed; inspect state before restarting.\": a missing or non-executable agent binary (`Popen` FileNotFoundError/PermissionError, process.py:118), session-evidence I/O, config reads, and PRD file moves in `park`. The real message is dropped, and every later run halts until someone edits state by hand. At base the error propagated with its message. This also breaks the premise of the settled F23 deferral (\"spawn failure remains explicit\"). Only `run_once` is tested with a launch OSError (test_supervisor.py:443); `run()` is not.",
+      "file": "src/ovcaq/runtime/supervisor.py:240",
+      "severity": "high",
+      "consensus": "1/3",
+      "action": "cycle 2: cap-overflow",
+      "reason": "rework cap reached with this finding unresolved; Confirmed: a synthetic launch OSError returns the generic supervisor state-failure outcome and persists supervisor.loop attention, with phase_repeats=0. The store is healthy. This is new evidence invalidating the explicit-spawn-error premise of settled F23; launcher readiness itself remains assigned to PRD 00010. Recovery should use the existing state CLI, never direct state editing.",
+      "type": "cap-overflow",
+      "status": "open",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F03",
+      "issue": "Retry ceilings are held only in `Supervisor._retries`; restarting the supervisor resets rate-limit/connectivity/death budgets, so decisions are not reproducible from committed state plus summary and configured per-class caps can be exceeded.",
+      "file": "src/ovcaq/runtime/supervisor.py:123",
+      "severity": "high",
+      "consensus": "1/3",
+      "action": "cycle 2: cap-overflow",
+      "reason": "rework cap reached with this finding unresolved; Confirmed with two fresh supervisor instances: configured connectivity_retries=1 produces WAIT twice while the durable phase counter reaches 2. The global phase cap bounds total attempts but does not preserve the configured per-class budget across restart. Resolving the persistent policy requires care; no schema or policy is changed at the cap.",
+      "type": "cap-overflow",
+      "status": "open",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F04",
+      "issue": "Driver launch/bootstrap exceptions are finalized as HALT evidence and then re-raised before the bounded decision policy can classify, retry, park, or return a normal supervisor outcome.",
+      "file": "src/ovcaq/runtime/supervisor.py:358",
+      "severity": "high",
+      "consensus": "1/3",
+      "action": "cycle 2: cap-overflow",
+      "reason": "rework cap reached with this finding unresolved; The launch-error path finalizes HALT and re-raises without consulting the failure decision table. Nuance: OSError is then caught by the outer state-error handler, rather than escaping run(); other launch exceptions still propagate. This broader bootstrap-routing gap is retained separately from F02, whose new regression is misclassifying non-state I/O and obscuring diagnostics.",
+      "type": "cap-overflow",
+      "status": "open",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F05",
+      "issue": "The supplied `SupervisorSettings.capability_timeouts` is never read. The supervisor builds `CapabilityService` without a timeout (supervisor.py:287), and the service re-reads disk through `supervisor_settings(self._root)`. This repeats F16's flaw for the new field. It also re-parses runtime, policy and phase config on every attempt, so an unrelated config error blocks capability runs. Tests pass only because the disk config matches the supplied settings (test_capability_execution_contract.py:82).",
+      "file": "src/ovcaq/runtime/capability.py:335",
+      "severity": "medium",
+      "consensus": "2/3",
+      "action": "cycle 2: cap-overflow",
+      "reason": "rework cap reached with this finding unresolved; Confirmed statically: Supervisor._capability_service omits the resolved timeout and CapabilityService._execute reloads supervisor_settings from disk. A follow-up should pass the resolved per-capability value from the supervisor while preserving standalone retry configuration and validation semantics.",
+      "type": "cap-overflow",
+      "status": "open",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F06",
+      "issue": "New tests hedge exactly the policy they were added to pin: `kind in {PARK, HALT}` (test_decision_retry_bound.py:60), `kind in {RETRY, WAIT}` (test_decision_retry_bound.py:87), and `kind in {HALT, PAUSE}` (test_supervisor_boundary_policy.py:38). Every parameter makes the exact kind knowable. These are not in the mech-check table.",
+      "file": "tests/runtime/test_decision_retry_bound.py:60",
+      "severity": "medium",
+      "consensus": "2/3",
+      "action": "cycle 2: cap-overflow",
+      "reason": "rework cap reached with this finding unresolved; Confirmed in the named test bodies. Alice separately raised the shared-limit and bootstrap alternatives; Bob also identified RETRY/WAIT. Assert exact outcomes after the provider-wide shared-limit policy in F12 is resolved; do not blindly hard-code PARK for provider-wide failures.",
+      "type": "cap-overflow",
+      "status": "open",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F07",
+      "issue": "`skip_empty_drain_capabilities` keeps a wall-clock fallback when `completed_at=None`. The only production caller passes the injected time (supervisor.py:261), so the fallback is reachable only from tests.",
+      "file": "src/ovcaq/state/commands.py:635",
+      "severity": "low",
+      "consensus": "2/3",
+      "action": "cycle 2: cap-overflow",
+      "reason": "rework cap reached with this finding unresolved; The optional wall-clock fallback remains in the state service, though the sole production caller now passes injected time and the original production F22 is closed. Retain this LOW cleanup separately; a follow-up must assess the public method signature before making the timestamp mandatory.",
+      "type": "cap-overflow",
+      "status": "open",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F08",
+      "issue": "`CapabilityService` checks `timeout_seconds` (typed `object`) in `__init__` and again in every `_execute`. Simpler: validate once in `__init__`, store the result as `int | None`, and have `_execute` read the stored value. Behavior does not change.",
+      "file": "src/ovcaq/runtime/capability.py:337",
+      "severity": "low",
+      "consensus": "2/3",
+      "action": "cycle 2: cap-overflow",
+      "reason": "rework cap reached with this finding unresolved; Duplicate validation is present. Simplification must preserve the current distinction between an omitted timeout and explicitly invalid None, which the tests require; an internal int-or-None representation can be used only after boundary validation.",
+      "type": "cap-overflow",
+      "status": "open",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F10",
+      "issue": "Any running optional capability blocks terminal completion even though the contract requires only required capabilities to be satisfied.",
+      "file": "src/ovcaq/runtime/decision.py:183",
+      "severity": "medium",
+      "consensus": "1/3",
+      "action": "cycle 2: cap-overflow",
+      "reason": "rework cap reached with this finding unresolved; The predicate checks every running capability although the design names required capabilities. Current compound start methods refuse optional capabilities, limiting the ordinary reachability; valid externally configured state can still expose the discrepancy. Retain the finding with that limitation.",
+      "type": "cap-overflow",
+      "status": "open",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F11",
+      "issue": "`ovcaq stop` validates PID identity and lock ownership before a separate `kill`, leaving a PID-reuse check-then-act window in which an unrelated process can receive SIGTERM.",
+      "file": "src/ovcaq/supervisor_cli.py:105",
+      "severity": "medium",
+      "consensus": "1/3",
+      "action": "cycle 2: cap-overflow",
+      "reason": "rework cap reached with this finding unresolved; The read-identity/lock checks and os.kill are separate operations, so the static PID-reuse window exists. It is unchanged in this incremental diff and needs a supported platform ownership design rather than an extra check falsely promising atomicity. No signal was sent to an unrelated process during review.",
+      "type": "cap-overflow",
+      "status": "open",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F12",
+      "issue": "The shared repeat limit parks a PRD for a provider-wide failure. When the limit is hit while the connectivity or rate-limit budget still allows WAIT, `decide` falls through to PARK whenever a PRD is active. Two traced cases with limit 5: conn, conn, conn, rate_limit, rate_limit gives PARK; `connectivity_retries=10` parks on the 5th outage. Running out of the same class budget gives HALT instead (test_decision_terminal_failures.py:65), and plan \u00a712.3 step 11 reserves halt for systemic failures. Two such parks trigger the systemic-park pause. The at-limit kind is not pinned by any test (hedged at test_decision_retry_bound.py:60).",
+      "file": "src/ovcaq/runtime/decision.py:283",
+      "severity": "medium",
+      "consensus": "1/3",
+      "action": "cycle 2: cap-overflow",
+      "reason": "rework cap reached with this finding unresolved; Confirmed statically: WAIT at the shared repeat limit falls through to PARK with an active PRD, while exhausted class budgets HALT. This needs explicit provider-wide versus PRD-specific policy and exact regression assertions; it is not resolved by merely replacing the existing test hedge with PARK.",
+      "type": "cap-overflow",
+      "status": "open",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F13",
+      "issue": "Same bug as F07, in a sibling path: `request_pause` always overwrites `pause_reason` (with None when there is no `--reason`). So `ovcaq pause` during a review-cap or systemic-park pause erases the routing key that workflow/resume.py:17 reads. `pause --reason X` replaces that key, and `resume` now keeps the replacement for good. `_record_stop` already guards this case (supervisor.py:190).",
+      "file": "src/ovcaq/state/commands.py:454",
+      "severity": "medium",
+      "consensus": "1/3",
+      "action": "cycle 2: cap-overflow",
+      "reason": "rework cap reached with this finding unresolved; request_pause still overwrites pause_reason unconditionally. The rework preserved a phase-pause reason in resume and operator-stop paths, but the sibling pause command can erase that routing key first. Retain as a bounded recurrence of the notice-preservation problem.",
+      "type": "cap-overflow",
+      "status": "open",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F14",
+      "issue": "Harmless revision conflicts now become sticky state failures. `RevisionConflictError` is a `StateError`, so an operator `pause` or `state set` that lands between the supervisor's read and its compare-and-set write (`record_progress`, `skip_empty_drain_capabilities`, `complete_batch`, capability `finish`) writes state-failure attention that blocks restart. The window is small.",
+      "file": "src/ovcaq/runtime/supervisor.py:609",
+      "severity": "low",
+      "consensus": "1/3",
+      "action": "cycle 2: cap-overflow",
+      "reason": "rework cap reached with this finding unresolved; RevisionConflictError derives from StateError and the shown compare-and-set sites route it to sticky state failure. Re-reading committed state should be evaluated as bounded conflict handling, without weakening genuine store-failure barriers.",
+      "type": "cap-overflow",
+      "status": "open",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F15",
+      "issue": "When a retry succeeds while another required capability is still pending, `finish_capability` clears this capability's attention but leaves `batch.status=\"attention\"`. The batch then shows attention with no `control.attention` until the other capability finishes.",
+      "file": "src/ovcaq/state/commands.py:604",
+      "severity": "low",
+      "consensus": "1/3",
+      "action": "cycle 2: cap-overflow",
+      "reason": "rework cap reached with this finding unresolved; After success clears this capability notice, the nonterminal branch does not restore batch.status from attention to running. The remaining required capability prevents premature completion, but the observable batch status is stale.",
+      "type": "cap-overflow",
+      "status": "open",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F16",
+      "issue": "A capability failure still overwrites any unrelated `control.attention`, even though the new success path deliberately keeps it. If a stale-owner reconcile or a manual retry fails over, say, a `supervisor.loop` notice, that notice is replaced; a later success then clears it without anyone acknowledging it.",
+      "file": "src/ovcaq/state/commands.py:599",
+      "severity": "low",
+      "consensus": "1/3",
+      "action": "cycle 2: cap-overflow",
+      "reason": "rework cap reached with this finding unresolved; The failure branch assigns control.attention regardless of an existing unrelated notice; subsequent success clears by capability site. Preserve earlier unacknowledged attention while retaining the capability failure detail in its durable attempt.",
+      "type": "cap-overflow",
+      "status": "open",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F17",
+      "issue": "`_capability_timeouts` accepts unknown keys in `[capabilities.NAME]`, while every other config table rejects them (config.py:428, config.py:456). A typo such as `timeout = 600` silently falls back to 10800 seconds.",
+      "file": "src/ovcaq/config.py:413",
+      "severity": "low",
+      "consensus": "1/3",
+      "action": "cycle 2: cap-overflow",
+      "reason": "rework cap reached with this finding unresolved; _capability_timeouts uses get(timeout_seconds, 10800) without rejecting unknown table keys. A misspelled timeout silently uses the default; a bounded validation follow-up should allow only documented capability fields.",
+      "type": "cap-overflow",
+      "status": "open",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F01",
+      "issue": "Capability failure leaves `batch.status` as running, and a later successful retry does not clear its stale `control.attention`, violating the lifecycle contract and leaving completed state with failure attention",
+      "file": "src/ovcaq/state/commands.py:554",
+      "severity": "high",
+      "consensus": "3/3",
+      "action": "cycle 1: fix",
+      "reason": "Verified in current source and within PRD 00007; bounded regression task carries this finding verbatim.",
+      "research": {
+        "category": "D",
+        "verdict": "proceed",
+        "checks": [
+          {
+            "check": "PRD requires behavior",
+            "result": "Success completes the batch; failure remains actionable and independently retryable.",
+            "pass": true
+          },
+          {
+            "check": "scope",
+            "result": "Internal state/supervisor implementation; existing public CLI and schema shapes remain unchanged.",
+            "pass": true
+          },
+          {
+            "check": "match",
+            "result": "Existing fields and configured limits implement the required behavior; isolated regression probe reproduced the gap.",
+            "pass": true
+          }
+        ],
+        "evidence_summary": "PRD 00007 and its mandatory implementation-plan contract; review verification and bounded probe. No dependency, schema migration, or changed public signature is required."
+      },
+      "type": "autonomous_research",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F04",
+      "issue": "Retry budgets can be dodged forever. `Supervisor._decide` resets `RetryState` whenever the failure class changes, and failure-path RETRY/WAIT decisions never advance `phase_repeats`. Alternating failures (agent death, then connectivity, then agent death...) therefore relaunch sessions without limit. This breaks the PRD's \"Retry storms: Bound every wait/retry\" mitigation. Confirmed by tracing `decide` and `_decide`",
+      "file": "src/ovcaq/runtime/supervisor.py:557",
+      "severity": "high",
+      "consensus": "1/3",
+      "action": "cycle 1: fix",
+      "reason": "Verified in current source and within PRD 00007; bounded regression task carries this finding verbatim.",
+      "research": {
+        "category": "D",
+        "verdict": "proceed",
+        "checks": [
+          {
+            "check": "PRD requires behavior",
+            "result": "All waits/retries/caps come from configuration and injectable time.",
+            "pass": true
+          },
+          {
+            "check": "scope",
+            "result": "Internal state/supervisor implementation; existing public CLI and schema shapes remain unchanged.",
+            "pass": true
+          },
+          {
+            "check": "match",
+            "result": "Existing fields and configured limits implement the required behavior; isolated regression probe reproduced the gap.",
+            "pass": true
+          }
+        ],
+        "evidence_summary": "PRD 00007 and its mandatory implementation-plan contract; review verification and bounded probe. No dependency, schema migration, or changed public signature is required."
+      },
+      "type": "autonomous_research",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F05",
+      "issue": "No production code ever starts a batch. Nothing in `src/` writes `batch.id` or `batch.status=\"running\"`, and `new_state` leaves `batch.id=\"\"`. So `ovcaq init` followed by `ovcaq run --no-tui` raises at `_open_session` \u2192 `publish_session_metric` \u2192 `_validate_identifier(\"\")`, and `archive_final_state` also requires the id. The installed drain acceptance test passes only because its SEED script writes the batch fields straight through StateStore",
+      "file": "tests/packaging/test_installed_supervisor_cli.py:68",
+      "severity": "high",
+      "consensus": "1/3",
+      "action": "cycle 1: fix",
+      "reason": "Verified in current source and within PRD 00007; bounded regression task carries this finding verbatim.",
+      "research": {
+        "category": "D",
+        "verdict": "proceed",
+        "checks": [
+          {
+            "check": "PRD requires behavior",
+            "result": "A fake Claude driver drains build/review/done through `ovcaq run --no-tui`.",
+            "pass": true
+          },
+          {
+            "check": "scope",
+            "result": "Internal state/supervisor implementation; existing public CLI and schema shapes remain unchanged.",
+            "pass": true
+          },
+          {
+            "check": "match",
+            "result": "Existing fields and configured limits implement the required behavior; isolated regression probe reproduced the gap.",
+            "pass": true
+          }
+        ],
+        "evidence_summary": "PRD 00007 and its mandatory implementation-plan contract; review verification and bounded probe. No dependency, schema migration, or changed public signature is required."
+      },
+      "type": "autonomous_research",
+      "prd": "00007-supervisor-loop-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F14",
+      "issue": "Changed-test fail-first replay timed out after 600 seconds, leaving no evidence that the changed tests fail against the pre-change implementation",
+      "severity": "medium",
+      "consensus": "2/3",
+      "file": "N/A",
+      "action": "deferred",
+      "reason": "The mandatory replay was attempted, retried with approved worktree access, and reached its documented 600-second bound. It reports no regression verdict; final-HEAD pytest passes 4263 tests. Bob supplied no exact runnable VERIFY command, so it is not queued. Preserve this verification limitation; behavioral repair tasks must provide meaningful regression tests, without rerunning the whole replay merely to satisfy this artifact finding.",
+      "type": "review-limitation",
+      "status": "open",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F37",
+      "issue": "`observe_metrics` imports `JsonlFollower` inside the function to avoid a `runtime.session` \u2194 `events.tail` import cycle.",
+      "severity": "low",
+      "consensus": "1/3",
+      "file": "src/ovcaq/runtime/session.py:254",
+      "action": "deferred",
+      "reason": "Bob's KNOWN bucket correctly identifies an existing module dependency constraint. The local import avoids the cycle while preserving the PRD's specified tail-module placement; relocation is outside this bounded TUI repair.",
+      "type": "review-limitation",
+      "status": "open",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F38",
+      "issue": "`verify_run` reads run.json with an unbounded `read_text()` that follows symlinks, while `observe_run` does a bounded O_NOFOLLOW read.",
+      "severity": "low",
+      "consensus": "1/3",
+      "file": "src/ovcaq/supervisor_cli.py:158",
+      "action": "deferred",
+      "reason": "Bob classified this KNOWN and traced it to pre-existing _stop logic moved into a public helper. Preserve the shared-runtime hardening concern as a low-severity deferral instead of expanding the TUI repair into the earlier runtime boundary.",
+      "type": "review-limitation",
+      "status": "open",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F14",
+      "issue": "Changed-test fail-first replay timed out after 600 seconds, leaving no evidence that the changed tests fail against the pre-change implementation",
+      "severity": "medium",
+      "consensus": "2/3",
+      "file": "N/A",
+      "action": "deferred",
+      "reason": "The mandatory replay was attempted, retried with approved worktree access, and reached its documented 600-second bound. It reports no regression verdict; final-HEAD pytest passes 4263 tests. Bob supplied no exact runnable VERIFY command, so it is not queued. Preserve this verification limitation; behavioral repair tasks must provide meaningful regression tests, without rerunning the whole replay merely to satisfy this artifact finding.",
+      "type": "review-limitation",
+      "status": "open",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F37",
+      "issue": "`observe_metrics` imports `JsonlFollower` inside the function to avoid a `runtime.session` \u2194 `events.tail` import cycle.",
+      "severity": "low",
+      "consensus": "1/3",
+      "file": "src/ovcaq/runtime/session.py:254",
+      "action": "deferred",
+      "reason": "Bob's KNOWN bucket correctly identifies an existing module dependency constraint. The local import avoids the cycle while preserving the PRD's specified tail-module placement; relocation is outside this bounded TUI repair.",
+      "type": "review-limitation",
+      "status": "open",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F38",
+      "issue": "`verify_run` reads run.json with an unbounded `read_text()` that follows symlinks, while `observe_run` does a bounded O_NOFOLLOW read.",
+      "severity": "low",
+      "consensus": "1/3",
+      "file": "src/ovcaq/supervisor_cli.py:158",
+      "action": "deferred",
+      "reason": "Bob classified this KNOWN and traced it to pre-existing _stop logic moved into a public helper. Preserve the shared-runtime hardening concern as a low-severity deferral instead of expanding the TUI repair into the earlier runtime boundary.",
+      "type": "review-limitation",
+      "status": "open",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F01",
+      "type": "cap-overflow",
+      "issue": "If the selected supervisor completes during evidence reads, exit revalidation discards even valid selected-owner final state and sets ended=True; ProjectObserver permanently caches unknown, so both viewers return failed/1 for normal completion. Reobserve the attested final selection before caching a terminal result.",
+      "severity": "high",
+      "file": "src/ovcaq/runtime/_run_observation.py:141",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "open",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F02",
+      "type": "cap-overflow",
+      "issue": "Active observation no longer checks the exact live registry entry; removing or replacing that entry while metadata, PID and run lock remain valid still exposes state and telemetry as running. Restore shared registry validation before and after evidence reads.",
+      "severity": "medium",
+      "file": "src/ovcaq/runtime/_run_observation.py:116",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "open",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F03",
+      "type": "cap-overflow",
+      "issue": "Three copies of the byte-at-a-time subprocess barrier reader appear in test_control_commit_identity, test_guarded_run_mutation and test_launcher_outcomes; extract one integration helper preserving their deadlines and EOF checks.",
+      "severity": "medium",
+      "file": "tests/integration/test_control_commit_identity.py:99",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "open",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F04",
+      "type": "cap-overflow",
+      "issue": "Raw fallback shows only a telemetry label: RAW_UNKNOWN previews are discarded, raw.jsonl is never tailed for presentation, and neither viewer displays raw output when normalization is unavailable.",
+      "severity": "medium",
+      "file": "src/ovcaq/tui/model.py:539",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "open",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F05",
+      "type": "cap-overflow",
+      "issue": "Capability failure and retry guidance are inaccessible through keyboard navigation at 80\u00d724: the stacked Static frame overflows, but Tab, Down, PageDown and End leave scroll_y at zero; an in-memory Textual probe exposed the retry command only after programmatic scrolling.",
+      "severity": "medium",
+      "file": "src/ovcaq/tui/app.py:345",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "open",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F06",
+      "type": "cap-overflow",
+      "issue": "F20 is only partly fixed: a supervisor that exits 0 with a PAUSE decision is reported as a failed launch. This happens on an interactive `ovcaq run` while a pause request is pending, and every confirmed `s` stop leaves one (`_record_stop` sets `pause_requested`). `_completed_launch` accepts only batch status `completed`, so `_launch_failure` prints \"supervisor pid N exited with code 0: {raw SessionMetadata JSON}\" and the command exits nonzero. If the parent wins the handshake race instead, `cli.py:513` re-raises `MissingRunError`. Both outcomes contradict the pinned rule that paused maps to detached/0.",
+      "severity": "medium",
+      "file": "src/ovcaq/supervisor_cli.py:396",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "open",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F07",
+      "type": "cap-overflow",
+      "issue": "`ProjectObserver.__init__` builds a `JsonlFollower` on the runtime `events.jsonl` that is never read. `_apply` always replaces it before the first read, because `_session_id` starts as None. It also points readers at the file F01 proved wrong.",
+      "severity": "medium",
+      "file": "src/ovcaq/tui/model.py:291",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "open",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F08",
+      "type": "cap-overflow",
+      "issue": "The per-session usage machinery is now dead. The observer follows one session's file, drops records from other run/session pairs (line 536), and calls `_clear()` on every session change. So `self._usage` never holds more than one entry, and the pop/reinsert step plus the `MAX_USAGE_SESSIONS` eviction can never run. No test references the cap.",
+      "severity": "medium",
+      "file": "src/ovcaq/tui/model.py:548",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "open",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F09",
+      "type": "cap-overflow",
+      "issue": "`_run` reads the private `supervisor._metadata` from another module to build the completion proof.",
+      "severity": "low",
+      "file": "src/ovcaq/supervisor_cli.py:177",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "open",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F10",
+      "type": "cap-overflow",
+      "issue": "`except _STATE_ERRORS: pass` silently drops a failed final-state read or attestation write. The viewer then reports \"final state does not belong to the selected run\", which blames an I/O fault on an ownership mismatch. Impact is limited because it fails closed, and the viewer reports its own read error when the state is unreadable.",
+      "severity": "low",
+      "file": "src/ovcaq/runtime/supervisor.py:180",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "open",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F11",
+      "type": "cap-overflow",
+      "issue": "Dropping `or None` from `next_phase` makes an empty committed `next_phase` render blank (`phase: build -> `) instead of a label. The change was made to satisfy a test fixture, not a requirement.",
+      "severity": "low",
+      "file": "src/ovcaq/tui/model.py:396",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "open",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F01",
+      "issue": "ProjectObserver follows runtime `events.jsonl`, but supervisors write normalized observations only to each session\u2019s `normalized.jsonl`; real TUI polls therefore never receive provider, activity-lane, or live-usage events",
+      "severity": "high",
+      "consensus": "3/3",
+      "file": "src/ovcaq/tui/model.py:274",
+      "action": "queued task 11",
+      "reason": "Bounded in-scope correction; preserve the documented public behavior and add regression coverage.",
+      "research": {
+        "category": "D",
+        "verdict": "proceed",
+        "checks": [
+          {
+            "check": "PRD-driven",
+            "pass": true,
+            "result": "PRD 00008 explicitly requires live truthful views, exact-run controls, safe run/attach, and terminal fallback."
+          },
+          {
+            "check": "interface scope",
+            "pass": true,
+            "result": "The repairs restore documented CLI behavior or adjust internal observation/control services. No new external product API or durable schema is authorized."
+          }
+        ],
+        "evidence_summary": "Verified PRD functionality and accepted design contracts against the current call graph. Keep single-writer ownership and shared runtime identity; these are bounded behavioral fixes, not original-plan task reruns."
+      },
+      "type": "autonomous_research",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F02",
+      "issue": "Normal supervisor cleanup removes the selected registry entry before the next poll; the observer then returns `unknown`, while both viewers exit only on `completed`, so completion, pause, halt, or stop can leave the viewer polling forever",
+      "severity": "high",
+      "consensus": "2/3",
+      "file": "src/ovcaq/tui/app.py:275",
+      "action": "queued task 12",
+      "reason": "Bounded in-scope correction; preserve the documented public behavior and add regression coverage.",
+      "research": {
+        "category": "D",
+        "verdict": "proceed",
+        "checks": [
+          {
+            "check": "PRD-driven",
+            "pass": true,
+            "result": "PRD 00008 explicitly requires live truthful views, exact-run controls, safe run/attach, and terminal fallback."
+          },
+          {
+            "check": "interface scope",
+            "pass": true,
+            "result": "The repairs restore documented CLI behavior or adjust internal observation/control services. No new external product API or durable schema is authorized."
+          }
+        ],
+        "evidence_summary": "Verified PRD functionality and accepted design contracts against the current call graph. Keep single-writer ownership and shared runtime identity; these are bounded behavioral fixes, not original-plan task reruns."
+      },
+      "type": "autonomous_research",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F03",
+      "issue": "The Textual timer executes registry snapshots, repeated `ps` probes, and filesystem reads synchronously on the UI thread, allowing every poll to freeze navigation and controls",
+      "severity": "high",
+      "consensus": "1/3",
+      "file": "src/ovcaq/tui/app.py:275",
+      "action": "queued task 13",
+      "reason": "Bounded in-scope correction; preserve the documented public behavior and add regression coverage.",
+      "research": {
+        "category": "D",
+        "verdict": "proceed",
+        "checks": [
+          {
+            "check": "PRD-driven",
+            "pass": true,
+            "result": "PRD 00008 explicitly requires live truthful views, exact-run controls, safe run/attach, and terminal fallback."
+          },
+          {
+            "check": "interface scope",
+            "pass": true,
+            "result": "The repairs restore documented CLI behavior or adjust internal observation/control services. No new external product API or durable schema is authorized."
+          }
+        ],
+        "evidence_summary": "Verified PRD functionality and accepted design contracts against the current call graph. Keep single-writer ownership and shared runtime identity; these are bounded behavioral fixes, not original-plan task reruns."
+      },
+      "type": "autonomous_research",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F04",
+      "issue": "Active duration is calculated by summing finalized session and capability wall times instead of elapsed time from `FleetRun.started_at`, contrary to the explicit duration contract",
+      "severity": "high",
+      "consensus": "2/3",
+      "file": "src/ovcaq/tui/model.py:299",
+      "action": "queued task 13",
+      "reason": "Bounded in-scope correction; preserve the documented public behavior and add regression coverage.",
+      "research": {
+        "category": "D",
+        "verdict": "proceed",
+        "checks": [
+          {
+            "check": "PRD-driven",
+            "pass": true,
+            "result": "PRD 00008 explicitly requires live truthful views, exact-run controls, safe run/attach, and terminal fallback."
+          },
+          {
+            "check": "interface scope",
+            "pass": true,
+            "result": "The repairs restore documented CLI behavior or adjust internal observation/control services. No new external product API or durable schema is authorized."
+          }
+        ],
+        "evidence_summary": "Verified PRD functionality and accepted design contracts against the current call graph. Keep single-writer ownership and shared runtime identity; these are bounded behavioral fixes, not original-plan task reruns."
+      },
+      "type": "autonomous_research",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F05",
+      "issue": "JSON `run` without `--no-tui` is silently dispatched as a foreground run, although the CLI contract requires JSON mode to reject it unless `--no-tui` is explicit",
+      "severity": "high",
+      "consensus": "1/3",
+      "file": "src/ovcaq/cli.py:526",
+      "action": "queued task 15",
+      "reason": "Bounded in-scope correction; preserve the documented public behavior and add regression coverage.",
+      "research": {
+        "category": "D",
+        "verdict": "proceed",
+        "checks": [
+          {
+            "check": "PRD-driven",
+            "pass": true,
+            "result": "PRD 00008 explicitly requires live truthful views, exact-run controls, safe run/attach, and terminal fallback."
+          },
+          {
+            "check": "interface scope",
+            "pass": true,
+            "result": "The repairs restore documented CLI behavior or adjust internal observation/control services. No new external product API or durable schema is authorized."
+          }
+        ],
+        "evidence_summary": "Verified PRD functionality and accepted design contracts against the current call graph. Keep single-writer ownership and shared runtime identity; these are bounded behavioral fixes, not original-plan task reruns."
+      },
+      "type": "autonomous_research",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F16",
+      "issue": "Raw-only crash detection cannot work: the normalized file is created before streaming begins, while evidence status treats mere file existence as successful normalization, so a crash after raw persistence but before normalization renders partial/unavailable instead of raw-only",
+      "severity": "high",
+      "consensus": "1/3",
+      "file": "src/ovcaq/tui/model.py:393",
+      "action": "queued task 11",
+      "reason": "Bounded in-scope correction; preserve the documented public behavior and add regression coverage.",
+      "research": {
+        "category": "D",
+        "verdict": "proceed",
+        "checks": [
+          {
+            "check": "PRD-driven",
+            "pass": true,
+            "result": "PRD 00008 explicitly requires live truthful views, exact-run controls, safe run/attach, and terminal fallback."
+          },
+          {
+            "check": "interface scope",
+            "pass": true,
+            "result": "The repairs restore documented CLI behavior or adjust internal observation/control services. No new external product API or durable schema is authorized."
+          }
+        ],
+        "evidence_summary": "Verified PRD functionality and accepted design contracts against the current call graph. Keep single-writer ownership and shared runtime identity; these are bounded behavioral fixes, not original-plan task reruns."
+      },
+      "type": "autonomous_research",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F17",
+      "issue": "Pause and resume verify run identity before and after the state commit, leaving a race where the selected run can exit and a replacement can start between verification and mutation; the replacement then receives the control action despite the exact-targeting requirement",
+      "severity": "high",
+      "consensus": "1/3",
+      "file": "src/ovcaq/tui/app.py:82",
+      "action": "queued task 14",
+      "reason": "Bounded in-scope correction; preserve the documented public behavior and add regression coverage.",
+      "research": {
+        "category": "D",
+        "verdict": "proceed",
+        "checks": [
+          {
+            "check": "PRD-driven",
+            "pass": true,
+            "result": "PRD 00008 explicitly requires live truthful views, exact-run controls, safe run/attach, and terminal fallback."
+          },
+          {
+            "check": "interface scope",
+            "pass": true,
+            "result": "The repairs restore documented CLI behavior or adjust internal observation/control services. No new external product API or durable schema is authorized."
+          }
+        ],
+        "evidence_summary": "Verified PRD functionality and accepted design contracts against the current call graph. Keep single-writer ownership and shared runtime identity; these are bounded behavioral fixes, not original-plan task reruns."
+      },
+      "type": "autonomous_research",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F14",
+      "issue": "Changed-test fail-first replay timed out after 600 seconds, leaving no evidence that the changed tests fail against the pre-change implementation",
+      "severity": "medium",
+      "consensus": "2/3",
+      "file": "N/A",
+      "action": "deferred",
+      "reason": "The mandatory replay was attempted, retried with approved worktree access, and reached its documented 600-second bound. It reports no regression verdict; final-HEAD pytest passes 4263 tests. Bob supplied no exact runnable VERIFY command, so it is not queued. Preserve this verification limitation; behavioral repair tasks must provide meaningful regression tests, without rerunning the whole replay merely to satisfy this artifact finding.",
+      "type": "review-limitation",
+      "status": "deferred",
+      "original_status": "open",
+      "op_id": "finalize-status-00008-tui-python-launcher-v1.md-1-F14",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F37",
+      "issue": "`observe_metrics` imports `JsonlFollower` inside the function to avoid a `runtime.session` \u2194 `events.tail` import cycle.",
+      "severity": "low",
+      "consensus": "1/3",
+      "file": "src/ovcaq/runtime/session.py:254",
+      "action": "deferred",
+      "reason": "Bob's KNOWN bucket correctly identifies an existing module dependency constraint. The local import avoids the cycle while preserving the PRD's specified tail-module placement; relocation is outside this bounded TUI repair.",
+      "type": "review-limitation",
+      "status": "deferred",
+      "original_status": "open",
+      "op_id": "finalize-status-00008-tui-python-launcher-v1.md-1-F37",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 1,
+      "finding_id": "F38",
+      "issue": "`verify_run` reads run.json with an unbounded `read_text()` that follows symlinks, while `observe_run` does a bounded O_NOFOLLOW read.",
+      "severity": "low",
+      "consensus": "1/3",
+      "file": "src/ovcaq/supervisor_cli.py:158",
+      "action": "deferred",
+      "reason": "Bob classified this KNOWN and traced it to pre-existing _stop logic moved into a public helper. Preserve the shared-runtime hardening concern as a low-severity deferral instead of expanding the TUI repair into the earlier runtime boundary.",
+      "type": "review-limitation",
+      "status": "deferred",
+      "original_status": "open",
+      "op_id": "finalize-status-00008-tui-python-launcher-v1.md-1-F38",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F01",
+      "type": "cap-overflow",
+      "issue": "If the selected supervisor completes during evidence reads, exit revalidation discards even valid selected-owner final state and sets ended=True; ProjectObserver permanently caches unknown, so both viewers return failed/1 for normal completion. Reobserve the attested final selection before caching a terminal result.",
+      "severity": "high",
+      "file": "src/ovcaq/runtime/_run_observation.py:141",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "original_status": "open",
+      "op_id": "finalize-status-00008-tui-python-launcher-v1.md-2-F01",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F02",
+      "type": "cap-overflow",
+      "issue": "Active observation no longer checks the exact live registry entry; removing or replacing that entry while metadata, PID and run lock remain valid still exposes state and telemetry as running. Restore shared registry validation before and after evidence reads.",
+      "severity": "medium",
+      "file": "src/ovcaq/runtime/_run_observation.py:116",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "original_status": "open",
+      "op_id": "finalize-status-00008-tui-python-launcher-v1.md-2-F02",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F03",
+      "type": "cap-overflow",
+      "issue": "Three copies of the byte-at-a-time subprocess barrier reader appear in test_control_commit_identity, test_guarded_run_mutation and test_launcher_outcomes; extract one integration helper preserving their deadlines and EOF checks.",
+      "severity": "medium",
+      "file": "tests/integration/test_control_commit_identity.py:99",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "original_status": "open",
+      "op_id": "finalize-status-00008-tui-python-launcher-v1.md-2-F03",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F04",
+      "type": "cap-overflow",
+      "issue": "Raw fallback shows only a telemetry label: RAW_UNKNOWN previews are discarded, raw.jsonl is never tailed for presentation, and neither viewer displays raw output when normalization is unavailable.",
+      "severity": "medium",
+      "file": "src/ovcaq/tui/model.py:539",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "original_status": "open",
+      "op_id": "finalize-status-00008-tui-python-launcher-v1.md-2-F04",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F05",
+      "type": "cap-overflow",
+      "issue": "Capability failure and retry guidance are inaccessible through keyboard navigation at 80\u00d724: the stacked Static frame overflows, but Tab, Down, PageDown and End leave scroll_y at zero; an in-memory Textual probe exposed the retry command only after programmatic scrolling.",
+      "severity": "medium",
+      "file": "src/ovcaq/tui/app.py:345",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "original_status": "open",
+      "op_id": "finalize-status-00008-tui-python-launcher-v1.md-2-F05",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F06",
+      "type": "cap-overflow",
+      "issue": "F20 is only partly fixed: a supervisor that exits 0 with a PAUSE decision is reported as a failed launch. This happens on an interactive `ovcaq run` while a pause request is pending, and every confirmed `s` stop leaves one (`_record_stop` sets `pause_requested`). `_completed_launch` accepts only batch status `completed`, so `_launch_failure` prints \"supervisor pid N exited with code 0: {raw SessionMetadata JSON}\" and the command exits nonzero. If the parent wins the handshake race instead, `cli.py:513` re-raises `MissingRunError`. Both outcomes contradict the pinned rule that paused maps to detached/0.",
+      "severity": "medium",
+      "file": "src/ovcaq/supervisor_cli.py:396",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "original_status": "open",
+      "op_id": "finalize-status-00008-tui-python-launcher-v1.md-2-F06",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F07",
+      "type": "cap-overflow",
+      "issue": "`ProjectObserver.__init__` builds a `JsonlFollower` on the runtime `events.jsonl` that is never read. `_apply` always replaces it before the first read, because `_session_id` starts as None. It also points readers at the file F01 proved wrong.",
+      "severity": "medium",
+      "file": "src/ovcaq/tui/model.py:291",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "original_status": "open",
+      "op_id": "finalize-status-00008-tui-python-launcher-v1.md-2-F07",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F08",
+      "type": "cap-overflow",
+      "issue": "The per-session usage machinery is now dead. The observer follows one session's file, drops records from other run/session pairs (line 536), and calls `_clear()` on every session change. So `self._usage` never holds more than one entry, and the pop/reinsert step plus the `MAX_USAGE_SESSIONS` eviction can never run. No test references the cap.",
+      "severity": "medium",
+      "file": "src/ovcaq/tui/model.py:548",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "original_status": "open",
+      "op_id": "finalize-status-00008-tui-python-launcher-v1.md-2-F08",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F09",
+      "type": "cap-overflow",
+      "issue": "`_run` reads the private `supervisor._metadata` from another module to build the completion proof.",
+      "severity": "low",
+      "file": "src/ovcaq/supervisor_cli.py:177",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "original_status": "open",
+      "op_id": "finalize-status-00008-tui-python-launcher-v1.md-2-F09",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F10",
+      "type": "cap-overflow",
+      "issue": "`except _STATE_ERRORS: pass` silently drops a failed final-state read or attestation write. The viewer then reports \"final state does not belong to the selected run\", which blames an I/O fault on an ownership mismatch. Impact is limited because it fails closed, and the viewer reports its own read error when the state is unreadable.",
+      "severity": "low",
+      "file": "src/ovcaq/runtime/supervisor.py:180",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "original_status": "open",
+      "op_id": "finalize-status-00008-tui-python-launcher-v1.md-2-F10",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "cycle": 2,
+      "finding_id": "F11",
+      "type": "cap-overflow",
+      "issue": "Dropping `or None` from `next_phase` makes an empty committed `next_phase` render blank (`phase: build -> `) instead of a label. The change was made to satisfy a test fixture, not a requirement.",
+      "severity": "low",
+      "file": "src/ovcaq/tui/model.py:396",
+      "consensus": "1/3",
+      "action": "deferred to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "original_status": "open",
+      "op_id": "finalize-status-00008-tui-python-launcher-v1.md-2-F11",
+      "prd": "00008-tui-python-launcher-v1.md"
+    },
+    {
+      "type": "assumed-ambiguity",
+      "question": "Task1 design names semantic activity fields without extra exact payload keys and conditional native timestamp without pinned producer field.",
+      "assumption": "Reuse shared kind/text convention, authorize representation-independent assertions for unspecified additional activity fields, receipt-only timestamps until native producer evidence exists.",
+      "prd": "00009-codex-adapter-v1.md",
+      "issue": "Task1 design names semantic activity fields without extra exact payload keys and conditional native timestamp without pinned producer field. Assumption: Reuse shared kind/text convention, authorize representation-independent assertions for unspecified additional activity fields, receipt-only timestamps until native producer evidence exists."
+    },
+    {
+      "type": "assumed-ambiguity",
+      "question": "Tool status/event precedence, unspecified sanitized detail shape and visible identity eviction evidence.",
+      "assumption": "Native command/file/MCP status and failure evidence take precedence; web lifecycle follows event. Synthetic credentials absent without fixed replacement. Eviction gap identifies short evicted item in reason or payload for observable terminal-first/FIFO ordering.",
+      "prd": "00009-codex-adapter-v1.md",
+      "issue": "Tool status/event precedence, unspecified sanitized detail shape and visible identity eviction evidence. Assumption: Native command/file/MCP status and failure evidence take precedence; web lifecycle follows event. Synthetic credentials absent without fixed replacement. Eviction gap identifies short evicted item in reason or payload for observable terminal-first/FIFO ordering."
+    },
+    {
+      "type": "assumed-ambiguity",
+      "question": "Task3 combined identity capacity and duplicate child-state projection.",
+      "assumption": "4096 applies to combined remembered items and lanes. Duplicate identical state may emit idempotent progress without new identity or fabricated success; no required dedup suppression.",
+      "prd": "00009-codex-adapter-v1.md",
+      "issue": "Task3 combined identity capacity and duplicate child-state projection. Assumption: 4096 applies to combined remembered items and lanes. Duplicate identical state may emit idempotent progress without new identity or fabricated success; no required dedup suppression."
+    },
+    {
+      "type": "assumed-ambiguity",
+      "question": "No public retained-identity count diagnostic for task3 memory-cap test; no exact label/tool name strings.",
+      "assumption": "Test sustained allocation saturation with tracemalloc, fixed-width identity streams and relative harness tolerance, without private storage assertions/new public diagnostic/product bytecap. Native attribution uses lane_id; exact neutral name/label wording remains unspecified. Completed raw_format is codex-exec-json-v1.",
+      "prd": "00009-codex-adapter-v1.md",
+      "issue": "No public retained-identity count diagnostic for task3 memory-cap test; no exact label/tool name strings. Assumption: Test sustained allocation saturation with tracemalloc, fixed-width identity streams and relative harness tolerance, without private storage assertions/new public diagnostic/product bytecap. Native attribution uses lane_id; exact neutral name/label wording remains unspecified. Completed raw_format is codex-exec-json-v1."
+    },
+    {
+      "cycle": 1,
+      "ref": "R8",
+      "issue": "The rate-limit reset parser only accepts \"reset at <ISO>\" and \"retry after N seconds\". Real Codex 0.160.0 says \"Try again at 3:45 PM.\" or \"try again later\" (upstream `retry_suffix`/`retry_suffix_after_or`). The repo's own rate-limited fixture (\"try again in 60 seconds\") is deliberately left unparsed. Result: every real Codex usage limit has an unknown reset and HALTs, so the \"rate-limit with reset\" path only works for text Codex never emits. tests/drivers/test_conformance.py:241 calls that invented text \"native\".",
+      "file": "src/ovcaq/drivers/codex_events.py:262",
+      "severity": "medium",
+      "consensus": "[2/3]",
+      "action": "defer to batch end",
+      "reason": "Requirements ambiguity: accepted design lines 187-192 permits explicit aware ISO or retry-after seconds only and rejects ambiguous local clock prose. Native formatter expansion needs a contract decision; retain unknown deadlines without guessing timezone.",
+      "type": "review-deferral",
+      "status": "open",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "cycle": 1,
+      "ref": "R15",
+      "issue": "All 8 JSONL fixture families are `schema-synthetic`, including healthy and tool-active, even though codex-cli 0.160.0 is installed here. The PRD allows synthesized families only when live capture is impractical (rate-limited, permission-failed). The made-up failure messages (see the connectivity finding) show the drift this causes.",
+      "file": "tests/fixtures/codex/v1/provenance.json:12",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "action": "defer to batch end",
+      "reason": "Requirements ambiguity: PRD prefers live capture when practical; accepted design lines 65-76 authorizes honestly labeled synthesis when a safe existing transcript is unavailable. Provenance confirms none supplied. Decide capture policy at batch end; do not fabricate capture provenance or launch real smoke.",
+      "type": "review-deferral",
+      "status": "open",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "cycle": 1,
+      "ref": "R22",
+      "issue": "Scope creep: the `sandbox` and `approval` driver options are not in the PRD and accept only their one hard-coded value. They add config surface that changes nothing.",
+      "file": "src/ovcaq/drivers/codex.py:51",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "defer to batch end",
+      "reason": "Requirements ambiguity: accepted design lines 99-101 mandates the sandbox/approval options that this finding calls out of scope. Removing accepted config requires a contract decision; preserve safe fixed values.",
+      "type": "review-deferral",
+      "status": "open",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "cycle": 1,
+      "ref": "R23",
+      "issue": "Default phase tiers use Claude family names (`sonnet`/`opus`), so a Codex config must define those tier keys or override every phase. The Codex tests hide this by using `{\"sonnet\":\u2026, \"opus\":\u2026}` (tests/tui/test_codex_projection.py:66). The PRD lists src/ovcaq/config.py, but it was not changed.",
+      "file": "src/ovcaq/drivers/__init__.py:18",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "defer to batch end",
+      "reason": "Requirements ambiguity: accepted design reuses shared config and logical tier mappings. Renaming shared defaults changes configuration behavior; decide neutral naming and migration scope at batch end.",
+      "type": "review-deferral",
+      "status": "open",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "cycle": 1,
+      "ref": "R27",
+      "issue": "On timeout, `subprocess.run(timeout=5)` kills only the direct child, so wrapper descendants can be orphaned.",
+      "file": "src/ovcaq/drivers/codex.py:119",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "defer to batch end",
+      "reason": "Accepted design dispatch-3 non-blocker records probe descendant ownership outside this fixture/fake PRD. Defer ownership policy rather than silently expand process-group behavior.",
+      "type": "review-deferral",
+      "status": "open",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R1",
+      "consensus": "[2/3]",
+      "severity": "medium",
+      "issue": "The fix for R21 (interrupted/shutdown/not_found lanes) also catches lanes that already finished. The \"started\" set at codex.py:372 is built from every lane identity, including ones marked done. So a lane that completed and is later reported as `shutdown` (for example by a `close_agent` or `wait` call) emits `lane.failed`, and the TUI accepts the change from completed to failed. Confirmed by running it: running \u2192 completed \u2192 shutdown gives `['tool.completed', 'lane.failed']`. Fix: pass only lanes that are not done (`{lane for (cat, lane), done in self._identities.items() if cat == \"lane\" and not done}`), make `started_lanes` a required parameter (codex_events.py:205, its only caller always passes it), and add a test for completed-then-shutdown",
+      "file": "src/ovcaq/drivers/codex.py:372",
+      "task": "23",
+      "found_by": "ALICE, BOB",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R2",
+      "consensus": "[2/3]",
+      "severity": "medium",
+      "issue": "`bounded_detail` redacts credentials first and strips terminal controls second. A key split by an escape sequence therefore survives redaction and is joined back together. Confirmed: `bounded_detail(\"token sk-abc\\x1b[0mdefghijklmnopqrstuvwxyz0123456789ABCDEF\")` returns the full `sk-abcdef\u2026` key unredacted, and that text lands in persisted `session.failed`, `rate_limit.started` and lane payloads. The existing `_bounded` (src/ovcaq/supervisor_cli.py:77) strips first and then sanitizes. Fix: swap the order, add a regression test, and consider sharing one helper instead of a second copy of the ANSI regex",
+      "file": "src/ovcaq/drivers/codex_events.py:57",
+      "task": "23",
+      "found_by": "ALICE, BOB",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R3",
+      "consensus": "[2/3]",
+      "severity": "medium",
+      "issue": "The R16 activity view drops the detail on error and warning messages. `_observe_activity` reads only `payload[\"text\"]`, but the Codex provisional top-level `error` (codex.py:278) and Claude `rate_limit_warning` (claude_events.py:143) carry their message in `detail`, so they render as a bare \"error\" or \"rate_limit_warning\". These payloads and Codex `turn` messages also have no `message_id`, so they share the key `(\"message\", \"\")`. The next `turn` line then replaces the error line. The test at tests/tui/test_rework_activity.py:86 uses `text` for kind `error`, so it never exercises the real provisional shape. Confirmed by code reading. Fix: fall back to `detail` when `text` is missing, give message_id-less entries a distinct key (for example kind plus sequence), and test the real provisional-error payload",
+      "file": "src/ovcaq/tui/model.py:575",
+      "task": "26",
+      "found_by": "ALICE, BOB",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R4",
+      "consensus": "[2/3]",
+      "severity": "medium",
+      "issue": "\"Selected model is at capacity\" (upstream ServerOverloaded, a transient overload) is now classified as `rate_limit`. That message never carries a reset time, so decision.py:197-213 halts the batch on the first occurrence. Before this rework it was `unknown` and got one retry. The design taxonomy puts \"server unavailable/503\" under connectivity, which waits and retries with a bound. Move `model is at capacity` to the connectivity pattern and update the expectation at tests/drivers/test_codex_rework_decode.py:94",
+      "file": "src/ovcaq/drivers/codex_events.py:309",
+      "task": "23",
+      "found_by": "ALICE, BOB",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R5",
+      "consensus": "[2/3]",
+      "severity": "medium",
+      "issue": "Simplify `_report_runtime_error`. It is named as a reporter, but it now raises in 2 of its 3 branches. The third branch returns an `Exception` that the only caller ignores, and the caller then does a bare `raise` (supervisor_cli.py:193-194). Make it `-> None`, drop `return error` (fall through), or rename it `_raise_runtime_error`. Behavior stays the same",
+      "file": "src/ovcaq/supervisor_cli.py:144",
+      "task": "26",
+      "found_by": "ALICE, BOB",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R6",
+      "consensus": "[2/3]",
+      "severity": "low",
+      "issue": "R6 is only partly fixed. Added now has two bullets, but a blank line still splits the Fixed list (CHANGELOG.md:45). The new Fixed bullet \"**tui**: show bounded normalized tool, message and plan activity\" repeats the Added bullet at :12 for this same unreleased PRD. Fold it into Added and remove the blank line",
+      "file": "CHANGELOG.md:44",
+      "task": "20",
+      "found_by": "ALICE, BOB",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R7",
+      "consensus": "[1/3]",
+      "severity": "high",
+      "issue": "A single valid Codex record can crash the supervisor, which breaks the \"malformed input degrades to `raw.unknown`\" rule. Any JSON string holding a lone surrogate escape (a `thread_id`, agent text, error message) passes `CodexDriver.decode` unsanitized. `NormalizedEventWriter.write` then raises `UnicodeEncodeError` at `.encode(\"utf-8\")`. That write sits outside the decoder's `try`, so the error escapes `RawFirstDecoder.feed`. `_stream` then SIGKILLs the child, and `_attempt` re-raises. Confirmed with a one-line repro: `{\"type\":\"item.completed\",\"item\":{\"id\":\"m\",\"type\":\"agent_message\",\"text\":\"\\ud800\"}}` gives `UnicodeEncodeError: surrogates not allowed`. The state layer already rejects lone surrogates; the event path does not.",
+      "file": "src/ovcaq/events/tail.py:143",
+      "task": "B",
+      "found_by": "BLAKE",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R8",
+      "consensus": "[1/3]",
+      "severity": "high",
+      "issue": "The exact version pin rejects the Codex CLI installed on this machine, which blocks the \"PRD 00010 can run the first real Codex smoke\" criterion. `probe()` requires `codex-cli 0.160.0` exactly, but the installed binary reports `codex-cli 0.160.1`. Running the real probe returns `DriverHealth(healthy=False, detail='codex: observed 0.160.1; pinned 0.160.0; refresh the Codex fixture contract')`, and `ovcaq run --agent codex` refuses before launch. Installed `codex exec --help` flags still match the captured help, so only the pin fails. Any patch release breaks the adapter.",
+      "file": "src/ovcaq/drivers/codex.py:200",
+      "task": "A",
+      "found_by": "BLAKE",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R9",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "issue": "Simplify: `version[10:]` behind `version.startswith(\"codex-cli \")` is a magic slice of the prefix length. Use `version.removeprefix(\"codex-cli \")` and compare it to `version` to choose between the \"observed\" and \"missing\" detail. Behavior stays the same",
+      "file": "src/ovcaq/drivers/codex.py:202",
+      "task": "24",
+      "found_by": "ALICE",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R10",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "issue": "`activity_panel` prints all kept activity (up to 256 items) oldest first, after the lanes. In a busy session the newest tool call sits at the bottom of a frame that can pass 500 lines, below what the terminal shows. Plain mode reprints that whole frame on every change.",
+      "file": "src/ovcaq/tui/panels.py:92",
+      "task": "26",
+      "found_by": "BOB",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R11",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "issue": "The fixture docs are stale after the rework. The family table has no `lanes-matched.jsonl` row. Line 45 still says edge tests build matched variants in place, but that in-place rewrite was removed. Lines 72-73 still say activity panels render lanes only. docs/driver-protocol.md:217 also names only `lanes.jsonl`.",
+      "file": "tests/fixtures/README.md:45",
+      "task": "general",
+      "found_by": "BOB",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R12",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "issue": "The root cause of R10 is still there for three of the four failure fixtures. `test_fixture_error_then_identical_failure_has_one_terminal_and_rate_start` still builds its expected class by calling `classify_failure(detail)`. If the rate-limited, authentication or permission fixture fell back to unknown, the test would still pass. Only connectivity got an independent expected value.",
+      "file": "tests/drivers/test_codex_decode_terminals.py:120",
+      "task": "23",
+      "found_by": "BOB",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R13",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "issue": "Six new test files are named after the review loop (`test_codex_rework_*`, `test_rework_*`), not after the behavior they guard. `test_codex_rework_placement.py` also re-tests text, reasoning, error and plan items, sanitizing, and rejection of malformed items, which tests/drivers/test_codex_decode.py:80-231 already covers through `decode`. It also pins which module holds the helper.",
+      "file": "tests/drivers/test_codex_rework_placement.py:1",
+      "task": "general",
+      "found_by": "BOB",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R14",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "issue": "Simplify: `\"; \".join(reason for reason in (gap, X) if reason)` appears three times (here, at :102, and at src/ovcaq/drivers/codex.py:312). In `turn_usage`, collect the reasons in a list and return `\"; \".join(reasons) or None`. In `_usage_observations`, use `gap = f\"{gap}; Conflicting thread identity\" if gap else \"Conflicting thread identity\"`.",
+      "file": "src/ovcaq/drivers/codex_events.py:93",
+      "task": "23",
+      "found_by": "BOB",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R15",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "issue": "Simplify: `_bind_observations` hides a conditional dict merge (`dict(...) | {...} if A and B else payload`) inside a `replace()` keyword, inside a generator. Reading it right depends on operator precedence. A plain loop that sets `payload` with one `if` and then calls `replace` does the same and is easy to read.",
+      "file": "src/ovcaq/events/tail.py:153",
+      "task": "20",
+      "found_by": "BOB",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R16",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "issue": "Simplify: `assert_prd_completion` recomputes `handoff_revision`, which its caller already computed (:385), and uses it only in the done branch. Pass it in, or write `before[\"revision\"] + 1` inline there.",
+      "file": "tests/drivers/test_codex_fake.py:323",
+      "task": "22",
+      "found_by": "BOB",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R17",
+      "consensus": "[1/3]",
+      "severity": "low",
+      "issue": "No test pins the 16 KiB per-stream capture cap, which was the core of R3. If the slice at codex.py:76 were removed (unbounded capture), every probe test would still pass, because `_probe_failure` truncates the final detail to 16 KiB anyway (tests/drivers/test_codex_rework_probe.py:140 checks only `len(detail)`). Add a check that a large stdout on the version probe is captured to at most 16 KiB, for example by making the helper's returned buffers observable",
+      "file": "src/ovcaq/drivers/codex.py:76",
+      "task": "24",
+      "found_by": "ALICE",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R18",
+      "consensus": "[1/3]",
+      "severity": "low",
+      "issue": "The driver accepts options the PRD never asks for. `sandbox` and `approval` can only equal their fixed defaults, so they do nothing. `allow_explicit_model` lets a launch skip the tier map, which the PRD says the model resolves through.",
+      "file": "src/ovcaq/drivers/codex.py:118",
+      "task": "A",
+      "found_by": "BLAKE",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R19",
+      "consensus": "[1/3]",
+      "severity": "low",
+      "issue": "On the supervisor path the model is resolved through the tier map twice. `resolve_phase_route` hands over a resolved model value, and `build_launch` maps it through `settings.tiers` again, keys first. A value that also names another tier, such as `{default=\"o3\", o3=\"o3-pro\"}`, launches the wrong model. The Claude edge maps values back to keys first; Codex has no such step.",
+      "file": "src/ovcaq/drivers/codex.py:138",
+      "task": "A",
+      "found_by": "BLAKE",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R20",
+      "consensus": "[1/3]",
+      "severity": "low",
+      "issue": "Failure classification matches bare status codes anywhere in the message. `\\b401\\b`, `\\b403\\b`, `\\b502\\b` and similar fire on unrelated numbers (\"processed 401 files\"), and authentication wins by precedence, so the wrong retry budget may be used. Suspected; not reproduced.",
+      "file": "src/ovcaq/drivers/codex_events.py:299",
+      "task": "B",
+      "found_by": "BLAKE",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R21",
+      "consensus": "[1/3]",
+      "severity": "low",
+      "issue": "The full suite passes but warns twice: `PytestWarning: (rm_rf) error removing \u2026/garbage-\u2026 Directory not empty`. Suspected cause: a process from a test still writes into tmp after teardown, possibly a fake descendant. Not traced.",
+      "file": "N/A",
+      "task": "C",
+      "found_by": "BLAKE",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R22",
+      "consensus": "[1/3]",
+      "severity": "low",
+      "issue": "The launch health gate now runs for every adapter, but test_rework_health.py configures only Codex. The decision gate asked for both adapters, and no test shows `ovcaq run --agent claude` stopping before spawn when `ClaudeDriver.probe` fails.",
+      "file": "tests/runtime/test_rework_health.py:86",
+      "task": "26",
+      "found_by": "BOB",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R23",
+      "consensus": "[1/3]",
+      "severity": "low",
+      "issue": "`ClaudeDriver.probe` now gates every launch, but it calls `shutil.which(command)` with the supervisor's PATH, not the PATH from the configured environment overlay that the agent spawn uses. A Claude command found only through an overlay PATH may now be rejected. Suspected, not confirmed.",
+      "file": "src/ovcaq/drivers/claude.py:81",
+      "task": "26",
+      "found_by": "BOB",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R25",
+      "consensus": "[1/3]",
+      "severity": "low",
+      "issue": "The probe now reads from pipes until end-of-file, so a wrapper's background child that keeps stdout open turns a healthy probe into a 5 s timeout.",
+      "file": "src/ovcaq/drivers/codex.py:66",
+      "task": "24",
+      "found_by": "BOB",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R26",
+      "consensus": "[1/3]",
+      "severity": "low",
+      "issue": "An existing test, `test_fake_build_review_done_drain_capability_failure_and_independent_retry`, is 52 lines. This diff does not touch it: test_supervisor.py has no net change against the PRD base.",
+      "file": "tests/runtime/test_supervisor.py:700",
+      "task": "general",
+      "found_by": "BOB",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R27",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "issue": "Dead fallback: `payload.get(\"detail\", payload.get(\"input\"))` reads an `input` key that no driver emits (searching src for `\"input\"` finds only this line). The Claude case in tests/tui/test_rework_activity.py:57 builds a made-up `input` payload just to reach it. Drop the `input` fallback and make the Claude test use the real `tool.started` shape (`tool_id`, `name`, metadata)",
+      "file": "src/ovcaq/tui/model.py:592",
+      "task": "26",
+      "found_by": "ALICE",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R28",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "issue": "1 touched test(s) pass against the pre-change code: test_command_backed_workflow_handoffs",
+      "file": "tests/drivers/test_codex_fake.py",
+      "task": "general",
+      "found_by": "mech-check",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R29",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "issue": "1 touched test(s) pass against the pre-change code: test_configured_prompts_remain_literal_phase_overrides",
+      "file": "tests/drivers/test_codex_prompt.py",
+      "task": "general",
+      "found_by": "mech-check",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R30",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "issue": "3 touched test(s) pass against the pre-change code: test_explicit_aware_rate_reset_accepts_punctuation_with_six_hour_ceiling",
+      "file": "tests/drivers/test_codex_rework_decode.py",
+      "task": "general",
+      "found_by": "mech-check",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R31",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "issue": "2 touched test(s) pass against the pre-change code: test_probe_rejects_version_aliases_that_are_not_exact_reviewed_evidence",
+      "file": "tests/drivers/test_codex_rework_probe.py",
+      "task": "general",
+      "found_by": "mech-check",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R32",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "issue": "1 touched test(s) pass against the pre-change code: test_repeated_native_thread_succeeds_with_terminal_evidence",
+      "file": "tests/runtime/test_rework_thread_conflict.py",
+      "task": "general",
+      "found_by": "mech-check",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R33",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "issue": "2 touched test(s) pass against the pre-change code: test_builtin_fake_command_handoffs_drain_and_retain_completed_results",
+      "file": "tests/runtime/test_supervisor_adapters.py",
+      "task": "general",
+      "found_by": "mech-check",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    },
+    {
+      "ref": "R34",
+      "consensus": "[1/3]",
+      "severity": "medium",
+      "issue": "5 touched test(s) pass against the pre-change code: test_fake_supervisor_evidence_drives_panels",
+      "file": "tests/tui/test_codex_projection.py",
+      "task": "general",
+      "found_by": "mech-check",
+      "type": "cap-overflow",
+      "cycle": 2,
+      "action": "defer to batch end",
+      "reason": "rework cap reached with this finding unresolved",
+      "status": "deferred",
+      "prd": "00009-codex-adapter-v1.md"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+Public behavior independently binds exact version pin and actionable sanitized probe failures; cap verification limit explicit when not directly observable. Preserve all current assertions. Tests only, no state/commit/production edits.

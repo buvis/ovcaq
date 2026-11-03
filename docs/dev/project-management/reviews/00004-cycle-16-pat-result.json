@@ -1,0 +1,100 @@
+{
+  "sha": "2742c08fe5f8194f65a36fa1e49a5980d69c16ef",
+  "cycle": 16,
+  "task": "11",
+  "provider": "claude",
+  "requested_model": "sonnet",
+  "actual_model": "claude-sonnet-5",
+  "logical_tier": "sonnet",
+  "session_id": "f720ee31-d14d-4dd7-aee8-a9706cbbf630",
+  "tools": [],
+  "runner_exit": 0,
+  "parser_exit": 0,
+  "dispatch": "e297e7a4",
+  "output": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/pat-output-00004-16-task-11-retry.txt",
+  "first_attempt": {
+    "dispatch": "78269b4a",
+    "exit": 1,
+    "output": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/pat-output-00004-16-task-11.txt",
+    "reset_epoch": 1789344600
+  },
+  "retry_not_before_epoch": 1789344605,
+  "retry_render_observed_utc": "2026-09-14 00:10:25 UTC",
+  "parsed": {
+    "no_findings": false,
+    "findings": [
+      {
+        "severity": "LOW",
+        "file": "tests/packaging/test_rework_13.py:398",
+        "issue": "`_assert_reparented_retry_and_replay` takes a `previous_runtime: list[int]` parameter that is never referenced in the function body",
+        "fix": "drop the unused parameter and its argument at the call site."
+      },
+      {
+        "severity": "LOW",
+        "file": "tests/packaging/test_rework_13.py:398",
+        "issue": "`authoritative` is annotated `tuple[bytes, bytes]` but is assigned from a single `_state_bytes(project)` call and compared with `==` against one such call — the tuple annotation doesn't match the value's actual shape",
+        "fix": "fix the annotation to match `_state_bytes`'s real return type (or drop it if untyped elsewhere in the file)."
+      }
+    ],
+    "closures": [
+      {
+        "verdict": "resolved",
+        "finding": "The restored deferred-directory diagnostic has no committed regression covering initial file/symlink refusal or the vanished-directory second open, including full path and preserved cause/errno",
+        "evidence": "tests/workflow/test_deferred_diagnostics.py adds test_record_defer_refuses_regular_file_at_deferred_path, test_record_defer_refuses_symlink_at_deferred_path, and test_record_defer_reports_directory_vanishing_before_second_open, all asserting full path + `__cause__.errno`."
+      },
+      {
+        "verdict": "resolved",
+        "finding": "`_ensure_directory_chain` is 51 lines because it embeds the 13-line ancestry verifier; move that verifier to a named helper",
+        "evidence": "`_verify_directory_chain` extracted as its own function; `_ensure_directory_chain` calls it via `verify_ancestry()` and measures 40 lines."
+      },
+      {
+        "verdict": "resolved",
+        "finding": "`test_installed_defer_never_succeeds_through_unconfirmed_reparented_ancestry` is 80 lines; extract the safe-result and retry/replay assertion flows into helpers",
+        "evidence": "Split into `_assert_reparented_result_is_safe` (35 lines) and `_assert_reparented_retry_and_replay` (30 lines); main test now 44 lines."
+      },
+      {
+        "verdict": "resolved",
+        "finding": "F4: `_invoke` reimplements subprocess.run's timeout kill/reap as a Popen block plus a framework-verifying assert",
+        "evidence": "`_invoke` now calls `subprocess.run(..., capture_output=True, text=True, timeout=20, check=False)`, dropping the manual Popen/communicate/kill/poll logic."
+      },
+      {
+        "verdict": "resolved",
+        "finding": "F5: `os.mkdir(deferred.name, dir_fd=runtime)` failures other than EEXIST still surface raw errno text with the bare name 'deferred'",
+        "evidence": "Added `except OSError as error: raise OSError(f\"deferred directory could not be created: {deferred}\") from error` after the `FileExistsError` branch, using the full path."
+      },
+      {
+        "verdict": "resolved",
+        "finding": "F6: fix commit changed a user-visible diagnostic (full deferred path on open failure) without a CHANGELOG entry",
+        "evidence": "CHANGELOG.md gains \"Deferred directory setup diagnostics report the full configured path while preserving the originating OS error.\""
+      },
+      {
+        "verdict": "resolved",
+        "finding": "F7: reparent-refusal branch hedges `if _ledger(runtime).exists(): _assert_one_record(runtime)` instead of pinning that no ledger exists on the direct case",
+        "evidence": "Replaced with `if replay: assert _ledger(runtime).read_bytes() == seeded` / `else: assert not _ledger(runtime).exists()`, deterministically asserting no ledger on the direct path."
+      }
+    ]
+  },
+  "adjudication": [
+    {
+      "finding": {
+        "severity": "LOW",
+        "file": "tests/packaging/test_rework_13.py:398",
+        "issue": "`_assert_reparented_retry_and_replay` takes a `previous_runtime: list[int]` parameter that is never referenced in the function body",
+        "fix": "drop the unused parameter and its argument at the call site."
+      },
+      "decision": "discarded",
+      "reason": "The parameter is used at tests/packaging/test_rework_13.py:398: assert identity(runtime) == previous_runtime."
+    },
+    {
+      "finding": {
+        "severity": "LOW",
+        "file": "tests/packaging/test_rework_13.py:398",
+        "issue": "`authoritative` is annotated `tuple[bytes, bytes]` but is assigned from a single `_state_bytes(project)` call and compared with `==` against one such call — the tuple annotation doesn't match the value's actual shape",
+        "fix": "fix the annotation to match `_state_bytes`'s real return type (or drop it if untyped elsewhere in the file)."
+      },
+      "decision": "discarded",
+      "reason": "_state_bytes at tests/packaging/test_rework_13.py:41-43 explicitly returns tuple[bytes, bytes], containing state and backup bytes. The annotation is correct."
+    }
+  ],
+  "unresolved": 0
+}

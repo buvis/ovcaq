@@ -1,0 +1,32 @@
+{
+  "alice": {
+    "provider": "anthropic",
+    "observed_models": [
+      "claude-opus-5-5"
+    ],
+    "requested_effort": "xhigh",
+    "session": "01b025ed-c063-4a98-bda6-a62160e03591",
+    "receipt": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-five-repair-review-20261012-evidence/alice-output.txt.receipt.json",
+    "exit": 0
+  },
+  "blake": {
+    "provider": "anthropic",
+    "observed_models": [
+      "claude-opus-5-5"
+    ],
+    "requested_effort": "xhigh",
+    "session": "a199a0c6-fcf8-4a3b-a331-e2f795b53d2c",
+    "receipt": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-five-repair-review-20261012-evidence/blake-output.txt.receipt.json",
+    "exit": 0
+  },
+  "bob": {
+    "provider": "anthropic",
+    "observed_models": [
+      "claude-opus-5-5"
+    ],
+    "requested_effort": "xhigh",
+    "session": "6359730c-f431-4db6-9d3f-3e4f5c91ff3d",
+    "receipt": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-five-repair-review-20261012-evidence/bob-output.txt.receipt.json",
+    "exit": 0
+  }
+}

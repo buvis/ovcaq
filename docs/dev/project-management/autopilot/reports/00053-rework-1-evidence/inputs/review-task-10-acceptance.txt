@@ -1,0 +1,1 @@
+Pin conservative empty-PATH probe when executable exists in current directory.

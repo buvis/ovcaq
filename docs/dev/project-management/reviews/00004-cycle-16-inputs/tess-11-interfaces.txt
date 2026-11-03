@@ -1,0 +1,7 @@
+Public import: from ovcaq.workflow.records import record_defer
+record_defer(runtime_root: Path, prd: str, batch_id: str, record: Mapping[str, Any], *, boundary_hook: Callable[[DeferBoundary], None] | None = None) -> Path
+Use runtime_root = tmp_path.resolve(), prd="00004-workflow-core-v1.md", batch_id="batch-16", record={"op_id":"diagnostic-16","detail":"test"}.
+On successful defer the path is runtime_root/"deferred"/"batch-16.json"; errors raise OSError.
+No state.json is involved by this API. Tests must never read live ~/.claude or ~/.codex files.
+Use Python3.12+, pytest tmp_path and monkeypatch; standard-library os errors for boundary injection.
+Host: run commands with tools.exec_command through functions.exec; tools do not expose timeout, so use yield_time_ms <=10000 and poll with a total 60s inspection /300s narrow /600s full deadline. Use mise exec -- uv run for tooling.

@@ -1,0 +1,88 @@
+--- a/.config/autocodex/adapter.py
++++ b/.config/autocodex/adapter.py
+@@ -374,6 +374,7 @@
+         decision: dict,
+         phase_launched: str,
+         model: str,
++        effort: str,
+     ) -> None:
+         row = {
+             "ts_start": ts_start,
+@@ -381,6 +382,7 @@
+             "wall_secs": ts_end - ts_start,
+             "provider": "codex",
+             "model": self._actual_model,
++            "effort": effort,
+             "phase_launched": phase_launched,
+             "phase_end": decision["phase_end"],
+             "signal": decision["signal"],
+--- a/.config/autocodex/test_adapter.py
++++ b/.config/autocodex/test_adapter.py
+@@ -157,6 +157,53 @@
+     assert len(launches) == 2
+     assert "autocodex: session died" in out.getvalue()
+     assert "autoclaude:" not in out.getvalue()
++
++
++@pytest.mark.parametrize("entrypoint, exit_code", [("run", 1), ("run_once", 0)])
++@pytest.mark.parametrize("effort", ["xhigh", "medium"])
++def test_review_pause_records_metrics_before_exit(
++    harness: tuple,
++    monkeypatch: pytest.MonkeyPatch,
++    entrypoint: str,
++    exit_code: int,
++    effort: str,
++) -> None:
++    instance, ap, _ = harness
++    instance.env["AUTOCODEX_EFFORT"] = effort
++    store.init(ap / "state.json", {"phase": "review", "next_phase": "review"})
++
++    def fake(
++        argv: list, prompt: str, cwd: Path, env: dict, stem: Path, cap: int, **kwargs: object
++    ) -> driver.Result:
++        store.transaction(
++            ap / "state.json",
++            lambda state: {
++                **state,
++                "phase": "paused",
++                "next_phase": "paused",
++                "pause_reason": {"site": "data_loss_risk", "detail": "durability gap"},
++            },
++        )
++        return successful(stem.with_suffix(".jsonl"))
++
++    monkeypatch.setattr(driver, "run_process", fake)
++
++    assert getattr(instance, entrypoint)() == exit_code
++
++    [metrics] = [
++        json.loads(line) for line in (ap / "autocodex-metrics.jsonl").read_text().splitlines()
++    ]
++    assert metrics["effort"] == effort
++    assert metrics["model"] == "gpt-6-astra"
++    assert metrics["phase_launched"] == "review"
++    assert metrics["phase_end"] == "paused"
++    assert metrics["signal"] == "paused"
++    assert Path(metrics["raw"]).read_text() == '{"type":"turn.completed"}\n'
++    assert instance._launched == 1
++    paused = (ap / "state.json").read_bytes()
++    assert instance._schema_gate(ap) == 1
++    assert (ap / "state.json").read_bytes() == paused
++    assert store.load(ap / "state.json")[0]["pause_reason"]["site"] == "data_loss_risk"
+ 
+ 
+ def test_pause_marker_stops_without_launch(harness: tuple) -> None:
+--- a/.config/autocodex/test_integration.py
++++ b/.config/autocodex/test_integration.py
+@@ -92,6 +92,11 @@
+     assert len(archived) == 1
+     assert json.loads(archived[0].read_text())["next_phase"] == ""
+     assert len(list((ap / "autocodex-sessions").glob("*.jsonl"))) == 3
++    metrics = [
++        json.loads(line) for line in (ap / "autocodex-metrics.jsonl").read_text().splitlines()
++    ]
++    assert [row["effort"] for row in metrics] == ["high", "xhigh", "medium"]
++    assert [row["signal"] for row in metrics] == ["continue", "continue", "done"]
+     assert len(list((tmp_path / "registry").glob("*.json"))) == 0
+ 
+ 

@@ -1,0 +1,26 @@
+[BLAKE] 🟠 Signal handling only raises an exception; no production runtime path composes group termination, outcome recording, registry cleanup, and lock release, leaving P03-T10’s centralized cleanup contract unimplemented | File: src/ovcaq/runtime/process.py:50 | Task: general
+[BLAKE] 🟡 Runtime-root precedence merges internal and external choices independently, so a lower-priority user external root conflicts with a higher-priority project or explicit internal root instead of being overridden | File: src/ovcaq/config.py:214 | Task: general
+[BLAKE] 🟡 Process identity uses `ps lstart` with one-second precision, so a PID recycled within the same second can be misclassified as the original process and escape stale-entry pruning | File: src/ovcaq/runtime/registry.py:109 | Task: general
+[BLAKE] 🟡 A `ps` timeout raises uncaught `subprocess.TimeoutExpired`, allowing registry discovery and `status`/`doctor` to traceback instead of producing degraded diagnostics | File: src/ovcaq/runtime/registry.py:109 | Task: general
+[BLAKE] 🟡 `status` embeds `datetime.now()` in its purge preview, so unchanged runtime/state data produces different output despite the required deterministic status contract | File: src/ovcaq/runtime_cli.py:303 | Task: general
+[BLAKE] ⚪ The CLI adds unlisted `doctor --acknowledge-emergency` and `logs purge --session` options, expanding both the interface and destructive purge behavior beyond the specified command surface | File: src/ovcaq/cli.py:167 | Task: general
+B1: fail
+B2: pass
+B3: fail
+B4: pass
+B5: fail
+B6: fail
+B7: fail
+B8: pass
+B9: pass
+B10: pass
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: fail
+B16: fail
+B17: fail
+B18: pass
+B19: pass
+

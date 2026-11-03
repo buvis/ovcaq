@@ -1,0 +1,136 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+________ test_exit_during_poll_preserves_validated_terminal_frame[run] _________
+
+isolated_config = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-20248/test_exit_during_poll_preserve0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b45d480>
+boundary = 'run'
+
+    @pytest.mark.parametrize("boundary", ["run", "state", "evidence"])
+    def test_exit_during_poll_preserves_validated_terminal_frame(
+        isolated_config: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+>       with selected_run(isolated_config, "completed", telemetry=True) as selected:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_observer_exit_during_poll.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Users/bob/.local/share/uv/python/cpython-3.13.16-macos-aarch64-none/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+tests/integration/test_observer_terminal_cleanup.py:400: in selected_run
+    wait_ready(base, child, telemetry)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+base = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-20248/test_exit_during_poll_preserve0')
+child = <Popen: returncode: 1 args: ['/Users/bob/git/src/github.com/buvis/ovcaq/.ven...>
+telemetry = True
+
+    def wait_ready(base: Path, child: subprocess.Popen[str], telemetry: bool) -> None:
+        deadline = time.monotonic() + 10
+        marker = "telemetry-ready" if telemetry else "agent-receipt"
+        while not (base / marker).exists():
+            if child.poll() is not None:
+>               pytest.fail(
+                    f"supervisor exited before agent receipt: {child.communicate()}"
+                )
+E               Failed: supervisor exited before agent receipt: ('', 'Traceback (most recent call last):\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/tests/integration/test_observer_terminal_cleanup.py", line 752, in <module>\n    worker(Path(sys.argv[1]), sys.argv[2], sys.argv[3], bool(int(sys.argv[4])))\n    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/tests/integration/test_observer_terminal_cleanup.py", line 291, in worker\n    result = supervisor.run()\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/runtime/supervisor.py", line 159, in run\n    metadata, entry = self._publish_ownership()\n                      ~~~~~~~~~~~~~~~~~~~~~~~^^\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/runtime/supervisor.py", line 223, in _publish_ownership\n    identity = process_identity(os.getpid())\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/runtime/registry.py", line 130, in process_identity\n    result = subprocess.run(\n        ["ps", "-p", str(pid), "-o", "lstart=", "-o", "stat="],\n    ...<4 lines>...\n        check=False,\n    )\n  File "/Users/bob/.local/share/uv/python/cpython-3.13.16-macos-aarch64-none/lib/python3.13/subprocess.py", line 555, in run\n    with Popen(*popenargs, **kwargs) as process:\n         ~~~~~^^^^^^^^^^^^^^^^^^^^^^\n  File "/Users/bob/.local/share/uv/python/cpython-3.13.16-macos-aarch64-none/lib/python3.13/subprocess.py", line 1040, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                        pass_fds, cwd, env,\n                        ^^^^^^^^^^^^^^^^^^^\n    ...<5 lines>...\n                        gid, gids, uid, umask,\n                        ^^^^^^^^^^^^^^^^^^^^^^\n                        start_new_session, process_group)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/Users/bob/.local/share/uv/python/cpython-3.13.16-macos-aarch64-none/lib/python3.13/subprocess.py", line 1992, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nPermissionError: [Errno 1] Operation not permitted: \'ps\'\n')
+
+tests/integration/test_observer_terminal_cleanup.py:332: Failed
+_______ test_exit_during_poll_preserves_validated_terminal_frame[state] ________
+
+isolated_config = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-20248/test_exit_during_poll_preserve1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10a7b6780>
+boundary = 'state'
+
+    @pytest.mark.parametrize("boundary", ["run", "state", "evidence"])
+    def test_exit_during_poll_preserves_validated_terminal_frame(
+        isolated_config: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+>       with selected_run(isolated_config, "completed", telemetry=True) as selected:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_observer_exit_during_poll.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Users/bob/.local/share/uv/python/cpython-3.13.16-macos-aarch64-none/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+tests/integration/test_observer_terminal_cleanup.py:400: in selected_run
+    wait_ready(base, child, telemetry)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+base = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-20248/test_exit_during_poll_preserve1')
+child = <Popen: returncode: 1 args: ['/Users/bob/git/src/github.com/buvis/ovcaq/.ven...>
+telemetry = True
+
+    def wait_ready(base: Path, child: subprocess.Popen[str], telemetry: bool) -> None:
+        deadline = time.monotonic() + 10
+        marker = "telemetry-ready" if telemetry else "agent-receipt"
+        while not (base / marker).exists():
+            if child.poll() is not None:
+>               pytest.fail(
+                    f"supervisor exited before agent receipt: {child.communicate()}"
+                )
+E               Failed: supervisor exited before agent receipt: ('', 'Traceback (most recent call last):\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/tests/integration/test_observer_terminal_cleanup.py", line 752, in <module>\n    worker(Path(sys.argv[1]), sys.argv[2], sys.argv[3], bool(int(sys.argv[4])))\n    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/tests/integration/test_observer_terminal_cleanup.py", line 291, in worker\n    result = supervisor.run()\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/runtime/supervisor.py", line 159, in run\n    metadata, entry = self._publish_ownership()\n                      ~~~~~~~~~~~~~~~~~~~~~~~^^\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/runtime/supervisor.py", line 223, in _publish_ownership\n    identity = process_identity(os.getpid())\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/runtime/registry.py", line 130, in process_identity\n    result = subprocess.run(\n        ["ps", "-p", str(pid), "-o", "lstart=", "-o", "stat="],\n    ...<4 lines>...\n        check=False,\n    )\n  File "/Users/bob/.local/share/uv/python/cpython-3.13.16-macos-aarch64-none/lib/python3.13/subprocess.py", line 555, in run\n    with Popen(*popenargs, **kwargs) as process:\n         ~~~~~^^^^^^^^^^^^^^^^^^^^^^\n  File "/Users/bob/.local/share/uv/python/cpython-3.13.16-macos-aarch64-none/lib/python3.13/subprocess.py", line 1040, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                        pass_fds, cwd, env,\n                        ^^^^^^^^^^^^^^^^^^^\n    ...<5 lines>...\n                        gid, gids, uid, umask,\n                        ^^^^^^^^^^^^^^^^^^^^^^\n                        start_new_session, process_group)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/Users/bob/.local/share/uv/python/cpython-3.13.16-macos-aarch64-none/lib/python3.13/subprocess.py", line 1992, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nPermissionError: [Errno 1] Operation not permitted: \'ps\'\n')
+
+tests/integration/test_observer_terminal_cleanup.py:332: Failed
+______ test_exit_during_poll_preserves_validated_terminal_frame[evidence] ______
+
+isolated_config = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-20248/test_exit_during_poll_preserve2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b443bf0>
+boundary = 'evidence'
+
+    @pytest.mark.parametrize("boundary", ["run", "state", "evidence"])
+    def test_exit_during_poll_preserves_validated_terminal_frame(
+        isolated_config: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+>       with selected_run(isolated_config, "completed", telemetry=True) as selected:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_observer_exit_during_poll.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Users/bob/.local/share/uv/python/cpython-3.13.16-macos-aarch64-none/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+tests/integration/test_observer_terminal_cleanup.py:400: in selected_run
+    wait_ready(base, child, telemetry)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+base = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-20248/test_exit_during_poll_preserve2')
+child = <Popen: returncode: 1 args: ['/Users/bob/git/src/github.com/buvis/ovcaq/.ven...>
+telemetry = True
+
+    def wait_ready(base: Path, child: subprocess.Popen[str], telemetry: bool) -> None:
+        deadline = time.monotonic() + 10
+        marker = "telemetry-ready" if telemetry else "agent-receipt"
+        while not (base / marker).exists():
+            if child.poll() is not None:
+>               pytest.fail(
+                    f"supervisor exited before agent receipt: {child.communicate()}"
+                )
+E               Failed: supervisor exited before agent receipt: ('', 'Traceback (most recent call last):\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/tests/integration/test_observer_terminal_cleanup.py", line 752, in <module>\n    worker(Path(sys.argv[1]), sys.argv[2], sys.argv[3], bool(int(sys.argv[4])))\n    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/tests/integration/test_observer_terminal_cleanup.py", line 291, in worker\n    result = supervisor.run()\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/runtime/supervisor.py", line 159, in run\n    metadata, entry = self._publish_ownership()\n                      ~~~~~~~~~~~~~~~~~~~~~~~^^\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/runtime/supervisor.py", line 223, in _publish_ownership\n    identity = process_identity(os.getpid())\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/runtime/registry.py", line 130, in process_identity\n    result = subprocess.run(\n        ["ps", "-p", str(pid), "-o", "lstart=", "-o", "stat="],\n    ...<4 lines>...\n        check=False,\n    )\n  File "/Users/bob/.local/share/uv/python/cpython-3.13.16-macos-aarch64-none/lib/python3.13/subprocess.py", line 555, in run\n    with Popen(*popenargs, **kwargs) as process:\n         ~~~~~^^^^^^^^^^^^^^^^^^^^^^\n  File "/Users/bob/.local/share/uv/python/cpython-3.13.16-macos-aarch64-none/lib/python3.13/subprocess.py", line 1040, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                        pass_fds, cwd, env,\n                        ^^^^^^^^^^^^^^^^^^^\n    ...<5 lines>...\n                        gid, gids, uid, umask,\n                        ^^^^^^^^^^^^^^^^^^^^^^\n                        start_new_session, process_group)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/Users/bob/.local/share/uv/python/cpython-3.13.16-macos-aarch64-none/lib/python3.13/subprocess.py", line 1992, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nPermissionError: [Errno 1] Operation not permitted: \'ps\'\n')
+
+tests/integration/test_observer_terminal_cleanup.py:332: Failed
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-d5ddad25-40fb-44f9-a6d1-d2c1b857826d
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-d5ddad25-40fb-44f9-a6d1-d2c1b857826d'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-6885a555-99bd-444f-bf38-7ff3bb9178bf
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-6885a555-99bd-444f-bf38-7ff3bb9178bf'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/integration/test_observer_exit_during_poll.py::test_exit_during_poll_preserves_validated_terminal_frame[run]
+FAILED tests/integration/test_observer_exit_during_poll.py::test_exit_during_poll_preserves_validated_terminal_frame[state]
+FAILED tests/integration/test_observer_exit_during_poll.py::test_exit_during_poll_preserves_validated_terminal_frame[evidence]
+3 failed, 2 warnings in 1.04s

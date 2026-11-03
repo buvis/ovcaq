@@ -1,0 +1,4 @@
+uv run pytest tests/drivers/test_adapter_failure_classes.py -q --tb=line
+exit 0
+140 passed in 0.21s
+Style and split-hygiene checks exit 0.

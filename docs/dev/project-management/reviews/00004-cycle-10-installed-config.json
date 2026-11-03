@@ -1,0 +1,90 @@
+{
+  "origin": {
+    "argv": [
+      "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/env/bin/python",
+      "-c",
+      "import ovcaq,ovcaq.config; print(ovcaq.__file__); print(ovcaq.config.__file__)"
+    ],
+    "exit": 0,
+    "stdout": "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/env/lib/python3.13/site-packages/ovcaq/__init__.py\n/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/env/lib/python3.13/site-packages/ovcaq/config.py\n",
+    "stderr": ""
+  },
+  "rows": [
+    {
+      "scope": "project",
+      "field": "recognized",
+      "argv": [
+        "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/env/bin/ovcaq",
+        "--root",
+        "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/project",
+        "--json",
+        "workflow",
+        "select",
+        "--runtime-root",
+        "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/project/runtime"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "{\"error\": {\"code\": \"usage\", \"message\": \"configuration nesting exceeds safe decode limit: /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/project/ovcaq.toml\", \"path\": null}, \"ok\": false}\n",
+      "state_preserved": true,
+      "config_preserved": true
+    },
+    {
+      "scope": "project",
+      "field": "ignored",
+      "argv": [
+        "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/env/bin/ovcaq",
+        "--root",
+        "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/project",
+        "--json",
+        "workflow",
+        "select",
+        "--runtime-root",
+        "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/project/runtime"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "{\"error\": {\"code\": \"usage\", \"message\": \"configuration nesting exceeds safe decode limit: /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/project/ovcaq.toml\", \"path\": null}, \"ok\": false}\n",
+      "state_preserved": true,
+      "config_preserved": true
+    },
+    {
+      "scope": "user",
+      "field": "recognized",
+      "argv": [
+        "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/env/bin/ovcaq",
+        "--root",
+        "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/project",
+        "--json",
+        "workflow",
+        "select",
+        "--runtime-root",
+        "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/project/runtime"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "{\"error\": {\"code\": \"usage\", \"message\": \"configuration nesting exceeds safe decode limit: /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/xdg/ovcaq/config.toml\", \"path\": null}, \"ok\": false}\n",
+      "state_preserved": true,
+      "config_preserved": true
+    },
+    {
+      "scope": "user",
+      "field": "ignored",
+      "argv": [
+        "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/env/bin/ovcaq",
+        "--root",
+        "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/project",
+        "--json",
+        "workflow",
+        "select",
+        "--runtime-root",
+        "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/project/runtime"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "{\"error\": {\"code\": \"usage\", \"message\": \"configuration nesting exceeds safe decode limit: /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/xdg/ovcaq/config.toml\", \"path\": null}, \"ok\": false}\n",
+      "state_preserved": true,
+      "config_preserved": true
+    }
+  ]
+}

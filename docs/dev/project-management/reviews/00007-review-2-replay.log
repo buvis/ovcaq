@@ -1,0 +1,20 @@
+## Fail-first replay (computed, do not re-judge)
+
+Touched tests from HEAD, run against the pre-change code at `bbe7d5213214`
+(HEAD's test files overlaid on a base worktree). A test that passes there
+does not pin this change. A behavior-preserving refactor's tests pass by
+design, so weigh the PRD's intent before raising one. `mech-check` is the finder.
+
+[MECH] 🟡 15 touched test(s) pass against the pre-change code: test_capability_request_uses_bounded_configuration_without_agent_route, test_explicit_timeout_overrides_project_and_user_values +9 more | File: tests/runtime/test_capability_execution_contract.py | Task: general
+[MECH] 🟡 150 touched test(s) pass against the pre-change code: test_empty_drain_skips_but_nonempty_drain_runs_sorted_required_capabilities, test_committed_progress_continues_before_session_failure_without_drain +144 more | File: tests/runtime/test_decision.py | Task: general
+[MECH] 🟡 13 touched test(s) pass against the pre-change code: test_unchanged_attempts_share_the_persisted_phase_limit +7 more | File: tests/runtime/test_decision_retry_bound.py | Task: general
+[MECH] 🟡 2 touched test(s) pass against the pre-change code: test_reconciliation_projects_interrupted_pending_without_rewriting_evidence | File: tests/runtime/test_session_metrics.py | Task: general
+[MECH] 🟡 2 touched test(s) pass against the pre-change code: test_retry_budget_resets_after_progress_or_a_changed_failure_class | File: tests/runtime/test_supervisor.py | Task: general
+[MECH] 🟡 1 touched test(s) pass against the pre-change code: test_run_commits_batch_identity_before_first_metric_and_preserves_work | File: tests/runtime/test_supervisor_batch_lifecycle.py | Task: general
+[MECH] 🟡 24 touched test(s) pass against the pre-change code: test_committed_controls_block_every_startup_boundary +18 more | File: tests/runtime/test_supervisor_boundary_policy.py | Task: general
+[MECH] 🟡 3 touched test(s) pass against the pre-change code: test_parser_exposes_init_state_and_workflow_command_inventory, test_incomplete_lifecycle_commands_fail_with_json_usage_errors | File: tests/runtime/test_supervisor_cli.py | Task: general
+[MECH] 🟡 6 touched test(s) pass against the pre-change code: test_successful_retry_completes_batch_and_clears_only_its_attention, test_retry_rejects_stale_revision_without_state_or_backup_writes, test_success_cannot_complete_batch_with_another_unfinished_required_capability | File: tests/state/test_supervisor_commands.py | Task: general
+
+Replay: 408 touched test(s) ran, 192 failed against base, 216 passed; 0 test file(s) could not be collected at base (their tests fail there). Command: env PYTHONPATH=src /Users/bob/git/src/github.com/buvis/ovcaq/.venv/bin/python -m pytest
+
+STDERR:

@@ -1,0 +1,18 @@
+{
+  "base": "7819970d7f807d6fad07b115af4f0df1fbc4a248",
+  "command": "mise exec -- uv run pytest -q",
+  "touched": 245,
+  "failed_at_base": 56,
+  "passed_at_base": 189,
+  "uncollectable_files": 0,
+  "passed_controls_by_file": {
+    "tests/drivers/test_adapter_failure_classes.py": 58,
+    "tests/drivers/test_adapter_outcomes.py": 17,
+    "tests/drivers/test_codex_decode_terminals.py": 10,
+    "tests/drivers/test_codex_failures.py": 7,
+    "tests/drivers/test_codex_launch.py": 61,
+    "tests/drivers/test_codex_rework_decode.py": 14,
+    "tests/runtime/test_adapter_health.py": 18,
+    "tests/runtime/test_adapter_launch_routing.py": 4
+  }
+}

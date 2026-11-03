@@ -1,0 +1,127 @@
+[
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/alice-output-00053-c6-20261014-512a5dbbb0b5409b895f1a44d9b46b08.jsonl",
+    "bytes": 418481,
+    "sha256": "d920629ae53c0d8d2ec6d8f2136387915a8262da3ad65e718b5fbaf693c5df9a"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/alice-output-00053-c6-20261014-512a5dbbb0b5409b895f1a44d9b46b08.stderr",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/alice-output-00053-c6-20261014.txt",
+    "bytes": 2297,
+    "sha256": "0ba3fc4d48126ba3f5b887dcbb56f8a8a4300c8039bb7f58968faed9c05fb775"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/alice-output-00053-c6-20261014.txt.receipt.json",
+    "bytes": 849,
+    "sha256": "7cefd3ab08076956a45ab3161760a23203233f52eb9b784b67eb120dc59eb6b1"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/alice-prompt-00053-c6-20261014.md",
+    "bytes": 58496,
+    "sha256": "396ae68179718d20d7c02c4a7f9ff567ce8b34e46e3efef16e67e6af3637ef46"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/blake-output-00053-c6-20261014-d7ebca9e01104b5dacb29e6543b8caad.jsonl",
+    "bytes": 976157,
+    "sha256": "15144d5a72b382ff77d151aba003558262cd2025df98080a7073118b0345ab7e"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/blake-output-00053-c6-20261014-d7ebca9e01104b5dacb29e6543b8caad.stderr",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/blake-output-00053-c6-20261014.txt",
+    "bytes": 2307,
+    "sha256": "ceea515fd7cd7435db24460f3f1c8da95e7eb2270b0ef92d963998f2bd262bb4"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/blake-output-00053-c6-20261014.txt.receipt.json",
+    "bytes": 850,
+    "sha256": "1a389216726f1fb1857535e211eb77918b71f0053d3bb58f8b5594a5030fc907"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/blake-prompt-00053-c6-20261014.md",
+    "bytes": 13531,
+    "sha256": "e0f4dc1e294cde8c6c4bb3944e8fb9436aab5ea5f2ea69407cb78da60908df98"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/bob-output-00053-c6-20261014-d483ef456e5b4129bd0d9a4c1ecd16b3.jsonl",
+    "bytes": 492479,
+    "sha256": "e6af102c24cafc9027dd719949e2b2b58a5f87b0e530b3ee3ce0f7c7953912fd"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/bob-output-00053-c6-20261014-d483ef456e5b4129bd0d9a4c1ecd16b3.stderr",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/bob-output-00053-c6-20261014.txt",
+    "bytes": 2465,
+    "sha256": "39d5712f31e5584122ffbd45f0eb5784feb7afe6eab99e088a10e9c16335fac7"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/bob-output-00053-c6-20261014.txt.receipt.json",
+    "bytes": 844,
+    "sha256": "5155e5ac127a1cba1c75855d24ee620e360add19bb1bef95203b0e8671b0422d"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/bob-prompt-00053-c6-20261014.md",
+    "bytes": 61838,
+    "sha256": "c4bd2e48329cd6f62e952f15602aab7b997e1450dc019bf7ed116cee342abbfc"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/chosen-findings.json",
+    "bytes": 4235,
+    "sha256": "d77f9d371fb01bcd4e0c3fa08db9219cc574bb128a429b5903352e4db77ac882"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/consolidation.txt",
+    "bytes": 3453,
+    "sha256": "d07d6562e1bc42b60c82660bfc8fe8eb2b250631ea699a18402e0c1f0b963df1"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/dispositions.json",
+    "bytes": 9091,
+    "sha256": "28ba137ff35b8cec52394fc6e9b8384de7a72a8d7f6851cd5dffec861785e9b3"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/full-suite-00053-c6-20261014-final-output.txt",
+    "bytes": 2402,
+    "sha256": "4eca09117824e33802ccdbdf63a853abf2acf3d3b254c2ed1436be86acea1448"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/last-verification.json",
+    "bytes": 886,
+    "sha256": "5b89207f13127753dc2b29af84894314b18e9b4e64eea2da1dfee5053c9bb0ca"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/replay-00053-c6-20261014.md",
+    "bytes": 2248,
+    "sha256": "8ec66c8d860dc9f6263c87dfbc7f8aed162f14e9cb7001ea019081830f56eaee"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/review-context-00053-c6-20261014.md",
+    "bytes": 252787,
+    "sha256": "1f8b882fdefef6f343c17e607358fcbb3bbed7c40994c4c9a9119acc6e8e2d2d"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/review-prd-00053-c6-20261014.md",
+    "bytes": 16492,
+    "sha256": "346508ddc657a013b9fe38c46d4bc5cee6d04ca18861e264fd5f7b08a9137d12"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/review-prd-raw-00053-c6-20261014.md",
+    "bytes": 8102,
+    "sha256": "46ed306a19ef76d6e8861d640d1a68e43f79378e4c50a286dcc68495e9b8e47a"
+  },
+  {
+    "path": "docs/dev/project-management/autopilot/reports/00053-cycle6-20261014/review-tasks-00053-c6-20261014.md",
+    "bytes": 51076,
+    "sha256": "760b708383ed2eec7083f30a21e50971557b9cb0358014801eca7c54600d63fe"
+  }
+]

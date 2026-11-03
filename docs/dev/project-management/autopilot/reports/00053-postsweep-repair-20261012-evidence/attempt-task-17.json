@@ -1,0 +1,17 @@
+{
+  "attempt": 1,
+  "model": "sonnet",
+  "outcome": "completed",
+  "review_cycle": 2,
+  "cause": null,
+  "implementor": "orchestrator",
+  "preflight_outcome": null,
+  "pipeline": "lean",
+  "red_check": "n/a:micro-lane",
+  "self_deslop": "skipped:trivial",
+  "style_gate": "clean",
+  "split_hygiene": "clean",
+  "review": "closures resolved; NO FINDINGS",
+  "actual_model": "gpt-6.1-sol",
+  "actual_provider": "openai"
+}

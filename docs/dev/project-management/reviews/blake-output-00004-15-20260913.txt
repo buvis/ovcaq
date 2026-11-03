@@ -1,0 +1,28 @@
+[BLAKE] 🟠 Effective `catchup`, `design`, `design_gate`, and `pause_on_ambiguity` frontmatter values are returned to the caller but discarded from committed state; only the review cap and tier survive, so restart/resume cannot reproduce the declared workflow policy and `catchup: skip` still follows `batch.catchup` | File: src/ovcaq/workflow/frontmatter.py | Task: P02-T02
+[BLAKE] 🟠 PRD discovery converts missing, unreadable, symlinked, or non-directory lifecycle roots into empty candidate lists, allowing an inaccessible `wip` to fall through to backlog or an invalid tree to report `drained`; this can skip higher-priority work or prematurely terminate a batch instead of surfacing the invalid-directory error required by the selection test strategy | File: src/ovcaq/workflow/selection.py | Task: P02-T01
+[BLAKE] 🟠 `defer_record` validates active batch/PRD with an unlocked read and then publishes the external ledger independently, without revision CAS or durable recovery intent; a concurrent completion/reset can therefore leave a successfully written deferred record attributed from stale state | File: src/ovcaq/workflow/records.py | Task: P02-T06
+B1: fail
+B2: fail
+B3: fail
+B4: pass
+B5: fail
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: pass
+B11: pass
+B12: pass
+B13: pass
+B14: fail
+B15: fail
+B16: fail
+B17: pass
+B18: pass
+B19: pass
+
+Source-task coverage: P02-T01 fail; P02-T02 fail; P02-T03 pass; P02-T04 pass; P02-T05 pass; P02-T06 fail; P02-T07 pass; P02-T08 pass; P02-T09 pass; P02-T10 pass.
+
+Phase-exit coverage: Phase A fails because frontmatter policy is not durably represented and invalid discovery can yield false lifecycle outcomes. Phase B fails because standalone defer publication is not coupled to the validated state revision/recovery intent, although park/stall durable-boundary recovery is implemented. Phase C passes: all required workflow commands and deterministic renderers are registered, parser-derived operations documentation is present, and workflow dependency/provider guards pass.
+
+Verification: `mise exec -- uv run pytest tests/workflow` completed with 373 passed and two pytest temporary-directory cleanup warnings.

@@ -1,0 +1,1 @@
+CLOSURE unresolved: src/ovcaq/drivers/codex.py:205 chained ternary for detail remains unchanged. Replace with separate source selection and message extraction.

@@ -1,0 +1,306 @@
+You are writing tests for a feature. You have NOT seen any implementation and must NOT think about how to implement it.
+
+Task: Classify HTTP/2 and HTTP/3 status diagnostics
+
+Description:
+Only edit /Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_failure_classes.py. Public API classify_failure(detail: str) -> FailureClass. HTTP/2 503 Service Unavailable and HTTP/2 429 Too Many Requests classify as CONNECTIVITY and RATE_LIMIT, respectively. HTTP/3 forms behave likewise. Existing HTTP/1.1 and ordinary-count behavior remains. No status=429 or Error 429: widening.
+
+Acceptance Criteria:
+Add literal HTTP/2 503 and HTTP/2 429 positives; HTTP/3 diagnostics must also classify.
+
+Existing test patterns (follow these conventions):
+import json
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+
+import pytest
+
+from ovcaq.config import AgentSettings
+from ovcaq.drivers.codex import CodexDriver
+from ovcaq.drivers.codex_events import classify_failure
+from ovcaq.events.model import FailureClass
+from ovcaq.runtime.decision import (
+    AttemptResult,
+    DecisionKind,
+    ProgressSnapshot,
+    RetryState,
+    SupervisorPolicy,
+    decide,
+    snapshot,
+)
+from ovcaq.state.schema import new_state
+
+
+@pytest.fixture
+def driver() -> CodexDriver:
+    settings = AgentSettings(
+        name="codex",
+        command=("fixture-wrapper",),
+        tiers={"standard": "fixture-model"},
+        environment={},
+        options={},
+    )
+    return CodexDriver(settings, run_id="capacity-run")
+
+
+def running_snapshot() -> ProgressSnapshot:
+    state = new_state(repo_root=Path("/tmp/decision-contract"))
+    state["batch"]["id"] = "batch-1"
+    state["batch"]["status"] = "running"
+    state["work"]["prd"] = "00001-feature.md"
+    return snapshot(state)
+
+
+@pytest.mark.parametrize(
+    ("code", "expected"),
+    [
+        ("401", FailureClass.AUTHENTICATION),
+        ("403", FailureClass.PERMISSION),
+        ("429", FailureClass.RATE_LIMIT),
+        ("502", FailureClass.CONNECTIVITY),
+        ("503", FailureClass.CONNECTIVITY),
+    ],
+)
+@pytest.mark.parametrize(
+    "template",
+    ["HTTP {code}", "HTTP status: {code}", "status code: {code}", "error code: {code}"],
+)
+def test_numeric_diagnostics_require_an_explicit_status_or_error_context(
+    code: str, expected: FailureClass, template: str
+) -> None:
+    assert classify_failure(template.format(code=code)) is expected
+
+
+@pytest.mark.parametrize(
+    ("detail", "expected"),
+    [
+        ("unexpected status 503 Service Unavailable", FailureClass.CONNECTIVITY),
+        ("unexpected status 502 Bad Gateway", FailureClass.CONNECTIVITY),
+        ("unexpected status 403 Forbidden", FailureClass.PERMISSION),
+        (
+            "exceeded retry limit, last status: 429 Too Many Requests",
+            FailureClass.RATE_LIMIT,
+        ),
+    ],
+)
+def test_explicit_bare_status_diagnostics_are_classified(
+    detail: str, expected: FailureClass
+) -> None:
+    assert classify_failure(detail) is expected
+
+
+@pytest.mark.parametrize(
+    ("detail", "expected"),
+    [
+        (
+            "HTTP status client error (429 Too Many Requests) for url (https://example.test)",
+            FailureClass.RATE_LIMIT,
+        ),
+        (
+            "HTTP status client error (403 Forbidden) for url (https://example.test)",
+            FailureClass.PERMISSION,
+        ),
+        (
+            "HTTP status server error (503 Service Unavailable) for url (https://example.test)",
+            FailureClass.CONNECTIVITY,
+        ),
+        ("HTTP/1.1 401 Unauthorized", FailureClass.AUTHENTICATION),
+        ("HTTP/1.1 403 Forbidden", FailureClass.PERMISSION),
+        ("HTTP/1.1 429 Too Many Requests", FailureClass.RATE_LIMIT),
+        ("HTTP/1.1 502 Bad Gateway", FailureClass.CONNECTIVITY),
+        ("HTTP/1.1 503 Service Unavailable", FailureClass.CONNECTIVITY),
+    ],
+)
+def test_reqwest_and_http_version_status_diagnostics_are_classified(
+    detail: str, expected: FailureClass
+) -> None:
+    assert classify_failure(detail) is expected
+
+
+@pytest.mark.parametrize("code", ["401", "403", "429", "502", "503"])
+@pytest.mark.parametrize(
+    "template",
+    [
+        "processed {code} files",
+        "inspected {code} records",
+        "port {code}",
+        "{code}",
+        "completed {code} tasks",
+    ],
+)
+def test_unrelated_numbers_are_not_failure_diagnostics(
+    code: str, template: str
+) -> None:
+    assert classify_failure(template.format(code=code)) is FailureClass.UNKNOWN
+
+
+@pytest.mark.parametrize(
+    "detail",
+    [
+        "disk at capacity",
+        "context capacity reached",
+        "Disk at capacity while model runs normally",
+    ],
+)
+def test_ordinary_resource_capacity_is_unknown(detail: str) -> None:
+    assert classify_failure(detail) is FailureClass.UNKNOWN
+
+
+@pytest.mark.parametrize("code", ["401", "403", "429", "502", "503"])
+def test_numeric_diagnostics_require_a_complete_status_number(code: str) -> None:
+    assert classify_failure(f"HTTP {code}0") is FailureClass.UNKNOWN
+
+
+@pytest.mark.parametrize(
+    ("detail", "expected"),
+    [
+        ("UnAuThOrIzEd", FailureClass.AUTHENTICATION),
+        ("Rate limit reached", FailureClass.RATE_LIMIT),
+        ("Rate\tlimit reached", FailureClass.UNKNOWN),
+        ("invalid credentials", FailureClass.AUTHENTICATION),
+    ],
+)
+def test_native_word_diagnostics_retain_case_without_widening_whitespace(
+    detail: str, expected: FailureClass
+) -> None:
+    assert classify_failure(detail) is expected
+
+
+@pytest.mark.parametrize(
+    "detail", ["Authentication failed", "MCP server authentication failed"]
+)
+def test_generic_authentication_failure_messages_remain_unknown(detail: str) -> None:
+    assert classify_failure(detail) is FailureClass.UNKNOWN
+
+
+@pytest.mark.parametrize(
+    ("detail", "expected"),
+    [
+        ("timeout; connection refused", FailureClass.CONNECTIVITY),
+        ("permission denied; not logged in", FailureClass.AUTHENTICATION),
+        ("not logged in; permission denied", FailureClass.AUTHENTICATION),
+        (
+            "unexpected status 403 Forbidden; not logged in",
+            FailureClass.AUTHENTICATION,
+        ),
+        (
+            "not logged in; unexpected status 403 Forbidden",
+            FailureClass.AUTHENTICATION,
+        ),
+    ],
+)
+def test_failure_precedence_is_independent_of_diagnostic_order(
+    detail: str, expected: FailureClass
+) -> None:
+    assert classify_failure(detail) is expected
+
+
+@pytest.mark.parametrize("event", ["error", "turn.failed"])
+def test_authentication_is_classified_beyond_the_display_detail_limit(
+    driver: CodexDriver, event: str
+) -> None:
+    detail = "x" * 5000 + " Unauthorized"
+    record = (
+        {"type": "error", "message": detail}
+        if event == "error"
+        else {"type": "turn.failed", "error": {"message": detail}}
+    )
+    observations = driver.decode(json.dumps(record))
+    expected_type = "activity.message" if event == "error" else "session.failed"
+    normalized = next(o for o in observations if o.type == expected_type)
+    assert normalized.payload["failure_class"] == "authentication"
+    summary = driver.summarize(observations, 1)
+    assert not summary.success
+    assert summary.failure_class is FailureClass.AUTHENTICATION
+
+
+@pytest.mark.parametrize(
+    ("connectivity_retries", "expected_kind"),
+    [
+        (0, DecisionKind.WAIT),
+        (1, DecisionKind.WAIT),
+        (2, DecisionKind.WAIT),
+        (3, DecisionKind.HALT),
+    ],
+)
+def test_model_capacity_uses_connectivity_wait_until_exact_retry_bound(
+    driver: CodexDriver, connectivity_retries: int, expected_kind: DecisionKind
+) -> None:
+    observations = driver.decode(
+        json.dumps(
+            {
+                "type": "turn.failed",
+                "error": {"message": "Selected model is at capacity"},
+            }
+        )
+    )
+    summary = driver.summarize(observations, 1)
+    assert not summary.success
+    assert summary.failure_class is FailureClass.CONNECTIVITY
+    assert summary.rate_limit_reset_at is None
+    assert not any(o.type == "rate_limit.started" for o in observations)
+    before = running_snapshot()
+    now = datetime(2026, 10, 2, 12, tzinfo=UTC)
+    result = AttemptResult(
+        summary=summary,
+        started_at=now - timedelta(seconds=10),
+        finished_at=now,
+        state_after=before,
+        state_error=None,
+    )
+    policy = SupervisorPolicy(
+        died_retries=2,
+        connectivity_retries=3,
+        rate_limit_retries=2,
+        connectivity_wait_seconds=7.5,
+        rate_limit_wait_seconds=120.0,
+        phase_repeat_limit=3,
+    )
+    retries = RetryState(connectivity=connectivity_retries, rate_limit=0)
+    decision = decide(before, result, retries, policy, now=now)
+    assert decision.kind is expected_kind
+    assert decision.wait_seconds == (
+        7.5 if expected_kind is DecisionKind.WAIT else None
+    )
+
+
+Public interfaces/types relevant to this task:
+classify_failure(detail: str) -> FailureClass; enum values CONNECTIVITY, RATE_LIMIT, UNKNOWN.
+
+Test framework: pytest
+
+Rules:
+1. Write tests from requirements only. You are a USER of this API, not its builder.
+2. Each test name describes a behavior: "rejects empty email", "returns 404 for missing user"
+3. Assert on outputs, return values, side effects, and errors. Never assert on mock existence.
+4. Cover edge cases: empty input, null/undefined, boundary values, error conditions
+5. Use real code paths. Mock only external dependencies (network, filesystem, databases).
+6. For EACH test, ask yourself: "What wrong implementation would still pass this?" If easy to answer, add constraints.
+7. Do not write implementation code. Do not modify non-test files.
+8. Do not add test-only methods to production classes. Use test utilities instead.
+9. SIMPLICITY FIRST: Test only the behavior in the acceptance criteria. Do not add tests for features nobody asked for. If you write 20 tests when 6 cover the spec, cut back.
+10. THINK BEFORE CODING: If the acceptance criteria are ambiguous (unclear input shape, unstated error behavior, multiple valid interpretations), STOP and report the ambiguity instead of picking an interpretation silently.
+10a. NEVER INVENT A CONTRACT: If the task names a data structure (JSON object, API response, enum, config schema, record type) but does not pin its EXACT field names, enum values, or types, STOP and report it as a blocker. Do not invent a plausible schema and test against it — a self-consistent wrong contract is worse than a reported gap, because the implementer will build to your tests and the mistake survives until PRD-level review. Likewise for "which kind of thing" choices the task leaves open (e.g. which hook event, which file location). The task description must hand you the exact strings; if it does not, that is a blocker, not a judgement call.
+11. SURGICAL: Only create/modify test files. Match the existing test file's style (quote style, import order, assertion library, naming). Do not reformat sample files you were given for reference.
+12. SIZE LIMITS: keep every test function under 50 lines and every test file under 800 lines; split by behavior into sibling files named after the test module (for example test_events_completion.py, test_events_usage.py) before you exceed either.
+
+Do NOT:
+- Think about how to implement the feature
+- Read or reference implementation files
+- Write stubs, placeholders, or TODO comments
+- Mock internal modules (only mock external boundaries)
+- Create tests that just check a function exists or returns truthy
+
+Read only the files listed above. If a file or symbol you need is not listed, stop and report it as a blocker — do not run broad `rg` sweeps to discover scope.
+
+Abort and report if you read more than 100K of total input. Return the partial result and an abort_reason: context_overrun field.
+
+Read every file before your first Edit to it. Never call bash `head`, `tail`, `cat`, `grep`, or `find` - a hook blocks them. Use the Read tool (offset/limit), `rg`, or `rg --files` instead. Never combine an inspection (read, list, search, diff) with a test, lint or build invocation in one Bash call - run them as two calls, because a combined command has two ways to hang and one exit code. Pass an explicit `timeout` on every Bash call: 60000 ms for an inspection, 300000 ms for a lint run or a narrow test run, 600000 ms for a full suite or a full build.
+
+Run only the test files this task names (the tests you wrote, or the
+failing tests in your prompt), with `-q --tb=line`. Never run a whole test
+directory or `dev/bin/release-checks`: the orchestrator runs the full suite
+once, after every task. Read the pass count and exit code from that one
+run; never re-run a suite to recover a number.
+
+End your report with `ASSUMPTIONS:` - one line per assumption you made where the task, tests, or listed files were silent (guessed interface, data shape, resolved ambiguity, unstated behavior). Write `ASSUMPTIONS: none` if you made none.

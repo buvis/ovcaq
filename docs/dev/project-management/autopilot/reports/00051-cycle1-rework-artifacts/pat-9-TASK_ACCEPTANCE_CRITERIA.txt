@@ -1,0 +1,1 @@
+Every in-scope quoted finding no longer reproduces; preserve settled deferrals and existing contracts.

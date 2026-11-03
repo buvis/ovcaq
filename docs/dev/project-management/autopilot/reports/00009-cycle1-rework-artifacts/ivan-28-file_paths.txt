@@ -1,0 +1,1 @@
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/packaging_support.py (write); /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/test_distribution.py (read only); /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/conftest.py (read only)

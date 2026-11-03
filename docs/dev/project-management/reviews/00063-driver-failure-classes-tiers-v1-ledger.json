@@ -1,0 +1,209 @@
+[
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "Possible scope drift. Task 5 said to touch no source file, but `WORKFLOW_INPUT_NOTES` in src/ovcaq/workflow_cli.py:34 was edited. This is probably the generated source of the operations.md text, so it is likely justified, but the edit should be called out.",
+    "file": "src/ovcaq/workflow_cli.py:34",
+    "reason": "single-voice; and already called out: docs/dev/project-management/meta/assumptions.md records the task-5 operations.md edit site as wrong and the WORKFLOW_INPUT_NOTES move as the deliberate fix (step-7 regression 1)",
+    "ref": "R6"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "The docs sentence \"the digit breaks no boundary after `429`\" is muddled. The point is that `\\b` does not hold between `429` and `0`.",
+    "file": "docs/driver-protocol.md:90",
+    "reason": "single-voice",
+    "ref": "R7"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "Smaller deviations from the contract. The reserved literal is the private `_PROVIDER_DEFAULT_MODEL` rather than the contract's named constant. `build_launch` sets `model = None` instead of using the contract's conditional on the argv segment. Both are behaviour-equivalent. The optional fakes in tests/drivers/test_contract.py:34 and tests/drivers/test_discovery.py:25 still lack `default_tiers`.",
+    "file": "src/ovcaq/drivers/codex.py:152",
+    "reason": "single-voice; the reporter states both deviations are behaviour-equivalent",
+    "ref": "R8"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "File sizes are close to the 800-line limit: src/ovcaq/runtime/supervisor.py is 782 lines, tests/runtime/test_supervisor.py 780 and tests/workflow/test_configuration.py 775. All are under the limit.",
+    "file": "N/A",
+    "reason": "single-voice; and not a defect by its own text - every named file is under the limit",
+    "ref": "R9"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "src/ovcaq/config.py:33 adds an unspecified public constant, `NEUTRAL_TIERS`. It is derived from `DEFAULT_PHASE_TIERS` and used only by `workflow_settings`. It is small and harmless, but the PRD does not list it.",
+    "file": "src/ovcaq/config.py:33",
+    "reason": "single-voice; the design doc's verbatim contract for task 3 names the NEUTRAL_TIERS union in workflow_settings, so it is specified, just not in the PRD body",
+    "ref": "R10"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "1 touched test(s) pass against the pre-change code: test_installed_explicit_available_tiers_override_the_active_map",
+    "file": "tests/packaging/test_workflow_inputs.py",
+    "reason": "mech-check replay on a behavior-preserving fixture migration: this test was touched only to move off the old tier keys, so passing against the pre-change code is expected, not unpinned behavior",
+    "ref": "R11"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "1 touched test(s) pass against the pre-change code: test_supplied_phase_settings_control_each_workflow_launch",
+    "file": "tests/runtime/test_supervisor.py",
+    "reason": "mech-check replay on a behavior-preserving fixture migration: touched only to move off the old tier keys",
+    "ref": "R12"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "1 touched test(s) pass against the pre-change code: test_create_session_os_error_before_session_opens_reverts_a_fresh_batch",
+    "file": "tests/runtime/test_supervisor_early_failure.py",
+    "reason": "mech-check replay on a formatting-only change: the only edit to this file in range is the ruff-format reflow at 981342e",
+    "ref": "R13"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "3 touched test(s) pass against the pre-change code: test_preflight_resolves_routes_for_the_driver_agent, test_preflight_accepts_a_tier_only_the_agent_override_supplies, test_preflight_reports_the_override_tier_not_the_neutral_one",
+    "file": "tests/runtime/test_supervisor_preflight.py",
+    "reason": "mech-check replay on a behavior-preserving stand-in change: the `route` stand-in gained a defaulted `default_tiers` parameter, which by design leaves existing behavior unchanged. R2 is the finding that this seam is under-tested, and it is being fixed.",
+    "ref": "R14"
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "8 touched test(s) pass against the pre-change code: test_explicit_phase_mapping_rejects_extra_nonroutable_keys, test_explicit_phase_mapping_rejects_untyped_values, test_config_rejects_nonroutable_phase_tables +2 more",
+    "file": "tests/workflow/test_supervisor_configuration.py",
+    "reason": "mech-check replay on a behavior-preserving fixture migration: these rows assert rejection of malformed phase tables and were touched only to move the arbitrary tier strings off the old keys",
+    "ref": "R15"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "Claude classification matches by plain substring with no word boundary, unlike Codex, so a failing build session whose result text merely mentions OAuth (\"the oauth_handler test failed\") classifies as authentication and halts for operator access; \"rate limit\" or \"getaddrinfo\" in prose likewise reroutes. The PRD's marker-over-reach mitigation (\"the table test includes the negative rows\") is satisfied for Codex (rows at tests/drivers/test_adapter_failure_classes.py:324) but the Claude table ships no glued-identifier negative rows for the new markers",
+    "file": "src/ovcaq/drivers/claude_events.py:223",
+    "reason": "single-voice; and the PRD specifies the Claude markers as plain substrings (task 1 acceptance names the table, not a boundary wrapper), so substring matching is the shipped contract rather than a defect",
+    "ref": "R3"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "\"HTTP 4290\" classifies as rate_limit and is locked in by a test comment as an \"accepted asymmetry\", which contradicts the hold 00056 rule the PRD pins (\"numeric codes keep their http or status context\") \u2014 Codex rejects the same shape at tests/drivers/test_adapter_failure_classes.py:323",
+    "file": "tests/drivers/test_adapter_failure_classes.py:482",
+    "reason": "single-voice; the hold 00056 rule the PRD pins requires the http/status context to be present, which \"HTTP 4290\" satisfies, and the asymmetry is recorded deliberately in the test rather than hidden",
+    "ref": "R4"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "Docs claim `default_tiers` is \"required at DRIVER_API_VERSION 2\", but `_register_driver` never validates the attribute and the version was deliberately not bumped; a third-party plugin already built against API 2 passes discovery and then raises a bare AttributeError inside `Supervisor.preflight` instead of a DriverDiscoveryError",
+    "file": "src/ovcaq/drivers/base.py:129",
+    "reason": "single-voice; the PRD deliberately does not bump DRIVER_API_VERSION and lists no discovery-validation work, so adding a registry check is new scope rather than a miss",
+    "ref": "R5"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "Fail-silent config path: an existing project whose `[agents.<agent>.tiers]` defines only model-name keys now resolves build/review/done through the driver's own models instead of the operator's configured ones, with no warning at route resolution (documented in CHANGELOG.md:51 and docs/operations.md:82, but nothing surfaces it at runtime)",
+    "file": "src/ovcaq/config.py:657",
+    "reason": "single-voice; the silent fallback is the PRD's chosen migration behavior and cycle 1's R3/R4 fixes documented it in both CHANGELOG.md and docs/operations.md; a runtime warning is new scope",
+    "ref": "R6"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "R5 residue: about 40 of the retained table rows still pass against the pre-change classifiers and pin pre-existing behavior rather than this change, e.g. the widened-whitespace unknowns at :337-342 and the precedence rows over pre-existing classes at :359-368 (the latter duplicate test_failure_precedence_is_independent_of_diagnostic_order at :215-234). Cuttable without losing a PRD-named pin.",
+    "file": "tests/drivers/test_adapter_failure_classes.py:337",
+    "reason": "single-voice; cycle 1's R5 trim already removed the generated bloat (replay now 61 failed against pre-change code) and the reporter states the residue loses no PRD-named pin",
+    "ref": "R9"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "Two fixture sites outside both the PRD list and cycle-1 R1's list still use the old tier key: tests/drivers/test_codex_edge.py:31 (`tiers = { sonnet = \"fixture-claude-model\" }`, asserted at :100) and tests/integration/test_native_telemetry_identity.py:167, :282, :301 (`PhaseSettings(\"sonnet\", ...)`). Self-consistent and green, so naming consistency only.",
+    "file": "tests/integration/test_native_telemetry_identity.py:301",
+    "reason": "single-voice; both files sit outside the PRD's file list and the reporter states they are self-consistent and green - naming consistency only",
+    "ref": "R10"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "Simplification: the test replaces the harness driver (`h.driver = Driver(h.clock, [], default_tiers=tiers)`) and then assigns `h.driver.steps` on the next line; `Driver` is a plain mutable dataclass, so `h.driver.default_tiers = tiers` keeps the harness's own driver and drops a statement.",
+    "file": "tests/runtime/test_adapter_launch_routing.py:249",
+    "reason": "single-voice; a one-statement style preference in a passing test",
+    "ref": "R11"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "Explicit `--available-tier KEY` flags bypass the neutral union (`available_tiers is None` guard), so an operator who lists tiers explicitly loses `standard`/`deep` and a frontmatter floor of standard or deep warns and applies no floor",
+    "file": "src/ovcaq/config.py:315",
+    "reason": "single-voice; an explicit tier list overriding the defaults is the documented meaning of the flag, and the warn-and-no-floor outcome is the behavior docs/operations.md already states",
+    "ref": "R12"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "`DEFAULT_PHASE_TIERS` is a mutable module-level dict while `NEUTRAL_TIERS` snapshots its values at import time; any in-process mutation silently desynchronizes phase defaults from `available_tiers`",
+    "file": "src/ovcaq/config.py:32",
+    "reason": "single-voice; nothing in the codebase mutates DEFAULT_PHASE_TIERS, so this is a hypothetical guard against a caller that does not exist",
+    "ref": "R13"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "`NEUTRAL_TIERS` is a new public config symbol outside the PRD's declared new-symbol set (`default_tiers` and the three driver attributes); harmless and derived, but unlisted",
+    "file": "src/ovcaq/config.py:33",
+    "reason": "single-voice; and already settled in cycle 1 as this PRD's ledger entry for R10 - the design doc's verbatim task-3 contract names the NEUTRAL_TIERS union in workflow_settings, so it is specified",
+    "ref": "R14"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "Codex execution records now store the literal \"default\" as the model for both tiers (route.model flows into session metadata/metrics), so the journal cannot say which model actually ran \u2014 an observability loss the spec implies but never states",
+    "file": "src/ovcaq/drivers/codex.py:118",
+    "reason": "single-voice; the reserved `default` literal with the `-m` segment omitted is the PRD's explicit task-2 contract, and the reporter concedes the spec never states the observability requirement",
+    "ref": "R15"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "Because the merged table now contains the reserved literal, `build_launch` accepts a raw explicit model \"default\" without `allow_explicit_model` (the `model not in settings.tiers.values()` branch) and silently omits `-m`; previously that string was rejected as an unknown model",
+    "file": "src/ovcaq/drivers/codex.py:148",
+    "reason": "single-voice; accepting a value that is now a legitimate member of the merged tier table is the direct consequence of the PRD's own default_tiers merge, and the resulting argv is the one the PRD specifies",
+    "ref": "R16"
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "PRD risk asks to document the model-name frontmatter-floor mapping in docs/operations.md, but Phase 2's own acceptance check forbids model names there; the mapping example consequently lives only in docs/driver-protocol.md:40 \u2014 an internal PRD contradiction resolved in favor of the grep",
+    "file": "docs/operations.md:80",
+    "reason": "single-voice; the reporter identifies it as a PRD-internal contradiction already resolved in favor of the binding acceptance grep, and cycle 1's R4 fix kept the driver-protocol pointer",
+    "ref": "R17"
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "name": "[C2] Unify configured state paths and root precedence (L)",
+  "description": "Make workflow, state/init and diagnostic commands agree on the explicit external state root and resolve cross-layer root precedence without inventing undocumented selectors.\n\nDisposition: deferred at cycle/cap 2/2. Review evidence only; no automatic repair dispatch is authorized by this task record. Keep it unstarted for operator/batch-end triage.\nSource review: dev/local/reviews/00005-runtime-substrate-v1-review-02.md\n\n### Findings (verbatim)\n[BOB] 🟠 Three code paths now pick the state file differently. `workflow_settings` reads a new, undocumented `[workflow] state_file` key (config.py:117) and ignores `[runtime] external_state_root`. `status`, `doctor` and `--acknowledge-emergency` use `runtime_settings`, which honors the external root and ignores `state_file`. `init` and `state` use `state_path(root)` (cli.py:426). With either key set, doctor reports state \"missing\", and acknowledgement can accept a different file than the one workflow commands write (confirmed by reading). The PRD's explicit external-root behavior is still not met. | File: src/ovcaq/config.py:117 | Task: 15\n[BLAKE] 🟡 Runtime-root precedence merges internal and external choices independently, so a lower-priority user external root conflicts with a higher-priority project or explicit internal root instead of being overridden | File: src/ovcaq/config.py:214 | Task: general\n[BOB] ⚪ `workflow_settings` validates the PRD root and the state file with `runtime_directory`. Rejections therefore say \"derived runtime path escapes project root\" even when the path is a PRD root or a state file. | File: src/ovcaq/config.py:106 | Task: 15\n\nAcceptance criteria:\n- [ ] Resolve every linked finding against PRD 00005 and its accepted source contracts.\n- [ ] Preserve single state writer, provider-neutral boundaries, owned-process signaling, and retained evidence.\n- [ ] Add only meaningful regression coverage and run the applicable quality gates when repair is authorized.\n\nFinding IDs: C2F07, C2F10, C2F32",
+  "review_cycle": 2,
+  "finding_ids": [
+    "C2F07",
+    "C2F10",
+    "C2F32"
+  ],
+  "deferred_at_cap": true
+}

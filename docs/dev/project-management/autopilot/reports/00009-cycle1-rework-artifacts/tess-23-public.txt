@@ -1,0 +1,124 @@
+able |
+| Nonfatal error item | `activity.message`, kind `error`; no session failure |
+| `turn.completed` | `usage.updated` and `session.completed` |
+| `turn.failed` | `session.failed`, plus `rate_limit.started` when classified |
+| Top-level `error` | Provisional error activity with normalized failure metadata |
+
+The adapter recognizes `item.started`, `item.updated` and `item.completed`.
+Tool failure requires native failure/decline status, explicit native error or
+nonzero command exit. Ordinary command output is not provider-health evidence.
+File detail summarizes paths and change kinds; MCP and web detail is sanitized
+and bounded to 4096 characters, rather than retained as wholesale results.
+
+Collaboration requires `agents_states` keys matching native receiver thread
+IDs. Pending/running receivers start or progress a lane, completed receivers
+complete it, and errored receivers fail it. Lane payloads supply `label` and
+bounded `detail`. Interrupted, shutdown, not-found or missing attribution remain
+unknown; a completed collaboration tool does not prove receiver completion.
+The checked-in `lanes.jsonl` deliberately mismatches these identities and
+therefore supplies raw missing-attribution evidence, not successful lanes.
+At most 4096 item/lane identities are remembered; eviction prefers the oldest
+terminal identity, then the oldest identity, and emits a visible raw gap.
+
+`summarize` consumes its supplied iterable once. If native terminal evidence
+exists, it returns the shared reduction summary unchanged. Otherwise the latest
+top-level provisional error's normalized metadata supplies a synthetic
+`session.failed` to reduction, plus `rate_limit.started` when applicable. This
+does not mutate workflow state or parse native prose in shared code. A recovered
+error followed by completion adds no synthetic failure or rate limit. With no
+terminal or provisional error, the shared reducer remains authoritative;
+zero process exit alone does not prove success. Conflicting thread identities
+remain represented and reduce to unknown failure rather than merged success.
+Each valid thread header emits exactly one `session.started`. A conflicting
+header resets usage and queues a raw gap for the next `turn.completed`, using
+that completion record's digest and sanitized preview.
+
+### Usage and unknown telemetry
+
+Normalized input excludes separately counted cache reads/writes, matching the
+Claude adapter. Native input includes cached input. With valid inclusive input,
+cache read and an explicit zero cache write, normalized input is inclusive
+input minus cache read. Native `120 input / 100 read / 0 write / 30 output`
+therefore becomes `20 input / 100 read / 0 creation / 30 output`.
+Reads exceeding inclusive input produce unknown uncached input and a raw gap.
+Positive cache writes expose their native value as cache creation and retain
+valid cache reads, but leave uncached input unknown with a partition gap and
+`estimated=True`: the pinned schema does not establish the write partition.
+Missing/invalid partition components also leave uncached input unknown.
+
+Counters are validated individually as nonnegative integers, rejecting bools,
+floats, nonfinite and wrong-shaped values. Valid components survive malformed
+neighbors; omitted components remain unknown and malformed supplied usage emits
+a raw gap. Reasoning tokens are not added to output again. `cost_usd` and
+`tool_uses` remain `None`, without inferred prices or invented zeroes. Inclusive
+native totals survive in private raw evidence only.
+
+The pinned producer's `usage_from_last_total` reads thread-cumulative totals.
+Codex takes fieldwise maxima across validated normalized snapshots for that
+thread, never sums terminal snapshots: native input snapshots 100 then 200
+yield 200, not 300. Replays, out-of-order completions and additional turns do
+not change that arithmetic or require a turn ledger. Usage identity is
+`thread:<id-or-unknown>` and is observational only. Known counters are exact
+unless a partition gap marks them estimated; unknown fields remain `None` and
+gaps remain visible. Default all-zero native telemetry yields unknown fields
+and an absence gap; a later zero snapshot cannot reduce earlier known maxima.
+
+### Native phase prompt and projection
+
+`default_prompt` accepts exactly `build`, `review` and `done`, rejecting other
+phases with `ValueError`. It returns this literal native invocation and contract:
+
+```text
+$run-autopilot
+Read the committed OVCAQ state to determine the current phase. Use `ovcaq state`
+and `ovcaq workflow` commands for all durable mutations. Perform only the
+current phase, commit exactly one successful phase handoff through the OVCAQ
+workflow command, then exit the session. Never edit state.json directly. Do not
+start a second phase in this session. Completion is determined by committed
+state, not your final message. Do not install, upgrade, or modify launcher
+plugins or marketplace content.
+```
+
+The external skill must expose the native name `run-autopilot`. A different
+installed name requires an explicit verified phase prompt override.
+`AgentSettings.prompts` are literal supervisor overrides subject to the same
+handoff contract; the driver does not embed skill files or open plugin caches.
+State transitions determine successful handoff and phase completion. One
+launched session performs one phase and exits after one successful committed
+handoff, with no second-phase work in that session.
+
+`ProjectObserver` and panels consume normalized observations and metrics to
+show provider identity, attributed lanes and exact/estimated usage. Normalized
+tool/text activity survives in the evidence; current activity panels render
+lanes only. Unavailable cost is unknown or omitted. Unsupported fields and
+normalization gaps retain raw-only visibility; out-of-order lane progress can
+remain unknown.
+Native receiver IDs do not establish OVCAQ task correlation. The TUI adds no
+provider parser, model names or lifecycle policy.
+
+## Evidence and permissions
+
+Session output is raw-first: OVCAQ writes and flushes each raw record before
+framing or decoding it. Normalized JSONL contains only validated, sanitized
+observations. The private raw file preserves the provider-native evidence needed
+for recovery and debugging after a host crash, including records that could not
+be decoded.
+
+Raw output can contain provider-native content or credentials. Its file mode is
+`0600`; access must remain restricted to the operator account. Sanitization of
+normalized data does not make the raw evidence safe to share.
+
+Claude v1 accepts only `permission_mode="auto"`. A missing or unsafe permission
+mode is a configuration failure. A runtime failure classified as `permission`
+is an operator alert, not an instruction for the workflow to change phase.
+
+## Operator runbook
+
+When a session fails or becomes unknown:
+
+1. Read the normalized `SessionSummary` and observations to identify the outcome
+   and `FailureClass`.
+2. If decoding is incomplete, inspect the session's private raw evidence as the
+   operator account. Keep it restricted because it may contain credentials.
+3. Treat `permission` failures as alerts. For Claude, confirm the configured
+   permission m

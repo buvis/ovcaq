@@ -1,0 +1,1 @@
+R1 and R7 resolved; both-provider hidden-by-PATH cases retained; no production changes.

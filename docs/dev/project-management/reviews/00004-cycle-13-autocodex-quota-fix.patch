@@ -1,0 +1,428 @@
+--- a/.config/autocodex/driver.py
++++ b/.config/autocodex/driver.py
+@@ -6,6 +6,7 @@
+ import argparse
+ import hashlib
+ import json
++import math
+ import os
+ import re
+ import selectors
+@@ -84,6 +85,8 @@
+     error: str = ""
+     usage: dict[str, Any] = field(default_factory=dict)
+     thread_id: str = ""
++    quota_reset: float | None = None
++    api_status: int | None = None
+ 
+     def accept(self, line: bytes) -> None:
+         try:
+@@ -94,12 +97,25 @@
+             return
+         kind = event.get("type")
+         if self.provider == "claude":
++            if kind == "rate_limit_event":
++                info = event.get("rate_limit_info")
++                self.quota_reset = None
++                if isinstance(info, dict) and info.get("status") == "rejected":
++                    reset = info.get("resetsAt")
++                    if isinstance(reset, (int, float)) and not isinstance(reset, bool):
++                        try:
++                            reset = float(reset)
++                        except OverflowError:
++                            return
++                        if math.isfinite(reset) and reset > 0:
++                            self.quota_reset = reset
+             if kind == "result":
+                 self.success = event.get("is_error") is False
+                 self.text = str(event.get("result") or "")
+                 self.error = "" if self.success else self.text
+                 self.thread_id = str(event.get("session_id") or "")
+                 self.usage = event.get("usage") or {}
++                self.api_status = event.get("api_error_status")
+             return
+         if kind == "thread.started":
+             self.thread_id = str(event.get("thread_id") or "")
+@@ -241,18 +257,60 @@
+     return result
+ 
+ 
++def wait_for_reviewer_quota(result: Result, cwd: Path, deadline: float) -> bool:
++    reset = result.events.quota_reset
++    if result.ok or result.capped or result.events.api_status != 429 or reset is None:
++        return False
++    delay = reset - time.time()
++    # Do not spin on stale resets, infer timestamps from prose, or retry early.
++    if delay <= 0 or delay + 5 >= deadline - time.monotonic():
++        return False
++    target = time.monotonic() + delay + 5
++    reset_label = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(reset))
++    print(
++        f"autocodex: Claude quota exhausted; waiting until {reset_label} + 5s; raw={result.log}",
++        flush=True,
++    )
++    pause = cwd / "dev/local/autopilot/pause-requested"
++    while True:
++        if pause.exists() or time.monotonic() >= deadline:
++            return False
++        remaining = target - time.monotonic()
++        if remaining <= 0:
++            return True
++        time.sleep(min(60, remaining))
++
++
++def run_reviewer(prompt: str, output: Path, model: str, cwd: Path, binary: str) -> Result:
++    env = reviewer_env(dict(os.environ))
++    cap = float(env.get("_AUTOPILOT_SESSION_MAX_REVIEW", "10800"))
++    parent_deadline = float(env.get("AUTOCODEX_SESSION_DEADLINE", str(time.time() + cap)))
++    cap = min(cap, parent_deadline - time.time())
++    if not math.isfinite(cap) or cap <= 0:
++        raise ValueError("no reviewer session time remaining")
++    deadline = time.monotonic() + cap
++    wait_deadline = min(
++        deadline, time.monotonic() + int(env.get("_AUTOPILOT_LIMIT_WAIT_MAX", "21600"))
++    )
++    while True:
++        stem = output.parent / f"{output.stem}-{uuid.uuid4().hex}"
++        result = run_process(
++            claude_argv(binary, model),
++            prompt,
++            cwd,
++            env,
++            stem,
++            deadline - time.monotonic(),
++            provider="claude",
++        )
++        if not wait_for_reviewer_quota(result, cwd, wait_deadline):
++            return result
++        print("autocodex: Claude quota reset reached; retrying reviewer", flush=True)
++
++
+ def review(prompt: Path, output: Path, model: str, cwd: Path, binary: str) -> int:
+-    stem = output.parent / f"{output.stem}-{uuid.uuid4().hex}"
+     started = time.time()
+-    result = run_process(
+-        claude_argv(binary, model),
+-        prompt.read_text(),
+-        cwd,
+-        reviewer_env(dict(os.environ)),
+-        stem,
+-        10800,
+-        provider="claude",
+-    )
++    result = run_reviewer(prompt.read_text(), output, model, cwd, binary)
+     missing = [
+         f"D{n}"
+         for n in range(1, 6)
+--- a/.config/autocodex/adapter.py
++++ b/.config/autocodex/adapter.py
+@@ -272,7 +272,7 @@
+             ),
+             prompt,
+             self.cwd,
+-            self.env,
++            dict(self.env, AUTOCODEX_SESSION_DEADLINE=str(self._started + plan.cap_secs)),
+             stem,
+             plan.cap_secs,
+             provider="codex",
+--- a/.config/autocodex/host.md
++++ b/.config/autocodex/host.md
+@@ -74,6 +74,13 @@
+ 
+     autocodex_bob_receipt: <absolute receipt path>
+ 
++The helper handles confirmed Claude quota resets itself: after a structured
++API 429 rejection, it waits until the reported reset plus five seconds, within
++the quota-wait and session deadlines, then retries with a fresh raw log. Keep
++awaiting that same helper while it waits; do not launch another reviewer,
++classify its pending output as a failed review, or retry before reset. If the
++helper exits unsuccessfully, preserve its raw evidence and pause as above.
++
+ Retain every raw rubric verdict in each corresponding consolidated reviewer
+ section: Alice's R rules, Blake's B rules, Bob's D1-D5. Do not emit a stale
+ `codex_thread_id` for a Claude reviewer. Keep provider provenance accurate in
+--- a/.config/autocodex/README.md
++++ b/.config/autocodex/README.md
+@@ -82,8 +82,15 @@
+ | `_AUTOPILOT_SESSION_MAX` | 7200 seconds |
+ | `_AUTOPILOT_SESSION_MAX_REVIEW` | 10800 seconds |
+ 
+-Usage-limit polling is bounded; reset times are not guessed from prose. Other
+-unsuccessful sessions get the configured retry budget and then stop with their
++Usage-limit polling is bounded; reset times are not guessed from prose.
++Claude reviewer attempts with a structured API 429 quota rejection wait for the
++reported reset plus five seconds, then retry with a fresh raw log. Waiting is
++bounded by `_AUTOPILOT_LIMIT_WAIT_MAX` and the enclosing session deadline; stale
++or missing resets fail normally. An operator pause interrupts the wait within
++60 seconds. Only a successful full D1–D5 review receives an output and receipt.
++Existing paused batches still require interactive recovery.
++
++Other unsuccessful sessions get the configured retry budget and then stop with their
+ evidence. Existing loop memory, plugin-version and repeated-progress guards
+ remain active. Some inherited diagnostics still name autoclaude.
+ 
+--- /dev/null
++++ b/.config/autocodex/test_reviewer_quota.py
+@@ -0,0 +1,262 @@
++from __future__ import annotations
++
++import json
++import os
++import subprocess
++import sys
++from pathlib import Path
++from unittest.mock import create_autospec
++
++import pytest
++
++import driver
++
++
++def rejected(reset: object = 130, status: object = 429) -> driver.Events:
++    events = driver.Events("claude")
++    events.accept(
++        json.dumps(
++            {
++                "type": "rate_limit_event",
++                "rate_limit_info": {"status": "rejected", "resetsAt": reset},
++            }
++        ).encode()
++    )
++    events.accept(
++        json.dumps(
++            {
++                "type": "result",
++                "is_error": True,
++                "api_error_status": status,
++                "result": "Session limit",
++            }
++        ).encode()
++    )
++    return events
++
++
++@pytest.fixture
++def clock(monkeypatch: pytest.MonkeyPatch) -> list[float]:
++    now = [100.0]
++    monkeypatch.setattr(driver.time, "time", lambda: now[0])
++    monkeypatch.setattr(driver.time, "monotonic", lambda: now[0])
++
++    def sleep(seconds: float) -> None:
++        assert 0 < seconds <= 60
++        now[0] += seconds
++
++    monkeypatch.setattr(driver.time, "sleep", sleep)
++    monkeypatch.delenv("AUTOCODEX_SESSION_DEADLINE", raising=False)
++    monkeypatch.setenv("_AUTOPILOT_LIMIT_WAIT_MAX", "300")
++    monkeypatch.setenv("_AUTOPILOT_SESSION_MAX_REVIEW", "10800")
++    return now
++
++
++def runner(monkeypatch: pytest.MonkeyPatch, events: list[driver.Events]) -> object:
++    pending = iter(events)
++
++    def run(*args: object, **kwargs: object) -> driver.Result:
++        event = next(pending)
++        stem = args[4]
++        assert isinstance(stem, Path)
++        raw = stem.with_suffix(".jsonl")
++        with raw.open("x") as file:
++            file.write(event.text or event.error)
++        stem.with_suffix(".stderr").touch()
++        return driver.Result(0 if event.success else 1, raw, event, False)
++
++    mock = create_autospec(driver.run_process, side_effect=run)
++    monkeypatch.setattr(driver, "run_process", mock)
++    return mock
++
++
++def review(tmp_path: Path) -> int:
++    prompt = tmp_path / "prompt.md"
++    prompt.write_text("Review")
++    return driver.review(prompt, tmp_path / "bob.md", "opus", tmp_path, "claude")
++
++
++def success() -> driver.Events:
++    return driver.Events("claude", success=True, text="\n".join(f"D{n}: pass" for n in range(1, 6)))
++
++
++def test_quota_wait_retries_and_publishes_only_successful_receipt(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    clock: list[float],
++) -> None:
++    run = runner(monkeypatch, [rejected(), success()])
++    assert review(tmp_path) == 0
++    assert clock[0] >= 130
++    assert run.call_count == 2
++    assert len(list(tmp_path.glob("*.jsonl"))) == 2
++    receipt = json.loads((tmp_path / "bob.md.receipt.json").read_text())
++    assert Path(receipt["raw"]).read_text() == success().text
++    assert (tmp_path / "bob.md").read_text() == success().text
++
++
++@pytest.mark.parametrize(
++    "reset,status",
++    [
++        (None, 429),
++        (True, 429),
++        ("130", 429),
++        (float("inf"), 429),
++        (float("nan"), 429),
++        (10**400, 429),
++        (99, 429),
++        (1000, 429),
++        (130, 401),
++        (130, "429"),
++    ],
++)
++def test_unusable_or_unbounded_reset_does_not_retry_or_publish(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    clock: list[float],
++    reset: object,
++    status: object,
++) -> None:
++    run = runner(monkeypatch, [rejected(reset, status)])
++    assert review(tmp_path) == 1
++    assert clock[0] == 100
++    assert run.call_count == 1
++    assert not (tmp_path / "bob.md").exists()
++    assert not (tmp_path / "bob.md.receipt.json").exists()
++
++
++def test_repeated_expired_reset_does_not_spin(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    clock: list[float],
++) -> None:
++    run = runner(monkeypatch, [rejected(), rejected()])
++    assert review(tmp_path) == 1
++    assert run.call_count == 2
++    assert not (tmp_path / "bob.md.receipt.json").exists()
++
++
++def test_parent_deadline_limits_reviewer_wait(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    clock: list[float],
++) -> None:
++    monkeypatch.setenv("AUTOCODEX_SESSION_DEADLINE", "120")
++    run = runner(monkeypatch, [rejected()])
++    assert review(tmp_path) == 1
++    assert run.call_count == 1
++    assert clock[0] == 100
++
++
++def test_pause_during_wait_prevents_retry(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    clock: list[float],
++) -> None:
++    ap = tmp_path / "dev/local/autopilot"
++    ap.mkdir(parents=True)
++
++    def pause(seconds: float) -> None:
++        clock[0] += seconds
++        (ap / "pause-requested").touch()
++
++    monkeypatch.setattr(driver.time, "sleep", pause)
++    run = runner(monkeypatch, [rejected()])
++    assert review(tmp_path) == 1
++    assert run.call_count == 1
++    assert not (tmp_path / "bob.md.receipt.json").exists()
++
++
++def test_incomplete_rubric_after_quota_retry_is_not_published(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    clock: list[float],
++) -> None:
++    run = runner(monkeypatch, [rejected(), driver.Events("claude", success=True, text="D1: pass")])
++    assert review(tmp_path) == 1
++    assert run.call_count == 2
++    assert not (tmp_path / "bob.md.receipt.json").exists()
++
++
++def test_total_wait_budget_bounds_multiple_advancing_resets(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    clock: list[float],
++) -> None:
++    monkeypatch.setenv("_AUTOPILOT_LIMIT_WAIT_MAX", "60")
++    run = runner(monkeypatch, [rejected(130), rejected(170)])
++    assert review(tmp_path) == 1
++    assert run.call_count == 2
++    assert clock[0] == 135
++    assert not (tmp_path / "bob.md.receipt.json").exists()
++
++
++def test_elapsed_deadline_after_suspension_does_not_launch_another_attempt(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    clock: list[float],
++) -> None:
++    def suspend(seconds: float) -> None:
++        clock[0] += 1000
++
++    monkeypatch.setattr(driver.time, "sleep", suspend)
++    run = runner(monkeypatch, [rejected()])
++    assert review(tmp_path) == 1
++    assert run.call_count == 1
++
++
++@pytest.mark.parametrize("info", [None, [], "rejected", {"status": "allowed", "resetsAt": 130}])
++def test_latest_nonrejected_or_malformed_limit_clears_rejection(info: object) -> None:
++    events = rejected()
++    events.accept(json.dumps({"type": "rate_limit_event", "rate_limit_info": info}).encode())
++    assert events.quota_reset is None
++
++
++def test_reviewer_cli_waits_for_real_process_reset_and_retains_attempts(tmp_path: Path) -> None:
++    fake = tmp_path / "fake-claude"
++    fake.write_text(
++        f"#!{sys.executable}\n"
++        "import json,pathlib,sys,time\n"
++        "sys.stdin.read()\n"
++        "counter=pathlib.Path('calls.jsonl')\n"
++        "first=not counter.exists()\n"
++        "with counter.open('a') as f: f.write(json.dumps({'at':time.time()})+'\\n')\n"
++        "if first:\n"
++        " print(json.dumps({'type':'rate_limit_event','rate_limit_info':"
++        "{'status':'rejected','resetsAt':time.time()+0.1}}))\n"
++        " print(json.dumps({'type':'result','is_error':True,'api_error_status':429,'result':'limit'}))\n"
++        " sys.exit(1)\n"
++        "print(json.dumps({'type':'result','is_error':False,'result':"
++        "'\\n'.join(f'D{n}: pass' for n in range(1,6))}))\n"
++    )
++    fake.chmod(0o700)
++    prompt = tmp_path / "prompt.md"
++    prompt.write_text("Synthetic quota test")
++    output = tmp_path / "bob.md"
++    env = dict(os.environ, AUTOCODEX_CLAUDE_BIN=str(fake), _AUTOPILOT_LIMIT_WAIT_MAX="20")
++    env.pop("AUTOCODEX_SESSION_DEADLINE", None)
++    result = subprocess.run(
++        [
++            sys.executable,
++            str(driver.HERE / "driver.py"),
++            "--cd",
++            str(tmp_path),
++            "reviewer",
++            "-f",
++            str(prompt),
++            "-o",
++            str(output),
++        ],
++        env=env,
++        capture_output=True,
++        text=True,
++        timeout=15,
++    )
++    assert result.returncode == 0, result.stdout + result.stderr
++    calls = [json.loads(line) for line in (tmp_path / "calls.jsonl").read_text().splitlines()]
++    assert len(calls) == 2
++    assert calls[1]["at"] - calls[0]["at"] >= 5
++    assert len(list(tmp_path.glob("bob-*.jsonl"))) == 2
++    receipt = json.loads(Path(str(output) + ".receipt.json").read_text())
++    assert json.loads(Path(receipt["raw"]).read_text())["is_error"] is False
++    assert "Claude quota exhausted; waiting until" in result.stdout

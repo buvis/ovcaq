@@ -1,0 +1,2 @@
+uv --cache-dir /private/tmp/ovcaq-rework-uv run pytest -q --tb=line tests/tui/test_codex_projection.py tests/drivers/test_codex_fixtures.py
+exit0:59 passed,2 temporary directory cleanup warnings; approved real process verification. Same result after style split.

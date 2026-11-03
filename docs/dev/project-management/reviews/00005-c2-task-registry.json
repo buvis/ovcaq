@@ -1,0 +1,11 @@
+{
+  "name": "[C2] Preserve fleet ownership and bounded identity diagnostics (L)",
+  "description": "Retain authoritative run-lock behavior while closing the reproduced entry replacement race, assessing process-start precision, and translating observation timeouts.\n\nDisposition: deferred at cycle/cap 2/2. Review evidence only; no automatic repair dispatch is authorized by this task record. Keep it unstarted for operator/batch-end triage.\nSource review: dev/local/reviews/00005-runtime-substrate-v1-review-02.md\n\n### Findings (verbatim)\n[ALICE] 🟠 Fleet entry reads are not identity-bound to deletion: `_scan` records a pre-open inode without comparing it to the opened descriptor, while `remove` validates contents and then unlinks the pathname without rechecking its inode; a replacement during either gap can make prune delete a live record or remove delete a new owner’s record | File: src/ovcaq/runtime/registry.py:317 | Task: 13\n[BLAKE] 🟡 Process identity uses `ps lstart` with one-second precision, so a PID recycled within the same second can be misclassified as the original process and escape stale-entry pruning | File: src/ovcaq/runtime/registry.py:109 | Task: general\n[BLAKE] 🟡 A `ps` timeout raises uncaught `subprocess.TimeoutExpired`, allowing registry discovery and `status`/`doctor` to traceback instead of producing degraded diagnostics | File: src/ovcaq/runtime/registry.py:109 | Task: general\n\nAcceptance criteria:\n- [ ] Resolve every linked finding against PRD 00005 and its accepted source contracts.\n- [ ] Preserve single state writer, provider-neutral boundaries, owned-process signaling, and retained evidence.\n- [ ] Add only meaningful regression coverage and run the applicable quality gates when repair is authorized.\n\nFinding IDs: C2F05, C2F11, C2F12",
+  "review_cycle": 2,
+  "finding_ids": [
+    "C2F05",
+    "C2F11",
+    "C2F12"
+  ],
+  "deferred_at_cap": true
+}

@@ -1,0 +1,25 @@
+Verified gate, all run in this session: the acceptance tests (273 passed), the full suite (7153 passed), `ruff check`, `ruff format --check` and `mypy` all clean. `uv build` succeeded into `/tmp/ovcaq-blake-build`. Source changes are limited to `claude.py`, `codex.py`, `codex_events.py` and `edge.py`. Driver API 2, observation protocol 1 and state schema 1 are unchanged.
+
+[BLAKE] ⚪ Numeric classification no longer catches some explicit HTTP and status forms. `HTTP/2 429 Too Many Requests`, `HTTP/2 403 Forbidden`, `HTTP/2 502 Bad Gateway`, `status=429` and `Error 429: ...` all classify as unknown, and before this PRD they classified correctly. The version pattern only accepts a dotted version like `HTTP/1.1`. Native Codex 0.160 forms (`unexpected status N`, `last status: N`, `HTTP status client error (N`) are covered, so the practical impact is low. | File: src/ovcaq/drivers/codex_events.py:301 | Task: Phase 0
+[BLAKE] ⚪ Every routine close of a completed lane (wait completed, then close_agent shutdown) now emits raw.unknown. The TUI then marks ordinary multi-agent sessions as having raw evidence. Late running or completed updates for terminal lanes emit nothing, so the two cases behave differently. This is documented and tested as intended, but it adds noise. | File: src/ovcaq/drivers/codex_events.py:233 | Task: Phase 0
+[BLAKE] ⚪ Probe and launch can disagree on relative lookups. Both probes resolve relative PATH entries and relative command paths against the supervisor's own working directory, but launch runs with `cwd=request.root`. Absolute paths and normal PATH entries are unaffected. | File: src/ovcaq/drivers/claude.py:82 | Task: Phase 1
+
+B1: pass
+B2: pass
+B3: pass
+B4: pass
+B5: pass
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: pass
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: pass
+B16: pass
+B17: pass
+B18: pass
+B19: pass

@@ -1,0 +1,22 @@
+{
+  "attempt": 1,
+  "model": "opus",
+  "outcome": "completed",
+  "review_cycle": null,
+  "cause": null,
+  "implementor": "claude",
+  "preflight_outcome": null,
+  "pipeline": "full",
+  "escalation_reason": null,
+  "escalated_from": null,
+  "diagnosis": null,
+  "repair_used": null,
+  "breaker_skipped": null,
+  "qwen_gate_failed": null,
+  "codex_no_edit": null,
+  "codex_no_edit_probe_exit": null,
+  "verification": null,
+  "red_check": null,
+  "self_deslop": "skipped:trivial",
+  "review": "pat-finding-discarded:create-ownership-callback-required-for-in-helper-failures; adversarial-budget-exhausted:raw-leading-whitespace-preservation"
+}

@@ -1,0 +1,65 @@
+[
+  {
+    "file": "src/ovcaq/state/commands.py",
+    "lines": 435,
+    "base_lines": 401,
+    "overlength_functions": [
+      {
+        "function": "add_task",
+        "line": 148,
+        "lines": 53,
+        "base_lines": 53,
+        "structurally_unchanged": false
+      }
+    ]
+  },
+  {
+    "file": "src/ovcaq/state/schema.py",
+    "lines": 933,
+    "base_lines": 927,
+    "overlength_functions": []
+  },
+  {
+    "file": "tests/packaging/conftest.py",
+    "lines": 119,
+    "base_lines": 255,
+    "overlength_functions": [
+      {
+        "function": "installed_wheel",
+        "line": 69,
+        "lines": 51,
+        "base_lines": 51,
+        "structurally_unchanged": true
+      }
+    ]
+  },
+  {
+    "file": "tests/packaging/test_distribution.py",
+    "lines": 480,
+    "base_lines": 480,
+    "overlength_functions": [
+      {
+        "function": "test_wheel_contains_exact_declared_package_and_metadata",
+        "line": 226,
+        "lines": 79,
+        "base_lines": 79,
+        "structurally_unchanged": true
+      }
+    ]
+  },
+  {
+    "file": "tests/packaging/test_installed_cli.py",
+    "lines": 217,
+    "base_lines": 137,
+    "overlength_functions": [
+      {
+        "function": "test_installed_version_and_every_declared_module_come_from_wheel",
+        "line": 152,
+        "lines": 66,
+        "base_lines": 66,
+        "structurally_unchanged": true
+      }
+    ]
+  }
+]
+

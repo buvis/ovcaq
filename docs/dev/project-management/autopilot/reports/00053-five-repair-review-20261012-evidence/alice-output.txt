@@ -1,0 +1,14 @@
+[ALICE] 🟡 Task 20 stopped passing a name to `fake_executable`, so its `name: str = "fixture-agent-health"` parameter is now dead: all 9 callers use the default. This file is new in this PRD, so the leftover comes from the repair itself. Fix: drop the parameter and write `executable = directory / "fixture-agent-health"` | File: tests/runtime/test_adapter_health.py:33 | Task: 20
+[ALICE] ⚪ Carried Pat18 LOW: `workflow_fixture` writes the Claude wrapper file and returns its path, but its name is a noun. Action functions should start with a verb, e.g. `write_workflow_fixture` (call sites tests/runtime/test_supervisor_adapters.py:56 and tests/runtime/test_adapter_launch_routing.py:33). The new helpers `configured_workflow` (tests/runtime/test_adapter_launch_routing.py:24) and `configured_driver` (tests/drivers/test_codex_launch.py:30) have the same shape. Against renaming: the older helpers in the same file (`adapter_harness`, `workflow_agent`) also use nouns, so a rename would break from the file's current style | File: tests/runtime/test_supervisor_adapters.py:40 | Task: 18
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass

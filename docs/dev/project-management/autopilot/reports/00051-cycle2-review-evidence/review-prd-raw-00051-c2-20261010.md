@@ -1,0 +1,145 @@
+---
+catchup: run
+design: run
+default_model: opus
+model_tier_rationale: new shared Unicode validation predicate and raw-first failure boundary require semantic continuity across adapters
+ledger: deferred/202609062243-deferred.json
+ledger_key: 8696acfef4a2
+source_prd: 00009-codex-adapter-v1.md
+severity: high
+---
+
+# UTF-8-safe normalized evidence
+
+## Overview
+
+### Problem Statement
+PRD 00009 cycle-2 R7: escaped lone surrogates survive decoding and crash
+`NormalizedEventWriter.write` during strict UTF-8 encoding. The raw-first decoder's
+exception boundary excludes publication, so the supervisor kills a healthy child.
+R2: `bounded_detail` redacts before removing controls and bounding; a reconstructed
+credential fragment can escape the observation's second sanitizer at the cap.
+Sources: [resolved discovery](../../discovery/00001-ovcaq-v1.md),
+[review 00009 cycle 2](../../reviews/00009-codex-adapter-v1-review-2.md), and
+[repair triage](../../autopilot/reports/repair-triage-20261007.md).
+Preserve this PRD's existing ledger metadata.
+
+### Target Users
+The repository owner supervising fixture/fake and later real agent sessions.
+
+### Success Metrics
+The named focused tests prove invalid Unicode degrades to `raw.unknown`, later
+valid frames complete normally, raw bytes remain exact, and synthetic credential
+fragments never enter normalized failure/rate/lane details. No live model calls.
+
+## Functional Decomposition
+
+### Capability: Safe observations
+Provider-neutral validation prevents unserializable strings from entering shared models.
+
+#### Feature: Unicode scalar validation
+- **Description**: Reject decoded strings containing lone UTF-16 surrogate code points.
+- **Inputs**: Observation identifiers, payload values, nested mapping keys and native JSON records.
+- **Outputs**: Valid observations or a bounded normalization gap.
+- **Behavior**: Validate all strings recursively, including keys, before native-record semantic decoding and mutation. An invalid frame produces `raw.unknown` and no session/thread/lane/usage mutation; later frames see the pre-frame adapter state. Direct observation construction rejects invalid strings. Valid escaped surrogate pairs decode to their non-BMP scalar and remain supported. Preserve ordinary valid Unicode and existing malformed/non-JSON fallback behavior. Merely escaping invalid strings with `ensure_ascii=True`, replacing identifiers, or silently dropping characters does not satisfy this contract.
+
+#### Feature: Raw-first continuity
+- **Description**: Retain evidence and continue after an invalid scalar record.
+- **Inputs**: Durable raw byte chunks, a driver and normalized evidence writer.
+- **Outputs**: Exact raw evidence, valid normalized JSONL and later decoded observations.
+- **Behavior**: Preserve existing raw-before-decode ordering, frame bounds, digest/preview bounds and session binding. Reject invalid scalar frames before driver state changes; fallback must itself be UTF-8-safe and redacted. Invalid records must not emit terminal/lane/tool semantics or poison subsequent frames. Genuine raw/normalized writer failures, evidence limits and disk errors still propagate through the existing supervisor failure path; do not catch publication failures as harmless decode gaps.
+
+### Capability: Safe bounded details
+Credential redaction remains effective when terminal controls and caps interact.
+
+#### Feature: Strip, sanitize, bound
+- **Description**: Correct Codex diagnostic detail processing order.
+- **Inputs**: Native failure/rate-limit/lane detail strings with terminal controls.
+- **Outputs**: Sanitized details of at most 4096 characters.
+- **Behavior**: Remove the existing recognized ANSI/control forms, redact credentials from the resulting full string, then bound. Preserve failure classification and reset extraction from full native text. Cover ordinary split tokens and the exact synthetic cap reproducer: `'x'*4080 + ' sk-abc\x1b[0mdefghijklmnopqrstuvwxyz0123456789ABCDEF'`; normalized output must contain neither the full reconstructed token nor `sk-abcdefghijkl`. Existing short-path whole-token second sanitization already works; this PRD does not claim a real credential exposure.
+
+## Structural Decomposition
+
+### Repository Structure
+
+```text
+src/ovcaq/
+  events/model.py                # scalar-safe observations and JSON values
+  events/tail.py                 # raw-first frame rejection and continuation
+  drivers/codex_events.py        # strip/sanitize/bound detail order
+tests/
+  events/test_unicode_safety.py  # new shared-model and raw-first regressions
+  drivers/test_codex_detail_safety.py # new actual detail/payload regressions
+  runtime/test_unicode_continuity.py # new real-subprocess supervisor proof
+  events/test_tail.py            # existing writer-failure preservation coverage
+docs/driver-protocol.md          # normalization safety contract
+CHANGELOG.md                    # fixed behavior
+```
+
+### Module: events
+- **Maps to capability**: Safe observations
+- **Responsibility**: Validate strings and reject unsafe records without publishing semantic observations or losing durable evidence.
+- **Exports**: Existing `Observation`, `sanitize_json`, `observation_record`, `RawFirstDecoder` and `NormalizedEventWriter`; no new public command or provider-specific shared branch.
+
+### Module: diagnostic details
+- **Maps to capability**: Safe bounded details
+- **Responsibility**: Correct bounded diagnostic sanitization at the provider edge.
+- **Exports**: Existing `bounded_detail`; adapter classification/reset contracts unchanged.
+
+### Module: continuity evidence
+- **Maps to capability**: Safe observations and Safe bounded details
+- **Responsibility**: Headless actual-pipeline regressions, real subprocess continuity and accurate protocol documentation.
+- **Exports**: Named focused pytest files and documented behavior; no production modules.
+
+## Dependency Graph
+
+### Foundation Layer (Phase 0)
+- **events validation**: No dependencies; establishes Unicode scalar acceptance and nested-string rejection.
+
+### Core Layer (Phase 1)
+- **raw-first events**: Depends on [events validation]; rejects native invalid scalars before decoding/mutation.
+- **diagnostic details**: Depends on [events validation]; produces valid redacted bounded detail payloads.
+
+### Integration Layer (Phase 2)
+- **continuity evidence**: Depends on [raw-first events, diagnostic details, existing supervisor/fake harness]; proves real-process continuation and documents the contract.
+
+## Implementation Phases
+
+### Phase 0: Foundation
+**Goal**: Establish safe string validation without changing valid observation semantics.
+
+**Tasks**:
+- [ ] Implement shared scalar validation and direct observation regressions (no deps) - Acceptance: Re-check that direct observations accept invalid scalars before editing; if already fixed, skip production edits and report while retaining independent tests. `mise exec -- uv run pytest tests/events/test_unicode_safety.py -k scalar` passes; cases cover lone high/low surrogates in identifiers, values and nested keys, ordinary Unicode and valid escaped pairs, with explicit rejected/accepted assertions.
+
+**Exit Criteria**: Invalid scalars cannot inhabit normalized observation identifiers or payloads.
+
+### Phase 1: Core
+**Goal**: Recover malformed native frames before mutation and close the credential-cap gap.
+
+**Tasks**:
+- [ ] Integrate pre-decode invalid-scalar rejection and safe raw fallback (depends on: Phase 0) - Acceptance: Re-check R7 before edits; if already safely recovered without adapter mutation, skip production edits and report while retaining independent tests. `mise exec -- uv run pytest tests/events/test_unicode_safety.py tests/events/test_tail.py` passes; byte-exact raw, gap digest/preview, unchanged adapter identity/usage and later healthy terminal are asserted; existing genuine writer failures still raise.
+- [ ] Correct strip/sanitize/bound ordering with real failure/rate/lane payload regressions (depends on: Phase 0) - Acceptance: Re-check the exact R2 cap reproducer before edits; if already redacted, skip production edits and report while retaining independent tests. `mise exec -- uv run pytest tests/drivers/test_codex_detail_safety.py tests/drivers/test_codex_decode_terminals.py` passes; the exact cap reproducer and ANSI/NUL splits redact before truncation, preserve limits, and do not change failure class/reset semantics.
+
+**Exit Criteria**: Unsafe records yield only normalization gaps; synthetic secrets and fragments are absent from bounded normalized details.
+
+### Phase 2: Integration
+**Goal**: Prove supervised child continuity and record the final operator contract.
+
+**Tasks**:
+- [ ] Add actual subprocess supervisor continuity tests and update protocol/changelog (depends on: Phase 1) - Acceptance: `mise exec -- uv run pytest tests/runtime/test_unicode_continuity.py` passes; a temporary fake child emits unsafe native records, later valid identity/usage and terminal evidence, remains alive until its normal exit, and leaves exact raw plus reloadable normalized evidence; a forced genuine normalized writer failure still aborts through the established runtime path. Re-check that R7/R2 premises remain before edits; if already fixed, retain independent regression coverage and report rather than force churn.
+
+**Exit Criteria**: Focused acceptance passes, then final project gates pass once: `mise exec -- uv sync --all-groups`, `mise exec -- uv run pytest`, `mise exec -- uv run ruff check .`, `mise exec -- uv run ruff format --check .`, `mise exec -- uv run mypy src/ovcaq`, `mise exec -- uv build`.
+
+## Test Strategy
+
+### Critical Scenarios
+- **Happy path**: Valid Unicode, escaped surrogate pairs and ordinary native JSON → unchanged supported semantic observations and normal completion.
+- **Edge case**: Invalid scalar thread/lane ID, agent/error text or nested key → one bounded raw gap, no semantic or adapter mutation, exact raw bytes and later valid completion.
+- **Edge case**: ANSI/NUL-split synthetic credential crossing detail cap → complete redaction before bounding in actual failure/rate/lane payloads.
+- **Error case**: Raw/normalized I/O failure or evidence exhaustion → existing failure propagation, never swallowed as malformed input.
+
+## Risks
+
+- **State contamination**: Reject invalid native strings before invoking stateful decoding; assert pre/post identity and usage with subsequent frames.
+- **Weakened storage errors**: Limit tolerant handling to validation/decoding; retain existing writer-failure tests and add supervised failure evidence.
+- **Scope expansion**: No version-pin refresh, model routing, lane status, retry policy, activity UI, provider-default naming or probe ownership changes; those have separate dispositions.

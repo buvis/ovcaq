@@ -1,0 +1,14 @@
+{
+  "attempt": 1,
+  "model": "sonnet",
+  "outcome": "aborted",
+  "review_cycle": 1,
+  "cause": "reviewer_permission_denied",
+  "implementor": "codex",
+  "preflight_outcome": null,
+  "pipeline": "lean",
+  "self_deslop": "noop",
+  "style_gate": "clean",
+  "split_hygiene": "clean",
+  "review": "failed:approval_denied_before_launch"
+}

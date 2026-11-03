@@ -1,0 +1,1 @@
+Add literal HTTP/2 503 and HTTP/2 429 positives; HTTP/3 diagnostics must also classify.

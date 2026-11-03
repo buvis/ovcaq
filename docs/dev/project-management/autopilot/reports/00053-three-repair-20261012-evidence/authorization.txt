@@ -1,0 +1,2 @@
+2026-10-12: Operator replied "yes, approved" to repairing R1/R2/R7, required checks, and handoff for fresh review. Cycle/rework_cap remain 2. Preserve R3/R5 deferrals, R4 limitation, R6 evidence retention. No further repairs or finalization authorized by this approval.
+Host adaptation: coordinator delegates substantive implementation to native workers, including small test-only repairs.

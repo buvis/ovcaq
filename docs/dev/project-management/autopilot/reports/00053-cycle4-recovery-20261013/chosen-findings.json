@@ -1,0 +1,34 @@
+[
+  {
+    "ref": "R1",
+    "severity": "⚪",
+    "file": "docs/driver-protocol.md:273",
+    "issue": "The protocol doc still says numeric codes \"require HTTP, status or error-code context\". Since task 25, bare `Error 429:` and `status=429` also count. CHANGELOG.md:45 says \"HTTP/status/error context\", so the two documents disagree. Change the doc to \"HTTP, status or error context\" to match the code and the changelog",
+    "classification": "fix",
+    "found_by": [
+      "ALICE",
+      "BOB"
+    ]
+  },
+  {
+    "ref": "R2",
+    "severity": "🟡",
+    "file": "src/ovcaq/drivers/codex_events.py:301",
+    "issue": "The ` error` branch inside the `http(...)` group of the `status` prefix can never change a result, so it is dead code. The new bare `error(?: code)?` branch already matches every string it catches, because a word boundary always sits between \"http \" and \"error\". I checked this by running both regexes on 4,288,305 generated token strings: 0 differences. Simpler version with the same behavior: `r\"(?:http(?:/\\d+(?:\\.\\d+)?| status(?: (?:client|server) error \\()?)?\"`, keeping line 302 as it is. \"HTTP error 503\" still returns connectivity through the bare `error` branch, so the `hTtP ErRoR {code}` tests keep passing",
+    "classification": "fix",
+    "found_by": [
+      "ALICE",
+      "BOB"
+    ]
+  },
+  {
+    "ref": "R5",
+    "severity": "⚪",
+    "file": "CHANGELOG.md",
+    "issue": "CHANGELOG.md:45 lists regex branch names (\"equals-delimited status, bare error, HTTP error, native bare-status and HTTP-version forms\"). It also restates unchanged behavior (\"retain existing authentication word diagnostics and genuine rate/quota limits\"). That describes the implementation, not what users see",
+    "classification": "fix",
+    "found_by": [
+      "BOB"
+    ]
+  }
+]

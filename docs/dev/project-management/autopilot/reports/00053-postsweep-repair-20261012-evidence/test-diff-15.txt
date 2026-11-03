@@ -1,0 +1,27 @@
+diff --git a/tests/drivers/test_adapter_failure_classes.py b/tests/drivers/test_adapter_failure_classes.py
+index 3218a5c..4adcd75 100644
+--- a/tests/drivers/test_adapter_failure_classes.py
++++ b/tests/drivers/test_adapter_failure_classes.py
+@@ -98,6 +98,10 @@ def test_explicit_bare_status_diagnostics_are_classified(
+         ("HTTP/1.1 429 Too Many Requests", FailureClass.RATE_LIMIT),
+         ("HTTP/1.1 502 Bad Gateway", FailureClass.CONNECTIVITY),
+         ("HTTP/1.1 503 Service Unavailable", FailureClass.CONNECTIVITY),
++        ("HTTP/2 503 Service Unavailable", FailureClass.CONNECTIVITY),
++        ("HTTP/2 429 Too Many Requests", FailureClass.RATE_LIMIT),
++        ("HTTP/3 503 Service Unavailable", FailureClass.CONNECTIVITY),
++        ("HTTP/3 429 Too Many Requests", FailureClass.RATE_LIMIT),
+     ],
+ )
+ def test_reqwest_and_http_version_status_diagnostics_are_classified(
+@@ -106,6 +110,11 @@ def test_reqwest_and_http_version_status_diagnostics_are_classified(
+     assert classify_failure(detail) is expected
+ 
+ 
++@pytest.mark.parametrize("detail", ["status=429", "Error 429:"])
++def test_unsupported_numeric_status_forms_remain_unknown(detail: str) -> None:
++    assert classify_failure(detail) is FailureClass.UNKNOWN
++
++
+ @pytest.mark.parametrize("code", ["401", "403", "429", "502", "503"])
+ @pytest.mark.parametrize(
+     "template",

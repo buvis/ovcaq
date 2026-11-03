@@ -1,0 +1,3 @@
+CLOSURE | resolved | "The ` error` branch inside the `http(...)` group of the `status` prefix can never change a result, so it is dead code." | The diff drops `| error` from the HTTP group, and the AC's second removal (plain ` status`) also happened (`" status(?: ... )?"` became `" status (?:client|server) error \("`). The parentheses stay balanced, line 302 is untouched, and the recorded 140 tests pass.
+
+NO FINDINGS

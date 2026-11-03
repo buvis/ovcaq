@@ -1,0 +1,38 @@
+{
+  "sha": "bade6a5d9eae960f515eeffda84349eb7a50bc81",
+  "cycle": 1,
+  "commands": [
+    {
+      "command": "python3 docs/dev/tmp/00053-review-test-gate.py",
+      "exit": 0
+    }
+  ],
+  "passed": 7165,
+  "failed": 0,
+  "skipped": 0,
+  "additional_gates": [
+    {
+      "command": "uv sync --all-groups",
+      "exit": 0
+    },
+    {
+      "command": "uv run ruff check .",
+      "exit": 0
+    },
+    {
+      "command": "uv run ruff format --check .",
+      "exit": 0
+    },
+    {
+      "command": "uv run mypy src/ovcaq",
+      "exit": 0
+    },
+    {
+      "command": "uv build",
+      "exit": 0
+    }
+  ],
+  "suite_log": "docs/dev/tmp/00053-review-pytest.log",
+  "staging_suite_exit": 0,
+  "count_repeat_reason": "Installed recorder requires PASS/FAIL/SKIP/EXIT summary; original successful staging run discarded pytest-native summary. Reporting wrapper preserved output and supplied exact counts."
+}

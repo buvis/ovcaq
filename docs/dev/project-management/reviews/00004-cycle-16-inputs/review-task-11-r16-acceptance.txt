@@ -1,0 +1,5 @@
+- Every quoted finding no longer reproduces.
+- Committed tests cover existing deferred path as real regular file and symlink, the second open after disappearance, and creation OSErrors EACCES/ENOSPC/EBADF; full path is in the outer error and original cause errno is retained. Existing file/symlink and target sentinel remain untouched; no deferred record is published on refusal.
+- Both open failures use "deferred directory is not a real directory: <full path>"; creation failure uses "deferred directory could not be created: <full path>".
+- Named function extraction keeps all modified Python functions <=50 lines. Maintain all real durability checks, direct/replay parameter cases and installed module-origin checks. Subprocess timeouts remain bounded and reaped by subprocess.run(timeout=20).
+- No ledger is created on the direct reparent-refusal chronology; replay preserves authoritative bytes.

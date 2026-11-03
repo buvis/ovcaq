@@ -1,0 +1,18 @@
+# Alice — consensus/architecture
+Verdict: changes_requested
+## Must fix
+- Issue: Size-compliant JSON containing an integer above Python’s digit-conversion limit escapes the store’s error boundary. Severity: medium. Evidence: `decode_json()` delegates directly to `json.loads()` at `src/ovcaq/state/schema.py:421-427`, while `_decode_state()` at `src/ovcaq/state/store.py:274-296` does not translate its resulting `ValueError`. An otherwise valid state with a 5,000-digit `revision` made `StateStore.read()` raise raw `ValueError`; installed CLI routing misclassified it as `usage`/1. The same backup input escaped `BackupError`, although bytes remained unchanged. Violated requirement: PRD total validation, fail-closed reads/restore, and stable symbolic errors (`P01-T02`, `P01-T03`, `P01-T10`).
+- Issue: Cycle-01 artifact safety remains incomplete for hard links. Severity: high. Evidence: `_verify_open_artifact()` at `src/ovcaq/state/store.py:467-478` verifies file type and inode identity but accepts multi-linked files; `_locked()` then calls `fchmod()` at line 196. Replacing `state.json.lock` with a hard link to an external 0644 victim made `StateStore.read()` succeed and changed the victim to 0600. Multi-linked state artifacts also permit writes through an alias outside the advisory-lock path. Violated requirement: the accepted plan’s project/runtime containment policy, the sole safe locked-store boundary (`P01-T03`), and the cycle-01 requirement that external victim bytes and metadata remain unchanged.
+- Issue: Compound task operations accept boolean and numeric-alias task identifiers. Severity: medium. Evidence: `_task_by_id()` compares identifiers with ordinary equality at `src/ovcaq/state/commands.py:59-63`; `StateService.start_task(True)` matched task ID `1`, committed its status change, and returned `{"task_id": True}`. `1.0` aliases the same ID. Violated requirement: the documented non-boolean integer identifier contract and `P01-T08` task-ID resolution required for PRD 00004 callers.
+## Can defer
+- Issue: Several `derived` crosswalk entries remain insufficiently deterministic, notably `cap_rotations -> recovery.operation`. Evidence: `docs/state-protocol.md` maps legacy signals to broader v1 owners without defining the derivation, while recovery currently models only park/stall operations. Rationale: no current state-kernel persistence defect, but PRD 00004 should clarify these mappings before consuming them.
+## Tests inspected or run
+- Inspected the complete implementation range, all changed production modules, protocol/crosswalk documentation, and the schema/store/durability/path/service/CLI/installed-wheel/packaging suites.
+- Focused cycle-01 regression selection: 23 passed.
+- State suite: 715 passed; two installed-wheel tests could not set up because sandboxed `uv` could not access its cache. Relied on supplied same-head evidence that the canonical 789-test suite and installed-wheel gates passed.
+- Reproduced the oversized-integer decoder escape, hard-linked lock metadata mutation, and boolean task-ID alias.
+- Provider-neutral dependency/string scans and range `git diff --check` passed; tracked worktree remained clean.
+## Residual doubts
+- Runtime component checks remain pathname-based and therefore retain parent-component swap/TOCTOU exposure; this was not practically reproduced.
+- Installed-wheel execution was not independently rerun in this sandbox.
+- Exact behavioral completeness of the legacy-suite port still relies partly on committed inventories and supplied audit evidence rather than an independent reread of the external legacy sources.

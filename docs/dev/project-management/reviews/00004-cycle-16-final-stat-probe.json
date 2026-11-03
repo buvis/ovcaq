@@ -1,0 +1,524 @@
+[
+  {
+    "baseline": {
+      "replay": false,
+      "inject_at": null,
+      "checks": 9,
+      "outcome": "success",
+      "error": null,
+      "events": [
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            2
+          ]
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            107435247
+          ]
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            107436446
+          ]
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            171304370
+          ]
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            171304371
+          ]
+        },
+        {
+          "event": "ancestor-check",
+          "number": 1
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            171304372
+          ]
+        },
+        {
+          "event": "ancestor-check",
+          "number": 2
+        },
+        {
+          "event": "ancestor-check",
+          "number": 3
+        },
+        {
+          "event": "ancestor-check",
+          "number": 4
+        },
+        {
+          "event": "ancestor-check",
+          "number": 5
+        },
+        {
+          "event": "fsync",
+          "directory": false,
+          "identity": [
+            16777230,
+            171304375
+          ]
+        },
+        {
+          "event": "ancestor-check",
+          "number": 6
+        },
+        {
+          "event": "ancestor-check",
+          "number": 7
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            171304373
+          ]
+        },
+        {
+          "event": "ancestor-check",
+          "number": 8
+        },
+        {
+          "event": "ancestor-check",
+          "number": 9
+        },
+        {
+          "event": "returned",
+          "outcome": "success"
+        }
+      ],
+      "module": "/private/tmp/ovcaq-r16-installed-59dil2qo/venv/lib/python3.13/site-packages/ovcaq/workflow/_files.py",
+      "prefix": "/private/tmp/ovcaq-r16-installed-59dil2qo/venv",
+      "module_sha256": "3ca13b78de3ebb53961c8305e92aab9a46770e696fb597180d9b5104cf008606",
+      "ancestor_replaced": false,
+      "runtime_preserved": true,
+      "ancestor_parent_fsync_after": false,
+      "replacement_ancestor_fsync_after": false,
+      "ledger_exists": true,
+      "ledger": {
+        "batch_id": "batch",
+        "items": [
+          {
+            "op_id": "final-stat-probe",
+            "prd": "00004-a.md"
+          }
+        ]
+      },
+      "seed_preserved": null,
+      "returned_path_exists": true,
+      "limit": "Real rename/reparent and fsync tracing, injected after final ancestor stat but before its return. No physical power-loss simulation; external reparent occurs after ledger publication fsync."
+    },
+    "trial": {
+      "replay": false,
+      "inject_at": 9,
+      "checks": 9,
+      "outcome": "success",
+      "error": null,
+      "events": [
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            2
+          ]
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            107435247
+          ]
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            107436446
+          ]
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            171304376
+          ]
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            171304377
+          ]
+        },
+        {
+          "event": "ancestor-check",
+          "number": 1
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            171304378
+          ]
+        },
+        {
+          "event": "ancestor-check",
+          "number": 2
+        },
+        {
+          "event": "ancestor-check",
+          "number": 3
+        },
+        {
+          "event": "ancestor-check",
+          "number": 4
+        },
+        {
+          "event": "ancestor-check",
+          "number": 5
+        },
+        {
+          "event": "fsync",
+          "directory": false,
+          "identity": [
+            16777230,
+            171304381
+          ]
+        },
+        {
+          "event": "ancestor-check",
+          "number": 6
+        },
+        {
+          "event": "ancestor-check",
+          "number": 7
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            171304379
+          ]
+        },
+        {
+          "event": "ancestor-check",
+          "number": 8
+        },
+        {
+          "event": "ancestor-check",
+          "number": 9
+        },
+        {
+          "event": "reparent",
+          "check": 9,
+          "old_ancestor": [
+            16777230,
+            171304377
+          ],
+          "new_ancestor": [
+            16777230,
+            171304382
+          ],
+          "same_runtime": true
+        },
+        {
+          "event": "returned",
+          "outcome": "success"
+        }
+      ],
+      "module": "/private/tmp/ovcaq-r16-installed-59dil2qo/venv/lib/python3.13/site-packages/ovcaq/workflow/_files.py",
+      "prefix": "/private/tmp/ovcaq-r16-installed-59dil2qo/venv",
+      "module_sha256": "3ca13b78de3ebb53961c8305e92aab9a46770e696fb597180d9b5104cf008606",
+      "ancestor_replaced": true,
+      "runtime_preserved": true,
+      "ancestor_parent_fsync_after": false,
+      "replacement_ancestor_fsync_after": false,
+      "ledger_exists": true,
+      "ledger": {
+        "batch_id": "batch",
+        "items": [
+          {
+            "op_id": "final-stat-probe",
+            "prd": "00004-a.md"
+          }
+        ]
+      },
+      "seed_preserved": null,
+      "returned_path_exists": true,
+      "limit": "Real rename/reparent and fsync tracing, injected after final ancestor stat but before its return. No physical power-loss simulation; external reparent occurs after ledger publication fsync."
+    }
+  },
+  {
+    "baseline": {
+      "replay": true,
+      "inject_at": null,
+      "checks": 6,
+      "outcome": "success",
+      "error": null,
+      "events": [
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            2
+          ]
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            107435247
+          ]
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            107436446
+          ]
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            171304383
+          ]
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            171304384
+          ]
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            171304385
+          ]
+        },
+        {
+          "event": "ancestor-check",
+          "number": 1
+        },
+        {
+          "event": "ancestor-check",
+          "number": 2
+        },
+        {
+          "event": "ancestor-check",
+          "number": 3
+        },
+        {
+          "event": "ancestor-check",
+          "number": 4
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            171304386
+          ]
+        },
+        {
+          "event": "ancestor-check",
+          "number": 5
+        },
+        {
+          "event": "ancestor-check",
+          "number": 6
+        },
+        {
+          "event": "returned",
+          "outcome": "success"
+        }
+      ],
+      "module": "/private/tmp/ovcaq-r16-installed-59dil2qo/venv/lib/python3.13/site-packages/ovcaq/workflow/_files.py",
+      "prefix": "/private/tmp/ovcaq-r16-installed-59dil2qo/venv",
+      "module_sha256": "3ca13b78de3ebb53961c8305e92aab9a46770e696fb597180d9b5104cf008606",
+      "ancestor_replaced": false,
+      "runtime_preserved": true,
+      "ancestor_parent_fsync_after": false,
+      "replacement_ancestor_fsync_after": false,
+      "ledger_exists": true,
+      "ledger": {
+        "batch_id": "batch",
+        "items": [
+          {
+            "op_id": "final-stat-probe",
+            "prd": "00004-a.md"
+          }
+        ]
+      },
+      "seed_preserved": true,
+      "returned_path_exists": true,
+      "limit": "Real rename/reparent and fsync tracing, injected after final ancestor stat but before its return. No physical power-loss simulation; external reparent occurs after ledger publication fsync."
+    },
+    "trial": {
+      "replay": true,
+      "inject_at": 6,
+      "checks": 6,
+      "outcome": "success",
+      "error": null,
+      "events": [
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            2
+          ]
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            107435247
+          ]
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            107436446
+          ]
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            171304389
+          ]
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            171304390
+          ]
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            171304391
+          ]
+        },
+        {
+          "event": "ancestor-check",
+          "number": 1
+        },
+        {
+          "event": "ancestor-check",
+          "number": 2
+        },
+        {
+          "event": "ancestor-check",
+          "number": 3
+        },
+        {
+          "event": "ancestor-check",
+          "number": 4
+        },
+        {
+          "event": "fsync",
+          "directory": true,
+          "identity": [
+            16777230,
+            171304392
+          ]
+        },
+        {
+          "event": "ancestor-check",
+          "number": 5
+        },
+        {
+          "event": "ancestor-check",
+          "number": 6
+        },
+        {
+          "event": "reparent",
+          "check": 6,
+          "old_ancestor": [
+            16777230,
+            171304390
+          ],
+          "new_ancestor": [
+            16777230,
+            171304395
+          ],
+          "same_runtime": true
+        },
+        {
+          "event": "returned",
+          "outcome": "success"
+        }
+      ],
+      "module": "/private/tmp/ovcaq-r16-installed-59dil2qo/venv/lib/python3.13/site-packages/ovcaq/workflow/_files.py",
+      "prefix": "/private/tmp/ovcaq-r16-installed-59dil2qo/venv",
+      "module_sha256": "3ca13b78de3ebb53961c8305e92aab9a46770e696fb597180d9b5104cf008606",
+      "ancestor_replaced": true,
+      "runtime_preserved": true,
+      "ancestor_parent_fsync_after": false,
+      "replacement_ancestor_fsync_after": false,
+      "ledger_exists": true,
+      "ledger": {
+        "batch_id": "batch",
+        "items": [
+          {
+            "op_id": "final-stat-probe",
+            "prd": "00004-a.md"
+          }
+        ]
+      },
+      "seed_preserved": true,
+      "returned_path_exists": true,
+      "limit": "Real rename/reparent and fsync tracing, injected after final ancestor stat but before its return. No physical power-loss simulation; external reparent occurs after ledger publication fsync."
+    }
+  }
+]

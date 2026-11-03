@@ -1,0 +1,43 @@
+[BLAKE] 🟡 Scope creep: commit 00b2fdf changes when the runtime treats a sample as terminal, which is lifecycle observation. `_selected_state` now re-samples process death, and `observe_selected_run` holds back a live-to-terminal frame as non-terminal. The PRD lists only `tui/{model.py,panels.py}`, forbids lifecycle changes and says to keep the 00051–00053 terminal semantics. The fix is tested but has no spec authority here. | File: src/ovcaq/runtime/_run_observation.py:106 | Task: general
+[BLAKE] 🟡 The same out-of-scope commit adds a second session-retention rule to the observer. It keeps the follower and cache when the run's process identity matches, so the TUI model now decides retention on process identity, beyond the activity-projection repair. | File: src/ovcaq/tui/model.py:468 | Task: general
+[BLAKE] 🟡 The lane window shows the first 20 lanes by insertion order, so the oldest-started lanes stay visible. Once a run has more than 20 lanes, the newest (running) lanes show up only in the "N lanes omitted" count. This repeats the R10 symptom ("hides recent work behind old … lanes") for lane-heavy runs. It is a literal reading of "existing order" and the design doc chose it, but it works against "keep the current activity visible". | File: src/ovcaq/tui/panels.py:99 | Task: Phase 1
+[BLAKE] ⚪ Claude text and thinking blocks that share one `message.id` collapse into a single entry, and the later block overwrites the earlier one. Only a test comment ("Known R1 limitation") records this. docs/driver-protocol.md says only that "message updates use their full IDs", so operators aren't told a block can disappear. | File: tests/tui/test_activity_projection.py:98 | Task: Phase 0
+[BLAKE] ⚪ The tool identity key still passes through `display_text`, which cuts at 512 characters. Two distinct long tool IDs with the same prefix would merge into one entry. This is the same truncation-merge defect the PRD fixed for message IDs (real IDs are short, so the risk is low). | File: src/ovcaq/tui/model.py:604 | Task: Phase 0
+[BLAKE] ⚪ The "unchanged retained ProjectView history" check can't fail. `original = replace(changed)` shares the same immutable tuples, so `changed == original` always holds. Retention beyond the 20-entry window is tested only in the projection eviction test, never together with rendering. | File: tests/tui/test_activity_window.py:198 | Task: Phase 1
+
+Checks I ran myself on HEAD b593719:
+- `uv sync --all-groups`: ok.
+- The three PRD test files: 80 passed.
+- Full `uv run pytest`: 7257 passed, 0 failed, 0 skipped. There were 2 pytest temp-directory cleanup warnings.
+- `ruff check`, `ruff format --check` and `mypy src/ovcaq`: all clean.
+- `uv build` (written to /tmp/ovcaq-blake-build): ok.
+
+Spec items I confirmed in the code:
+- Messages use `text` when it is not null, otherwise `detail`.
+- A message ID that is blank or missing gets a sequence key, so it can't replace another entry.
+- Real IDs are used whole, not truncated.
+- The invented tool `input` fallback is gone.
+- The 256-entry retention limit and eviction work as before.
+- Activity renders newest-first, capped at 20, ahead of the lanes, and both omission counts appear.
+- The docs name `lanes-matched.jsonl`, and the in-place and lanes-only claims are gone.
+- The TUI code contains no provider names.
+
+B1: pass
+B2: pass
+B3: pass
+B4: pass
+B5: pass
+B6: fail
+B7: pass
+B8: pass
+B9: pass
+B10: pass
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: pass
+B16: pass
+B17: pass
+B18: pass
+B19: pass

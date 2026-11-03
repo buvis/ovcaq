@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "model": "sonnet",
+  "actual_model": "gpt-6.1-sol",
+  "actual_provider": "openai",
+  "actual_effort": "medium",
+  "implementor": "codex",
+  "pipeline": "lean",
+  "outcome": "completed",
+  "cause": null,
+  "review_cycle": 1,
+  "self_deslop": "skipped:test-only",
+  "style_gate": "clean",
+  "split_hygiene": "clean",
+  "verification": "3 passed,2warnings; named boundary pause test, exit0 after approved ps retry",
+  "review": "Closure resolved; NO FINDINGS",
+  "review_evidence": "docs/dev/project-management/reviews/00009-cycle1-task30-pat.md",
+  "dispatch_ids": [
+    "9caa8cdf",
+    "2a2621d2"
+  ],
+  "implementation_commits": [
+    "c8364eb"
+  ]
+}

@@ -1,0 +1,3 @@
+Diagnostic sk-abcdefghijklmnopqrstuvwxyz\x1b[0m0123456789ABCDEF => Diagnostic [REDACTED]0123456789ABCDEF
+Bearer a*23 + NUL + bbbbbbbb => Bearer [REDACTED]bbbbbbbb
+Actual bounded_detail was invoked via .venv/bin/python at reviewed HEAD; synthetic fixtures only.

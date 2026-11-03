@@ -1,0 +1,25 @@
+{
+  "commands": [
+    {
+      "command": "uv sync --all-groups",
+      "exit": 0
+    },
+    {
+      "command": "uv run ruff check .",
+      "exit": 0
+    },
+    {
+      "command": "uv run ruff format --check .",
+      "exit": 0
+    },
+    {
+      "command": "uv run mypy src/ovcaq",
+      "exit": 0
+    },
+    {
+      "command": "uv build",
+      "exit": 0
+    }
+  ],
+  "notes": "Default sandbox denied uv cache; approved retries passed. Stage full suite exit 0 with discarded counts; fresh retained summary run: 7202 passed, zero failed/skipped, exit 0. See full-suite.log and verification.json."
+}

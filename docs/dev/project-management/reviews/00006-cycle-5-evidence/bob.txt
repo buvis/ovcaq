@@ -1,0 +1,59 @@
+**Prior findings, checked against HEAD 0228eb0**
+
+- **B1** (long-key leak): fixed. `model.py:27-31` now starts a key only at the start of a run of word characters or hyphens, so there is no length cap and each run is scanned a fixed number of times. Against 82a12fe the 65- and 1000-character cases leave `private-value` unredacted.
+- **P1**: fixed. Any `sk-` in a cut-off window with no whitespace now gives an empty preview (`tail.py:150`). Against 82a12fe, the ABCDE case leaves `-sk-ABCDE` in the preview. The U+0130 case leaves `sk-QQQQQQQ` there.
+- **P2**: the deviation is now written up in `docs/driver-protocol.md:77-80` and the CHANGELOG. The code still differs from the task-22 contract (see finding 4).
+- **P3**: fixed (`claude_events.py:206`). Against 82a12fe the `[non_leap_anchor_year]` case returns `2096-02-29T09:00:00Z`, so that test fails there.
+- **P4**: pinned by the test at `test_claude_rate_limit.py:261` and documented at docs :64-65. It matches `claude.py:190` plus the reducer, where the last `rate_limit.started` wins.
+- **P5**: fixed, and the behavior is the same. `local.replace(..., fold=0)` plus a one-day timedelta does the same wall-clock math as the two old `datetime(...)` calls.
+- **L2**: fixed (`tail.py:141`). Against 82a12fe both test cases keep the trailing `\r`.
+- **L3**: pinned.
+- **K1, K2, P6, P7, L1**: already settled. Not raised again.
+- **Fail-first [MECH] lines**: the test cases that pass at 82a12fe are ones that pin existing behavior, by design. Task 23 item 3 asks for the pinning, and that covers `leap_day_already_passed`, Feb 28 and suffix=10. The cases that carry the fix fail at 82a12fe when I trace the old code. This matches the settled "pinning guards" decision, so I did not raise them.
+
+**Issues**
+
+```
+[BOB] 🟡 Authorization values that use a scheme other than Bearer still leak. sanitize_text("Authorization: Basic dXNlcjpwYXNzd29yZA==") gives "Authorization: [REDACTED] dXNlcjpwYXNzd29yZA==": only the scheme word is redacted. The same happens with `token ghp_…` and `Digest …`. This gap already existed at 82a12fe, but the diff rewrote this exact clause as `(?:bearer\s+)?`. No test covers it | File: src/ovcaq/events/model.py:29 | Task: 21
+[BOB] 🟡 Once `continue` became `return None`, the `for … else: return None` branch can no longer run: the year+1 pass either raises or builds a time later than `local`. The loop can become one constructor plus `replace(year=local.year + 1)`, which raises ValueError for Feb 29 and gives the same results | File: src/ovcaq/drivers/claude_events.py:200 | Task: 23
+[BOB] ⚪ JSON keys with escaped quotes inside raw previews are not redacted. In `{\"apiKey\": \"v\"}` the key is followed by a backslash, so `["']?\s*[:=]` fails and `v` survives in raw.unknown previews (claude.py:151, tail.py:152). This already existed at 82a12fe. It matters most when stream records change shape and many records fall back to raw.unknown | File: src/ovcaq/events/model.py:29 | Task: 21
+[BOB] ⚪ Task-22 contract item 1 says every cut-off window with no whitespace previews as empty. The code empties it only when it contains the literal `sk-`. That ties tail.py to the patterns in _LIKELY_SECRET: if a new bare-secret pattern is added there, the cut-off leak quietly comes back. The conflicting test is test_tail.py:547 (it expects "x" in the preview) | File: src/ovcaq/events/tail.py:150 | Task: 22
+[BOB] ⚪ The protocol doc describes the preview wrongly. It says "512-byte window", but the window is _PREVIEW_WINDOW_BYTES = 4096 (or the frame-buffer cap if smaller). It says a trailing CR "never" reaches the preview, but finish() on an unterminated `…\r` frame keeps it (trim_cr needs `terminated`) | File: docs/driver-protocol.md:77 | Task: 22
+[BOB] ⚪ Two asserts are redundant: each `not any(...)` / `"ABCDE" not in preview` check follows `assert preview == ""` and can never add anything | File: tests/events/test_tail.py:668 | Task: 22
+[BOB] ⚪ Cannot statically verify: full `uv run pytest` at 0228eb0 (the context says "currently running"; tasks 22 and 23 record no suite output, including the DST time-only banner tests) | File: N/A | Task: general
+```
+
+FIX:
+- Non-Bearer Authorization schemes leak their credentials. `src/ovcaq/events/model.py:29`. Change `(?:bearer\s+)?` to `(?:(?:bearer|basic|digest|token)\s+)?`. Add a test that `Authorization: Basic <b64>` and `Authorization: token <v>` leave no trace of the value.
+- `for…else` can no longer run. `src/ovcaq/drivers/claude_events.py:200-210`. Replace it with `try: wall = datetime(local.year, month, int(match[2]), hour, minute, tzinfo=zone); if wall <= local: wall = wall.replace(year=local.year + 1)` and `except ValueError: return None`.
+- Keys with escaped quotes are not redacted. `src/ovcaq/events/model.py:29`. Change `[\"']?` to `(?:\\?[\"'])?`. Add a test that `{\"apiKey\": \"v\"}` leaves no `v`.
+- The preview depends on the literal `sk-` and departs from the task-22 contract. `src/ovcaq/events/tail.py:150`. Set `end = 0` for every cut-off window with no whitespace. Update the conflicting `"x"` expectation at `tests/events/test_tail.py:547` and note there that it contradicts the task-22 contract. Then remove the `sk-` sentence from docs :78-79.
+- The doc misstates the window size and the CR rule. `docs/driver-protocol.md:77-80`. Change "512-byte window" to "4096-byte preview window, or the frame-byte cap if smaller". Change "A frame's trailing CR" to "An LF-terminated frame's trailing CR".
+- Redundant asserts. `tests/events/test_tail.py:668`, `:692`. Delete the follow-up `not any(...)` and `"ABCDE" not in preview` lines.
+
+VERIFY:
+- Full suite at HEAD is unconfirmed. Run `uv run pytest` at 0228eb0 and confirm exit 0. That includes `tests/drivers/test_claude_rate_limit.py`, which holds the DST time-only tests behind the P5 simplification.
+
+KNOWN:
+- (none)
+
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: fail
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+```
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```

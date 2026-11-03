@@ -1,0 +1,510 @@
+
+You are Ivan, the implementor. Make all failing tests pass. Tests ARE the
+spec. Do NOT modify test files unless your allowlist below names them (a
+test-only task lists them on purpose). Do NOT read the task's acceptance criteria —
+none are provided to you on purpose.
+
+## Failing tests
+
+from __future__ import annotations
+
+import json
+import stat
+import subprocess
+from pathlib import Path
+from typing import Any
+from uuid import uuid4
+
+import pytest
+from packaging_support import InstalledWheel, run_checked
+from rework_11_scripts import INITIALIZE_STATE
+from rework_12_scripts import ORIGIN_CHECK
+from rework_13_scripts import ANCESTRY_BOUNDARY_ACTOR
+
+PRD = "00004-a.md"
+
+
+def _assert_installed(origins: dict[str, str], installed: InstalledWheel) -> None:
+    assert "ovcaq.workflow.records" in origins
+    for module, filename in origins.items():
+        path = Path(filename).resolve()
+        assert path.is_relative_to(installed.root.resolve()), (module, filename)
+        assert "site-packages" in path.parts, (module, filename)
+
+
+def _prepare(installed: InstalledWheel, tmp_path: Path) -> Path:
+    project = tmp_path.resolve() / "project"
+    state = project / "independent/state.json"
+    project.mkdir()
+    script = (
+        INITIALIZE_STATE
+        + ORIGIN_CHECK
+        + "\nfrom ovcaq.workflow.records import record_defer\n"
+        + "print(json.dumps(installed_origins()))\n"
+    )
+    result = run_checked(
+        [installed.python, "-I", "-c", script, project, state, PRD],
+        cwd=project,
+        env=installed.environment,
+    )
+    _assert_installed(json.loads(result.stdout), installed)
+    state.with_suffix(".json.bak").write_bytes(state.read_bytes())
+    (project / "ancestor").mkdir()
+    return project
+
+
+def _state_bytes(project: Path) -> tuple[bytes, bytes]:
+    state = project / "independent/state.json"
+    return state.read_bytes(), state.with_suffix(".json.bak").read_bytes()
+
+
+def _identity(path: Path) -> list[int]:
+    value = path.stat()
+    return [value.st_dev, value.st_ino]
+
+
+def _invoke(
+    installed: InstalledWheel,
+    project: Path,
+    mode: str,
+    *,
+    runtime: Path | None = None,
+    ancestor: Path | None = None,
+) -> dict[str, Any]:
+    if runtime is None:
+        runtime = project / "ancestor/runtime"
+    if ancestor is None:
+        ancestor = runtime.parent
+    result = subprocess.run(
+        [
+            installed.python,
+            "-I",
+            "-c",
+            ANCESTRY_BOUNDARY_ACTOR,
+            str(project),
+            mode,
+            str(runtime),
+            str(ancestor),
+        ],
+        cwd=project,
+        env=installed.environment,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=20,
+    )
+    value: dict[str, Any] = json.loads(result.stdout)
+    _assert_installed(value["origins"], installed)
+    assert result.returncode == value["exit"], (result.stdout, result.stderr)
+    return value
+
+
+def _ledger(runtime: Path) -> Path:
+    return runtime / "deferred/batch-deferred.json"
+
+
+def _assert_one_record(runtime: Path) -> bytes:
+    content = _ledger(runtime).read_bytes()
+    assert json.loads(content) == {
+        "batch_id": "batch",
+        "items": [{"op_id": "replacement-probe", "prd": PRD}],
+    }
+    return content
+
+
+def _assert_replaced_after_confirmation(
+    interrupted: dict[str, Any], project: Path, ancestor: Path, previous: list[int]
+) -> None:
+    events = interrupted["events"]
+    replacements = [event for event in events if event["kind"] == "replaced"]
+    assert len(replacements) == 1, interrupted
+    replacement = replacements[0]
+    assert replacement["previous"] == previous
+    assert replacement["displaced"] == previous == _identity(project / "displaced")
+    assert replacement["replacement"] == _identity(ancestor)
+    assert replacement["replacement"] != previous
+    assert replacement["boundary"] == "before-reopen"
+    index = events.index(replacement)
+    assert {
+        "kind": "fsync",
+        "path": str(ancestor.parent),
+        "identity": _identity(ancestor.parent),
+    } in events[:index]
+    assert {
+        "kind": "observed",
+        "path": str(ancestor),
+        "identity": previous,
+    } in events[:index]
+    assert events[index + 1] == {
+        "kind": "observed",
+        "path": str(ancestor),
+        "identity": replacement["replacement"],
+    }
+    assert not any(
+        event["kind"] == "fsync" and event["path"] == str(ancestor)
+        for event in events[:index]
+    ), interrupted
+
+
+@pytest.mark.parametrize("replay", (False, True), ids=("direct", "exact-replay"))
+@pytest.mark.parametrize("position", ("parent", "nested-parent"))
+def test_installed_defer_refuses_replaced_ancestry_until_fresh_attempt(
+    installed_wheel: InstalledWheel, tmp_path: Path, replay: bool, position: str
+) -> None:
+    project = _prepare(installed_wheel, tmp_path)
+    authoritative = _state_bytes(project)
+    container = project if position == "parent" else project / "branch"
+    ancestor = container / uuid4().hex
+    ancestor.mkdir(parents=True)
+    runtime = ancestor / "runtime"
+    displaced_runtime = project / "displaced" / runtime.relative_to(ancestor)
+    previous = _identity(ancestor)
+    seeded = None
+    if replay:
+        assert (
+            _invoke(
+                installed_wheel, project, "normal", runtime=runtime, ancestor=ancestor
+            )["exit"]
+            == 0
+        )
+        seeded = _assert_one_record(runtime)
+        assert _state_bytes(project) == authoritative
+
+    interrupted = _invoke(
+        installed_wheel, project, "replace", runtime=runtime, ancestor=ancestor
+    )
+    _assert_replaced_after_confirmation(interrupted, project, ancestor, previous)
+    assert interrupted["exit"] == 2, interrupted
+    assert interrupted["os_error"] is True, interrupted
+    assert "identity changed; retry" in interrupted["error"]
+    assert str(ancestor) in interrupted["error"].split("identity changed; retry", 1)[1]
+    assert "path" not in interrupted
+    assert not _ledger(runtime).exists()
+    assert _state_bytes(project) == authoritative
+    if replay:
+        assert _ledger(displaced_runtime).read_bytes() == seeded
+    else:
+        assert not _ledger(displaced_runtime).exists()
+
+    retry = _invoke(
+        installed_wheel, project, "normal", runtime=runtime, ancestor=ancestor
+    )
+    assert retry["exit"] == 0, retry
+    assert retry["path"] == str(_ledger(runtime))
+    _assert_one_record(runtime)
+    assert _state_bytes(project) == authoritative
+    if replay:
+        assert _ledger(displaced_runtime).read_bytes() == seeded
+
+
+def test_installed_defer_confirms_parent_through_native_search_only_access(
+    installed_wheel: InstalledWheel, tmp_path: Path
+) -> None:
+    project = _prepare(installed_wheel, tmp_path)
+    authoritative = _state_bytes(project)
+    ancestor = project / "ancestor"
+    runtime = ancestor / "runtime"
+    runtime.mkdir()
+    original_mode = stat.S_IMODE(ancestor.stat().st_mode)
+    try:
+        ancestor.chmod(0o111)
+        assert stat.S_IMODE(ancestor.stat().st_mode) == 0o111
+        result = _invoke(installed_wheel, project, "search")
+    finally:
+        ancestor.chmod(original_mode)
+    assert _state_bytes(project) == authoritative
+    if "skip" in result:
+        pytest.skip(result["skip"])
+    assert result["exit"] == 0, result
+    assert result["euid"] != 0
+    assert result["read_denied"] is True
+    assert result["search_fsync"] is True
+    assert {
+        "kind": "fsync",
+        "path": str(ancestor),
+        "identity": _identity(ancestor),
+    } in result["events"]
+    assert result["path"] == str(_ledger(runtime))
+    _assert_one_record(runtime)
+
+
+def test_installed_defer_confirms_first_descendant_without_root_self_confirmation(
+    installed_wheel: InstalledWheel, tmp_path: Path
+) -> None:
+    project = _prepare(installed_wheel, tmp_path)
+    authoritative = _state_bytes(project)
+    result = _invoke(installed_wheel, project, "normal")
+    assert result["exit"] == 0, result
+    root = Path(project.anchor)
+    first_descendant = root / project.parts[1]
+    events = result["events"]
+    assert not any(
+        event["kind"] == "mkdir" and event["path"] == str(root) for event in events
+    ), result
+    confirmations = [
+        event
+        for event in events
+        if event["kind"] == "fsync" and event["path"] == str(root)
+    ]
+    assert confirmations == [
+        {"kind": "fsync", "path": str(root), "identity": _identity(root)}
+    ], result
+    assert {
+        "kind": "observed",
+        "path": str(first_descendant),
+        "identity": _identity(first_descendant),
+    } in events[: events.index(confirmations[0])]
+    _assert_one_record(project / "ancestor/runtime")
+    assert _state_bytes(project) == authoritative
+
+
+def test_installed_defer_avoids_creation_attempts_on_existing_external_ancestors(
+    installed_wheel: InstalledWheel, tmp_path: Path
+) -> None:
+    project = _prepare(installed_wheel, tmp_path)
+    authoritative = _state_bytes(project)
+    result = _invoke(installed_wheel, project, "forbid-ancestor-mkdir")
+    assert result["exit"] == 0, result
+    assert not [
+        event
+        for event in result["events"]
+        if event["kind"] == "mkdir" and event["forbidden"]
+    ], result
+    runtime = project / "ancestor/runtime"
+    for parent in runtime.parents:
+        assert {
+            "kind": "fsync",
+            "path": str(parent),
+            "identity": _identity(parent),
+        } in result["events"], (str(parent), result)
+    assert result["path"] == str(_ledger(runtime))
+    _assert_one_record(runtime)
+    assert _state_bytes(project) == authoritative
+from __future__ import annotations
+
+from rework_12_scripts import ORIGIN_CHECK
+
+__all__ = ["ANCESTRY_BOUNDARY_ACTOR"]
+
+ANCESTRY_BOUNDARY_ACTOR = (
+    ORIGIN_CHECK
+    + r"""
+import errno
+import os
+import stat
+from unittest.mock import patch
+from ovcaq.workflow.records import record_defer
+
+project = Path(sys.argv[1])
+mode = sys.argv[2]
+runtime = Path(sys.argv[3])
+ancestor = Path(sys.argv[4])
+displaced = project / "displaced"
+real_open = os.open
+real_stat = os.stat
+real_mkdir = os.mkdir
+real_fsync = os.fsync
+events = []
+replaced = False
+ancestor_confirmed = False
+known_directories = {}
+
+def identity(value):
+    return [value.st_dev, value.st_ino]
+
+for directory in (*runtime.parents, runtime, runtime / "deferred"):
+    try:
+        known_directories[tuple(identity(real_stat(directory)))] = str(directory)
+    except FileNotFoundError:
+        pass
+
+def absolute(path, dir_fd=None):
+    if isinstance(path, int):
+        return known_directories.get(tuple(identity(os.fstat(path))))
+    name = os.fsdecode(path)
+    if not os.path.isabs(name) and dir_fd is not None:
+        parent = known_directories[tuple(identity(os.fstat(dir_fd)))]
+        name = os.path.join(parent, name)
+    return os.path.abspath(name)
+
+def observed(path, value):
+    if stat.S_ISDIR(value.st_mode):
+        key = identity(value)
+        known_directories[tuple(key)] = path
+        events.append({"kind": "observed", "path": path, "identity": key})
+
+def observing_stat(path, *args, **kwargs):
+    value = real_stat(path, *args, **kwargs)
+    observed(absolute(path, kwargs.get("dir_fd")), value)
+    return value
+
+def observing_open(path, flags, *args, **kwargs):
+    global replaced
+    name = absolute(path, kwargs.get("dir_fd"))
+    if mode == "replace" and name == str(ancestor) and ancestor_confirmed and not replaced:
+        previous = identity(real_stat(ancestor))
+        os.rename(ancestor, displaced)
+        real_mkdir(ancestor)
+        replaced = True
+        events.append({
+            "kind": "replaced", "path": str(ancestor), "previous": previous,
+            "displaced": identity(real_stat(displaced)),
+            "replacement": identity(real_stat(ancestor)),
+            "boundary": "before-reopen",
+        })
+    descriptor = real_open(path, flags, *args, **kwargs)
+    observed(name, os.fstat(descriptor))
+    return descriptor
+
+def observing_mkdir(path, *args, **kwargs):
+    name = absolute(path, kwargs.get("dir_fd"))
+    forbidden = mode == "forbid-ancestor-mkdir" and Path(name) in runtime.parents
+    events.append({"kind": "mkdir", "path": name, "forbidden": forbidden})
+    if forbidden:
+        raise PermissionError(errno.EPERM, "injected forbidden ancestor mkdir", name)
+    return real_mkdir(path, *args, **kwargs)
+
+def observing_fsync(descriptor):
+    global ancestor_confirmed
+    value = os.fstat(descriptor)
+    real_fsync(descriptor)
+    if not stat.S_ISDIR(value.st_mode):
+        return
+    name = known_directories.get(tuple(identity(value)))
+    events.append({"kind": "fsync", "path": name, "identity": identity(value)})
+    if name == str(ancestor.parent):
+        ancestor_confirmed = True
+
+def search_capability():
+    if os.geteuid() == 0:
+        return {"skip": "root bypasses execute-only directory permissions"}
+    # Darwin exposes O_SEARCH natively even when Python omits the constant.
+    search = getattr(os, "O_SEARCH", 0x40000000 if sys.platform == "darwin" else None)
+    if search is None:
+        return {"skip": "platform has no native fsync-capable O_SEARCH descriptor"}
+    try:
+        descriptor = real_open(ancestor, os.O_RDONLY | os.O_DIRECTORY)
+    except PermissionError:
+        pass
+    else:
+        os.close(descriptor)
+        raise AssertionError("read access bypasses the real 0111 directory mode")
+    descriptor = None
+    try:
+        descriptor = real_open(ancestor, search | os.O_DIRECTORY)
+        real_fsync(descriptor)
+    except OSError as error:
+        return {"skip": f"native O_SEARCH directory fsync unavailable: {error}"}
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+    return {"euid": os.geteuid(), "read_denied": True, "search_fsync": True}
+
+def invoke():
+    capability = search_capability() if mode == "search" else {}
+    if "skip" in capability:
+        return {"exit": 0, **capability}
+    try:
+        with (
+            patch.object(os, "open", observing_open),
+            patch.object(os, "stat", observing_stat),
+            patch.object(os, "mkdir", observing_mkdir),
+            patch.object(os, "fsync", observing_fsync),
+        ):
+            path = record_defer(
+                runtime, "00004-a.md", "batch", {"op_id": "replacement-probe"}
+            )
+    except Exception as error:
+        return {
+            "exit": 2, "error": str(error), "os_error": isinstance(error, OSError),
+            **capability,
+        }
+    return {"exit": 0, "path": str(path), **capability}
+
+result = invoke()
+result.update({"origins": installed_origins(), "events": events})
+print(json.dumps(result), flush=True)
+raise SystemExit(result["exit"])
+"""
+)
+
+## Architecture context
+
+This is bounded task-4 rework of PRD 00004 in OVCAQ. The tests supplied are the spec. Do not read the PRD's acceptance prose, workflow state, sibling tasks or previous review findings.
+
+OVCAQ is Python >=3.12. It owns a provider-neutral workflow layer. Every durable state mutation uses the existing state store. This task is confined to directory ancestry behavior in workflow/_files.py and a concise CHANGELOG.md Fixed entry; do not add a state writer, dependencies, configuration options, new public APIs, provider code, migration or rollback machinery. Keep generic modules free of provider names.
+
+Reading budget (<=30K total): the supplied new tests; /Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/workflow/_files.py lines 1–90, 220–340 and 374–423 first, additional function ranges only when a referenced symbol is needed. File is >400 lines: do not read it repeatedly. CHANGELOG.md lines 7–28 only. Read-only preservation context allowed: /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/test_rework_12.py and rework_12_scripts.py; /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/test_rework_11.py and rework_11_scripts.py. The test support modules packaging_support.py and conftest.py under the same directory may be read only for fixture/runner questions.
+
+The existing module handles locked, descriptor-bound deferred publication and identity checks. Its existing tests cover killed creators (fresh process retry/replay), peer-created directories including caught-fsync failures, complete prospective ledger validation, sidecar replacement and serialization, state/backup preservation, exact operation-ID replay and report overlap. Preserve those boundaries. Unrelated error messages and helpers should stay compatible.
+
+Ordered work: inspect supplied failing tests; make the smallest safe implementation in the allowed product file; update the changelog; run only the new task-4 test file. Existing preservation tests will run at final verification unless a concrete regression concern calls for a narrow check. Do not add or alter tests and do not commit. Return all touched files and concise test results. Scope ends after this task, no next phase or workflow-state mutation.
+
+Use mise exec -- uv run --offline --no-sync pytest tests/packaging/test_rework_13.py -q. Adapt source-tool timeouts to exec_command yielding and deadline-aware waits (300s per narrow run). Individual functions should remain <=50 lines, file <=800 lines; no broad formatting pass.
+
+Host provenance: logical Opus maps to native gpt-6-astra for this dispatch. This is the source procedure's native-agent branch, not a nested CLI implementor.
+
+
+## Files you may read and modify
+
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/workflow/_files.py
+/Users/bob/git/src/github.com/buvis/ovcaq/CHANGELOG.md
+
+
+Read only the files listed above. If a file or symbol you need is not
+listed, stop and report it as a blocker — do not run broad `rg` sweeps to
+discover scope.
+
+
+
+### Code quality rules (mandatory)
+
+Follow these four rules. They override any instinct to "improve" the code
+beyond what the failing tests require.
+
+**1. Think before coding.** Re-read the task and the failing tests. If scope,
+data shape, target file, or success criteria are ambiguous - more than one
+reasonable implementation would pass the tests differently - STOP and report
+the ambiguity as a blocker. Do not guess and proceed.
+
+**2. Simplicity.** Write the simplest code that makes the failing tests pass.
+
+- No abstractions, helpers, or interfaces built for a single caller.
+- No error handling, fallbacks, or validation for inputs the tests never
+  exercise. Validate at real system boundaries only.
+- No features, options, or configuration the task did not ask for.
+- If your draft runs long and the same behavior fits in far fewer lines,
+  rewrite it before returning.
+
+**3. Surgical changes.** Touch only what the task requires.
+
+- Do not refactor, reformat, or "improve" code outside the change.
+- Match the surrounding style even if you would write it differently.
+- Remove imports, variables, and functions that YOUR change orphaned. Do not
+  delete pre-existing dead code - mention it instead.
+- Every changed line must trace to the task or a failing test.
+
+**4. Goal-driven.** The failing tests are the spec. Make them pass - do not
+modify them, do not weaken them, do not add tests. If a test looks wrong,
+report it as a blocker rather than changing it.
+
+Abort and report if you read more than 100K of total input. Return the
+partial result and an abort_reason: context_overrun field.
+
+Read every file before your first Edit to it. Never call bash `head`,
+`tail`, `cat`, `grep`, or `find` - a hook blocks them. Use the Read tool
+(offset/limit), `rg`, or `rg --files` instead. Never combine an inspection
+(read, list, search, diff) with a test, lint or build invocation in one Bash
+call - run them as two calls, because a combined command has two ways to hang
+and one exit code. Pass an explicit `timeout` on every Bash call: 60000 ms for
+an inspection, 300000 ms for a lint run or a narrow test run, 600000 ms for a
+full suite or a full build.
+
+End your report with `ASSUMPTIONS:` - one line per assumption you made
+where the task, tests, or listed files were silent (guessed interface, data
+shape, resolved ambiguity, unstated behavior). Write `ASSUMPTIONS: none` if
+you made none.
+
+Also end your report with `FILES_TOUCHED:` - one line per file you created
+or modified, path relative to the repo root. Write `FILES_TOUCHED: none` if
+you changed no files.

@@ -1,0 +1,352 @@
+{
+  "sizes": [
+    {
+      "file": "src/ovcaq/cli.py",
+      "lines": 548,
+      "overlength": []
+    },
+    {
+      "file": "src/ovcaq/cli_io.py",
+      "lines": 87,
+      "overlength": []
+    },
+    {
+      "file": "src/ovcaq/config.py",
+      "lines": 110,
+      "overlength": []
+    },
+    {
+      "file": "src/ovcaq/errors.py",
+      "lines": 51,
+      "overlength": []
+    },
+    {
+      "file": "src/ovcaq/paths.py",
+      "lines": 134,
+      "overlength": []
+    },
+    {
+      "file": "src/ovcaq/state/__init__.py",
+      "lines": 29,
+      "overlength": []
+    },
+    {
+      "file": "src/ovcaq/state/commands.py",
+      "lines": 435,
+      "overlength": [
+        {
+          "function": "add_task",
+          "line": 148,
+          "lines": 53
+        }
+      ]
+    },
+    {
+      "file": "src/ovcaq/state/schema.py",
+      "lines": 933,
+      "overlength": []
+    },
+    {
+      "file": "src/ovcaq/state/store.py",
+      "lines": 543,
+      "overlength": []
+    },
+    {
+      "file": "src/ovcaq/workflow/_files.py",
+      "lines": 403,
+      "overlength": []
+    },
+    {
+      "file": "src/ovcaq/workflow/_rename.py",
+      "lines": 34,
+      "overlength": []
+    },
+    {
+      "file": "src/ovcaq/workflow/frontmatter.py",
+      "lines": 208,
+      "overlength": []
+    },
+    {
+      "file": "src/ovcaq/workflow/paths.py",
+      "lines": 64,
+      "overlength": []
+    },
+    {
+      "file": "src/ovcaq/workflow/policy.py",
+      "lines": 80,
+      "overlength": []
+    },
+    {
+      "file": "src/ovcaq/workflow/records.py",
+      "lines": 783,
+      "overlength": []
+    },
+    {
+      "file": "src/ovcaq/workflow/reports.py",
+      "lines": 711,
+      "overlength": []
+    },
+    {
+      "file": "src/ovcaq/workflow/resume.py",
+      "lines": 46,
+      "overlength": []
+    },
+    {
+      "file": "src/ovcaq/workflow/selection.py",
+      "lines": 60,
+      "overlength": []
+    },
+    {
+      "file": "src/ovcaq/workflow/transitions.py",
+      "lines": 116,
+      "overlength": []
+    },
+    {
+      "file": "src/ovcaq/workflow_cli.py",
+      "lines": 314,
+      "overlength": []
+    },
+    {
+      "file": "tests/packaging/conftest.py",
+      "lines": 119,
+      "overlength": [
+        {
+          "function": "installed_wheel",
+          "line": 69,
+          "lines": 51
+        }
+      ]
+    },
+    {
+      "file": "tests/packaging/packaging_support.py",
+      "lines": 265,
+      "overlength": []
+    },
+    {
+      "file": "tests/packaging/reports_scripts.py",
+      "lines": 57,
+      "overlength": []
+    },
+    {
+      "file": "tests/packaging/sagas_scripts.py",
+      "lines": 93,
+      "overlength": []
+    },
+    {
+      "file": "tests/packaging/test_distribution.py",
+      "lines": 480,
+      "overlength": [
+        {
+          "function": "test_wheel_contains_exact_declared_package_and_metadata",
+          "line": 226,
+          "lines": 79
+        }
+      ]
+    },
+    {
+      "file": "tests/packaging/test_input_integrity.py",
+      "lines": 157,
+      "overlength": []
+    },
+    {
+      "file": "tests/packaging/test_installed_cli.py",
+      "lines": 217,
+      "overlength": [
+        {
+          "function": "test_installed_version_and_every_declared_module_come_from_wheel",
+          "line": 152,
+          "lines": 66
+        }
+      ]
+    },
+    {
+      "file": "tests/packaging/test_installed_reports.py",
+      "lines": 287,
+      "overlength": []
+    },
+    {
+      "file": "tests/packaging/test_installed_sagas.py",
+      "lines": 323,
+      "overlength": []
+    },
+    {
+      "file": "tests/packaging/test_workflow_inputs.py",
+      "lines": 244,
+      "overlength": []
+    },
+    {
+      "file": "tests/state/test_cli.py",
+      "lines": 800,
+      "overlength": []
+    },
+    {
+      "file": "tests/state/test_cli_limits.py",
+      "lines": 520,
+      "overlength": []
+    },
+    {
+      "file": "tests/state/test_commands.py",
+      "lines": 575,
+      "overlength": []
+    },
+    {
+      "file": "tests/state/test_crosswalk.py",
+      "lines": 297,
+      "overlength": []
+    },
+    {
+      "file": "tests/state/test_recovery_mutations.py",
+      "lines": 119,
+      "overlength": []
+    },
+    {
+      "file": "tests/state/test_schema.py",
+      "lines": 551,
+      "overlength": []
+    },
+    {
+      "file": "tests/state/test_schema_invariants.py",
+      "lines": 754,
+      "overlength": []
+    },
+    {
+      "file": "tests/state/test_service_commands.py",
+      "lines": 774,
+      "overlength": []
+    },
+    {
+      "file": "tests/state/test_service_contracts.py",
+      "lines": 99,
+      "overlength": []
+    },
+    {
+      "file": "tests/test_package_baseline.py",
+      "lines": 139,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/conftest.py",
+      "lines": 24,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/saga_support.py",
+      "lines": 103,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_applications.py",
+      "lines": 292,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_blank_decisions.py",
+      "lines": 54,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_boundaries.py",
+      "lines": 63,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_characterized_fixtures.py",
+      "lines": 88,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_configuration.py",
+      "lines": 63,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_deferred_ledger.py",
+      "lines": 265,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_frontmatter.py",
+      "lines": 139,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_ledger_integrity.py",
+      "lines": 91,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_ledger_publication.py",
+      "lines": 120,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_policy.py",
+      "lines": 76,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_records.py",
+      "lines": 222,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_report_identity.py",
+      "lines": 90,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_report_recovery.py",
+      "lines": 129,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_reports.py",
+      "lines": 549,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_resume.py",
+      "lines": 145,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_saga_artifacts.py",
+      "lines": 104,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_saga_identity.py",
+      "lines": 299,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_saga_publication.py",
+      "lines": 150,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_sagas.py",
+      "lines": 572,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_selection.py",
+      "lines": 175,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_transitions.py",
+      "lines": 253,
+      "overlength": []
+    },
+    {
+      "file": "tests/workflow/test_workflow_cli.py",
+      "lines": 387,
+      "overlength": []
+    }
+  ],
+  "artifacts": {
+    "dist/ovcaq-0.1.0.dev0.tar.gz": "e633eb9803b311210106b7673db408c63e27205ec2669184421e43fd10bc19ec",
+    "dist/ovcaq-0.1.0.dev0-py3-none-any.whl": "f3e6b76240f72608ecf9d4761ff172e2502ee358c9cd79d152324ad9b1fe657a"
+  }
+}

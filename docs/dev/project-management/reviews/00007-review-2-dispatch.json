@@ -1,0 +1,53 @@
+{
+  "cycle": 2,
+  "prd": "00007-supervisor-loop-v1.md",
+  "head_sha": "3f5a0bdd3e3268eb08bbef2240beb3f6733eda59",
+  "diff_base": "bbe7d521321428b670d15c4ede00e31792a61e1c",
+  "codex_implemented_task_count": 10,
+  "alice": {
+    "agent": "/root/alice_review_00007_2",
+    "provider": "openai",
+    "model": "gpt-5.6-sol",
+    "logical_tier": "sonnet",
+    "effort": "high",
+    "fork_turns": "none",
+    "prompt": "docs/dev/tmp/alice-prompt-00007-2-20261003.md",
+    "status": "completed",
+    "prompt_sha256": "54024fbc98ca9e5ed28e312ca93f427f89602c99e1f65d5dfa36289586942e1e"
+  },
+  "blake": {
+    "agent": "/root/blake_review_00007_2",
+    "provider": "openai",
+    "model": "gpt-5.6-sol",
+    "logical_tier": "sonnet",
+    "effort": "high",
+    "fork_turns": "none",
+    "prompt": "docs/dev/tmp/blake-prompt-00007-2-20261003.md",
+    "inputs": "PRD-only; no diff, file list, implementation plan, design, history or sibling findings",
+    "status": "completed",
+    "prompt_sha256": "6158c6db90b0c06f9545990e640f00943fc018ef64bbddddeaed7fe4a34390df"
+  },
+  "bob": {
+    "provider": "anthropic",
+    "logical_tier": "opus",
+    "launch": "fresh external Claude via authorized autocodex reviewer helper",
+    "model_evidence": "receipt and immutable raw init event",
+    "dispatch_id": "a31a5dcd",
+    "prompt": "docs/dev/tmp/bob-prompt-00007-2-20261003.md",
+    "output": "docs/dev/project-management/reviews/00007-review-2-bob.txt",
+    "receipt": "docs/dev/project-management/reviews/00007-review-2-bob.txt.receipt.json",
+    "actual_model": "claude-opus-5-5",
+    "status": "completed",
+    "prompt_sha256": "6d6f9b89cfccc314c9498829094f820e9ba063c95bcc5823fdf807804173d81d"
+  },
+  "carl": {
+    "status": "approval_denied_before_launch",
+    "dispatch_id": "68d644a0",
+    "evidence": "docs/dev/project-management/reviews/00007-review-2-carl-denial.md",
+    "counted_in_consensus": false
+  },
+  "eve": {
+    "dispatched": false,
+    "reason": "Explicit host substitution uses actual external Claude Opus Bob as the non-Codex doubt voice; no Fable capability or dispatch is claimed."
+  }
+}

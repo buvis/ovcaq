@@ -1,0 +1,28 @@
+Gates I ran on HEAD `4c84d4d`: `pytest` 6884 passed; `ruff check` passed; `ruff format --check` reported 232 files already formatted; `mypy` found no issues in 61 files; `uv build` built the sdist and wheel. I skipped `uv sync --all-groups` because the existing venv already works. A probe script (since deleted) confirmed the display-time leak in the second finding below.
+
+[BLAKE] 🟡 The raw-first regressions are in a file the PRD doesn't list (tests/events/test_unicode_frames.py). The PRD's Phase 1 acceptance command (`pytest tests/events/test_unicode_safety.py tests/events/test_tail.py`) never runs them, so it shows nothing about byte-exact raw, gap digest/preview, unchanged adapter state or the later healthy terminal. The tests themselves are thorough and pass. Fix by moving them into test_unicode_safety.py, as the PRD's repo structure says, or by correcting the acceptance command | File: tests/events/test_unicode_frames.py:172 | Task: 2
+[BLAKE] 🟡 The R2 class of bug still exists at display time, outside this PRD's scope. `bounded_detail` strips only C0 controls and 7-bit CSI. The TUI's `display_text` drops all Cc/Cf/Cs/Zl/Zp characters (src/ovcaq/tui/model.py:57). Confirmed: `"lane sk-abc\u200b<36 chars>"` (also with \x85, \x9b, \u00ad, \u2060 instead of \u200b) passes redaction unchanged and the TUI shows the joined `sk-abcabcdef…` token. Activity text and tool details (src/ovcaq/drivers/codex_events.py:32, src/ovcaq/drivers/codex_events.py:127) strip nothing, so a NUL-split token also renders whole on screen. This needs a durable home (a PRD or issue) | File: src/ovcaq/drivers/codex_events.py:59 | Task: 3
+[BLAKE] ⚪ The supervisor's catch-all handler builds `SessionSummary(..., str(error), ...)`. If the error text carries surrogateescape bytes (a non-UTF-8 path), the new `SessionSummary` check raises `ValueError` inside the handler and `_conclude` is skipped, so the failure record is lost. Not a regression: the strict encode in src/ovcaq/runtime/_session_io.py:19 already failed on such text | File: src/ovcaq/runtime/supervisor.py:370 | Task: general
+[BLAKE] ⚪ The pre-decode check assumes every driver parses frames with plain `json.loads`. A plugin driver that unwraps a prefix or applies its own escapes skips the pre-mutation check. The model still rejects the bad strings, so nothing crashes, but such a driver can change its state before the `Observation` constructor raises. Every frame (up to 1 MiB) is also parsed twice; the PRD sets no performance limit | File: src/ovcaq/events/tail.py:118 | Task: 2
+
+Phase mapping: I matched B15–B17 to the PRD's phases by name. Phase 1 = Core, Phase 2 = Integration, and the PRD has no Phase 3, so B17 passes with nothing to check.
+
+B1: pass
+B2: pass
+B3: pass
+B4: pass
+B5: pass
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: pass
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: fail
+B16: pass
+B17: pass
+B18: pass
+B19: pass

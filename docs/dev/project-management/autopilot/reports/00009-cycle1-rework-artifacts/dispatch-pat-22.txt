@@ -1,0 +1,378 @@
+
+You are Pat, the per-task code reviewer. Review the single task's committed
+diff below. This review is READ-ONLY: report findings, change nothing.
+
+## Task
+
+Subject: [D1] tests/drivers/
+
+Description:
+Review: docs/dev/project-management/reviews/00009-codex-adapter-v1-review-1.md
+Design context: docs/dev/project-management/designs/00009-codex-adapter-v1-design.md
+
+Extract helpers without weakening existing assertions, handle all four overlength functions, and exercise configured prompt overrides through real resolution using distinct values. Coordinate fake-fixture edits with task 21.
+
+Acceptance: every quoted finding no longer reproduces; preserve all existing assertions and full shared conformance. Run source work pipeline, independent behavioral regressions where needed, and its mandatory final verification.
+
+### Findings (verbatim)
+- 🟡 tests/drivers/test_codex_fake.py:311: Functions over the 50-line limit, per the mechanical facts: `assert_workflow_handoff` (74) and `test_command_backed_workflow_handoffs` (75) in tests/drivers/test_codex_fake.py; `test_builtin_fake_command_handoffs_drain_and_retain_completed_results` (56) in tests/runtime/test_supervisor_adapters.py:154; `main` (51) in tests/fixtures/codex/v1/fake_codex.py:195. The build report already records the fake_codex.main style-gate failure. Split the per-phase handoff assertions into helpers (found by: ALICE, BOB)
+- ⚪ tests/drivers/test_codex_prompt.py:52: The prompt-override test sets the configured prompts equal to the default prompt and then checks `default_prompt`, so it would still pass if overrides were ignored. (found by: BLAKE)
+
+
+Acceptance criteria:
+Every quoted finding resolved within this split scope; preserve behavior and assertions.
+
+## Diff under review
+
+```diff
+diff --git a/tests/drivers/test_codex_fake.py b/tests/drivers/test_codex_fake.py
+index eadb481..0ec7062 100644
+--- a/tests/drivers/test_codex_fake.py
++++ b/tests/drivers/test_codex_fake.py
+@@ -137,7 +137,8 @@ def test_probe_invocation_evidence(tmp_path, fake_environment, arguments, text):
+         timeout=10,
+         check=False,
+     )
+-    evidence, output = result.stdout.splitlines()
++    (evidence,) = result.stderr.splitlines()
++    (output,) = result.stdout.splitlines()
+     assert result.returncode == 0
+     assert output == text
+     record = json.loads(evidence)
+@@ -308,27 +309,18 @@ def installed_cli(root, environment, *arguments):
+     return json.loads(result.stdout)
+ 
+ 
+-def assert_workflow_handoff(
+-    commands,
+-    records,
+-    store,
+-    before,
+-    phase,
+-    outcome,
+-    next_phase,
+-    environment,
+-    tmp_path,
+-    prd,
+-    historical,
+-    current,
+-):
+-    completions = [record for record in commands if "phase-complete" in record["argv"]]
+-    assert len(completions) == 1
+-    assert commands[-1] == completions[0]
+-    reads = [record for record in commands if record["argv"][-2:] == ["state", "show"]]
+-    assert len(reads) == (2 if phase in {"build", "done"} else 1)
++def assert_prd_completion(
++    commands: list[dict],
++    reads: list[dict],
++    before: dict,
++    phase: str,
++    environment: dict[str, str],
++    tmp_path: Path,
++    prd: Path,
++    historical: dict,
++    current: dict,
++) -> None:
+     handoff_revision = before["revision"] + (1 if phase == "done" else 0)
+-    assert reads[-1]["result"]["revision"] == handoff_revision
+     prd_completions = [
+         record for record in commands if "complete-prd" in record["argv"]
+     ]
+@@ -352,6 +344,49 @@ def assert_workflow_handoff(
+         assert commands.index(prd_completions[0]) < commands.index(reads[-1])
+     else:
+         assert prd_completions == []
++
++
++def assert_handoff_observation(
++    records: list[dict], after: dict, phase: str, outcome: str, next_phase: str
++) -> None:
++    handoffs = [
++        record for record in records if record["type"] == "fake_workflow_handoff"
++    ]
++    assert handoffs == [
++        {
++            "type": "fake_workflow_handoff",
++            "phase": phase,
++            "outcome": outcome,
++            "revision": after["revision"],
++            "result": {"phase": after["work"]["phase"], "next_phase": next_phase},
++        }
++    ]
++
++
++def assert_workflow_handoff(
++    commands,
++    records,
++    store,
++    before,
++    phase,
++    outcome,
++    next_phase,
++    environment,
++    tmp_path,
++    prd,
++    historical,
++    current,
++):
++    completions = [record for record in commands if "phase-complete" in record["argv"]]
++    assert len(completions) == 1
++    assert commands[-1] == completions[0]
++    reads = [record for record in commands if record["argv"][-2:] == ["state", "show"]]
++    assert len(reads) == (2 if phase in {"build", "done"} else 1)
++    handoff_revision = before["revision"] + (1 if phase == "done" else 0)
++    assert reads[-1]["result"]["revision"] == handoff_revision
++    assert_prd_completion(
++        commands, reads, before, phase, environment, tmp_path, prd, historical, current
++    )
+     assert completions[0]["argv"] == [
+         environment["OVCAQ_FAKE_CLI"],
+         "--root",
+@@ -370,21 +405,12 @@ def assert_workflow_handoff(
+         [historical, current] if phase == "done" else [historical]
+     )
+     assert after["work"]["next_phase"] == next_phase
+-    handoffs = [
+-        record for record in records if record["type"] == "fake_workflow_handoff"
+-    ]
+-    assert handoffs == [
+-        {
+-            "type": "fake_workflow_handoff",
+-            "phase": phase,
+-            "outcome": outcome,
+-            "revision": after["revision"],
+-            "result": {"phase": after["work"]["phase"], "next_phase": next_phase},
+-        }
+-    ]
++    assert_handoff_observation(records, after, phase, outcome, next_phase)
+ 
+ 
+-def test_command_backed_workflow_handoffs(tmp_path, fake_environment):
++def prepare_workflow_handoff(
++    tmp_path: Path, fake_environment: dict[str, str]
++) -> tuple[Path, dict[str, str], CodexDriver, StateStore, dict, dict]:
+     installed_cli(tmp_path, fake_environment, "init")
+     backlog = tmp_path / "docs/dev/project-management/prds/backlog"
+     backlog.mkdir(parents=True)
+@@ -421,6 +447,13 @@ def test_command_backed_workflow_handoffs(tmp_path, fake_environment):
+         "tasks_completed": 0,
+         "tasks_total": 0,
+     }
++    return prd, environment, adapter, store, historical, current
++
++
++def test_command_backed_workflow_handoffs(tmp_path, fake_environment):
++    prd, environment, adapter, store, historical, current = prepare_workflow_handoff(
++        tmp_path, fake_environment
++    )
+     all_commands = []
+     for phase, outcome, next_phase in [
+         ("build", "tasks_done", "review"),
+diff --git a/tests/drivers/test_codex_prompt.py b/tests/drivers/test_codex_prompt.py
+index 9889bbf..34c2152 100644
+--- a/tests/drivers/test_codex_prompt.py
++++ b/tests/drivers/test_codex_prompt.py
+@@ -2,7 +2,12 @@ from pathlib import Path
+ 
+ import pytest
+ 
+-from ovcaq.config import AgentSettings, agent_settings
++from ovcaq.config import (
++    AgentSettings,
++    PhaseSettings,
++    agent_settings,
++    resolve_phase_route,
++)
+ from ovcaq.drivers.codex import CodexDriver
+ from ovcaq.paths import CONFIG_NAME
+ 
+@@ -57,20 +62,29 @@ def test_configured_prompts_remain_literal_phase_overrides(
+     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
+     (project / CONFIG_NAME).write_text(
+         'agent = "codex"\n'
++        '[agents.codex.tiers]\nstandard = "fixture-model"\n'
+         "[agents.codex.prompts]\n"
+-        f'build = """{NATIVE_PROMPT}"""\n'
+-        f'review = """{NATIVE_PROMPT}"""\n'
+-        f'done = """{NATIVE_PROMPT}"""\n',
++        "build = 'Build ${HOME} $(touch injected); literal'\n"
++        "review = 'Review --literal-prompt; separate'\n"
++        "done = 'Finish $run-autopilot; configured'\n",
+         encoding="utf-8",
+     )
+ 
+     settings = agent_settings(project)
+ 
+     assert settings.prompts == {
+-        "build": NATIVE_PROMPT,
+-        "review": NATIVE_PROMPT,
+-        "done": NATIVE_PROMPT,
++        "build": "Build ${HOME} $(touch injected); literal",
++        "review": "Review --literal-prompt; separate",
++        "done": "Finish $run-autopilot; configured",
+     }
+     driver = CodexDriver(settings, run_id="configured-prompt-run")
+     for phase in ("build", "review", "done"):
++        route = resolve_phase_route(
++            project,
++            phase,
++            agent="codex",
++            phase_settings=PhaseSettings("standard", "high", 10),
++        )
++        assert route.prompt == settings.prompts[phase]
++        assert route.prompt != NATIVE_PROMPT
+         assert driver.default_prompt(phase) == NATIVE_PROMPT
+diff --git a/tests/fixtures/codex/v1/fake_codex.py b/tests/fixtures/codex/v1/fake_codex.py
+index b83e378..8a83f4a 100755
+--- a/tests/fixtures/codex/v1/fake_codex.py
++++ b/tests/fixtures/codex/v1/fake_codex.py
+@@ -10,8 +10,12 @@ import time
+ from pathlib import Path
+ 
+ 
+-def emit(record: object) -> None:
+-    print(json.dumps(record, sort_keys=True, separators=(",", ":")), flush=True)
++def emit(record: object, *, stderr: bool = False) -> None:
++    print(
++        json.dumps(record, sort_keys=True, separators=(",", ":")),
++        file=sys.stderr if stderr else sys.stdout,
++        flush=True,
++    )
+ 
+ 
+ def valid_exec_argv(argv: list[str]) -> bool:
+@@ -209,7 +213,8 @@ def emit_invocation(argv: list[str]) -> None:
+                     "OVCAQ_FAKE_MARKER",
+                 )
+             },
+-        }
++        },
++        stderr=argv in (["--version"], ["login", "status"]),
+     )
+ 
+ 
+diff --git a/tests/runtime/test_supervisor_adapters.py b/tests/runtime/test_supervisor_adapters.py
+index 3757250..5d2111c 100644
+--- a/tests/runtime/test_supervisor_adapters.py
++++ b/tests/runtime/test_supervisor_adapters.py
+@@ -150,6 +150,16 @@ def assert_retained_evidence(
+     assert json.loads((session / "meta.json").read_text())["agent"] == provider
+ 
+ 
++def assert_completed_results(final: dict, historical: dict, name: str) -> None:
++    assert final["work"]["phase"] == "done" and final["work"]["next_phase"] == ""
++    assert final["batch"]["completed_prds"][0] == historical
++    assert [item["filename"] for item in final["batch"]["completed_prds"]] == [
++        historical["filename"],
++        name,
++    ]
++    assert final["batch"]["capabilities"]["audit"]["status"] == "succeeded"
++
++
+ @pytest.mark.parametrize("provider", ["claude", "codex"])
+ def test_builtin_fake_command_handoffs_drain_and_retain_completed_results(
+     tmp_path: Path,
+@@ -197,13 +207,7 @@ def test_builtin_fake_command_handoffs_drain_and_retain_completed_results(
+         assert_retained_evidence(session, phase, target, provider)
+     assert initial["revision"] < revisions[0] < revisions[1] < revisions[2]
+     final = h.store.read()
+-    assert final["work"]["phase"] == "done" and final["work"]["next_phase"] == ""
+-    assert final["batch"]["completed_prds"][0] == historical
+-    assert [item["filename"] for item in final["batch"]["completed_prds"]] == [
+-        historical["filename"],
+-        name,
+-    ]
+-    assert final["batch"]["capabilities"]["audit"]["status"] == "succeeded"
++    assert_completed_results(final, historical, name)
+     assert (
+         json.loads((h.paths.reports / "batch-1-state-final.json").read_text()) == final
+     )
+
+```
+
+## Recorded verification
+
+The task's tests were run before this review. This is what they reported:
+
+Initial task22 approved run:
+uv --cache-dir /private/tmp/ovcaq-rework-uv run pytest tests/drivers/test_codex_fake.py tests/runtime/test_supervisor_adapters.py tests/drivers/test_codex_prompt.py -q --tb=line
+Exit1:45passed5failed2warnings in8.42s; confirmed native health stdout fake instrumentation mismatch.
+
+After same-tier feedback correction, identical sandbox command:
+Exit1:2failed48passed2warnings in11.92s; both failures PermissionError ps.
+
+Required approved retry:
+uv --cache-dir /private/tmp/ovcaq-rework-uv run pytest 'tests/runtime/test_supervisor_adapters.py::test_builtin_fake_command_handoffs_drain_and_retain_completed_results[claude]' 'tests/runtime/test_supervisor_adapters.py::test_builtin_fake_command_handoffs_drain_and_retain_completed_results[codex]' -q --tb=line
+Exit0:2passed2warnings in1.53s. All50 named cases verified across original run and approved process retry. No behavioral failure after fixture correction. Warnings concern pytest temporary-directory cleanup.
+
+Style check whole changed candidates exit0; split hygiene exit0. Current AST spans: assert_workflow_handoff43, test_command_backed_workflow_handoffs42, builtin_fake_command...50, fake main35. Fake main already fixed by prior child29 commitd4ef489, before task22 base c8364eb. Task22 preserves that split; health instrumentation moved to stderr. Every direct argv/cwd/stdin/output/returncode assertion remains.
+
+
+Judge only from this prompt: the diff above, the task text, and this recorded
+result. Do not read other files, run commands, or re-run the tests. What is not
+in this prompt is not evidence, and a finding you cannot ground in what is here
+is one you should not report.
+
+# Simplification Mandate (step 5.7 reviewer-prompt appendix)
+
+Append this block **verbatim** to every per-task code-reviewer prompt (see
+`SKILL.md` step 5.7). It ships inside the prompt, so it must stay
+self-contained.
+
+> Beyond bugs, actively hunt for simplification in the diff under review. For
+> every added or changed file, ask "what would make this simpler to read
+> without changing what it does?" and flag concrete behavior-preserving
+> opportunities to: reduce complexity (needless indirection, dead branches,
+> single-caller abstractions, nesting deeper than 4 levels, functions over 50
+> lines); eliminate redundancy (logic duplicated within the diff or against
+> existing code, a helper that reimplements a stdlib or existing utility);
+> improve naming (names that state intent, no opaque abbreviations); and
+> remove dead code. Follow CLAUDE.md / AGENTS.md conventions and the
+> surrounding code's style.
+>
+> Report each concrete behavior-preserving simplification as a LOW finding,
+> with file:line, the current shape, and the simpler replacement. LOW findings
+> are carried to the PRD-level review, never retried here.
+>
+> Do not over-simplify: never propose a change that trades clarity for
+> brevity, drops error handling, collapses a deliberate boundary, or removes a
+> documented invariant. Simpler means easier to read and maintain, not shorter
+> at any cost. If a change would alter behavior, it is out of scope — do not
+> flag it.
+
+
+## Reporting contract
+
+Report one finding per line, in exactly this shape:
+
+SEVERITY | file:line | issue | fix
+
+Severities are CRITICAL, HIGH, MEDIUM, LOW.
+
+Severity has a fixed meaning here, and it decides what happens next. MEDIUM is
+reserved for a correctness or security defect this diff introduces that its own
+tests do not catch: a wrong result, an unhandled error path, data loss,
+injection, secret exposure, or a missing authorization check. Style, naming,
+duplication, structure and maintainability are LOW, and so is every
+behavior-preserving simplification, whatever its size. A LOW is noted and
+carried to the PRD-level review; it is never retried in this loop.
+
+If the diff has no findings, emit the literal line:
+
+NO FINDINGS
+
+## Closure verdicts (only when the description carries a findings block)
+
+When the Description above contains a `### Findings (verbatim)` block, this is
+a rework task and each quoted finding is a claim to check. Before your findings
+lines, emit one verdict per quoted finding, in this shape:
+
+CLOSURE | resolved|unresolved | <the finding, quoted> | <one line of evidence from the diff>
+
+Judge each finding against the diff, not against the commit message and not
+against how clean the code reads. A diff that improves the file while leaving
+the quoted defect reachable is `unresolved`. Quote the line that resolves it,
+or say what still reaches the defect. Emit a verdict for every quoted finding,
+including ones you judge already fixed elsewhere.
+
+

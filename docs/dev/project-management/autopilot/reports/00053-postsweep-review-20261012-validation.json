@@ -1,0 +1,25 @@
+{
+  "review_file": "docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-2-postsweep-20261012.md",
+  "reviewed_head": "4382d83eb48323204a920b555be04ea8deb1acc6",
+  "fingerprint": "dc3a1730423571328f86544292cb0e93894ba9a48656555cf2efbf0411757b4b",
+  "helpers": {
+    "alice": 0,
+    "blake": 0,
+    "bob": 0
+  },
+  "historical_receipts_unchanged": 33,
+  "review_shape": "pass",
+  "provider_receipt_gate": "pass",
+  "full_rubrics": "pass",
+  "tasks_completed": 14,
+  "tasks_total": 14,
+  "cycle": 2,
+  "rework_cap": 2,
+  "findings": {
+    "raw": 9,
+    "distinct_actionable": 6,
+    "medium": 1,
+    "low": 5
+  },
+  "repairs_performed": 0
+}

@@ -1,0 +1,145 @@
+[
+  {
+    "ref": "R1",
+    "consensus": "[1/3]",
+    "severity": "⚪",
+    "issue": "A plain `error` label counts as a numeric code context because the ` code` part is optional (`error(?: code)?`). So `Error: 401 tests passed` comes back `authentication`. That is an ordinary count after a generic error label, not the \"error-code\" context the PRD describes",
+    "file": "src/ovcaq/drivers/codex_events.py:302",
+    "task": "Phase 0",
+    "found_by": [
+      "BLAKE"
+    ],
+    "classification": "discard",
+    "reason": "Previously settled mixed diagnostic-prefix/count precedence limitation (cycle 2): status: 401 tests passed and error code: 503 records. Error: 401 tests passed is the same ambiguity, not a new contract. PRD preserves genuine Error 401: diagnostics; broader prose grammar requires separate specification."
+  },
+  {
+    "ref": "R2",
+    "consensus": "[1/3]",
+    "severity": "⚪",
+    "issue": "The Claude probe checks only `command[0]` against the overlay `PATH`. With a wrapper argv (for example `env claude`), it never checks that the wrapped executable exists, while the Codex probe runs the full wrapper argv. This predates the PRD, but the PRD lists wrapper argv as a probe input",
+    "file": "src/ovcaq/drivers/claude.py:81",
+    "task": "Phase 1",
+    "found_by": [
+      "BLAKE"
+    ],
+    "classification": "defer",
+    "reason": "Existing wrapper-inner-executable limitation: base 7819970 Claude probe already checks only command[0]. The reviewed design explicitly requires shutil.which(command, path=effective_path), not execution or parsing of arbitrary wrapper argv. Effective PATH lookup is implemented and tested. Further wrapper health semantics need a separately specified contract."
+  },
+  {
+    "ref": "R3",
+    "consensus": "[1/3]",
+    "severity": "⚪",
+    "issue": "Cannot statically verify: the Phase-2 exit gate (full `uv run pytest`) at HEAD. The settled 7202-passed run was at 93fd36f. The only run at cf48315 (`last-verification.json`) stopped with exit 130 (partial: 85 failed, 27 errors, blamed on the macOS `ps` denial), and this cycle's test gate exited 2 with no summary line. The rework since 93fd36f touches only tests and docs, and both narrow runs pass (136 passed; 2 passed), so the settled reason does not cover HEAD",
+    "file": "N/A",
+    "task": "general",
+    "found_by": [
+      "BOB"
+    ],
+    "classification": "verify",
+    "reason": "Resolved by approved full suite at reviewed HEAD ca878006eba9e0fff0f1eb175a30557d82f8278b: uv run pytest -q --tb=line exited 0, 7199 passed, 0 failed/skipped. Sync, Ruff lint/format, mypy and build also pass. Alice independently obtained the same full-suite result."
+  },
+  {
+    "ref": "R4",
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "109 touched test(s) pass against the pre-change code: test_numeric_codes_classify_with_explicit_status_or_error_context +103 more",
+    "file": "tests/drivers/test_adapter_failure_classes.py",
+    "task": "general",
+    "found_by": [
+      "mech-check"
+    ],
+    "classification": "discard",
+    "reason": "Required PRD compatibility/preservation controls, not tautologies: direct tier/argv precedence, native fixtures, normal lane/probe behavior remain compatible. Fresh full-range replay ran 293 touched cases; 52 fail against base and 241 preserve behavior. Same-file historical ledger dispositions remain valid; the new Codex default-PATH case intentionally preserves pre-existing subprocess semantics."
+  },
+  {
+    "ref": "R5",
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "17 touched test(s) pass against the pre-change code: test_unfinished_lane_fails_after_close_status +11 more",
+    "file": "tests/drivers/test_adapter_outcomes.py",
+    "task": "general",
+    "found_by": [
+      "mech-check"
+    ],
+    "classification": "discard",
+    "reason": "Required PRD compatibility/preservation controls, not tautologies: direct tier/argv precedence, native fixtures, normal lane/probe behavior remain compatible. Fresh full-range replay ran 293 touched cases; 52 fail against base and 241 preserve behavior. Same-file historical ledger dispositions remain valid; the new Codex default-PATH case intentionally preserves pre-existing subprocess semantics."
+  },
+  {
+    "ref": "R6",
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "10 touched test(s) pass against the pre-change code: test_native_failure_emits_classified_terminal_with_receipt_identity +4 more",
+    "file": "tests/drivers/test_codex_decode_terminals.py",
+    "task": "general",
+    "found_by": [
+      "mech-check"
+    ],
+    "classification": "discard",
+    "reason": "Required PRD compatibility/preservation controls, not tautologies: direct tier/argv precedence, native fixtures, normal lane/probe behavior remain compatible. Fresh full-range replay ran 293 touched cases; 52 fail against base and 241 preserve behavior. Same-file historical ledger dispositions remain valid; the new Codex default-PATH case intentionally preserves pre-existing subprocess semantics."
+  },
+  {
+    "ref": "R7",
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "7 touched test(s) pass against the pre-change code: test_failure_classification_uses_documented_precedence +1 more",
+    "file": "tests/drivers/test_codex_failures.py",
+    "task": "general",
+    "found_by": [
+      "mech-check"
+    ],
+    "classification": "discard",
+    "reason": "Required PRD compatibility/preservation controls, not tautologies: direct tier/argv precedence, native fixtures, normal lane/probe behavior remain compatible. Fresh full-range replay ran 293 touched cases; 52 fail against base and 241 preserve behavior. Same-file historical ledger dispositions remain valid; the new Codex default-PATH case intentionally preserves pre-existing subprocess semantics."
+  },
+  {
+    "ref": "R8",
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "61 touched test(s) pass against the pre-change code: test_launch_has_exact_order_and_omits_unconfigured_flags +55 more",
+    "file": "tests/drivers/test_codex_launch.py",
+    "task": "general",
+    "found_by": [
+      "mech-check"
+    ],
+    "classification": "discard",
+    "reason": "Required PRD compatibility/preservation controls, not tautologies: direct tier/argv precedence, native fixtures, normal lane/probe behavior remain compatible. Fresh full-range replay ran 293 touched cases; 52 fail against base and 241 preserve behavior. Same-file historical ledger dispositions remain valid; the new Codex default-PATH case intentionally preserves pre-existing subprocess semantics."
+  },
+  {
+    "ref": "R9",
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "14 touched test(s) pass against the pre-change code: test_native_diagnostics_have_independent_failure_classification +8 more",
+    "file": "tests/drivers/test_codex_rework_decode.py",
+    "task": "general",
+    "found_by": [
+      "mech-check"
+    ],
+    "classification": "discard",
+    "reason": "Required PRD compatibility/preservation controls, not tautologies: direct tier/argv precedence, native fixtures, normal lane/probe behavior remain compatible. Fresh full-range replay ran 293 touched cases; 52 fail against base and 241 preserve behavior. Same-file historical ledger dispositions remain valid; the new Codex default-PATH case intentionally preserves pre-existing subprocess semantics."
+  },
+  {
+    "ref": "R10",
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "19 touched test(s) pass against the pre-change code: test_probe_finds_executable_available_only_on_overlay_path, test_probe_rejects_absolute_command_that_is_not_an_executable_file, test_probe_rejects_file_without_execute_permission +13 more",
+    "file": "tests/runtime/test_adapter_health.py",
+    "task": "general",
+    "found_by": [
+      "mech-check"
+    ],
+    "classification": "discard",
+    "reason": "Required PRD compatibility/preservation controls, not tautologies: direct tier/argv precedence, native fixtures, normal lane/probe behavior remain compatible. Fresh full-range replay ran 293 touched cases; 52 fail against base and 241 preserve behavior. Same-file historical ledger dispositions remain valid; the new Codex default-PATH case intentionally preserves pre-existing subprocess semantics."
+  },
+  {
+    "ref": "R11",
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "4 touched test(s) pass against the pre-change code: test_configured_supervisor_launches_each_selected_literal_model_and_effort",
+    "file": "tests/runtime/test_adapter_launch_routing.py",
+    "task": "general",
+    "found_by": [
+      "mech-check"
+    ],
+    "classification": "discard",
+    "reason": "Required PRD compatibility/preservation controls, not tautologies: direct tier/argv precedence, native fixtures, normal lane/probe behavior remain compatible. Fresh full-range replay ran 293 touched cases; 52 fail against base and 241 preserve behavior. Same-file historical ledger dispositions remain valid; the new Codex default-PATH case intentionally preserves pre-existing subprocess semantics."
+  }
+]

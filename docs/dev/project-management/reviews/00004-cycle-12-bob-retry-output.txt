@@ -1,0 +1,81 @@
+## Bob — doubt + de-slop review, PRD 00004 cycle 12
+
+HEAD `39ecaf4f95c79df6a88c30e4626386a352d1505b` confirmed; working tree clean (`git status --porcelain -uall` empty, `git log -1` proves the command shape). Static review only — no tests, linters, or builds run.
+
+### Prior-finding verification (read, not executed)
+
+**R11-01 — repaired.** `_files.py:82` `_validate_record_encoding` canonicalizes the *composed* ledger, then applies the reader's exact pair (`decode_json` + `validate_json_value(…, "deferred")`) before anything touches disk, and `_write_record_file:105` runs it outside the `try`, so a rejection leaves prior bytes untouched. Depth arithmetic checks out against `MAX_JSON_DEPTH = 32` (schema.py:36): with the `{batch_id, items:[…]}` envelope the innermost value of a depth-*d* record lands at `d+2`, so 30 passes and 31+ raise `ResourceLimitError`. Depth 33 was already refused by the per-item check at `_deferred_item:242`, which makes it an honest control rather than new coverage — consistent with the handoff's 5-failed/4-passed fail-first split.
+
+**R11-03 — repaired.** `_ensure_directory_chain` (`_files.py:252`) walks up to the first existing level, then creates top-down and confirms each new entry by fsyncing its parent, removing the just-created child if that fsync fails so a retry rediscovers the same boundary. Chain order for `project/new/nested/deferred` is `project → new → nested → deferred`, matching the four parametrized failure points. Symlinked ancestors cannot reach this code: `config.workflow_settings:95` routes the configured root through `paths._reject_symlink_components`.
+
+**R11-02 — repaired.** `reports._publish_report:705-712` now holds the reports-directory `flock` across read → compose → publish. The pause point the actor patches (`_publish_file`) sits *inside* that lock, so a contender is refused rather than silently overwriting. `_assert_overlap_publication_state:456-459` is the binding assertion: it demands that any publisher that exited 0 has its section in the artifact, which is exactly what the pre-change code violated.
+
+### Issues
+
+```
+[BOB] 🟡 F1: Report publication contention reuses the deferred ledger's message and the generic state_io code, so a supervisor can only tell "retry me" from a real disk failure by string-matching the word "retry" | File: src/ovcaq/workflow/_files.py:75 | Task: P02-T08
+[BOB] 🟡 F2: _ensure_directory_chain dropped exist_ok, so a peer creating the same missing runtime ancestor makes defer fail with a bare FileExistsError; the sibling helper paths.ensure_runtime_directory:102 handles that case | File: src/ovcaq/workflow/_files.py:265 | Task: P02-T06
+[BOB] 🟡 F3: Assertion cannot fail as written: delegated_calls counts every fsync and directories counts a labeled subset, so the inequality holds by construction | File: tests/packaging/test_rework_11.py:278 | Task: P02-T06
+[BOB] 🟡 F4: reports.publish_report has no production caller; workflow_cli reaches into the module-private reports._publish_report instead | File: src/ovcaq/workflow/reports.py:676 | Task: P02-T08
+[BOB] ⚪ F5: FSYNC_SCENARIO emits state_changed_while_interrupted; no assertion reads it | File: tests/packaging/rework_11_scripts.py:202 | Task: P02-T06
+[BOB] ⚪ V1: Cannot statically verify: suite, ruff, format, mypy, and build gates at the reviewed head | File: N/A | Task: general
+[BOB] ⚪ K1: A ledger written past the reader's depth limit by a pre-fix build stays unreadable and unappendable; the repair is prospective only | File: src/ovcaq/workflow/_files.py:82 | Task: P02-T06
+[BOB] ⚪ K2: render report requires runtime_root to already exist while defer now creates its chain | File: src/ovcaq/workflow/reports.py:507 | Task: P02-T08
+[BOB] 🟡 R8-K1: inherited config-collision test retains the mechanically flagged either-or assertion | File: tests/state/test_cli.py:372 | Task: general
+[BOB] ⚪ R8-K2: inherited 53-line add_task and three unchanged packaging functions exceed R12 | File: src/ovcaq/state/commands.py:148 | Task: general
+[BOB] ⚪ R9-K3: inherited state schema remains 933 lines, over R13 | File: src/ovcaq/state/schema.py:1 | Task: general
+[BOB] ⚪ R9-K4: universal implementation-base fail-first binding remains unproven; this cycle's replay was skipped outright (worktree creation denied) | File: N/A | Task: general
+```
+
+### Buckets
+
+```
+FIX:
+- [BOB] 🟡 F1 report contention message/code — src/ovcaq/workflow/_files.py:75, used from reports.py:707 — add a `label` parameter to `_serialize_deferred_publication` (default "deferred") so the report path raises "report publication busy; retry: <…>-report.md"; optionally map contention to REVISION_CONFLICT rather than STATE_IO, which already means "contention, retry" in errors.py:28.
+- [BOB] 🟡 F2 concurrent ancestor creation — src/ovcaq/workflow/_files.py:265 — wrap `level.mkdir()` in `try/except FileExistsError`, still fsync `level.parent`, and skip the `rmdir` compensation for a level this process did not create.
+- [BOB] 🟡 F3 always-true assertion — tests/packaging/test_rework_11.py:278 — assert the delegated label sequence contains the required labels in expected order, or drop the line; `assert failed["delegated_calls"] > 0` at :263 is weak for the same reason.
+- [BOB] 🟡 F4 single-caller indirection — src/ovcaq/workflow/reports.py:676 and src/ovcaq/workflow_cli.py:161 — promote the two-value function to public (`publish_report_text`) and either delete `publish_report` or define it in terms of the public one, updating the ~10 workflow-test call sites.
+- [BOB] ⚪ F5 dead evidence key — tests/packaging/rework_11_scripts.py:202 — assert it in test_rework_11.py or remove the key.
+VERIFY:
+- [BOB] ⚪ V1 gates at reviewed head — run `mise exec -- uv run pytest`, `mise exec -- uv run ruff check .`, `mise exec -- uv run ruff format --check .`, `mise exec -- uv run mypy src/ovcaq`, and `mise exec -- uv build` at `39ecaf4f95c79df6a88c30e4626386a352d1505b`; retain results. Coordinator reports 1348 passed / 0 failed / 0 skipped in 22.14s plus clean ruff, format (119 files), mypy (51 files) and build — supplied as evidence, not reproduced here.
+KNOWN:
+- [BOB] ⚪ K1 poisoned pre-fix ledger — out of scope: the accepted repair was prospective validation only, and the package has no released version (CHANGELOG carries `[Unreleased]` alone), so no such ledger can exist in the field.
+- [BOB] ⚪ K2 render vs defer root creation — out of scope: R11-03 was scoped to deferred publication; render fails loudly with no durability loss and no PRD clause requires it to create the configured root.
+- [BOB] 🟡 R8-K1 — settled inherited assertion; broad state-test restructuring excluded.
+- [BOB] ⚪ R8-K2 — settled inherited function sizes; preserve the accepted exceptions.
+- [BOB] ⚪ R9-K3 — settled inherited schema size; state restructuring excluded.
+- [BOB] ⚪ R9-K4 — settled; the base-worktree replay is a retained known limitation, not retried.
+```
+
+Count conservation: **12 = 5 FIX + 1 VERIFY + 6 KNOWN**.
+
+Reconciled all ten source tasks and the three phase exits. The installed command family is complete (`workflow_cli.py:64-134`), docs are byte-compared against the live parser (`test_workflow_cli.py:373`), and `dev/local/autopilot` is guarded as a forbidden string (`test_boundaries.py:19`). The `_finish_record_publication` extraction preserves the boundary-hook order exactly; the only behavioral difference is a post-replace `os.unlink` of the temporary name that always hits the swallowed `FileNotFoundError`, which the existing failpoint replay tests would catch if it removed the published file. All files are within 800 lines except the settled `schema.py`; the new 576-line test file respects the 50-line function limit throughout.
+
+R1: pass
+R2: fail
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: fail
+R13: fail
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+
+---
+
+**Status**: Done.
+**Changed**: nothing — review only, no files written.
+```
+HEAD 39ecaf4f95c79df6a88c30e4626386a352d1505b
+git status --porcelain -uall -> (empty)
+12 findings = 5 FIX + 1 VERIFY + 6 KNOWN
+```
+**Next**: Task complete. Suggested next: route F1–F5 into the cycle-12 rework handoff; F2 is the only one with a correctness edge (concurrent defer against a missing runtime root).

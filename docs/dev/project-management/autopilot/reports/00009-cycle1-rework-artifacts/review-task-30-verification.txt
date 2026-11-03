@@ -1,0 +1,2 @@
+uv --cache-dir /private/tmp/ovcaq-rework-uv run pytest tests/runtime/test_supervisor.py::test_boundary_pause_returns_zero_without_launching -q --tb=line
+exit0:3passed,2temporary-directory cleanup warnings. Sandbox ps denial retried with required approval; approved run is verdict.

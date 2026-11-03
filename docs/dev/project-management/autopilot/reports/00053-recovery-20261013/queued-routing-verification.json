@@ -1,0 +1,12 @@
+{
+  "command": "mise exec -- uv run pytest -q tests/runtime/test_adapter_launch_routing.py tests/runtime/test_supervisor_adapters.py",
+  "sandbox_permissions": "require_escalated",
+  "exit": 1,
+  "sha": "c1192298cc503392891adc84588afdb7af4bdab7",
+  "passed": 0,
+  "failed": 8,
+  "skipped": 0,
+  "warnings": 2,
+  "summary": "8 failed, 2 warnings in 0.36s",
+  "cause": "PermissionError: [Errno 1] Operation not permitted: ps"
+}

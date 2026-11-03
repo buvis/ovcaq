@@ -1,0 +1,2 @@
+uv --cache-dir /private/tmp/ovcaq-uv-cache run pytest tests/runtime/test_adapter_health.py::test_probe_finds_executable_available_only_on_overlay_path -q --tb=line
+exit 0; 2 passed, 2 warnings in 0.53s

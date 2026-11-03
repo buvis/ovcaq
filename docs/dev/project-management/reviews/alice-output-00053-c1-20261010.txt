@@ -1,0 +1,20 @@
+[ALICE] 🟠 Numeric diagnostics now need "HTTP", "HTTP status", "status code" or "error code" (src/ovcaq/drivers/codex_events.py:301), so Codex's own status wording falls to UNKNOWN. I ran `classify_failure` on "unexpected status 503 Service Unavailable", "unexpected status 502 Bad Gateway", "unexpected status 403 Forbidden" and "exceeded retry limit, last status: 429 Too Many Requests", and all four return `unknown`. The old code returned connectivity, permission and rate_limit for these. Both prefixes are confirmed as strings in the installed codex 0.162.1 binary; the "503 Service Unavailable" suffix is my guess at how Codex renders the code. Effect: 502/503 skip the bounded connectivity WAIT and get an immediate died-retry and then PARK, and 403 retries instead of halting for the operator. The PRD allows "HTTP/status/error-code" context, and "status 503" is a status context. Fix: accept a bare `status` (e.g. `(?:http(?: status)?|status(?: code)?|error code)`) and add both Codex spellings as literal positives in tests/drivers/test_adapter_failure_classes.py:55 | File: src/ovcaq/drivers/codex_events.py:301 | Task: 6
+[ALICE] 🟡 The docs say an empty host PATH "searches the current directory" for both native adapters, but `ClaudeDriver.probe` passes `path=""` to `shutil.which`, which returns None (checked on Python 3.13). tests/runtime/test_adapter_health.py:263 asserts unhealthy. So the Claude probe treats an empty host PATH as unhealthy, while only the Codex subprocess probe searches the current directory. Fix the sentence to say this | File: docs/driver-protocol.md:37 | Task: 4
+[ALICE] 🟡 Only the `continue` at src/ovcaq/drivers/codex.py:383 is pinned by tests. The unfinished-only `started_lanes` filter at src/ovcaq/drivers/codex.py:372 is not: dropping it still suppresses LANE_FAILED through the `continue`, and no test asserts the RAW_UNKNOWN that the design requires for a close status on a completed lane (I ran it: completed then shutdown gives `raw.unknown`; that the tests miss its removal comes from reading them, not a run). Add a RAW_UNKNOWN assertion on `closed` in `test_completed_lane_remains_completed_after_close_status` (tests/drivers/test_adapter_outcomes.py:89) | File: src/ovcaq/drivers/codex.py:372 | Task: 5
+[ALICE] ⚪ The `continue` at codex.py:383 freezes failed lanes as well as completed ones, and silently drops late `errored`/`running`/`completed` updates with no raw-unknown evidence (I ran it: completed then errored gives only `tool.completed`, while completed then shutdown gives `raw.unknown`). docs/driver-protocol.md:242 describes only completed lanes. Document that failed lanes also stay terminal, or emit raw evidence consistently | File: src/ovcaq/drivers/codex.py:383 | Task: 5
+[ALICE] ⚪ `_ResolvedModelCodexDriver.build_launch` is identical to `_ResolvedModelClaudeDriver.build_launch` (inverse tier map plus `replace`). A shared module function such as `_tier_key_request(settings, request)` called by both overrides would remove the copy. The design asked for mirroring, so this is low | File: src/ovcaq/drivers/edge.py:26 | Task: 2
+[ALICE] ⚪ The new `authentication failed` pattern goes beyond "retain existing word diagnostics". The authentication fixture already classifies through "invalid credentials", and the new pattern widens the authentication HALT to messages like "MCP server authentication failed" | File: src/ovcaq/drivers/codex_events.py:307 | Task: 6
+[ALICE] ⚪ The "fixture" case in `test_claude_probe_keeps_empty_host_path_unhealthy` puts the executable in tmp_path/bin while the working directory is tmp_path. It cannot tell the conservative empty-PATH handling apart from a current-directory search. Put the executable in the working directory to pin the choice | File: tests/runtime/test_adapter_health.py:263 | Task: 3
+
+R1: fail
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: pass
+R13: pass

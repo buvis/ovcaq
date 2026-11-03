@@ -1,0 +1,43 @@
+Rework check done. Prior-cycle findings: R2, R4, R5, R6, R10 and R12 are fixed. R9 got the fix it asked for, but one assert that can never fail is still there (finding 2). The settled deferrals (R1, R3, R7, R13, R14, R20) were not re-raised. The new viewer exit-race fix looks correct: all four exit points it handles fail against the old code, and the cases with missing or damaged attestation still end as unknown. It has no changelog entry and no task of its own.
+
+[BOB] 🟡 Commit 00b2fdf is a `fix(tui)` with a user-visible effect: a viewer whose supervisor exits mid-poll now shows the attested final outcome, where before it froze on an uncertain unknown frame. It has no CHANGELOG entry. The blocking changelog rule requires one, and this PRD's own unreleased fixes got entries at CHANGELOG.md:43-45 | File: CHANGELOG.md:41 | Task: general
+[BOB] ⚪ `original = replace(changed)` followed by `assert changed == original` can never fail. `replace` makes a shallow copy that shares the same tuples, and `ProjectView`, `ActivityItem` and `ActivityLane` are all `frozen=True, slots=True` (src/ovcaq/tui/model.py:75, src/ovcaq/tui/model.py:83, src/ovcaq/tui/model.py:113). R9's prescribed fix kept this check, so R16's claim still holds | File: tests/tui/test_activity_window.py:220 | Task: 4
+[BOB] ⚪ Production lifecycle-observation changes (src/ovcaq/runtime/_run_observation.py:106, src/ovcaq/runtime/_run_observation.py:156, src/ovcaq/tui/model.py:468) are credited to task 4. That task is tests-only and its boundary says "Do not expand this task beyond its quoted findings". No task in PRD 00054 covers the exit race | File: src/ovcaq/runtime/_run_observation.py:106 | Task: 4
+[BOB] ⚪ The run-identity half of the new cache-keep guard may have no test. The new tests pin the keep path through final telemetry, but none may fail if the condition shrinks to `if selected.ended:` | File: src/ovcaq/tui/model.py:468 | Task: 4
+[BOB] ⚪ Cannot statically verify: full suite green at b593719. The test gate reported exit 0 with no counts | File: N/A | Task: general
+[BOB] ⚪ Fail-first replay: 18 touched tests pass against the old code. All are guard tests or tests rebuilt on decoded payloads for existing or settled behavior: the attestation-damage guards, the R1 characterization, the R6 redaction guard and the R12 decoded rewrites | File: N/A | Task: general
+[BOB] ⚪ `test_activity_window.py` imports the private helpers `_poll` and `_decoder` from sibling test modules (tests/tui/test_activity_window.py:19), which Pat retained as LOW | File: tests/tui/test_activity_window.py:19 | Task: 4
+
+FIX:
+- Fix commit has no changelog entry — CHANGELOG.md:41 — add under Fixed: `- **tui**: keep observing when the selected supervisor exits mid-poll, so viewers show its attested final outcome and telemetry instead of an uncertain frame.`
+- Assert that can never fail — tests/tui/test_activity_window.py:220 — delete line 198 (`original = replace(changed)`) and line 220. The frozen types already guarantee immutability, and `text == _render(changed)` stays.
+- Production fix filed under a tests-only task — src/ovcaq/runtime/_run_observation.py:106 — record the exit-race repair (00b2fdf) as its own task, or as the R14 follow-up closure, through the state CLI or ledger. Keep it off task 4.
+
+VERIFY:
+- Untested identity half of the guard — change src/ovcaq/tui/model.py:468 to `if selected.ended:`, run `uv run pytest tests/tui tests/integration -q`, then revert. If all tests pass, add a test where a non-terminal invalid sample with no matching run/process identity clears the session cache.
+- Full suite at b593719 — confirm the coordinator's foreground capture reports a pytest summary line with 0 failed and 0 errors.
+
+KNOWN:
+- 18 touched tests pass against the old code — they are guard, characterization or decoded-payload rewrites of existing or settled behavior. The 4 exit-point params that carry this cycle's new behavior fail against the old code as they should.
+- Private helpers imported across test modules — this follows precedent from cycle 1 (tests/tui/test_activity_projection.py:15 imports from test_rework_activity). Moving them into tests/tui/model_support.py is a separate cleanup.
+
+R1: pass
+R2: fail
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+```
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```

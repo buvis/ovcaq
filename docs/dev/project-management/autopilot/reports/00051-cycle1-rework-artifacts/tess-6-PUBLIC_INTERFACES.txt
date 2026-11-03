@@ -1,0 +1,3 @@
+bounded_detail(detail: str) -> str
+CodexDriver(AgentSettings(...), run_id: str); decode(frame: str) -> tuple[Observation, ...]
+RawFirstDecoder(raw=SessionEvidenceWriter(...), normalized=NormalizedEventWriter(...), driver=CodexDriver(...), run_id=..., session_id=...); feed(bytes) and finish() -> tuple[Observation,...]. Native malformed frame delegation produces RAW_UNKNOWN with driver-native reason, raw_sha256 and preview. Observation.payload is a mapping. Test fixture unicode_tail and detail driver fixtures are available in the listed test files.

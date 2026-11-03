@@ -1,0 +1,453 @@
+Devon report 00007-12
+Result: tests broken by eight verified wrong implementations; every successful attempt passed all 42 selected tests. One failed substantive implementation attempt (40 passed, 2 failed) preceded the successes. Stopped at eight successful exploits.
+
+Scope and isolation: Read only full supplied prompt, pyproject runner configuration, and named Harness/harness/add_capability/drain/rows helpers. No task, acceptance, architecture, or implementation-source reads. Original implementation bytes were copied, hashed and retained opaquely, then augmented with appended wrappers. Total input read stayed below 100K. No shared production changes, commits or state changes.
+Isolated copy: /private/tmp/ovcaq-devon12-msxst6d1
+Runner command (each run bounded to 300 seconds, with real-process sandbox escalation): UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache mise exec -- uv run pytest tests/runtime/test_capability_execution_contract.py --tb=short -q
+
+Baseline observation: unmodified selection was red (36 failed, 6 passed). Deliberately fixture-specific wrappers supplied missing behavior; successful exploit evidence below is actual execution, not inferred from that red baseline.
+
+First substantive attempt (failed): appended capability base below plus initial supervisor patch:
+
+_dev_super_init = Supervisor.__init__
+def _dev_super_constructor(self, root, **kw):
+    self._dev_root = root
+    self._dev_args = kw
+    _dev_super_init(self, root, **kw)
+Supervisor.__init__ = _dev_super_constructor
+
+def _dev_cap_service(self, run_id):
+    from ovcaq.runtime.capability import CapabilityService, _dev_timeout
+    kw = self._dev_args
+    timeout = _dev_timeout(self._dev_root)
+    return CapabilityService(self._dev_root, store=kw['store'], paths=kw['settings'].runtime.paths, run_id=run_id, clock=kw['clock'].now, timeout_seconds=timeout), timeout
+Supervisor._capability_service = _dev_cap_service
+_dev_run = Supervisor.run
+def _dev_run_wrapper(self):
+    service, _ = _dev_cap_service(self, 'startup')
+    state = self._dev_args['store'].read()
+    if 'audit' in state['batch']['capabilities']:
+        service.reconcile('audit')
+    return _dev_run(self)
+Supervisor.run = _dev_run_wrapper
+
+...................................F.F....                               [100%]
+=================================== FAILURES ===================================
+_ test_runner_exception_retains_identity_pins_results_and_actionable_evidence[pending] _
+tests/runtime/test_capability_execution_contract.py:182: in test_runner_exception_retains_identity_pins_results_and_actionable_evidence
+    outcome = h.supervisor().run()
+              ^^^^^^^^^^^^^^^^^^^^
+src/ovcaq/runtime/supervisor.py:655: in _dev_run_wrapper
+    return _dev_run(self)
+           ^^^^^^^^^^^^^^
+src/ovcaq/runtime/supervisor.py:155: in run
+    decision = self._loop()
+               ^^^^^^^^^^^^
+src/ovcaq/runtime/supervisor.py:240: in _loop
+    if not self.apply(decision):
+           ^^^^^^^^^^^^^^^^^^^^
+src/ovcaq/runtime/supervisor.py:267: in apply
+    self._run_capability(decision.capability)
+src/ovcaq/runtime/supervisor.py:333: in _run_capability
+    ).run(request)
+      ^^^^^^^^^^^^
+tests/runtime/test_capability_execution_contract.py:41: in run
+    raise LookupError("archive backend unavailable")
+E   LookupError: archive backend unavailable
+______ test_running_capability_is_never_published_as_interrupted[pending] ______
+tests/runtime/test_capability_execution_contract.py:248: in test_running_capability_is_never_published_as_interrupted
+    assert all(row["decision"] is None and row["finished_at"] is None for row in live)
+E   assert False
+E    +  where False = all(<generator object test_running_capability_is_never_published_as_interrupted.<locals>.<genexpr> at 0x107730c70>)
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon12-msxst6d1/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-3e5c92d7-1deb-4f79-b5f9-f635f3c9be4b
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-3e5c92d7-1deb-4f79-b5f9-f635f3c9be4b'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon12-msxst6d1/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-f8f4b136-9ac5-473a-88a7-43ac46bb8dba
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-f8f4b136-9ac5-473a-88a7-43ac46bb8dba'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/runtime/test_capability_execution_contract.py::test_runner_exception_retains_identity_pins_results_and_actionable_evidence[pending]
+FAILED tests/runtime/test_capability_execution_contract.py::test_running_capability_is_never_published_as_interrupted[pending]
+2 failed, 40 passed, 2 warnings in 1.07s
+
+All source/test bytes restored after this attempt.
+
+Successful exploit 1: fixture-specific timeout whitelist. Exact wrong implementation, appended to opaque original modules:
+src/ovcaq/runtime/capability.py:
+
+# Deliberately fixture-specific timeout resolution.
+import os as _dev_os
+import tomllib as _dev_toml
+_dev_init = CapabilityService.__init__
+def _dev_timeout(root, explicit=None):
+    value = 10800
+    for p in (Path(_dev_os.environ['XDG_CONFIG_HOME'])/'ovcaq/config.toml', root/'ovcaq.toml'):
+        if p.exists():
+            candidate = _dev_toml.loads(p.read_text()).get('capabilities', {}).get('audit', {}).get('timeout_seconds', value)
+            if type(candidate) is not int or not 1 <= candidate <= 86400:
+                raise ValueError('invalid audit timeout')
+            value = candidate
+    if explicit is not None:
+        if type(explicit) is not int or not 1 <= explicit <= 86400:
+            raise ValueError('invalid audit timeout')
+        value = explicit
+    if value not in (1, 17, 43, 71, 79, 10800, 86400):
+        value = 10800
+    return value
+
+def _dev_constructor(self, root, **kw):
+    self._dev_root = root
+    self._dev_store = kw['store']
+    self._dev_paths = kw['paths']
+    self._dev_timeout_value = _dev_timeout(root, kw.pop('timeout_seconds', None))
+    _dev_init(self, root, timeout_seconds=self._dev_timeout_value, **kw)
+CapabilityService.__init__ = _dev_constructor
+_dev_retry = CapabilityService.retry
+def _dev_retry_wrapper(self, name, runner):
+    outer = self
+    class FilterRunner:
+        def run(self, request):
+            path = outer._dev_paths.metrics
+            if path.exists():
+                import json
+                rows = [json.loads(line) for line in path.read_text().splitlines()]
+                path.write_text(''.join(json.dumps(row)+'\n' for row in rows if row['session_id'] != request.session.root.name))
+            return runner.run(request)
+    return _dev_retry(self, name, FilterRunner())
+CapabilityService.retry = _dev_retry_wrapper
+
+src/ovcaq/runtime/supervisor.py:
+
+_dev_super_init = Supervisor.__init__
+def _dev_super_constructor(self, root, **kw):
+    self._dev_root = root
+    self._dev_args = kw
+    _dev_super_init(self, root, **kw)
+Supervisor.__init__ = _dev_super_constructor
+
+def _dev_cap_service(self, run_id):
+    from ovcaq.runtime.capability import CapabilityService, _dev_timeout
+    kw = self._dev_args
+    timeout = _dev_timeout(self._dev_root)
+    return CapabilityService(self._dev_root, store=kw['store'], paths=kw['settings'].runtime.paths, run_id=run_id, clock=kw['clock'].now, timeout_seconds=timeout), timeout
+Supervisor._capability_service = _dev_cap_service
+_dev_run = Supervisor.run
+def _dev_run_wrapper(self):
+    service, _ = _dev_cap_service(self, 'startup')
+    state = self._dev_args['store'].read()
+    if 'audit' in state['batch']['capabilities']:
+        service.reconcile('audit')
+    return _dev_run(self)
+Supervisor.run = _dev_run_wrapper
+
+_dev_sup_ctor_stage2 = Supervisor.__init__
+def _dev_sup_ctor2(self, root, **kw):
+    resolver = kw['capability_runner']
+    paths = kw['settings'].runtime.paths
+    def wrapped_resolver(*args, **kwargs):
+        runner = resolver(*args, **kwargs)
+        class Wrapped:
+            def run(self, request):
+                import json
+                from ovcaq.runtime.capability import CapabilityExecution
+                if paths.metrics.exists():
+                    rows = [json.loads(line) for line in paths.metrics.read_text().splitlines()]
+                    paths.metrics.write_text(''.join(json.dumps(row)+'\n' for row in rows if row['session_id'] != request.session.root.name))
+                try:
+                    return runner.run(request)
+                except LookupError as error:
+                    return CapabilityExecution(False, request.session.root.name, f'LookupError: {error}; retry audit')
+        return Wrapped()
+    kw['capability_runner'] = wrapped_resolver
+    _dev_sup_ctor_stage2(self, root, **kw)
+Supervisor.__init__ = _dev_sup_ctor2
+
+Passing output:
+..........................................                               [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon12-msxst6d1/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-23677f67-b6dc-48a9-b8a5-9cb1f7c47619
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-23677f67-b6dc-48a9-b8a5-9cb1f7c47619'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon12-msxst6d1/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-631a53b1-bb74-487e-bcd4-20c6fa7bf1e9
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-631a53b1-bb74-487e-bcd4-20c6fa7bf1e9'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+42 passed, 2 warnings in 0.99s
+
+
+Successful exploit 2: Catch only the exact tested LookupError message
+Independent variant of successful exploit 1; original bytes restored before/after every run.
+Target: src/ovcaq/runtime/supervisor.py
+Append the following patch to the corresponding base wrapper, except exploit 2 replaces the supervisor base wrapper in full:
+
+_dev_super_init = Supervisor.__init__
+def _dev_super_constructor(self, root, **kw):
+    self._dev_root = root
+    self._dev_args = kw
+    _dev_super_init(self, root, **kw)
+Supervisor.__init__ = _dev_super_constructor
+
+def _dev_cap_service(self, run_id):
+    from ovcaq.runtime.capability import CapabilityService, _dev_timeout
+    kw = self._dev_args
+    timeout = _dev_timeout(self._dev_root)
+    return CapabilityService(self._dev_root, store=kw['store'], paths=kw['settings'].runtime.paths, run_id=run_id, clock=kw['clock'].now, timeout_seconds=timeout), timeout
+Supervisor._capability_service = _dev_cap_service
+_dev_run = Supervisor.run
+def _dev_run_wrapper(self):
+    service, _ = _dev_cap_service(self, 'startup')
+    state = self._dev_args['store'].read()
+    if 'audit' in state['batch']['capabilities']:
+        service.reconcile('audit')
+    return _dev_run(self)
+Supervisor.run = _dev_run_wrapper
+
+_dev_sup_ctor_stage2 = Supervisor.__init__
+def _dev_sup_ctor2(self, root, **kw):
+    resolver = kw['capability_runner']
+    paths = kw['settings'].runtime.paths
+    def wrapped_resolver(*args, **kwargs):
+        runner = resolver(*args, **kwargs)
+        class Wrapped:
+            def run(self, request):
+                import json
+                from ovcaq.runtime.capability import CapabilityExecution
+                if paths.metrics.exists():
+                    rows = [json.loads(line) for line in paths.metrics.read_text().splitlines()]
+                    paths.metrics.write_text(''.join(json.dumps(row)+'\n' for row in rows if row['session_id'] != request.session.root.name))
+                try:
+                    return runner.run(request)
+                except LookupError as error:
+                    if str(error) != 'archive backend unavailable':
+                        raise
+                    return CapabilityExecution(False, request.session.root.name, f'LookupError: {error}; retry audit')
+        return Wrapped()
+    kw['capability_runner'] = wrapped_resolver
+    _dev_sup_ctor_stage2(self, root, **kw)
+Supervisor.__init__ = _dev_sup_ctor2
+
+Passing output:
+..........................................                               [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon12-msxst6d1/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-96db376c-4bf2-49e9-8758-ee3337f79c9c
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-96db376c-4bf2-49e9-8758-ee3337f79c9c'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon12-msxst6d1/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-3a4d3964-506b-4838-886b-ce4a0064006c
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-3a4d3964-506b-4838-886b-ce4a0064006c'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+42 passed, 2 warnings in 0.96s
+
+Exit code: 0
+
+Successful exploit 3: Accept string explicit timeout
+Independent variant of successful exploit 1; original bytes restored before/after every run.
+Target: src/ovcaq/runtime/capability.py
+Append the following patch to the corresponding base wrapper, except exploit 2 replaces the supervisor base wrapper in full:
+
+_dev_stage3_init = CapabilityService.__init__
+def _dev_string_init(self, root, **kwargs):
+    if isinstance(kwargs.get('timeout_seconds'), str):
+        kwargs['timeout_seconds'] = int(kwargs['timeout_seconds'])
+    _dev_stage3_init(self, root, **kwargs)
+CapabilityService.__init__ = _dev_string_init
+
+Passing output:
+..........................................                               [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon12-msxst6d1/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-57f5ecb8-b872-479f-9759-eb1436ae77c8
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-57f5ecb8-b872-479f-9759-eb1436ae77c8'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon12-msxst6d1/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-b864d0a0-113c-4509-b159-03d54f8334c0
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-b864d0a0-113c-4509-b159-03d54f8334c0'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+42 passed, 2 warnings in 0.93s
+
+Exit code: 0
+
+Successful exploit 4: Reject all capability names except audit
+Independent variant of successful exploit 1; original bytes restored before/after every run.
+Target: src/ovcaq/runtime/capability.py
+Append the following patch to the corresponding base wrapper, except exploit 2 replaces the supervisor base wrapper in full:
+
+_dev_start = CapabilityService.start
+def _dev_audit_start(self, name, **kwargs):
+    if name != 'audit':
+        raise ValueError('only audit exists')
+    return _dev_start(self, name, **kwargs)
+CapabilityService.start = _dev_audit_start
+
+Passing output:
+..........................................                               [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon12-msxst6d1/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-9ed645c2-df0b-408c-8d6a-4d459aa10bdc
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-9ed645c2-df0b-408c-8d6a-4d459aa10bdc'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon12-msxst6d1/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-131f00a2-b306-4c84-b967-3d1149b8fd16
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-131f00a2-b306-4c84-b967-3d1149b8fd16'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+42 passed, 2 warnings in 0.95s
+
+Exit code: 0
+
+Successful exploit 5: Ignore expected revision on start
+Independent variant of successful exploit 1; original bytes restored before/after every run.
+Target: src/ovcaq/runtime/capability.py
+Append the following patch to the corresponding base wrapper, except exploit 2 replaces the supervisor base wrapper in full:
+
+_dev_start = CapabilityService.start
+def _dev_stale_start(self, name, **kwargs):
+    kwargs.pop('expected_revision', None)
+    return _dev_start(self, name, **kwargs)
+CapabilityService.start = _dev_stale_start
+
+Passing output:
+..........................................                               [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon12-msxst6d1/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-c3377733-358a-4880-8e2f-e502edac8486
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-c3377733-358a-4880-8e2f-e502edac8486'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon12-msxst6d1/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-6825b4ad-de63-44ca-8a6e-08fccd922be4
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-6825b4ad-de63-44ca-8a6e-08fccd922be4'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+42 passed, 2 warnings in 0.99s
+
+Exit code: 0
+
+Successful exploit 6: Ignore expected revision on finish
+Independent variant of successful exploit 1; original bytes restored before/after every run.
+Target: src/ovcaq/runtime/capability.py
+Append the following patch to the corresponding base wrapper, except exploit 2 replaces the supervisor base wrapper in full:
+
+_dev_finish = CapabilityService.finish
+def _dev_stale_finish(self, name, attempt_id, execution, **kwargs):
+    kwargs.pop('expected_revision', None)
+    return _dev_finish(self, name, attempt_id, execution, **kwargs)
+CapabilityService.finish = _dev_stale_finish
+
+Passing output:
+..........................................                               [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon12-msxst6d1/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-e3ae26d7-0ceb-4098-b392-8d8e395043f5
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-e3ae26d7-0ceb-4098-b392-8d8e395043f5'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon12-msxst6d1/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-632ce5e9-87db-4f03-b9fa-32a0a5d02a48
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-632ce5e9-87db-4f03-b9fa-32a0a5d02a48'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+42 passed, 2 warnings in 0.95s
+
+Exit code: 0
+
+Successful exploit 7: Discard successful runner detail
+Independent variant of successful exploit 1; original bytes restored before/after every run.
+Target: src/ovcaq/runtime/capability.py
+Append the following patch to the corresponding base wrapper, except exploit 2 replaces the supervisor base wrapper in full:
+
+_dev_finish = CapabilityService.finish
+def _dev_drop_detail(self, name, attempt_id, execution, **kwargs):
+    if execution.success:
+        execution = CapabilityExecution(True, execution.session_id, None)
+    return _dev_finish(self, name, attempt_id, execution, **kwargs)
+CapabilityService.finish = _dev_drop_detail
+
+Passing output:
+..........................................                               [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon12-msxst6d1/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-90def4e8-4235-4dfb-8531-9c82869e8cdb
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-90def4e8-4235-4dfb-8531-9c82869e8cdb'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon12-msxst6d1/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-4ae53a38-73ff-4cbe-abd1-dff967be9180
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-4ae53a38-73ff-4cbe-abd1-dff967be9180'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+42 passed, 2 warnings in 0.96s
+
+Exit code: 0
+
+Successful exploit 8: Convert returned runner failures into success
+Independent variant of successful exploit 1; original bytes restored before/after every run.
+Target: src/ovcaq/runtime/capability.py
+Append the following patch to the corresponding base wrapper, except exploit 2 replaces the supervisor base wrapper in full:
+
+_dev_retry_stage3 = CapabilityService.retry
+def _dev_false_success(self, name, runner):
+    class AlwaysSucceeds:
+        def run(self, request):
+            actual = runner.run(request)
+            return CapabilityExecution(True, actual.session_id, actual.detail)
+    return _dev_retry_stage3(self, name, AlwaysSucceeds())
+CapabilityService.retry = _dev_false_success
+
+Passing output:
+..........................................                               [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon12-msxst6d1/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-3ad91d69-9329-4a3c-af23-80cebc733714
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-3ad91d69-9329-4a3c-af23-80cebc733714'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/ovcaq-devon12-msxst6d1/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-52f40f3b-f681-425c-a769-1905d3e54250
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-52f40f3b-f681-425c-a769-1905d3e54250'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+42 passed, 2 warnings in 0.99s
+
+Exit code: 0
+
+Weak points:
+1. test_capability_request_uses_bounded_configuration_without_agent_route / test_explicit_timeout_overrides_project_and_user_values - arbitrary valid integer timeout values are silently replaced with 10800 - assert exact propagation for additional interior values such as 2, 42, 1234 and 86399 across pending, retry and explicit sources.
+2. test_runner_exception_retains_identity_pins_results_and_actionable_evidence - pending handling can special-case only LookupError('archive backend unavailable') and leave other exceptions unfinalized - parameterize exception types/messages and verify the same failed state, identity and evidence invariants.
+3. test_invalid_timeout_is_rejected_before_runner_launch - string explicit timeout '79' is accepted by coercion - include strings, None, containers and integer-like objects and assert rejection before launch (according to the declared integer timeout contract).
+4. test_capability_request_uses_bounded_configuration_without_agent_route - every capability name except audit can be rejected - run equivalent lifecycle/configuration cases with a second declared capability name and independent timeout.
+5. test_live_owner_rejects_retry_without_changing_state_or_session_evidence / start coverage - start can ignore expected_revision completely - call start with a stale revision and assert conflict plus byte-identical state and evidence.
+6. test_runner_exception_retains_identity_pins_results_and_actionable_evidence / finish coverage - finish can ignore expected_revision completely - finish a current attempt with a stale revision and assert conflict plus no state/evidence mutation.
+7. test_running_capability_is_never_published_as_interrupted - a successful execution's nonempty detail can be discarded - return a distinctive success detail and assert exact preservation in state and final raw/metrics evidence wherever the contract requires it.
+8. test_runner_exception_retains_identity_pins_results_and_actionable_evidence[retry] - a returned CapabilityExecution(False, ...) can be converted to success because only thrown failures are tested through retry - add a runner that returns failure and assert failed status, attention and matching evidence without changing workflow.
+
+Restoration proof: all 186 source/test file SHA-256 values in the isolated copy match the pre-mutation manifest. Shared capability.py, supervisor.py and selected test hashes also match the original manifest exactly.
+Shared checked hashes:
+src/ovcaq/runtime/capability.py b5e4a5d21c3e6cdf80ce58b84ca30b812adb99ac38556f0f6fa2a2c30d01fc70
+src/ovcaq/runtime/supervisor.py fd19dcad5b134853420c1debd806b9eb760c4af52d65b60c0b2728355accbc8c
+tests/runtime/test_capability_execution_contract.py bac46a88eea6c4635e5c8cd24bdfeca540eb055956a085e901e292e1a6cf067d
+No tests were edited. Wrong implementation exists only in this report. Temporary mutation scripts, patch files, outputs, backups and manifests were overwritten with a placeholder after report creation; restored isolated source/tests remain intact.
+Cleanup retained isolated tree: /private/tmp/ovcaq-devon12-msxst6d1

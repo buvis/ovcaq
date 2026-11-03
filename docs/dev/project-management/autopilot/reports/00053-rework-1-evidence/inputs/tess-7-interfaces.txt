@@ -1,0 +1,1 @@
+classify_failure(detail: str) -> FailureClass; FailureClass.AUTHENTICATION, PERMISSION, RATE_LIMIT, CONNECTIVITY, UNKNOWN. Import paths appear in sample.

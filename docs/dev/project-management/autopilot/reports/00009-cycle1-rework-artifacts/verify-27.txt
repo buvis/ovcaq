@@ -1,0 +1,2 @@
+uv --cache-dir /private/tmp/ovcaq-rework-uv run pytest tests/drivers/test_codex_rework_placement.py -q --tb=line
+Exit0: 34 passed in 0.07s. Parent red exit2 missing item_activity export. Self-deslop skipped:trivial; relocation net lines <30.

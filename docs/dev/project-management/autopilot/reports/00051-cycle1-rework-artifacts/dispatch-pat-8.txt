@@ -1,0 +1,129 @@
+
+You are Pat, the per-task code reviewer. Review the single task's committed
+diff below. This review is READ-ONLY: report findings, change nothing.
+
+## Task
+
+Subject: [D1] tests/drivers/test_codex_detail_safety.py
+
+Description:
+Source review: docs/dev/project-management/reviews/00051-triage-a-single-valid-codex-record-can-crash-th-v1-review-1.md
+
+Disposition and bounded acceptance:
+Replace receiver-lane self-comparison/cap special casing with independently expected exact payload values; assert token/fragment absence against actual payload detail, not expected constants. Keep existing saved JSONL checks, all synthetic runtime fixture values and task 6's new boundary regressions. Acceptance: every quoted finding no longer reproduces, all helper/native/rate/lane tests pass, packaging scanner remains green; no production edits.
+
+### Findings (verbatim)
+- 🟡 tests/drivers/test_codex_detail_safety.py:281: The receiver-lane test special-cases the exact cap input with `if detail != CAP_REPRODUCER`. It then calls `assert_safe_details(tmp_path, lanes, lane_detail)`, which compares the lane detail to itself, so the cap case never checks the exact redacted value or that `[REDACTED]` is present. I confirmed the actual lane detail equals the expected `"x"*4080 + " [REDACTED]"`. Simpler and stronger: drop the guard and call `assert_safe_details(tmp_path, lanes, expected)`. Related: `assert TOKEN not in expected` and `assert "sk-abcdefghijkl" not in expected` (lines 87-88) check fixed test data inside the loop. They should check `observation.payload["detail"]` (found by: ALICE, BOB)
+
+
+Acceptance criteria:
+Every in-scope quoted finding no longer reproduces; preserve settled deferrals and existing contracts.
+
+## Diff under review
+
+```diff
+diff --git a/tests/drivers/test_codex_detail_safety.py b/tests/drivers/test_codex_detail_safety.py
+index c535c2f..aef9a95 100644
+--- a/tests/drivers/test_codex_detail_safety.py
++++ b/tests/drivers/test_codex_detail_safety.py
+@@ -113,8 +113,8 @@ def assert_safe_details(
+         assert len(observation.payload["detail"]) <= 4096
+         assert "\x1b" not in observation.payload["detail"]
+         assert "\x00" not in observation.payload["detail"]
+-        assert TOKEN not in expected
+-        assert "sk-abcdefghijkl" not in expected
++        assert TOKEN not in observation.payload["detail"]
++        assert "sk-abcdefghijkl" not in observation.payload["detail"]
+     path = tmp_path / "normalized.jsonl"
+     writer = NormalizedEventWriter(path, max_bytes=1 << 20, min_free_bytes=0)
+     try:
+@@ -331,6 +331,4 @@ def test_receiver_lane_redacts_message_payload_and_saved_jsonl(
+     assert isinstance(lane_detail, str)
+     assert "\x1b" not in lane_detail
+     assert "\x00" not in lane_detail
+-    if detail != CAP_REPRODUCER:
+-        assert expected in lane_detail
+-    assert_safe_details(tmp_path, lanes, lane_detail)
++    assert_safe_details(tmp_path, lanes, expected)
+
+```
+
+## Recorded verification
+
+The task's tests were run before this review. This is what they reported:
+
+Command: mise exec -- uv run --no-sync pytest tests/drivers/test_codex_detail_safety.py -q --tb=line
+Environment: UV_CACHE_DIR=/private/tmp/ovcaq-rework-uv-cache
+Exit: 0
+180 passed, 2 warnings in 0.17s
+Micro lane: one noncritical finding, named file clean at claim, one-file diff +3/-5, net -2.
+
+
+Judge only from this prompt: the diff above, the task text, and this recorded
+result. Do not read other files, run commands, or re-run the tests. What is not
+in this prompt is not evidence, and a finding you cannot ground in what is here
+is one you should not report.
+
+# Simplification Mandate (step 5.7 reviewer-prompt appendix)
+
+Append this block **verbatim** to every per-task code-reviewer prompt (see
+`SKILL.md` step 5.7). It ships inside the prompt, so it must stay
+self-contained.
+
+> Beyond bugs, actively hunt for simplification in the diff under review. For
+> every added or changed file, ask "what would make this simpler to read
+> without changing what it does?" and flag concrete behavior-preserving
+> opportunities to: reduce complexity (needless indirection, dead branches,
+> single-caller abstractions, nesting deeper than 4 levels, functions over 50
+> lines); eliminate redundancy (logic duplicated within the diff or against
+> existing code, a helper that reimplements a stdlib or existing utility);
+> improve naming (names that state intent, no opaque abbreviations); and
+> remove dead code. Follow CLAUDE.md / AGENTS.md conventions and the
+> surrounding code's style.
+>
+> Report each concrete behavior-preserving simplification as a LOW finding,
+> with file:line, the current shape, and the simpler replacement. LOW findings
+> are carried to the PRD-level review, never retried here.
+>
+> Do not over-simplify: never propose a change that trades clarity for
+> brevity, drops error handling, collapses a deliberate boundary, or removes a
+> documented invariant. Simpler means easier to read and maintain, not shorter
+> at any cost. If a change would alter behavior, it is out of scope — do not
+> flag it.
+
+
+## Reporting contract
+
+Report one finding per line, in exactly this shape:
+
+SEVERITY | file:line | issue | fix
+
+Severities are CRITICAL, HIGH, MEDIUM, LOW.
+
+Severity has a fixed meaning here, and it decides what happens next. MEDIUM is
+reserved for a correctness or security defect this diff introduces that its own
+tests do not catch: a wrong result, an unhandled error path, data loss,
+injection, secret exposure, or a missing authorization check. Style, naming,
+duplication, structure and maintainability are LOW, and so is every
+behavior-preserving simplification, whatever its size. A LOW is noted and
+carried to the PRD-level review; it is never retried in this loop.
+
+If the diff has no findings, emit the literal line:
+
+NO FINDINGS
+
+## Closure verdicts (only when the description carries a findings block)
+
+When the Description above contains a `### Findings (verbatim)` block, this is
+a rework task and each quoted finding is a claim to check. Before your findings
+lines, emit one verdict per quoted finding, in this shape:
+
+CLOSURE | resolved|unresolved | <the finding, quoted> | <one line of evidence from the diff>
+
+Judge each finding against the diff, not against the commit message and not
+against how clean the code reads. A diff that improves the file while leaving
+the quoted defect reachable is `unresolved`. Quote the line that resolves it,
+or say what still reaches the defect. Emit a verdict for every quoted finding,
+including ones you judge already fixed elsewhere.
+
+

@@ -1,0 +1,26 @@
+[BLAKE] 🟠 The project observer tails `runtime/events.jsonl`, but the supervisor writes normalized observations only to each session’s `normalized.jsonl`, so live provider identity, activity lanes, and usage events never reach the TUI | File: src/ovcaq/tui/model.py:273 | Task: P06-T01
+[BLAKE] 🟠 Raw-only crash detection cannot work: the normalized file is created before streaming begins, while evidence status treats mere file existence as successful normalization, so a crash after raw persistence but before normalization renders partial/unavailable instead of raw-only | File: src/ovcaq/tui/model.py:393 | Task: P06-T07
+[BLAKE] 🟠 Pause and resume verify run identity before and after the state commit, leaving a race where the selected run can exit and a replacement can start between verification and mutation; the replacement then receives the control action despite the exact-targeting requirement | File: src/ovcaq/tui/app.py:82 | Task: P06-T05
+[BLAKE] 🟡 Active duration is never calculated from registry `started_at`; the projection only sums finalized metric wall times, so a first or currently running session displays unknown or stale duration | File: src/ovcaq/tui/model.py:319 | Task: P06-T03
+[BLAKE] 🟡 Malformed and stale registry entries are preserved in `FleetView` but neither the Textual fleet selector nor the plain selector renders them, silently hiding incomplete fleet evidence instead of exposing a telemetry gap | File: src/ovcaq/tui/app.py:206 | Task: P06-T02
+[BLAKE] 🟡 The actual Textual and plain fleet selectors sanitize only the run ID; attacker-controlled control characters in registry root or agent fields reach terminal output even though the separate fleet table sanitizes those values | File: src/ovcaq/tui/app.py:209 | Task: P06-T02
+[BLAKE] 🟡 Textual fallback catches only ImportError, OSError, and RuntimeError, so other startup/runtime exceptions such as ValueError bypass the required plain-renderer fallback | File: src/ovcaq/tui/app.py:31 | Task: P06-T09
+B1: fail
+B2: fail
+B3: fail
+B4: pass
+B5: fail
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: fail
+B11: pass
+B12: fail
+B13: pass
+B14: fail
+B15: fail
+B16: fail
+B17: pass
+B18: pass
+B19: pass

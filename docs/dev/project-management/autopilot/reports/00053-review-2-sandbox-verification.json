@@ -1,0 +1,13 @@
+{
+  "command": "uv run --cache-dir /private/tmp/ovcaq-uv-cache pytest",
+  "exit": 2,
+  "interrupted_by_coordinator": true,
+  "passed": 3235,
+  "failed": 90,
+  "errors": 27,
+  "warnings": 2,
+  "duration_seconds": 146.86,
+  "failure_evidence": "tests/integration/test_control_commit_identity.py:148 calls process_identity; registry.py:130 subprocess ps is denied in the sandbox. Process/ownership integration tests consequently fail. Agent-owned pytest PID90838 received SIGINT; approved full retry PID92887 remains running.",
+  "tool_output_chunk": "eaf034",
+  "superseded_by": "approved full suite retry at current reviewed HEAD"
+}

@@ -1,0 +1,68 @@
+## Prior-cycle reconciliation
+
+- **R15-01** resolved: `_ensure_directory_chain` records every confirmed level in `ancestry` and yields `verify_ancestry`, which re-lstats the whole chain on every `verify_lock()` call (read, lock, publish, post-fsync, post-yield); park/stall reach it through the same `_open_deferred_ledger` verify. The 6 new reparent cases (distance 1/3/5 × direct/replay) fail at base for the intended reason (base returns 0 without post-reparent fsyncs).
+- **R15-02** resolved: `assert_installed` on `_invoke`/`_await_event`/`_finish` (rework_12, incl. the exit-73 crash output) and `_invoke` (rework_13).
+- **R15-03** resolved in code (both opens wrapped, cause chained, identity error inside the handler correctly escapes the outer `except OSError`) but ships without a regression test (F1).
+- **R15-04/05/06/07** resolved (42-line parametrized test; `parent_stat`/`level_stat`; distance-1 restored; unused capability keys removed, consumers intact).
+- Source reconciliation: P02-T01–T05, T08, T10 unchanged; T06/T07/T09 and the Phase B durable-boundary exit are now satisfied by the full-chain revalidation. Suite delta +8 (1364→1372) matches the added cases exactly.
+
+## Findings
+
+```
+[BOB] 🟡 F1: R15-03 diagnostic fix has no regression test: no test places a symlink or regular file at runtime/deferred and asserts "deferred directory is not a real directory: <full path>" with the ELOOP/ENOTDIR cause chained; only the ad-hoc cycle-15 diagnostic probe exercised it | File: src/ovcaq/workflow/_files.py:336 | Task: 9
+[BOB] 🟡 F2: _ensure_directory_chain grew to 51 lines (mechanical facts) with the nested verify_ancestry closure, over the 50-line limit; growth is introduced by this diff | File: src/ovcaq/workflow/_files.py:268 | Task: 9
+[BOB] 🟡 F3: test_installed_defer_never_succeeds_through_unconfirmed_reparented_ancestry is 80 lines (mechanical facts; task 9 style gate flagged it and it was left unfixed) | File: tests/packaging/test_rework_13.py:357 | Task: 9
+[BOB] 🟡 F4: _invoke reimplements subprocess.run's timeout kill/reap as a 16-line Popen block plus a framework-verifying `assert process.poll() is not None`; subprocess.run(timeout=20) already kills and waits on TimeoutExpired, and test_rework_12._invoke in the same diff keeps subprocess.run | File: tests/packaging/test_rework_13.py:58 | Task: 9
+[BOB] ⚪ F5: os.mkdir(deferred.name, dir_fd=runtime) failures other than EEXIST (EACCES, ENOSPC, EBADF) still surface raw errno text with the bare name 'deferred'; same class as R15-03, on the create step the acceptance ("every failing open") did not name | File: src/ovcaq/workflow/_files.py:340 | Task: 9
+[BOB] ⚪ F6: fix commit 93c049b changed a user-visible diagnostic (full deferred path on open failure) without a CHANGELOG entry; the only added Fixed line covers ancestry revalidation | File: CHANGELOG.md:24 | Task: 9
+[BOB] ⚪ F7: reparent-refusal branch hedges `if _ledger(runtime).exists(): _assert_one_record(runtime)`; the shipped chronology deterministically refuses inside the first _read_record_content before any write, so the direct case should pin that no ledger exists | File: tests/packaging/test_rework_13.py:406 | Task: 9
+[BOB] ⚪ F8: Cannot statically verify: suite/ruff/format/mypy/build at 4011d1a; 1372/0/0 are reused same-HEAD records, not a fresh run | File: N/A | Task: general
+[BOB] ⚪ F9: fail-first replay: 12 touched tests pass at base; all are behavior-preserving test edits (origin re-assertions in rework_12's concurrent test, re-parametrized cycle-13/14 regressions in rework_13), the 6 new reparent cases fail at base | File: tests/packaging/test_rework_13.py | Task: general
+```
+
+## Buckets
+
+```
+FIX:
+- F1 — tests/workflow/test_deferred_ledger.py — add `test_defer_refuses_non_directory_deferred_with_full_path` parametrized over ("symlink", "regular-file") at runtime_root/"deferred"; assert `pytest.raises(OSError, match=f"deferred directory is not a real directory: {re.escape(str(deferred))}")`, `error.__cause__.errno in {errno.ELOOP, errno.ENOTDIR}`, and the symlink/file object untouched
+- F2 — src/ovcaq/workflow/_files.py:277 — hoist to module-level `_verify_ancestry(ancestry: dict[Path, tuple[int, int]]) -> None` and `yield directory, partial(_verify_ancestry, ancestry)`; drops the function to ~38 lines, no behavior change
+- F3 — tests/packaging/test_rework_13.py:386-407,414-436 — extract `_assert_reparent_outcome(result, index, runtime, ancestor)` (the exit 0/2 branch) and `_assert_fresh_attempts_confirm(installed, project, runtime, ancestor, previous_runtime, seeded, authoritative, displaced_runtime)` (retry + exact replay); test body falls under 50
+- F4 — tests/packaging/test_rework_13.py:58-81 — revert to `subprocess.run([...], cwd=project, env=installed.environment, capture_output=True, text=True, check=False, timeout=20)` exactly as test_rework_12._invoke; drop the poll assert
+- F5 — src/ovcaq/workflow/_files.py:339-342 — after `except FileExistsError: pass` add `except OSError as error: raise OSError(f"deferred directory could not be created: {deferred}") from error`
+- F6 — CHANGELOG.md — add under Fixed: "Deferred directory open failures name the full configured path and chain the original errno."
+- F7 — tests/packaging/test_rework_13.py:406-407 — replace with `if not replay: assert not _ledger(runtime).exists()` (replay bytes are already pinned at line 409)
+VERIFY:
+- (none)
+KNOWN:
+- F8 — read-only static sandbox cannot execute gates; same-HEAD exit-0 records for all six commands exist in the review context and are reused, not re-run
+- F9 — task 10 is test-only by acceptance (restore origin proof, re-parametrize existing regressions), so those 12 tests passing at base is by design; the product change is pinned by the 6 reparent cases that fail at base
+```
+
+## Rubric verdicts
+
+```
+R1: fail
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: fail
+R13: pass
+```
+
+```
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```
+
+**Status**: Done.
+**Changed**: nothing (review only); 9 findings = 7 FIX + 0 VERIFY + 2 KNOWN; R1/R12 fail, rest pass.
+**Next**: Task complete. Suggested next: route F1–F4 into the rework loop, batch F5–F7 as a LOW multi-select.

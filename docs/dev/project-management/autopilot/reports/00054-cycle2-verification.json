@@ -1,0 +1,26 @@
+{
+  "sha": "b593719ff4610b92f0aa002f29a962ce1f4debc7",
+  "cycle": 2,
+  "passed": 7257,
+  "failed": 0,
+  "skipped": 0,
+  "source": "Blake independent foreground-awaited full suite raw tool result",
+  "evidence": [
+    {
+      "path": "docs/dev/tmp/blake-output-00054-c2-20261017-28de219013384932b08195fb47985fb1.jsonl",
+      "line": 279,
+      "sha256": "8429a83cf4da087de7f9cbe21de60198b39c7710f24d024a3863ab62457a738b"
+    }
+  ],
+  "prior_capture": {
+    "passed": 7256,
+    "failed": 1,
+    "isolated_failed_case_passed": 1
+  },
+  "commands": [
+    {
+      "command": "uv run pytest -q -p no:cacheprovider --tb=short (Blake; raw tool evidence)",
+      "exit": 0
+    }
+  ]
+}

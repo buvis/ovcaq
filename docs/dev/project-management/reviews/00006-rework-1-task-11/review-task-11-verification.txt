@@ -1,0 +1,17 @@
+Command: UV_CACHE_DIR=/private/tmp/ovcaq-autocodex-uv-cache mise exec -- uv run pytest -q tests/workflow/test_configuration.py tests/workflow/test_configuration_rework.py tests/events/test_model_rework.py
+Exit: 0
+........................................................................ [ 53%]
+..............................................................           [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-cdb49c8a-c459-4905-898a-39f34054ad35
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-cdb49c8a-c459-4905-898a-39f34054ad35'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-425a05fa-e21b-415b-9298-ad34a77783d8
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-425a05fa-e21b-415b-9298-ad34a77783d8'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+134 passed, 2 warnings in 0.14s

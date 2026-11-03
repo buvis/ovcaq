@@ -1,0 +1,41 @@
+{
+  "sha": "0228eb00f39a3152a008351212fee3b01603a646",
+  "cycle": 5,
+  "source": "review session mandatory checks",
+  "commands": [
+    {
+      "command": "uv run pytest -q",
+      "exit": 0,
+      "summary": "3003 passed, 2 pytest temporary-directory cleanup warnings in 49.49s"
+    },
+    {
+      "command": "uv run ruff check .",
+      "exit": 1,
+      "note": "41 errors, all in pre-existing untracked docs/dev/project-management probe scripts; cycle-4 deferred hygiene"
+    },
+    {
+      "command": "uv run ruff format --check .",
+      "exit": 1,
+      "note": "41 project-management artifact files would be reformatted; cycle-4 deferred hygiene"
+    },
+    {
+      "command": "uv run ruff check src tests",
+      "exit": 0
+    },
+    {
+      "command": "uv run ruff format --check src tests",
+      "exit": 0
+    },
+    {
+      "command": "uv run mypy src/ovcaq",
+      "exit": 0
+    },
+    {
+      "command": "uv build",
+      "exit": 0
+    }
+  ],
+  "passed": 3003,
+  "failed": 0,
+  "skipped": 0
+}

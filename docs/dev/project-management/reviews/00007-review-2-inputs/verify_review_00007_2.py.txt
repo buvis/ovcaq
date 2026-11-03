@@ -1,0 +1,46 @@
+"""Capture review checks without altering production sources or workflow state."""
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path('/Users/bob/git/src/github.com/buvis/ovcaq')
+SKILL = Path('/Users/bob/.claude/plugins/cache/buvis-plugins/autopilot/0.6.0/skills/review-work-completion')
+TMP = ROOT / 'docs/dev/tmp'
+REV = ROOT / 'docs/dev/project-management/reviews'
+PREFIX = '00007-review-2'
+ENV = dict(os.environ, UV_CACHE_DIR='/private/tmp/ovcaq-review-2-cache')
+
+def check(label: str, argv: list[str], timeout: int = 600) -> int:
+    result = subprocess.run(argv, cwd=ROOT, env=ENV, capture_output=True, text=True, timeout=timeout, check=False)
+    (REV / f'{PREFIX}-{label}.log').write_text(result.stdout + '\nSTDERR:\n' + result.stderr)
+    (REV / f'{PREFIX}-{label}.json').write_text(json.dumps({'argv': argv, 'exit': result.returncode}, indent=2) + '\n')
+    print(label, 'exit', result.returncode, '\n' + '\n'.join(result.stdout.splitlines()[-10:]) + result.stderr[-2000:], flush=True)
+    return result.returncode
+
+def mechanical() -> None:
+    changed = subprocess.check_output(['git', 'diff', '--name-only', 'bbe7d521321428b670d15c4ede00e31792a61e1c..HEAD'], cwd=ROOT, text=True).splitlines()
+    files = [p for p in changed if p.endswith('.py')]
+    blocks = []
+    for script in ('compute_mech_facts.py', 'detect_tautological_tests.py'):
+        result = subprocess.run(['python3', str(SKILL / 'scripts' / script), *files], cwd=ROOT, capture_output=True, text=True, timeout=60, check=True)
+        blocks.append(result.stdout)
+    (TMP / 'mechanical-00007-2-20261003.md').write_text('\n'.join(blocks))
+    print('\n'.join(blocks))
+
+mode = sys.argv[1]
+if mode == 'mechanical':
+    mechanical()
+elif mode == 'suite':
+    sys.exit(check('suite', ['mise', 'exec', '--', 'uv', 'run', 'pytest', '--tb=short']))
+elif mode == 'replay':
+    command = ['python3', str(SKILL / 'scripts/replay_tests_against_base.py'), '--base', 'bbe7d521321428b670d15c4ede00e31792a61e1c', '--cmd', 'env PYTHONPATH=src /Users/bob/git/src/github.com/buvis/ovcaq/.venv/bin/python -m pytest', '--timeout', '300']
+    check('replay', command)
+    output = (REV / f'{PREFIX}-replay.log').read_text().split('\nSTDERR:', 1)[0]
+    target = TMP / 'mechanical-00007-2-20261003.md'
+    target.write_text(target.read_text() + '\n' + output)
+elif mode == 'quality':
+    checks = [('sync', ['sync', '--all-groups']), ('ruff-root', ['run', 'ruff', 'check', '.', '--statistics']), ('format-root', ['run', 'ruff', 'format', '--check', '.']), ('ruff-product', ['run', 'ruff', 'check', 'src', 'tests']), ('format-product', ['run', 'ruff', 'format', '--check', 'src', 'tests']), ('mypy', ['run', 'mypy', 'src/ovcaq']), ('build', ['build'])]
+    for label, args in checks:
+        check(label, ['mise', 'exec', '--', 'uv', *args])

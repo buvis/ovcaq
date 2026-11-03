@@ -1,0 +1,33 @@
+{
+  "sha": "0961e40d93bd39af92814eb9e2d32e76a9d01954",
+  "cycle": null,
+  "commands": [
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache python3 -c 'import subprocess; raise SystemExit(subprocess.run([\"mise\",\"exec\",\"--\",\"uv\",\"sync\",\"--all-groups\"],timeout=300).returncode)'",
+      "exit": 0
+    },
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache python3 -c 'import subprocess; raise SystemExit(subprocess.run([\"mise\",\"exec\",\"--\",\"uv\",\"run\",\"pytest\",\"-q\",\"--tb=line\"],timeout=600).returncode)'",
+      "exit": 0
+    },
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache python3 -c 'import subprocess; raise SystemExit(subprocess.run([\"mise\",\"exec\",\"--\",\"uv\",\"run\",\"ruff\",\"check\",\".\"],timeout=300).returncode)'",
+      "exit": 0
+    },
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache python3 -c 'import subprocess; raise SystemExit(subprocess.run([\"mise\",\"exec\",\"--\",\"uv\",\"run\",\"ruff\",\"format\",\"--check\",\".\"],timeout=300).returncode)'",
+      "exit": 0
+    },
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache python3 -c 'import subprocess; raise SystemExit(subprocess.run([\"mise\",\"exec\",\"--\",\"uv\",\"run\",\"mypy\",\"src/ovcaq\"],timeout=300).returncode)'",
+      "exit": 0
+    },
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache python3 -c 'import subprocess; raise SystemExit(subprocess.run([\"mise\",\"exec\",\"--\",\"uv\",\"build\"],timeout=300).returncode)'",
+      "exit": 0
+    }
+  ],
+  "passed": 6884,
+  "failed": 0,
+  "skipped": 0
+}

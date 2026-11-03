@@ -1,0 +1,23 @@
+diff --git a/tests/packaging/test_rework_11.py b/tests/packaging/test_rework_11.py
+index 40725a4..8e3383b 100644
+--- a/tests/packaging/test_rework_11.py
++++ b/tests/packaging/test_rework_11.py
+@@ -311,15 +311,11 @@ def _render_command(installed: InstalledWheel, root: Path) -> list[str | Path]:
+ def _assert_retry_error(
+     result: subprocess.CompletedProcess[str], report_path: Path
+ ) -> None:
+-    assert result.returncode != 0
++    assert result.returncode == 2
+     assert result.stdout == ""
+     error = json.loads(result.stderr)["error"]
+-    if error["code"] == "state_io":
+-        assert result.returncode == 2
+-        assert error["message"] == f"publication busy; retry: {report_path}"
+-    else:
+-        assert error["code"]
+-        assert "retry" in json.dumps(error).lower()
++    assert error["code"] == "state_io"
++    assert error["message"] == f"publication busy; retry: {report_path}"
+     assert "Traceback" not in result.stderr
+ 
+ 

@@ -1,0 +1,9 @@
+Strengthen only task 4's existing new tests; no product edits or commits. Devon proved the tests permit an implementation that checks replacement only for the literal component name "ancestor". All five tests passed that wrong implementation. Full exploit and run evidence follow this feedback.
+
+Make the replacement directory name independent of that literal (e.g. a generated component passed explicitly to the actor) and cover both existing direct/exact-replay paths. Preserve exact chronology: baseline must reach successful publication despite replacement, not merely a different diagnostic. Keep current permissions/root/creation-boundary tests and no broader product changes. Existing template's path discovery restrictions remain; only test_rework_13.py and rework_13_scripts.py are writable, all supporting paths remain the same.
+
+Also declare the intentional ANCESTRY_BOUNDARY_ACTOR export in __all__, consistent with rework_12_scripts.py. The split-hygiene checker currently reports:
+UNUSED | /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/rework_13_scripts.py:5 | ANCESTRY_BOUNDARY_ACTOR | module-level binding never read in this file
+It is consumed by test_rework_13.py, so do not delete it. This is module export metadata, not an assertion change.
+
+Run the new tests once against unchanged production to verify intended red. No full suite. Required ASSUMPTIONS footer. Devon evidence:

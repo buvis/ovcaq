@@ -1,0 +1,20 @@
+{
+  "attempt": 1,
+  "model": "sonnet",
+  "outcome": "completed",
+  "review_cycle": 5,
+  "cause": null,
+  "implementor": "codex",
+  "actual_model": "gpt-6.1-sol",
+  "actual_provider": "openai",
+  "preflight_outcome": null,
+  "pipeline": "lean",
+  "red_check": "n/a:test-only-task",
+  "self_deslop": "skipped:test-only",
+  "style_gate": "clean",
+  "split_hygiene": "clean",
+  "commit": "cf48315",
+  "verification": "2 passed, 22 deselected, 2 pytest cleanup warnings in 1.06s; exit 0",
+  "review": "Pat: resolved CLOSURE verdict, NO FINDINGS; parsed output valid",
+  "host_adaptation": "Eligible micro repair delegated to native Ivan at logical sonnet, observed gpt-6.1-sol/medium; coordinator did not edit tests. Tess/Devon skipped per test-only task rule."
+}

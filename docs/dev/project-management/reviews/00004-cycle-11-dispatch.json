@@ -1,0 +1,29 @@
+{
+  "review": 11,
+  "head": "22d9193a0d00486b09ebea169e7a38a9f858799d",
+  "reviewers": {
+    "alice": {
+      "task": "/root/alice",
+      "lens": "consensus",
+      "isolation": "fork_turns=none"
+    },
+    "blake": {
+      "task": "/root/blake",
+      "lens": "PRD-only",
+      "isolation": "fork_turns=none"
+    },
+    "bob": {
+      "task": "/root/bob",
+      "lens": "static consensus+doubt+de-slop",
+      "isolation": "fork_turns=none"
+    }
+  },
+  "host": "native Codex host subagents; no model diversity claimed; unavailable native Claude substituted with host adapter",
+  "carl": "disabled per user: prior nested-wrapper refusal; not retried",
+  "eve": "not enabled; standalone target has no task store",
+  "pack": "unavailable: repo not registered; command exit 1",
+  "state": "historical paused PRD 00003 exists; unrelated, not attached or mutated",
+  "consensus_engine": "legacy",
+  "doubt_reviewer": "codex default (native host adapter)",
+  "scope": "full base..HEAD"
+}

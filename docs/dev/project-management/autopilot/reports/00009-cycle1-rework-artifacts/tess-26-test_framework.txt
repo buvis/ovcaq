@@ -1,0 +1,1 @@
+pytest. Run only new named test files using uv --cache-dir /private/tmp/ovcaq-rework-uv run pytest <file> -q --tb=line. Test functions<50lines, files<800.

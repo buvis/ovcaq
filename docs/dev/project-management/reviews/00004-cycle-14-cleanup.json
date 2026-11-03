@@ -1,0 +1,62 @@
+{
+  "archived_inputs": [
+    {
+      "original": "dev/local/tmp/review-tasks-00004-14-20260913.md",
+      "archived": "dev/local/reviews/00004-cycle-14-inputs/review-tasks-00004-14-20260913.md",
+      "sha256": "b78ebd8531d59138cc9ded72c9380099d0804b43453251a3fc41bc2146b44802"
+    },
+    {
+      "original": "dev/local/tmp/review-prd-00004-14-20260913.md",
+      "archived": "dev/local/reviews/00004-cycle-14-inputs/review-prd-00004-14-20260913.md",
+      "sha256": "e161880ac1c8122c091c6a37457f77ca03fb2ac9adba69c661722de090be348d"
+    },
+    {
+      "original": "dev/local/tmp/review-context-00004-14-20260913.md",
+      "archived": "dev/local/reviews/00004-cycle-14-inputs/review-context-00004-14-20260913.md",
+      "sha256": "6b17528247b1a802f1fedc6490ca5773e4c4e192a0d736d9613db997e7f9506c"
+    },
+    {
+      "original": "dev/local/tmp/review-context-bob-00004-14-20260913.md",
+      "archived": "dev/local/reviews/00004-cycle-14-inputs/review-context-bob-00004-14-20260913.md",
+      "sha256": "4737da75c84ab0e0d7e32fa456441084defdad2c5da7693790b1d292727f3a89"
+    },
+    {
+      "original": "dev/local/tmp/review-diff-00004-14-20260913.diff",
+      "archived": "dev/local/reviews/00004-cycle-14-inputs/review-diff-00004-14-20260913.diff",
+      "sha256": "539f0077926b6c1881f2ffa0042f997c9d334b9813c122922539348bd81d3f3a"
+    },
+    {
+      "original": "dev/local/tmp/alice-prompt-00004-14-20260913.md",
+      "archived": "dev/local/reviews/00004-cycle-14-inputs/alice-prompt-00004-14-20260913.md",
+      "sha256": "c86ca8b096936503715bb7a78e9ea67b589c843fcf82fcbd2154053a431ebb89"
+    },
+    {
+      "original": "dev/local/tmp/blake-prompt-00004-14-20260913.md",
+      "archived": "dev/local/reviews/00004-cycle-14-inputs/blake-prompt-00004-14-20260913.md",
+      "sha256": "cac0ea7c27fc15f27abb88de43f7845529c40a9090bc93396b1c763355298978"
+    },
+    {
+      "original": "dev/local/tmp/bob-prompt-00004-14-20260913.md",
+      "archived": "dev/local/reviews/00004-cycle-14-inputs/bob-prompt-00004-14-20260913.md",
+      "sha256": "2a7aaad7ef66b7140a7d51604ef86ab3e82263ed68a3883b97492bb03f4c4752"
+    },
+    {
+      "original": "dev/local/tmp/carl-prompt-00004-14-20260913.md",
+      "archived": "dev/local/reviews/00004-cycle-14-inputs/carl-prompt-00004-14-20260913.md",
+      "sha256": "e363e3bb488e5b35b5f452fa634bfa92f906f0e24fe84dcf9e4b605dca15c336"
+    },
+    {
+      "original": "dev/local/tmp/alice-output-00004-14-20260913.txt",
+      "archived": "dev/local/reviews/00004-cycle-14-inputs/alice-output-00004-14-20260913.txt",
+      "sha256": "ef3a84b35c834760fe6b12f5d3a7d1ce06a12df9242fa01b2dd5086b5c5bbd02"
+    },
+    {
+      "original": "dev/local/tmp/blake-output-00004-14-20260913.txt",
+      "archived": "dev/local/reviews/00004-cycle-14-inputs/blake-output-00004-14-20260913.txt",
+      "sha256": "36c32cc11f85f8ac53ceba575584666486f320eff69aa0372c2580fa8e294dc2"
+    }
+  ],
+  "removed_test_tree": "/private/tmp/ovcaq-r14-full",
+  "historical_artifacts": "preserved",
+  "executed_plan_files": "none created in this review phase"
+}

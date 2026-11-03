@@ -1,0 +1,14 @@
+[
+  {
+    "mode": "file",
+    "error": "[Errno 20] Not a directory: 'deferred'",
+    "full_path_present": false,
+    "object_preserved": true
+  },
+  {
+    "mode": "symlink",
+    "error": "[Errno 20] Not a directory: 'deferred'",
+    "full_path_present": false,
+    "object_preserved": true
+  }
+]

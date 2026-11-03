@@ -1,0 +1,12 @@
+{
+  "status": "denied_before_launch",
+  "reviewer": "Pat",
+  "provider": "claude",
+  "requested_model": "sonnet",
+  "session_id": "0a852a51-8e52-4806-bd3f-d9d4a972b467",
+  "dispatch_id": "4c94daf2",
+  "permission_mode": "no edit/bypass flags; tools disabled with -t empty",
+  "reason": "The command uploads an internal code diff, project details, and review prompt to an external Claude service; this sensitive-data egress is not authorized by trusted user content. Do not bypass this rejection through a workaround or indirect execution.",
+  "reviewer_launched": false,
+  "requested_helper": "/Users/bob/.claude/plugins/cache/buvis-plugins/autopilot/0.5.6/skills/use-sonnet/scripts/sonnet-run.sh"
+}

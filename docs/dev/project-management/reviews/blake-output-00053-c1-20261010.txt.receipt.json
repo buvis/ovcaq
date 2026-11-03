@@ -1,0 +1,17 @@
+{
+  "provider": "claude",
+  "model_provider": "anthropic",
+  "lens": "blake",
+  "model": "opus",
+  "started": 1791633754.2431061,
+  "completed": 1791634252.5926669,
+  "output": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/blake-output-00053-c1-20261010.txt",
+  "sha256": "52b469d9ee5077b44b7be0944e68e659009ddcee359803eaf82b825a3e90b5ba",
+  "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/blake-output-00053-c1-20261010-de1e8e0e176c4d6f9b78bf0d26530c7e.jsonl",
+  "raw_sha256": "204389c18a822e9f8529b92304eddf07a11972f1f5c38c32fcdc1b7ccc5b6fec",
+  "thread_id": "eb1da19f-8c98-4b8f-b3c3-e5806be9272d",
+  "root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+  "prd": "00053-adapter-operational-corrections-v1.md",
+  "cycle": 1,
+  "implementation_fingerprint": "6a13f0b2a66db6dcd2cd3f0b4d9a5a6ce6dd305f49f75f41ac9ca96c686871b5"
+}

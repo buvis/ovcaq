@@ -1,0 +1,45 @@
+{
+  "alice": {
+    "provider": "openai",
+    "model": "gpt-5.6-sol",
+    "logical_tier": "sonnet",
+    "agent": "/root/alice_r12",
+    "isolated": true
+  },
+  "blake": {
+    "provider": "openai",
+    "model": "gpt-5.6-sol",
+    "logical_tier": "sonnet",
+    "agent": "/root/blake_r12",
+    "isolated": true
+  },
+  "bob": {
+    "provider": "claude",
+    "model": "opus",
+    "actual_model": "claude-opus-5",
+    "logical_tier": "opus",
+    "receipt": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00004-cycle-12-bob-retry-output.txt.receipt.json",
+    "host_substitution": "external Claude Bob replaces former external Codex doubt role"
+  },
+  "carl": {
+    "exit": 3,
+    "reason": "refusing nested dispatch (already inside a CLI agent)",
+    "provider_dispatched": false
+  },
+  "watcher": {
+    "agent": "/root/watcher_r12",
+    "model": "gpt-5.6-luna",
+    "logical_tier": "haiku",
+    "status": "DONE"
+  },
+  "initial_bob_failure": {
+    "reason": "API ENOTFOUND inside sandbox; no inference",
+    "raw": "dev/local/reviews/00004-cycle-12-bob-output-ab72972b331b4710a2c1f3fa8008eb98.jsonl"
+  },
+  "bob_method": {
+    "read_calls": 22,
+    "readonly_shell_calls": 11,
+    "product_execution": false,
+    "note": "No-shell persona deviation recorded; raw evidence retained."
+  }
+}

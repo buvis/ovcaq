@@ -1,0 +1,12 @@
+{
+  "command": "mise exec -- uv run --offline --no-sync python dev/local/reviews/00004-cycle-13-distant-ancestor-check.py /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-6531/ovcaq-installed-wheel0/venv --expect-success",
+  "exit": 0,
+  "production_sha": "be5e385bd9714952b4803ee30f7c72e661c278f2",
+  "cases": [
+    {"distance_from_runtime": 3, "replay": false, "publication_exit": 0},
+    {"distance_from_runtime": 3, "replay": true, "publication_exit": 0},
+    {"distance_from_runtime": 5, "replay": false, "publication_exit": 0},
+    {"distance_from_runtime": 5, "replay": true, "publication_exit": 0}
+  ],
+  "checks": "Each case passed actual replacement chronology, installed module origins, state/backup preservation and existing ledger preservation assertions. Baseline incorrectly published after replacement. No physical power loss simulated."
+}

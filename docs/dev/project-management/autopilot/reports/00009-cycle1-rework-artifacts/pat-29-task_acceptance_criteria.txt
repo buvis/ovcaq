@@ -1,0 +1,1 @@
+Every quoted finding resolved within this split scope; preserve behavior and assertions.

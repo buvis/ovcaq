@@ -1,0 +1,891 @@
+...................................................F.................... [ 61%]
+......FFFFFFFFFFFFFFFFFFFF...F.FFFFF.FFF.....                            [100%]
+=================================== FAILURES ===================================
+_________ test_agent_settings_default_omitted_command_to_selected_name _________
+
+config_root = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-8801/test_agent_settings_default_om0/project')
+
+    def test_agent_settings_default_omitted_command_to_selected_name(
+        config_root: Path,
+    ) -> None:
+        (config_root / "ovcaq.toml").write_text(
+            'agent = "local"\n[agents.local]\ntiers = {}\nenvironment = {}\noptions = {}\n'
+        )
+>       settings = agent_settings(config_root)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/workflow/test_configuration.py:338: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-8801/test_agent_settings_default_om0/project')
+name = None
+
+    def agent_settings(root: Path, *, name: str | None = None) -> AgentSettings:
+        """Load the selected agent's argv and merge its declarative settings."""
+        root = _trusted_path(root)
+        config_home = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+        config_home = _trusted_path(config_home)
+        user = _read_config(config_home / "ovcaq/config.toml")
+        project = _read_config(root / CONFIG_NAME)
+        active = name if name is not None else project.get("agent", user.get("agent"))
+        if not isinstance(active, str) or not active:
+            raise ConfigurationError("configuration agent must be a nonempty name")
+        user_agent = _table(_table(user, "agents"), active)
+        project_agent = _table(_table(project, "agents"), active)
+        command = project_agent.get("command", user_agent.get("command"))
+        if (
+            not isinstance(command, list)
+            or not command
+            or any(not isinstance(part, str) or not part for part in command)
+        ):
+>           raise ConfigurationError("agent command must be a nonempty array of strings")
+E           ovcaq.config.ConfigurationError: agent command must be a nonempty array of strings
+
+src/ovcaq/config.py:162: ConfigurationError
+______________ test_workflow_settings_validate_the_selected_agent ______________
+
+config_root = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-8801/test_workflow_settings_validat0/project')
+
+    def test_workflow_settings_validate_the_selected_agent(config_root: Path) -> None:
+        (config_root / "ovcaq.toml").write_text(
+            'agent = "local"\n[agents.local]\ncommand = []\n'
+        )
+    
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:39: Failed
+_ test_agent_settings_reject_additional_credential_keys_and_pinned_values[AUTHORIZATION = "synthetic"-environment] _
+
+config_root = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-8801/test_agent_settings_reject_add0/project')
+table = 'environment', entry = 'AUTHORIZATION = "synthetic"'
+
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    @pytest.mark.parametrize(
+        "entry",
+        (
+            'AUTHORIZATION = "synthetic"',
+            'Cookie = "synthetic"',
+            'clientCredential = "synthetic"',
+            'VALUE = "authorization=synthetic-value"',
+            'VALUE = "cookie: synthetic-value"',
+            'VALUE = "credential=synthetic-value"',
+        ),
+    )
+    def test_agent_settings_reject_additional_credential_keys_and_pinned_values(
+        config_root: Path, table: str, entry: str
+    ) -> None:
+        other = "options" if table == "environment" else "environment"
+        (config_root / "ovcaq.toml").write_text(
+            'agent = "local"\n[agents.local]\ncommand = ["runner"]\ntiers = {}\n'
+            f"{other} = {{}}\n{table} = {{ {entry} }}\n"
+        )
+    
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:64: Failed
+_ test_agent_settings_reject_additional_credential_keys_and_pinned_values[AUTHORIZATION = "synthetic"-options] _
+
+config_root = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-8801/test_agent_settings_reject_add1/project')
+table = 'options', entry = 'AUTHORIZATION = "synthetic"'
+
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    @pytest.mark.parametrize(
+        "entry",
+        (
+            'AUTHORIZATION = "synthetic"',
+            'Cookie = "synthetic"',
+            'clientCredential = "synthetic"',
+            'VALUE = "authorization=synthetic-value"',
+            'VALUE = "cookie: synthetic-value"',
+            'VALUE = "credential=synthetic-value"',
+        ),
+    )
+    def test_agent_settings_reject_additional_credential_keys_and_pinned_values(
+        config_root: Path, table: str, entry: str
+    ) -> None:
+        other = "options" if table == "environment" else "environment"
+        (config_root / "ovcaq.toml").write_text(
+            'agent = "local"\n[agents.local]\ncommand = ["runner"]\ntiers = {}\n'
+            f"{other} = {{}}\n{table} = {{ {entry} }}\n"
+        )
+    
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:64: Failed
+_ test_agent_settings_reject_additional_credential_keys_and_pinned_values[Cookie = "synthetic"-environment] _
+
+config_root = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-8801/test_agent_settings_reject_add2/project')
+table = 'environment', entry = 'Cookie = "synthetic"'
+
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    @pytest.mark.parametrize(
+        "entry",
+        (
+            'AUTHORIZATION = "synthetic"',
+            'Cookie = "synthetic"',
+            'clientCredential = "synthetic"',
+            'VALUE = "authorization=synthetic-value"',
+            'VALUE = "cookie: synthetic-value"',
+            'VALUE = "credential=synthetic-value"',
+        ),
+    )
+    def test_agent_settings_reject_additional_credential_keys_and_pinned_values(
+        config_root: Path, table: str, entry: str
+    ) -> None:
+        other = "options" if table == "environment" else "environment"
+        (config_root / "ovcaq.toml").write_text(
+            'agent = "local"\n[agents.local]\ncommand = ["runner"]\ntiers = {}\n'
+            f"{other} = {{}}\n{table} = {{ {entry} }}\n"
+        )
+    
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:64: Failed
+_ test_agent_settings_reject_additional_credential_keys_and_pinned_values[Cookie = "synthetic"-options] _
+
+config_root = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-8801/test_agent_settings_reject_add3/project')
+table = 'options', entry = 'Cookie = "synthetic"'
+
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    @pytest.mark.parametrize(
+        "entry",
+        (
+            'AUTHORIZATION = "synthetic"',
+            'Cookie = "synthetic"',
+            'clientCredential = "synthetic"',
+            'VALUE = "authorization=synthetic-value"',
+            'VALUE = "cookie: synthetic-value"',
+            'VALUE = "credential=synthetic-value"',
+        ),
+    )
+    def test_agent_settings_reject_additional_credential_keys_and_pinned_values(
+        config_root: Path, table: str, entry: str
+    ) -> None:
+        other = "options" if table == "environment" else "environment"
+        (config_root / "ovcaq.toml").write_text(
+            'agent = "local"\n[agents.local]\ncommand = ["runner"]\ntiers = {}\n'
+            f"{other} = {{}}\n{table} = {{ {entry} }}\n"
+        )
+    
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:64: Failed
+_ test_agent_settings_reject_additional_credential_keys_and_pinned_values[clientCredential = "synthetic"-environment] _
+
+config_root = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-8801/test_agent_settings_reject_add4/project')
+table = 'environment', entry = 'clientCredential = "synthetic"'
+
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    @pytest.mark.parametrize(
+        "entry",
+        (
+            'AUTHORIZATION = "synthetic"',
+            'Cookie = "synthetic"',
+            'clientCredential = "synthetic"',
+            'VALUE = "authorization=synthetic-value"',
+            'VALUE = "cookie: synthetic-value"',
+            'VALUE = "credential=synthetic-value"',
+        ),
+    )
+    def test_agent_settings_reject_additional_credential_keys_and_pinned_values(
+        config_root: Path, table: str, entry: str
+    ) -> None:
+        other = "options" if table == "environment" else "environment"
+        (config_root / "ovcaq.toml").write_text(
+            'agent = "local"\n[agents.local]\ncommand = ["runner"]\ntiers = {}\n'
+            f"{other} = {{}}\n{table} = {{ {entry} }}\n"
+        )
+    
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:64: Failed
+_ test_agent_settings_reject_additional_credential_keys_and_pinned_values[clientCredential = "synthetic"-options] _
+
+config_root = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-8801/test_agent_settings_reject_add5/project')
+table = 'options', entry = 'clientCredential = "synthetic"'
+
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    @pytest.mark.parametrize(
+        "entry",
+        (
+            'AUTHORIZATION = "synthetic"',
+            'Cookie = "synthetic"',
+            'clientCredential = "synthetic"',
+            'VALUE = "authorization=synthetic-value"',
+            'VALUE = "cookie: synthetic-value"',
+            'VALUE = "credential=synthetic-value"',
+        ),
+    )
+    def test_agent_settings_reject_additional_credential_keys_and_pinned_values(
+        config_root: Path, table: str, entry: str
+    ) -> None:
+        other = "options" if table == "environment" else "environment"
+        (config_root / "ovcaq.toml").write_text(
+            'agent = "local"\n[agents.local]\ncommand = ["runner"]\ntiers = {}\n'
+            f"{other} = {{}}\n{table} = {{ {entry} }}\n"
+        )
+    
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:64: Failed
+_ test_agent_settings_reject_additional_credential_keys_and_pinned_values[VALUE = "authorization=synthetic-value"-environment] _
+
+config_root = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-8801/test_agent_settings_reject_add6/project')
+table = 'environment', entry = 'VALUE = "authorization=synthetic-value"'
+
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    @pytest.mark.parametrize(
+        "entry",
+        (
+            'AUTHORIZATION = "synthetic"',
+            'Cookie = "synthetic"',
+            'clientCredential = "synthetic"',
+            'VALUE = "authorization=synthetic-value"',
+            'VALUE = "cookie: synthetic-value"',
+            'VALUE = "credential=synthetic-value"',
+        ),
+    )
+    def test_agent_settings_reject_additional_credential_keys_and_pinned_values(
+        config_root: Path, table: str, entry: str
+    ) -> None:
+        other = "options" if table == "environment" else "environment"
+        (config_root / "ovcaq.toml").write_text(
+            'agent = "local"\n[agents.local]\ncommand = ["runner"]\ntiers = {}\n'
+            f"{other} = {{}}\n{table} = {{ {entry} }}\n"
+        )
+    
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:64: Failed
+_ test_agent_settings_reject_additional_credential_keys_and_pinned_values[VALUE = "authorization=synthetic-value"-options] _
+
+config_root = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-8801/test_agent_settings_reject_add7/project')
+table = 'options', entry = 'VALUE = "authorization=synthetic-value"'
+
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    @pytest.mark.parametrize(
+        "entry",
+        (
+            'AUTHORIZATION = "synthetic"',
+            'Cookie = "synthetic"',
+            'clientCredential = "synthetic"',
+            'VALUE = "authorization=synthetic-value"',
+            'VALUE = "cookie: synthetic-value"',
+            'VALUE = "credential=synthetic-value"',
+        ),
+    )
+    def test_agent_settings_reject_additional_credential_keys_and_pinned_values(
+        config_root: Path, table: str, entry: str
+    ) -> None:
+        other = "options" if table == "environment" else "environment"
+        (config_root / "ovcaq.toml").write_text(
+            'agent = "local"\n[agents.local]\ncommand = ["runner"]\ntiers = {}\n'
+            f"{other} = {{}}\n{table} = {{ {entry} }}\n"
+        )
+    
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:64: Failed
+_ test_agent_settings_reject_additional_credential_keys_and_pinned_values[VALUE = "cookie: synthetic-value"-environment] _
+
+config_root = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-8801/test_agent_settings_reject_add8/project')
+table = 'environment', entry = 'VALUE = "cookie: synthetic-value"'
+
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    @pytest.mark.parametrize(
+        "entry",
+        (
+            'AUTHORIZATION = "synthetic"',
+            'Cookie = "synthetic"',
+            'clientCredential = "synthetic"',
+            'VALUE = "authorization=synthetic-value"',
+            'VALUE = "cookie: synthetic-value"',
+            'VALUE = "credential=synthetic-value"',
+        ),
+    )
+    def test_agent_settings_reject_additional_credential_keys_and_pinned_values(
+        config_root: Path, table: str, entry: str
+    ) -> None:
+        other = "options" if table == "environment" else "environment"
+        (config_root / "ovcaq.toml").write_text(
+            'agent = "local"\n[agents.local]\ncommand = ["runner"]\ntiers = {}\n'
+            f"{other} = {{}}\n{table} = {{ {entry} }}\n"
+        )
+    
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:64: Failed
+_ test_agent_settings_reject_additional_credential_keys_and_pinned_values[VALUE = "cookie: synthetic-value"-options] _
+
+config_root = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-8801/test_agent_settings_reject_add9/project')
+table = 'options', entry = 'VALUE = "cookie: synthetic-value"'
+
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    @pytest.mark.parametrize(
+        "entry",
+        (
+            'AUTHORIZATION = "synthetic"',
+            'Cookie = "synthetic"',
+            'clientCredential = "synthetic"',
+            'VALUE = "authorization=synthetic-value"',
+            'VALUE = "cookie: synthetic-value"',
+            'VALUE = "credential=synthetic-value"',
+        ),
+    )
+    def test_agent_settings_reject_additional_credential_keys_and_pinned_values(
+        config_root: Path, table: str, entry: str
+    ) -> None:
+        other = "options" if table == "environment" else "environment"
+        (config_root / "ovcaq.toml").write_text(
+            'agent = "local"\n[agents.local]\ncommand = ["runner"]\ntiers = {}\n'
+            f"{other} = {{}}\n{table} = {{ {entry} }}\n"
+        )
+    
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:64: Failed
+_ test_agent_settings_reject_additional_credential_keys_and_pinned_values[VALUE = "credential=synthetic-value"-environment] _
+
+config_root = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-8801/test_agent_settings_reject_add10/project')
+table = 'environment', entry = 'VALUE = "credential=synthetic-value"'
+
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    @pytest.mark.parametrize(
+        "entry",
+        (
+            'AUTHORIZATION = "synthetic"',
+            'Cookie = "synthetic"',
+            'clientCredential = "synthetic"',
+            'VALUE = "authorization=synthetic-value"',
+            'VALUE = "cookie: synthetic-value"',
+            'VALUE = "credential=synthetic-value"',
+        ),
+    )
+    def test_agent_settings_reject_additional_credential_keys_and_pinned_values(
+        config_root: Path, table: str, entry: str
+    ) -> None:
+        other = "options" if table == "environment" else "environment"
+        (config_root / "ovcaq.toml").write_text(
+            'agent = "local"\n[agents.local]\ncommand = ["runner"]\ntiers = {}\n'
+            f"{other} = {{}}\n{table} = {{ {entry} }}\n"
+        )
+    
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:64: Failed
+_ test_agent_settings_reject_additional_credential_keys_and_pinned_values[VALUE = "credential=synthetic-value"-options] _
+
+config_root = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-8801/test_agent_settings_reject_add11/project')
+table = 'options', entry = 'VALUE = "credential=synthetic-value"'
+
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    @pytest.mark.parametrize(
+        "entry",
+        (
+            'AUTHORIZATION = "synthetic"',
+            'Cookie = "synthetic"',
+            'clientCredential = "synthetic"',
+            'VALUE = "authorization=synthetic-value"',
+            'VALUE = "cookie: synthetic-value"',
+            'VALUE = "credential=synthetic-value"',
+        ),
+    )
+    def test_agent_settings_reject_additional_credential_keys_and_pinned_values(
+        config_root: Path, table: str, entry: str
+    ) -> None:
+        other = "options" if table == "environment" else "environment"
+        (config_root / "ovcaq.toml").write_text(
+            'agent = "local"\n[agents.local]\ncommand = ["runner"]\ntiers = {}\n'
+            f"{other} = {{}}\n{table} = {{ {entry} }}\n"
+        )
+    
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:64: Failed
+_ test_direct_agent_settings_reject_credential_key_substrings[environment-SERVICE_TOKEN_HEADER] _
+
+table = 'environment', key = 'SERVICE_TOKEN_HEADER'
+
+    @pytest.mark.parametrize(
+        "key",
+        (
+            "SERVICE_TOKEN_HEADER",
+            "CLIENT_SECRET_VALUE",
+            "DATABASE_PASSWORD_FILE",
+            "HEADER_AUTHORIZATION_MODE",
+            "PRIMARY_API_KEY_PATH",
+            "SESSION_COOKIE_VALUE",
+            "CLIENT_CREDENTIAL_FILE",
+        ),
+    )
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    def test_direct_agent_settings_reject_credential_key_substrings(
+        table: str, key: str
+    ) -> None:
+        environment = {key: "synthetic"} if table == "environment" else {}
+        options = {key: "synthetic"} if table == "options" else {}
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:86: Failed
+_ test_direct_agent_settings_reject_credential_key_substrings[environment-CLIENT_SECRET_VALUE] _
+
+table = 'environment', key = 'CLIENT_SECRET_VALUE'
+
+    @pytest.mark.parametrize(
+        "key",
+        (
+            "SERVICE_TOKEN_HEADER",
+            "CLIENT_SECRET_VALUE",
+            "DATABASE_PASSWORD_FILE",
+            "HEADER_AUTHORIZATION_MODE",
+            "PRIMARY_API_KEY_PATH",
+            "SESSION_COOKIE_VALUE",
+            "CLIENT_CREDENTIAL_FILE",
+        ),
+    )
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    def test_direct_agent_settings_reject_credential_key_substrings(
+        table: str, key: str
+    ) -> None:
+        environment = {key: "synthetic"} if table == "environment" else {}
+        options = {key: "synthetic"} if table == "options" else {}
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:86: Failed
+_ test_direct_agent_settings_reject_credential_key_substrings[environment-DATABASE_PASSWORD_FILE] _
+
+table = 'environment', key = 'DATABASE_PASSWORD_FILE'
+
+    @pytest.mark.parametrize(
+        "key",
+        (
+            "SERVICE_TOKEN_HEADER",
+            "CLIENT_SECRET_VALUE",
+            "DATABASE_PASSWORD_FILE",
+            "HEADER_AUTHORIZATION_MODE",
+            "PRIMARY_API_KEY_PATH",
+            "SESSION_COOKIE_VALUE",
+            "CLIENT_CREDENTIAL_FILE",
+        ),
+    )
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    def test_direct_agent_settings_reject_credential_key_substrings(
+        table: str, key: str
+    ) -> None:
+        environment = {key: "synthetic"} if table == "environment" else {}
+        options = {key: "synthetic"} if table == "options" else {}
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:86: Failed
+_ test_direct_agent_settings_reject_credential_key_substrings[environment-HEADER_AUTHORIZATION_MODE] _
+
+table = 'environment', key = 'HEADER_AUTHORIZATION_MODE'
+
+    @pytest.mark.parametrize(
+        "key",
+        (
+            "SERVICE_TOKEN_HEADER",
+            "CLIENT_SECRET_VALUE",
+            "DATABASE_PASSWORD_FILE",
+            "HEADER_AUTHORIZATION_MODE",
+            "PRIMARY_API_KEY_PATH",
+            "SESSION_COOKIE_VALUE",
+            "CLIENT_CREDENTIAL_FILE",
+        ),
+    )
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    def test_direct_agent_settings_reject_credential_key_substrings(
+        table: str, key: str
+    ) -> None:
+        environment = {key: "synthetic"} if table == "environment" else {}
+        options = {key: "synthetic"} if table == "options" else {}
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:86: Failed
+_ test_direct_agent_settings_reject_credential_key_substrings[environment-PRIMARY_API_KEY_PATH] _
+
+table = 'environment', key = 'PRIMARY_API_KEY_PATH'
+
+    @pytest.mark.parametrize(
+        "key",
+        (
+            "SERVICE_TOKEN_HEADER",
+            "CLIENT_SECRET_VALUE",
+            "DATABASE_PASSWORD_FILE",
+            "HEADER_AUTHORIZATION_MODE",
+            "PRIMARY_API_KEY_PATH",
+            "SESSION_COOKIE_VALUE",
+            "CLIENT_CREDENTIAL_FILE",
+        ),
+    )
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    def test_direct_agent_settings_reject_credential_key_substrings(
+        table: str, key: str
+    ) -> None:
+        environment = {key: "synthetic"} if table == "environment" else {}
+        options = {key: "synthetic"} if table == "options" else {}
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:86: Failed
+_ test_direct_agent_settings_reject_credential_key_substrings[environment-SESSION_COOKIE_VALUE] _
+
+table = 'environment', key = 'SESSION_COOKIE_VALUE'
+
+    @pytest.mark.parametrize(
+        "key",
+        (
+            "SERVICE_TOKEN_HEADER",
+            "CLIENT_SECRET_VALUE",
+            "DATABASE_PASSWORD_FILE",
+            "HEADER_AUTHORIZATION_MODE",
+            "PRIMARY_API_KEY_PATH",
+            "SESSION_COOKIE_VALUE",
+            "CLIENT_CREDENTIAL_FILE",
+        ),
+    )
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    def test_direct_agent_settings_reject_credential_key_substrings(
+        table: str, key: str
+    ) -> None:
+        environment = {key: "synthetic"} if table == "environment" else {}
+        options = {key: "synthetic"} if table == "options" else {}
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:86: Failed
+_ test_direct_agent_settings_reject_credential_key_substrings[environment-CLIENT_CREDENTIAL_FILE] _
+
+table = 'environment', key = 'CLIENT_CREDENTIAL_FILE'
+
+    @pytest.mark.parametrize(
+        "key",
+        (
+            "SERVICE_TOKEN_HEADER",
+            "CLIENT_SECRET_VALUE",
+            "DATABASE_PASSWORD_FILE",
+            "HEADER_AUTHORIZATION_MODE",
+            "PRIMARY_API_KEY_PATH",
+            "SESSION_COOKIE_VALUE",
+            "CLIENT_CREDENTIAL_FILE",
+        ),
+    )
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    def test_direct_agent_settings_reject_credential_key_substrings(
+        table: str, key: str
+    ) -> None:
+        environment = {key: "synthetic"} if table == "environment" else {}
+        options = {key: "synthetic"} if table == "options" else {}
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:86: Failed
+_ test_direct_agent_settings_reject_credential_key_substrings[options-HEADER_AUTHORIZATION_MODE] _
+
+table = 'options', key = 'HEADER_AUTHORIZATION_MODE'
+
+    @pytest.mark.parametrize(
+        "key",
+        (
+            "SERVICE_TOKEN_HEADER",
+            "CLIENT_SECRET_VALUE",
+            "DATABASE_PASSWORD_FILE",
+            "HEADER_AUTHORIZATION_MODE",
+            "PRIMARY_API_KEY_PATH",
+            "SESSION_COOKIE_VALUE",
+            "CLIENT_CREDENTIAL_FILE",
+        ),
+    )
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    def test_direct_agent_settings_reject_credential_key_substrings(
+        table: str, key: str
+    ) -> None:
+        environment = {key: "synthetic"} if table == "environment" else {}
+        options = {key: "synthetic"} if table == "options" else {}
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:86: Failed
+_ test_direct_agent_settings_reject_credential_key_substrings[options-SESSION_COOKIE_VALUE] _
+
+table = 'options', key = 'SESSION_COOKIE_VALUE'
+
+    @pytest.mark.parametrize(
+        "key",
+        (
+            "SERVICE_TOKEN_HEADER",
+            "CLIENT_SECRET_VALUE",
+            "DATABASE_PASSWORD_FILE",
+            "HEADER_AUTHORIZATION_MODE",
+            "PRIMARY_API_KEY_PATH",
+            "SESSION_COOKIE_VALUE",
+            "CLIENT_CREDENTIAL_FILE",
+        ),
+    )
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    def test_direct_agent_settings_reject_credential_key_substrings(
+        table: str, key: str
+    ) -> None:
+        environment = {key: "synthetic"} if table == "environment" else {}
+        options = {key: "synthetic"} if table == "options" else {}
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:86: Failed
+_ test_direct_agent_settings_reject_credential_key_substrings[options-CLIENT_CREDENTIAL_FILE] _
+
+table = 'options', key = 'CLIENT_CREDENTIAL_FILE'
+
+    @pytest.mark.parametrize(
+        "key",
+        (
+            "SERVICE_TOKEN_HEADER",
+            "CLIENT_SECRET_VALUE",
+            "DATABASE_PASSWORD_FILE",
+            "HEADER_AUTHORIZATION_MODE",
+            "PRIMARY_API_KEY_PATH",
+            "SESSION_COOKIE_VALUE",
+            "CLIENT_CREDENTIAL_FILE",
+        ),
+    )
+    @pytest.mark.parametrize("table", ("environment", "options"))
+    def test_direct_agent_settings_reject_credential_key_substrings(
+        table: str, key: str
+    ) -> None:
+        environment = {key: "synthetic"} if table == "environment" else {}
+        options = {key: "synthetic"} if table == "options" else {}
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:86: Failed
+_ test_direct_agent_settings_reject_pinned_credential_values[environment0-options0] _
+
+environment = {'MODE': 'authorization=synthetic-value'}, options = {}
+
+    @pytest.mark.parametrize(
+        "environment,options",
+        (
+            ({"MODE": "authorization=synthetic-value"}, {}),
+            ({}, {"value": "cookie: synthetic-value"}),
+            ({}, {"nested": [{"value": "credential=synthetic-value"}]}),
+        ),
+    )
+    def test_direct_agent_settings_reject_pinned_credential_values(
+        environment: dict[str, str], options: dict[str, object]
+    ) -> None:
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:107: Failed
+_ test_direct_agent_settings_reject_pinned_credential_values[environment1-options1] _
+
+environment = {}, options = {'value': 'cookie: synthetic-value'}
+
+    @pytest.mark.parametrize(
+        "environment,options",
+        (
+            ({"MODE": "authorization=synthetic-value"}, {}),
+            ({}, {"value": "cookie: synthetic-value"}),
+            ({}, {"nested": [{"value": "credential=synthetic-value"}]}),
+        ),
+    )
+    def test_direct_agent_settings_reject_pinned_credential_values(
+        environment: dict[str, str], options: dict[str, object]
+    ) -> None:
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:107: Failed
+_ test_direct_agent_settings_reject_pinned_credential_values[environment2-options2] _
+
+environment = {}
+options = {'nested': [{'value': 'credential=synthetic-value'}]}
+
+    @pytest.mark.parametrize(
+        "environment,options",
+        (
+            ({"MODE": "authorization=synthetic-value"}, {}),
+            ({}, {"value": "cookie: synthetic-value"}),
+            ({}, {"nested": [{"value": "credential=synthetic-value"}]}),
+        ),
+    )
+    def test_direct_agent_settings_reject_pinned_credential_values(
+        environment: dict[str, str], options: dict[str, object]
+    ) -> None:
+>       with pytest.raises(ConfigurationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/workflow/test_configuration_rework.py:107: Failed
+_ test_text_sanitization_redacts_bare_likely_secret_tokens[Bearer Q7v-k9_42mN8p23R4j62y-Bearer [REDACTED]] _
+
+text = 'Bearer Q7v-k9_42mN8p23R4j62y', expected = 'Bearer [REDACTED]'
+
+    @pytest.mark.parametrize(
+        "text,expected",
+        (
+            ("Bearer Q7v-k9_42mN8p23R4j62y", "Bearer [REDACTED]"),
+            (
+                "request used sk-synthetic_Q7v-k9_42mN8p23R4j62y",
+                "request used [REDACTED]",
+            ),
+            (
+                "token sk-test-synthetic-Q7v_k9-42mN8p23R4j62y",
+                "token [REDACTED]",
+            ),
+        ),
+    )
+    def test_text_sanitization_redacts_bare_likely_secret_tokens(
+        text: str, expected: str
+    ) -> None:
+>       assert sanitize_text(text) == expected
+E       AssertionError: assert 'Bearer Q7v-k9_42mN8p23R4j62y' == 'Bearer [REDACTED]'
+E         
+E         - Bearer [REDACTED]
+E         + Bearer Q7v-k9_42mN8p23R4j62y
+
+tests/events/test_model_rework.py:34: AssertionError
+_ test_text_sanitization_redacts_bare_likely_secret_tokens[request used sk-synthetic_Q7v-k9_42mN8p23R4j62y-request used [REDACTED]] _
+
+text = 'request used sk-synthetic_Q7v-k9_42mN8p23R4j62y'
+expected = 'request used [REDACTED]'
+
+    @pytest.mark.parametrize(
+        "text,expected",
+        (
+            ("Bearer Q7v-k9_42mN8p23R4j62y", "Bearer [REDACTED]"),
+            (
+                "request used sk-synthetic_Q7v-k9_42mN8p23R4j62y",
+                "request used [REDACTED]",
+            ),
+            (
+                "token sk-test-synthetic-Q7v_k9-42mN8p23R4j62y",
+                "token [REDACTED]",
+            ),
+        ),
+    )
+    def test_text_sanitization_redacts_bare_likely_secret_tokens(
+        text: str, expected: str
+    ) -> None:
+>       assert sanitize_text(text) == expected
+E       AssertionError: assert 'request used...2mN8p23R4j62y' == 'request used [REDACTED]'
+E         
+E         - request used [REDACTED]
+E         + request used sk-synthetic_Q7v-k9_42mN8p23R4j62y
+
+tests/events/test_model_rework.py:34: AssertionError
+_ test_text_sanitization_redacts_bare_likely_secret_tokens[token sk-test-synthetic-Q7v_k9-42mN8p23R4j62y-token [REDACTED]] _
+
+text = 'token sk-test-synthetic-Q7v_k9-42mN8p23R4j62y'
+expected = 'token [REDACTED]'
+
+    @pytest.mark.parametrize(
+        "text,expected",
+        (
+            ("Bearer Q7v-k9_42mN8p23R4j62y", "Bearer [REDACTED]"),
+            (
+                "request used sk-synthetic_Q7v-k9_42mN8p23R4j62y",
+                "request used [REDACTED]",
+            ),
+            (
+                "token sk-test-synthetic-Q7v_k9-42mN8p23R4j62y",
+                "token [REDACTED]",
+            ),
+        ),
+    )
+    def test_text_sanitization_redacts_bare_likely_secret_tokens(
+        text: str, expected: str
+    ) -> None:
+>       assert sanitize_text(text) == expected
+E       AssertionError: assert 'token sk-tes...2mN8p23R4j62y' == 'token [REDACTED]'
+E         
+E         - token [REDACTED]
+E         + token sk-test-synthetic-Q7v_k9-42mN8p23R4j62y
+
+tests/events/test_model_rework.py:34: AssertionError
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-01fef856-5c62-4037-8004-2a949e64e142
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-01fef856-5c62-4037-8004-2a949e64e142'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-374a0c1f-1883-474c-83af-86ff35e8fab5
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-374a0c1f-1883-474c-83af-86ff35e8fab5'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/workflow/test_configuration.py::test_agent_settings_default_omitted_command_to_selected_name
+FAILED tests/workflow/test_configuration_rework.py::test_workflow_settings_validate_the_selected_agent
+FAILED tests/workflow/test_configuration_rework.py::test_agent_settings_reject_additional_credential_keys_and_pinned_values[AUTHORIZATION = "synthetic"-environment]
+FAILED tests/workflow/test_configuration_rework.py::test_agent_settings_reject_additional_credential_keys_and_pinned_values[AUTHORIZATION = "synthetic"-options]
+FAILED tests/workflow/test_configuration_rework.py::test_agent_settings_reject_additional_credential_keys_and_pinned_values[Cookie = "synthetic"-environment]
+FAILED tests/workflow/test_configuration_rework.py::test_agent_settings_reject_additional_credential_keys_and_pinned_values[Cookie = "synthetic"-options]
+FAILED tests/workflow/test_configuration_rework.py::test_agent_settings_reject_additional_credential_keys_and_pinned_values[clientCredential = "synthetic"-environment]
+FAILED tests/workflow/test_configuration_rework.py::test_agent_settings_reject_additional_credential_keys_and_pinned_values[clientCredential = "synthetic"-options]
+FAILED tests/workflow/test_configuration_rework.py::test_agent_settings_reject_additional_credential_keys_and_pinned_values[VALUE = "authorization=synthetic-value"-environment]
+FAILED tests/workflow/test_configuration_rework.py::test_agent_settings_reject_additional_credential_keys_and_pinned_values[VALUE = "authorization=synthetic-value"-options]
+FAILED tests/workflow/test_configuration_rework.py::test_agent_settings_reject_additional_credential_keys_and_pinned_values[VALUE = "cookie: synthetic-value"-environment]
+FAILED tests/workflow/test_configuration_rework.py::test_agent_settings_reject_additional_credential_keys_and_pinned_values[VALUE = "cookie: synthetic-value"-options]
+FAILED tests/workflow/test_configuration_rework.py::test_agent_settings_reject_additional_credential_keys_and_pinned_values[VALUE = "credential=synthetic-value"-environment]
+FAILED tests/workflow/test_configuration_rework.py::test_agent_settings_reject_additional_credential_keys_and_pinned_values[VALUE = "credential=synthetic-value"-options]
+FAILED tests/workflow/test_configuration_rework.py::test_direct_agent_settings_reject_credential_key_substrings[environment-SERVICE_TOKEN_HEADER]
+FAILED tests/workflow/test_configuration_rework.py::test_direct_agent_settings_reject_credential_key_substrings[environment-CLIENT_SECRET_VALUE]
+FAILED tests/workflow/test_configuration_rework.py::test_direct_agent_settings_reject_credential_key_substrings[environment-DATABASE_PASSWORD_FILE]
+FAILED tests/workflow/test_configuration_rework.py::test_direct_agent_settings_reject_credential_key_substrings[environment-HEADER_AUTHORIZATION_MODE]
+FAILED tests/workflow/test_configuration_rework.py::test_direct_agent_settings_reject_credential_key_substrings[environment-PRIMARY_API_KEY_PATH]
+FAILED tests/workflow/test_configuration_rework.py::test_direct_agent_settings_reject_credential_key_substrings[environment-SESSION_COOKIE_VALUE]
+FAILED tests/workflow/test_configuration_rework.py::test_direct_agent_settings_reject_credential_key_substrings[environment-CLIENT_CREDENTIAL_FILE]
+FAILED tests/workflow/test_configuration_rework.py::test_direct_agent_settings_reject_credential_key_substrings[options-HEADER_AUTHORIZATION_MODE]
+FAILED tests/workflow/test_configuration_rework.py::test_direct_agent_settings_reject_credential_key_substrings[options-SESSION_COOKIE_VALUE]
+FAILED tests/workflow/test_configuration_rework.py::test_direct_agent_settings_reject_credential_key_substrings[options-CLIENT_CREDENTIAL_FILE]
+FAILED tests/workflow/test_configuration_rework.py::test_direct_agent_settings_reject_pinned_credential_values[environment0-options0]
+FAILED tests/workflow/test_configuration_rework.py::test_direct_agent_settings_reject_pinned_credential_values[environment1-options1]
+FAILED tests/workflow/test_configuration_rework.py::test_direct_agent_settings_reject_pinned_credential_values[environment2-options2]
+FAILED tests/events/test_model_rework.py::test_text_sanitization_redacts_bare_likely_secret_tokens[Bearer Q7v-k9_42mN8p23R4j62y-Bearer [REDACTED]]
+FAILED tests/events/test_model_rework.py::test_text_sanitization_redacts_bare_likely_secret_tokens[request used sk-synthetic_Q7v-k9_42mN8p23R4j62y-request used [REDACTED]]
+FAILED tests/events/test_model_rework.py::test_text_sanitization_redacts_bare_likely_secret_tokens[token sk-test-synthetic-Q7v_k9-42mN8p23R4j62y-token [REDACTED]]
+30 failed, 87 passed, 2 warnings in 0.55s

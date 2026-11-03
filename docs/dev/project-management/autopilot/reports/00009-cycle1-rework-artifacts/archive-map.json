@@ -1,0 +1,1190 @@
+[
+  {
+    "original": "docs/dev/tmp/split-19-3.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/split-19-3.json"
+  },
+  {
+    "original": "docs/dev/tmp/tess-26-sample_test_file.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-26-sample_test_file.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-21-architecture_context.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-21-architecture_context.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-27-task_description.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-27-task_description.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-style-violations-24.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-style-violations-24.md"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-ivan-26.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-ivan-26.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-28-file_paths.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-28-file_paths.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-26-task_acceptance_criteria.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-26-task_acceptance_criteria.txt"
+  },
+  {
+    "original": "docs/dev/tmp/final-format-24-files.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/final-format-24-files.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-28-task_subject.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-28-task_subject.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-28-task_acceptance_criteria.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-28-task_acceptance_criteria.txt"
+  },
+  {
+    "original": "docs/dev/tmp/context-28.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/context-28.txt"
+  },
+  {
+    "original": "docs/dev/tmp/context-29.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/context-29.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-20-context-erratum.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-20-context-erratum.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-22-task_description.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-22-task_description.txt"
+  },
+  {
+    "original": "docs/dev/tmp/00009-d1-task-19-body.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/00009-d1-task-19-body.md"
+  },
+  {
+    "original": "docs/dev/tmp/tess-25-test_framework.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-25-test_framework.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-20-file_paths.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-20-file_paths.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-ivan-27.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-ivan-27.txt"
+  },
+  {
+    "original": "docs/dev/tmp/deslop-26.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/deslop-26.md"
+  },
+  {
+    "original": "docs/dev/tmp/pat-27-simplification_mandate.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-27-simplification_mandate.txt"
+  },
+  {
+    "original": "docs/dev/tmp/final-format24.diff",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/final-format24.diff"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-ivan-24-pat-fix.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-ivan-24-pat-fix.txt"
+  },
+  {
+    "original": "docs/dev/tmp/task-29.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/task-29.json"
+  },
+  {
+    "original": "docs/dev/tmp/task26-base.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/task26-base.txt"
+  },
+  {
+    "original": "docs/dev/tmp/task27-base.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/task27-base.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-29-architecture_context.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-29-architecture_context.txt"
+  },
+  {
+    "original": "docs/dev/tmp/alice-output-00009-c1-20261005-9673b27da48340cbb93deb5b661c2774.jsonl",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/alice-output-00009-c1-20261005-9673b27da48340cbb93deb5b661c2774.jsonl"
+  },
+  {
+    "original": "docs/dev/tmp/style-29.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/style-29.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-ivan-28-hygiene.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-ivan-28-hygiene.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-24-prompt.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-24-prompt.md"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-27-file_paths.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-27-file_paths.txt"
+  },
+  {
+    "original": "docs/dev/tmp/attempt-23-final-blocker.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/attempt-23-final-blocker.json"
+  },
+  {
+    "original": "docs/dev/tmp/attempt-21-aggregate.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/attempt-21-aggregate.json"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-ivan-24.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-ivan-24.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-ivan-30.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-ivan-30.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-21-failing_tests.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-21-failing_tests.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-ivan-26-style.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-ivan-26-style.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-28-task_description.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-28-task_description.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-20-contract_correction.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-20-contract_correction.txt"
+  },
+  {
+    "original": "docs/dev/tmp/attempt-task-24.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/attempt-task-24.json"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-26-file_paths.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-26-file_paths.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-30.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-30.md"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-ivan-20.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-ivan-20.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-23-pat-2.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-23-pat-2.md"
+  },
+  {
+    "original": "docs/dev/tmp/verify-28.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/verify-28.txt"
+  },
+  {
+    "original": "docs/dev/tmp/attempt-22-fail.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/attempt-22-fail.json"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-21-retry_instruction.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-21-retry_instruction.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-29-verification.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-29-verification.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-25-task_subject.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-25-task_subject.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-24-architecture.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-24-architecture.txt"
+  },
+  {
+    "original": "docs/dev/tmp/alice-output-00009-c1-20261005-9673b27da48340cbb93deb5b661c2774.stderr",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/alice-output-00009-c1-20261005-9673b27da48340cbb93deb5b661c2774.stderr"
+  },
+  {
+    "original": "docs/dev/tmp/pat-27-task_subject.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-27-task_subject.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-ivan-21.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-ivan-21.txt"
+  },
+  {
+    "original": "docs/dev/tmp/attempt-29.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/attempt-29.json"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-20.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-20.md"
+  },
+  {
+    "original": "docs/dev/tmp/attempt-task25-abort.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/attempt-task25-abort.json"
+  },
+  {
+    "original": "docs/dev/tmp/deslop-23.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/deslop-23.md"
+  },
+  {
+    "original": "docs/dev/tmp/tess-26-test_framework.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-26-test_framework.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan26-style-FAILING_TESTS.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan26-style-FAILING_TESTS.txt"
+  },
+  {
+    "original": "docs/dev/tmp/attempt-task-28.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/attempt-task-28.json"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-29-retry_instruction.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-29-retry_instruction.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-21-file_paths.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-21-file_paths.txt"
+  },
+  {
+    "original": "docs/dev/tmp/diff-28.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/diff-28.txt"
+  },
+  {
+    "original": "docs/dev/tmp/task30.diff",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/task30.diff"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-22-verification.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-22-verification.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-27-pat.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-27-pat.md"
+  },
+  {
+    "original": "docs/dev/tmp/pat-20-simplification_mandate.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-20-simplification_mandate.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-30-task_description.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-30-task_description.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-ivan-23.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-ivan-23.txt"
+  },
+  {
+    "original": "docs/dev/tmp/attempt-24-final-format.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/attempt-24-final-format.json"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-ivan-20-style.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-ivan-20-style.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-24-subject.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-24-subject.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-20-public_interfaces.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-20-public_interfaces.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-30-task_acceptance_criteria.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-30-task_acceptance_criteria.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-20-verification_result.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-20-verification_result.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-ivan-22.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-ivan-22.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-20-gate-1.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-20-gate-1.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-20-failing_tests.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-20-failing_tests.txt"
+  },
+  {
+    "original": "docs/dev/tmp/context-22-retry.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/context-22-retry.txt"
+  },
+  {
+    "original": "docs/dev/tmp/split-19-2.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/split-19-2.json"
+  },
+  {
+    "original": "docs/dev/tmp/tess-19-acceptance.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-19-acceptance.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-29-file_paths.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-29-file_paths.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-27-task_description.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-27-task_description.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan26-style-ARCHITECTURE_CONTEXT.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan26-style-ARCHITECTURE_CONTEXT.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-28-hygiene-RETRY_INSTRUCTION.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-28-hygiene-RETRY_INSTRUCTION.txt"
+  },
+  {
+    "original": "docs/dev/tmp/checks-28.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/checks-28.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-27-gate-1.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-27-gate-1.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-27-task_acceptance_criteria.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-27-task_acceptance_criteria.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-23-description.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-23-description.txt"
+  },
+  {
+    "original": "docs/dev/tmp/style-29-context.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/style-29-context.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-24-style-files.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-24-style-files.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-20-test_framework.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-20-test_framework.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-27-contract_correction.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-27-contract_correction.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-28-contract_correction.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-28-contract_correction.txt"
+  },
+  {
+    "original": "docs/dev/tmp/meta25-split.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/meta25-split.json"
+  },
+  {
+    "original": "docs/dev/tmp/pat-29-task_subject.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-29-task_subject.txt"
+  },
+  {
+    "original": "docs/dev/tmp/final-regression-23-files.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/final-regression-23-files.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-24-compliant-prompt.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-24-compliant-prompt.md"
+  },
+  {
+    "original": "docs/dev/tmp/task-diff-23.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/task-diff-23.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-29-task_description.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-29-task_description.txt"
+  },
+  {
+    "original": "docs/dev/tmp/test-diff-23.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/test-diff-23.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan20-style-ARCHITECTURE_CONTEXT.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan20-style-ARCHITECTURE_CONTEXT.txt"
+  },
+  {
+    "original": "docs/dev/tmp/attempt-task-23.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/attempt-task-23.json"
+  },
+  {
+    "original": "docs/dev/tmp/checks-29.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/checks-29.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-26-failing_tests.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-26-failing_tests.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-26-public_interfaces.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-26-public_interfaces.txt"
+  },
+  {
+    "original": "docs/dev/tmp/attempt-21-abort.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/attempt-21-abort.json"
+  },
+  {
+    "original": "docs/dev/tmp/tess-20-task_subject.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-20-task_subject.txt"
+  },
+  {
+    "original": "docs/dev/tmp/attempt-22.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/attempt-22.json"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-23-rerun-2.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-23-rerun-2.md"
+  },
+  {
+    "original": "docs/dev/tmp/pat-26-task_description.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-26-task_description.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-27-sample_test_file.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-27-sample_test_file.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-30-verification_result.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-30-verification_result.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan20-style-RETRY_INSTRUCTION.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan20-style-RETRY_INSTRUCTION.txt"
+  },
+  {
+    "original": "docs/dev/tmp/test-diff-20.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/test-diff-20.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-22-task_subject.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-22-task_subject.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-27-retry_instruction.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-27-retry_instruction.txt"
+  },
+  {
+    "original": "docs/dev/tmp/split25-27.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/split25-27.json"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-tess-27-retry-1.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-tess-27-retry-1.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-27-verification_result.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-27-verification_result.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-30-simplification_mandate.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-30-simplification_mandate.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-28-hygiene-FILE_PATHS.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-28-hygiene-FILE_PATHS.txt"
+  },
+  {
+    "original": "docs/dev/tmp/test-diff-24.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/test-diff-24.txt"
+  },
+  {
+    "original": "docs/dev/tmp/task20.diff",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/task20.diff"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-pat-28.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-pat-28.txt"
+  },
+  {
+    "original": "docs/dev/tmp/task-diff-24.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/task-diff-24.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-19-subject.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-19-subject.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-26-task_subject.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-26-task_subject.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-24-pat-compliant.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-24-pat-compliant.md"
+  },
+  {
+    "original": "docs/dev/tmp/pat-22-diff.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-22-diff.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-26-task_description.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-26-task_description.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-final-format-24.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-final-format-24.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-pat-29.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-pat-29.txt"
+  },
+  {
+    "original": "docs/dev/tmp/attempt-task-25-aggregate.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/attempt-task-25-aggregate.json"
+  },
+  {
+    "original": "docs/dev/tmp/pat-26-simplification_mandate.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-26-simplification_mandate.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-20-task_acceptance_criteria.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-20-task_acceptance_criteria.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-20-architecture_context.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-20-architecture_context.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-27-failing_tests.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-27-failing_tests.txt"
+  },
+  {
+    "original": "docs/dev/tmp/split-19-4.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/split-19-4.json"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-30-file_paths.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-30-file_paths.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-28-verification_result.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-28-verification_result.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-23-pat-fix.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-23-pat-fix.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-30-contract_correction.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-30-contract_correction.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-24-subject.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-24-subject.txt"
+  },
+  {
+    "original": "docs/dev/tmp/task20-base.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/task20-base.txt"
+  },
+  {
+    "original": "docs/dev/tmp/test-diff-27.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/test-diff-27.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-ivan-22-retry.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-ivan-22-retry.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-23-prior-2.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-23-prior-2.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-23-compliant-prompt.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-23-compliant-prompt.md"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-23-prompt.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-23-prompt.md"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-28-hygiene-FAILING_TESTS.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-28-hygiene-FAILING_TESTS.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan26-style-FILE_PATHS.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan26-style-FILE_PATHS.txt"
+  },
+  {
+    "original": "docs/dev/tmp/test-diff-26.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/test-diff-26.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-19-description.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-19-description.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-22-failing_tests.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-22-failing_tests.txt"
+  },
+  {
+    "original": "docs/dev/tmp/attempt-task-19-abort.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/attempt-task-19-abort.json"
+  },
+  {
+    "original": "docs/dev/tmp/tess-24-description.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-24-description.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-22-file_paths.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-22-file_paths.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-23-verification.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-23-verification.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-28-architecture_context.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-28-architecture_context.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-29-diff.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-29-diff.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-28-diff.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-28-diff.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-24-acceptance.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-24-acceptance.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-23-pat-compliant.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-23-pat-compliant.md"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-24-pat-fix.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-24-pat-fix.txt"
+  },
+  {
+    "original": "docs/dev/tmp/checks-21.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/checks-21.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-23-subject.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-23-subject.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-pat-27.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-pat-27.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-ivan-29-style.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-ivan-29-style.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-29.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-29.md"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-24-files.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-24-files.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan20-style-FILE_PATHS.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan20-style-FILE_PATHS.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-pat-26.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-pat-26.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-30-verification.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-30-verification.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-tess-20-retry-1.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-tess-20-retry-1.txt"
+  },
+  {
+    "original": "docs/dev/tmp/checks-22.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/checks-22.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-25-task_description.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-25-task_description.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-23-acceptance.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-23-acceptance.txt"
+  },
+  {
+    "original": "docs/dev/tmp/attempt-task-19-aggregate.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/attempt-task-19-aggregate.json"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-24-verification.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-24-verification.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-30-architecture_context.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-30-architecture_context.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-pat-30.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-pat-30.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-ivan-24-style.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-ivan-24-style.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-28-pat.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-28-pat.md"
+  },
+  {
+    "original": "docs/dev/tmp/tess-25-task_acceptance_criteria.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-25-task_acceptance_criteria.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-20-task_description.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-20-task_description.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-22-retry_instruction.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-22-retry_instruction.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-28-hygiene-ARCHITECTURE_CONTEXT.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-28-hygiene-ARCHITECTURE_CONTEXT.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-30-diff.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-30-diff.txt"
+  },
+  {
+    "original": "docs/dev/tmp/attempt-20.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/attempt-20.json"
+  },
+  {
+    "original": "docs/dev/tmp/00009-d1-task-21-body.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/00009-d1-task-21-body.md"
+  },
+  {
+    "original": "docs/dev/tmp/pat-28-simplification_mandate.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-28-simplification_mandate.txt"
+  },
+  {
+    "original": "docs/dev/tmp/task25-base.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/task25-base.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-28-retry_instruction.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-28-retry_instruction.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-20-task_description.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-20-task_description.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-24-pat-1.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-24-pat-1.md"
+  },
+  {
+    "original": "docs/dev/tmp/tess-23-public.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-23-public.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-26-pat.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-26-pat.md"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-pat-20.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-pat-20.txt"
+  },
+  {
+    "original": "docs/dev/tmp/task-19-tess-abort.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/task-19-tess-abort.md"
+  },
+  {
+    "original": "docs/dev/tmp/files-22-retry.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/files-22-retry.txt"
+  },
+  {
+    "original": "docs/dev/tmp/task22.diff",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/task22.diff"
+  },
+  {
+    "original": "docs/dev/tmp/00009-d1-task-20-body.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/00009-d1-task-20-body.md"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-20-verification.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-20-verification.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-26-task_acceptance_criteria.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-26-task_acceptance_criteria.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-22-task_acceptance_criteria.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-22-task_acceptance_criteria.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-22-architecture_context.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-22-architecture_context.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-19-public.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-19-public.txt"
+  },
+  {
+    "original": "docs/dev/tmp/checks-30.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/checks-30.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan26-style-RETRY_INSTRUCTION.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan26-style-RETRY_INSTRUCTION.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-20-retry_instruction.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-20-retry_instruction.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-pat-22.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-pat-22.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-26-interface-erratum.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-26-interface-erratum.txt"
+  },
+  {
+    "original": "docs/dev/tmp/style-29-files.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/style-29-files.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-26-architecture_context.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-26-architecture_context.txt"
+  },
+  {
+    "original": "docs/dev/tmp/checks-22-retry.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/checks-22-retry.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-27-task_subject.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-27-task_subject.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-27-diff.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-27-diff.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-26-diff.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-26-diff.txt"
+  },
+  {
+    "original": "docs/dev/tmp/split25-28.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/split25-28.json"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-23-architecture.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-23-architecture.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-20-task_subject.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-20-task_subject.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-20-task_acceptance_criteria.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-20-task_acceptance_criteria.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-23-subject.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-23-subject.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-23-pat-1.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-23-pat-1.md"
+  },
+  {
+    "original": "docs/dev/tmp/pat-29-simplification_mandate.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-29-simplification_mandate.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-tess-25.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-tess-25.txt"
+  },
+  {
+    "original": "docs/dev/tmp/verify-27.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/verify-27.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-tess-19.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-tess-19.txt"
+  },
+  {
+    "original": "docs/dev/tmp/context-21.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/context-21.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-29-failing_tests.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-29-failing_tests.txt"
+  },
+  {
+    "original": "docs/dev/tmp/context-20.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/context-20.txt"
+  },
+  {
+    "original": "docs/dev/tmp/verify-26.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/verify-26.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-26-retry_instruction.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-26-retry_instruction.txt"
+  },
+  {
+    "original": "docs/dev/tmp/00009-d1-task-22-body.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/00009-d1-task-22-body.md"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-tess-24.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-tess-24.txt"
+  },
+  {
+    "original": "docs/dev/tmp/task-19-blocked.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/task-19-blocked.json"
+  },
+  {
+    "original": "docs/dev/tmp/attempt-30.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/attempt-30.json"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-30-retry_instruction.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-30-retry_instruction.txt"
+  },
+  {
+    "original": "docs/dev/tmp/split-19-1.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/split-19-1.json"
+  },
+  {
+    "original": "docs/dev/tmp/tess-23-gate-1.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-23-gate-1.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-29-verification_result.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-29-verification_result.txt"
+  },
+  {
+    "original": "docs/dev/tmp/diff-27.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/diff-27.txt"
+  },
+  {
+    "original": "docs/dev/tmp/attempt-task-27.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/attempt-task-27.json"
+  },
+  {
+    "original": "docs/dev/tmp/pat-22-contract_correction.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-22-contract_correction.txt"
+  },
+  {
+    "original": "docs/dev/tmp/task28-base.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/task28-base.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-30-failing_tests.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-30-failing_tests.txt"
+  },
+  {
+    "original": "docs/dev/tmp/task29.diff",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/task29.diff"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-tess-26.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-tess-26.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tests-26.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tests-26.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan20-style-FAILING_TESTS.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan20-style-FAILING_TESTS.txt"
+  },
+  {
+    "original": "docs/dev/tmp/context-22.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/context-22.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-27-architecture_context.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-27-architecture_context.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-20-diff.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-20-diff.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-tess-27.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-tess-27.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-27-test_framework.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-27-test_framework.txt"
+  },
+  {
+    "original": "docs/dev/tmp/final-regression-23.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/final-regression-23.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-24-public.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-24-public.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-27-public_interfaces.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-27-public_interfaces.txt"
+  },
+  {
+    "original": "docs/dev/tmp/final-regression-23-context.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/final-regression-23-context.txt"
+  },
+  {
+    "original": "docs/dev/tmp/deslop-24.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/deslop-24.md"
+  },
+  {
+    "original": "docs/dev/tmp/diff-26.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/diff-26.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-24-description.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-24-description.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-26-verification_result.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-26-verification_result.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-30-task_subject.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-30-task_subject.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-23-description.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-23-description.txt"
+  },
+  {
+    "original": "docs/dev/tmp/final-format-24-context.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/final-format-24-context.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-ivan-29.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-ivan-29.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-tess-23.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-tess-23.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-23-files.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-23-files.txt"
+  },
+  {
+    "original": "docs/dev/tmp/final-format-24.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/final-format-24.txt"
+  },
+  {
+    "original": "docs/dev/tmp/context-27.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/context-27.txt"
+  },
+  {
+    "original": "docs/dev/tmp/context-26.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/context-26.txt"
+  },
+  {
+    "original": "docs/dev/tmp/ivan-28-failing_tests.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/ivan-28-failing_tests.txt"
+  },
+  {
+    "original": "docs/dev/tmp/task-30.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/task-30.json"
+  },
+  {
+    "original": "docs/dev/tmp/pat-29-task_acceptance_criteria.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-29-task_acceptance_criteria.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-ivan-28.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-ivan-28.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-27-task_acceptance_criteria.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-27-task_acceptance_criteria.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-23-acceptance.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-23-acceptance.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-tess-23-retry-1.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-tess-23-retry-1.txt"
+  },
+  {
+    "original": "docs/dev/tmp/attempt-task-26.json",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/attempt-task-26.json"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-final-regression-23.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-final-regression-23.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-25-public_interfaces.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-25-public_interfaces.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-20-sample_test_file.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-20-sample_test_file.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-22-verification_result.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-22-verification_result.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-26-task_subject.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-26-task_subject.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-tess-20.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-tess-20.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-29-contract_correction.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-29-contract_correction.txt"
+  },
+  {
+    "original": "docs/dev/tmp/context-30.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/context-30.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-24-acceptance.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-24-acceptance.txt"
+  },
+  {
+    "original": "docs/dev/tmp/tess-25-sample_test_file.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/tess-25-sample_test_file.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-26-contract_correction.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-26-contract_correction.txt"
+  },
+  {
+    "original": "docs/dev/tmp/pat-22-simplification_mandate.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/pat-22-simplification_mandate.txt"
+  },
+  {
+    "original": "docs/dev/tmp/review-task-22.md",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/review-task-22.md"
+  },
+  {
+    "original": "docs/dev/tmp/diff-20.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/diff-20.txt"
+  },
+  {
+    "original": "docs/dev/tmp/dispatch-ivan-23-pat-fix.txt",
+    "archive": "docs/dev/project-management/autopilot/reports/00009-cycle1-rework-artifacts/dispatch-ivan-23-pat-fix.txt"
+  }
+]

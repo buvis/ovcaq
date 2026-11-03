@@ -1,0 +1,191 @@
+{
+  "batch_id": "202610251552",
+  "items": [
+    {
+      "type": "assumed-ambiguity",
+      "task": "2",
+      "question": "What JSON field shape does the controller's apply response use to populate ApplyResult?",
+      "assumption": "The controller's apply stdout JSON maps 1:1 onto ApplyResult's own field names (ok, revision, result, error_code, retryable) \u2014 the simplest safe reading consistent with ApplyResult's declared shape and with no richer schema specified anywhere in the PRD or design doc.",
+      "prd": "00057-autopilot-controller-client-v1.md"
+    },
+    {
+      "type": "stall",
+      "site": "wrapper_died",
+      "detail": "died after 1 retries; parking 00057-autopilot-controller-client-v1.md; lane=full",
+      "op_id": "46210a58c526",
+      "prd": "00057-autopilot-controller-client-v1.md"
+    },
+    {
+      "type": "stall",
+      "site": "wrapper_died",
+      "detail": "died after 1 retries; parking 00062-supervisor-process-identity-v1.md; lane=full",
+      "op_id": "cca351c2186b",
+      "prd": "00062-supervisor-process-identity-v1.md"
+    },
+    {
+      "type": "review-cap-reached",
+      "task": "7",
+      "file": "src/ovcaq/workflow_client.py:345",
+      "summary": "Pat's per-task review (3 cycles, cap reached) still flags _actor_secrets() as reading actor-file credentials and never redacting secrets shorter than MIN_SECRET_CHARS (8). This rework task's scope was limited to the rotation gap (fixed and tested) plus documenting the short-secret and unreadable-file behavior (done via docstring). Dropping credential reading entirely, or redacting sub-8-char secrets, is a larger redesign of the opaque actor-file contract and was deliberately left out of this task's acceptance criteria. Flagging for the PRD-level review/next cycle to decide whether this is in-scope for PRD 00057 or a follow-up.",
+      "prd": "00057-autopilot-controller-client-v1.md"
+    },
+    {
+      "type": "stall",
+      "site": "cap_regression",
+      "detail": "cycle 3 of 3: R1 3dc0722, R3 fa26fb7, R6 fa26fb7 regressed by this cycle's own rework; 7 unresolved findings deferred (R1-R7)",
+      "op_id": "cb15ee812a4e",
+      "prd": "00057-autopilot-controller-client-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "ref": "R1",
+      "issue": "The project gate fails: ruff BLE001 on `except BaseException as error` in tests/workflow_client/test_kill_group_bounded.py:56, so ./tools/check exits 1 before ruff format, mypy, pytest or the build. The PRD's Phase 2 exit criterion \"./tools/check passes\" is not met. REGRESSION introduced by this cycle's own rework (commit 3dc0722).",
+      "severity": "high",
+      "consensus": "3/3",
+      "cycle": 3,
+      "reason": "rework cap reached with this finding unresolved",
+      "prd": "00057-autopilot-controller-client-v1.md",
+      "op_id": "cb15ee812a4e-dd0"
+    },
+    {
+      "type": "cap-overflow",
+      "ref": "R2",
+      "issue": "Cleanup is still unbounded through _run()'s `with process:` exit: Popen.__exit__ closes the pipes and then calls an unbounded wait(), and the close blocks behind a reader thread. Measured 8.04 s against a 1 s timeout with a detached descendant holding the pipes. The new tests call _kill_group and _capture directly and never exercise _run's context exit. (src/ovcaq/workflow_client.py:448)",
+      "severity": "high",
+      "consensus": "2/3",
+      "cycle": 3,
+      "reason": "rework cap reached with this finding unresolved",
+      "prd": "00057-autopilot-controller-client-v1.md",
+      "op_id": "cb15ee812a4e-dd1"
+    },
+    {
+      "type": "cap-overflow",
+      "ref": "R3",
+      "issue": "[workflow].contract_bundle_sha256 has two incompatible digest definitions: tools/autopilot-prerequisites hashes raw file bytes, the client hashes sha256 of json.dumps(data, sort_keys=True). On the real pinned fixture they differ (raw c40ba84e..., canonical b98f0a68...), so one configured value cannot satisfy both the PRD 58 gate and contract(). REGRESSION introduced by this cycle's own rework (commit fa26fb7).",
+      "severity": "high",
+      "consensus": "2/3",
+      "cycle": 3,
+      "reason": "rework cap reached with this finding unresolved",
+      "prd": "00057-autopilot-controller-client-v1.md",
+      "op_id": "cb15ee812a4e-dd2"
+    },
+    {
+      "type": "cap-overflow",
+      "ref": "R4",
+      "issue": "Abnormal post-spawn exits still escape unknown-outcome handling: a non-zero exit during apply raises a plain ControllerError, so a controller killed after committing but before acking is reported as a definite failure rather than unknown-outcome-retry-same-envelope. (src/ovcaq/workflow_client.py:450)",
+      "severity": "high",
+      "consensus": "3/3",
+      "cycle": 3,
+      "reason": "rework cap reached with this finding unresolved",
+      "prd": "00057-autopilot-controller-client-v1.md",
+      "op_id": "cb15ee812a4e-dd3"
+    },
+    {
+      "type": "cap-overflow",
+      "ref": "R5",
+      "issue": "Redaction still reads actor-file credentials on every _redact call and still discloses in two cases: secrets shorter than MIN_SECRET_CHARS are never redacted, and an unreadable actor file makes redaction a silent no-op. The cycle-2 rework fixed only rotation. This is the same defect the task-7 per-task review deferred as review-cap-reached; the PRD-level decision asked for there is: in scope for PRD 00057, unfixed at the cap. (src/ovcaq/workflow_client.py:350)",
+      "severity": "high",
+      "consensus": "2/3",
+      "cycle": 3,
+      "reason": "rework cap reached with this finding unresolved",
+      "prd": "00057-autopilot-controller-client-v1.md",
+      "op_id": "cb15ee812a4e-dd4"
+    },
+    {
+      "type": "cap-overflow",
+      "ref": "R6",
+      "issue": "tools/autopilot-prerequisites bundle validation accepts arbitrary JSON, including null and {}, although the client rejects these as contracts. REGRESSION introduced by this cycle's own rework (commit fa26fb7). (tools/autopilot-prerequisites:157)",
+      "severity": "high",
+      "consensus": "1/3",
+      "cycle": 3,
+      "reason": "rework cap reached with this finding unresolved",
+      "prd": "00057-autopilot-controller-client-v1.md",
+      "op_id": "cb15ee812a4e-dd5"
+    },
+    {
+      "type": "cap-overflow",
+      "ref": "R7",
+      "issue": "ApplyOutcomeUnknownError still subclasses ControllerTimeoutError and its docstring still says \"An apply timed out\", yet it is now raised for output overruns, non-JSON stdout and malformed responses too, so a caller catching ControllerTimeoutError also catches completed-but-ambiguous calls. (src/ovcaq/workflow_client.py:50)",
+      "severity": "medium",
+      "consensus": "2/3",
+      "cycle": 3,
+      "reason": "rework cap reached with this finding unresolved",
+      "prd": "00057-autopilot-controller-client-v1.md",
+      "op_id": "cb15ee812a4e-dd6"
+    },
+    {
+      "type": "stall",
+      "site": "wrapper_died",
+      "detail": "died after 1 retries; parking 00062-supervisor-process-identity-v1.md; lane=full",
+      "op_id": "da83e3757b00",
+      "prd": "00062-supervisor-process-identity-v1.md"
+    },
+    {
+      "type": "stall",
+      "site": "wrapper_died",
+      "detail": "died after 1 retries; parking 00063-driver-failure-classes-tiers-v1.md; lane=full",
+      "op_id": "4a12b31791a7",
+      "prd": "00063-driver-failure-classes-tiers-v1.md"
+    },
+    {
+      "type": "out-of-scope",
+      "issue": "./tools/check is red at HEAD on a pre-existing ruff BLE001 at tests/workflow_client/test_kill_group_bounded.py:56, a file outside PRD 00062 diff range (last touched by PRD 00057-era commits)",
+      "severity": "medium",
+      "cycle": 1,
+      "reason": "outside this PRD diff range; fixing it would widen PRD 00062 scope",
+      "prd": "00062-supervisor-process-identity-v1.md"
+    },
+    {
+      "type": "test-helper-ps",
+      "issue": "ps_field in tests/integration/test_terminal_lifecycle.py:106 still spawns ps at three sites (review row R16), so 3 tests fail and 14 error with PermissionError on ps under the agent sandbox; the single-voice rule barred it from becoming a rework task",
+      "severity": "low",
+      "cycle": 1,
+      "reason": "single-voice low finding, barred from a task by review-close; recorded so the red sandbox suite is not lost",
+      "prd": "00062-supervisor-process-identity-v1.md"
+    },
+    {
+      "type": "stall",
+      "site": "cap_regression",
+      "detail": "R1 97c9766, R2 cecd747",
+      "op_id": "edf8375ae75b",
+      "prd": "00062-supervisor-process-identity-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "issue": "R1: `_cleanup_ownership_records` guards only OSError, but FleetRegistry.remove raises ValueError from _directory, _mutation and _verify_root. The ValueError escapes _abandon_start and run before _revert_fresh_start, leaving a batch running with no supervisor (src/ovcaq/runtime/supervisor.py:283). Catch (OSError, ValueError) and add a test where publish and remove both raise ValueError.",
+      "severity": "high",
+      "consensus": "1/3",
+      "reason": "rework cap reached with this finding unresolved",
+      "cycle": 2,
+      "prd": "00062-supervisor-process-identity-v1.md",
+      "op_id": "edf8375ae75b-dd0"
+    },
+    {
+      "type": "cap-overflow",
+      "issue": "R2: the `_sessions <= 1` guard does not prove no session was opened, so a ConfigurationError/CommandError raised after _open_session also reverts a batch whose first session already exists (src/ovcaq/runtime/supervisor.py:246). Track session-opened explicitly and add an after-opening regression test.",
+      "severity": "high",
+      "consensus": "3/3",
+      "reason": "rework cap reached with this finding unresolved",
+      "cycle": 2,
+      "prd": "00062-supervisor-process-identity-v1.md",
+      "op_id": "edf8375ae75b-dd1"
+    },
+    {
+      "type": "cap-overflow",
+      "issue": "R6: no test where FleetRegistry.publish writes the entry and then raises, so the new FleetRegistry.remove(..., expected=...) branch in _cleanup_ownership_records is never exercised (tests/runtime/test_supervisor_preflight.py:632).",
+      "severity": "medium",
+      "consensus": "2/3",
+      "reason": "rework cap reached with this finding unresolved",
+      "cycle": 2,
+      "prd": "00062-supervisor-process-identity-v1.md",
+      "op_id": "edf8375ae75b-dd2"
+    },
+    {
+      "type": "stall",
+      "site": "plan_expansion",
+      "detail": "module_drift 4 > 1 (tests/integration, tests/packaging, tests/runtime, tests/workflow); plan is 6 tasks at expansion 1.20, well under the ceiling - the drift is the PRD Repository Structure being incomplete, not plan bloat: the tier-key rename breaks 7 fixture files and 4 fake drivers the PRD never lists (found by the design review), and those files must be edited for the change to be correct, so no task reshaping can reduce the module count; fix by extending the PRD tree with the 10 files (see split note) or by setting plan_expansion: allow with rework_cap: 3; note docs/dev/project-management/autopilot/split-notes/00063-driver-failure-classes-tiers-v1.md",
+      "op_id": "27c869944842",
+      "prd": "00063-driver-failure-classes-tiers-v1.md"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+[
+  {
+    "task": "21",
+    "role": "implementation",
+    "model": "gpt-6.1-sol",
+    "path": "docs/dev/project-management/autopilot/reports/00053-three-repair-20261012-evidence/ivan-21.raw.jsonl",
+    "line": 8,
+    "sha256": "da620dbf8ffaed4b162aefa2ffb64275d4519cacebf2d97b329b5a6f596b3ce5",
+    "session": "01a131bf-fe2b-7831-90a1-323cf74a1ddf",
+    "agent_path": "/root/repair21",
+    "effort": "medium"
+  },
+  {
+    "task": "22",
+    "role": "implementation",
+    "model": "gpt-6.1-sol",
+    "path": "docs/dev/project-management/autopilot/reports/00053-three-repair-20261012-evidence/ivan-22.raw.jsonl",
+    "line": 8,
+    "sha256": "d642a4db720756571d12125c95e0557e255b01b48a22652249e432ad87c9e7a8",
+    "session": "01a131c1-813f-78e1-b9df-6964686009c4",
+    "agent_path": "/root/repair22",
+    "effort": "medium"
+  }
+]

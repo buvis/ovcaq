@@ -1,0 +1,9 @@
+[
+  {
+    "cycle": 2,
+    "finding": "Full suite at the review HEAD",
+    "file": null,
+    "command": "mise exec -- uv run pytest",
+    "source": "bob"
+  }
+]

@@ -1,0 +1,52 @@
+[BOB] ⚪ `assert retries.rate_limit == 0` can never fail. It checks the frozen `RetryState` the test built with `rate_limit=0`, and `decide` cannot change it (src/ovcaq/runtime/decision.py:84). Lines 200-201 already pin the non-rate-limit path | File: tests/drivers/test_adapter_failure_classes.py:225 | Task: 6
+[BOB] ⚪ `INVALID_OPTIONS` was moved to a module constant so the factory test could share it. The rework deleted that test (R13), so the constant has one user left and no longer serves any change | File: tests/drivers/test_codex_launch.py:140 | Task: 8
+[BOB] ⚪ CHANGELOG says "preserving standard missing ... host PATH lookup", but the Claude probe changed. With no host PATH it now falls back to `os.defpath` (`/bin:/usr/bin`, src/ovcaq/drivers/claude.py:82). The old `shutil.which(command)` used `CS_PATH` (`/usr/bin:/bin:/usr/sbin:/sbin` here, confirmed with `getconf PATH` and the stdlib source). The new value matches the subprocess spawn, as the design asks, so only the wording is wrong | File: CHANGELOG.md:43 | Task: 4
+[BOB] ⚪ The test for an absent host PATH probes `sh`, which is in both `os.defpath` and `CS_PATH`. It cannot tell the design's spawn-matching `os.defpath` fallback from the old `CS_PATH` one, so going back to `shutil.which(command, path=None)` would still pass (found by reading, not run) | File: tests/runtime/test_adapter_health.py:250 | Task: 3
+[BOB] ⚪ Suspected, not run: `HTTP/1.1 503`, `status=503` and `status_code: 429` still come out UNKNOWN under the status prefix regex. No checked-in fixture holds a numeric code, so nothing shows whether Codex emits these forms | File: src/ovcaq/drivers/codex_events.py:301 | Task: 6
+
+Prior-cycle findings (all confirmed in code):
+- R1: resolved. Bare `status` is accepted (src/ovcaq/drivers/codex_events.py:301), with Codex-spelling positives at tests/drivers/test_adapter_failure_classes.py:63.
+- R2 and R9 and R12: resolved. The protocol doc now matches the code (docs/driver-protocol.md:37, docs/driver-protocol.md:243).
+- R3: resolved. The test now runs from the executable's directory (tests/runtime/test_adapter_health.py:268).
+- R4: resolved. RAW_UNKNOWN is asserted on `closed` (tests/drivers/test_adapter_outcomes.py:89). Removing the unfinished-only filter would now fail this test.
+- R6: resolved. Late running/errored/completed updates on a finished lane are pinned (tests/drivers/test_adapter_outcomes.py:257). Removing the `continue` would now fail this test.
+- R5: resolved. The PRD's Phase 0 acceptance command now includes test_adapter_failure_classes.py.
+- R7: resolved. `_tier_request` is shared by both drivers (src/ovcaq/drivers/edge.py:16).
+- R8: resolved. The receiver parametrization and the non-JSON test are gone.
+- R11: resolved. The `authentication failed` pattern is removed, with a test guarding against its return.
+- R13: resolved. The factory test is deleted and the constructor test checks the exact exception type.
+- Test count fell from 7165 to 7141 (−24). That matches exactly the parametrizations removed and added, so no test was lost by accident.
+
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+FIX:
+- Assert that can never fail — tests/drivers/test_adapter_failure_classes.py:225 — delete `assert retries.rate_limit == 0`; lines 200-201 already pin the non-rate path.
+- Single-use `INVALID_OPTIONS` left after R13 — tests/drivers/test_codex_launch.py:140 — move the tuple back into `@pytest.mark.parametrize("options", ...)` on `test_constructor_rejects_unknown_or_invalid_options`.
+- CHANGELOG wrongly says the missing-PATH lookup is preserved — CHANGELOG.md:43 — reword to "a missing host PATH now uses the subprocess default search path (`os.defpath`); an empty host PATH keeps each adapter's previous lookup".
+- Absent-PATH test cannot tell the two fallbacks apart — tests/runtime/test_adapter_health.py:250 — create a fixture executable in tmp_path, `monkeypatch.setattr(os, "defpath", str(fixture_dir))`, delete PATH, and assert healthy. A `CS_PATH` fallback would not find the fixture.
+VERIFY:
+- Whether Codex emits numeric codes in forms the regex misses (`HTTP/1.1 503`, `status=`, `status_code`) — run `mise which codex`, then `rg -a -c -e "HTTP/1\.[01] \{" -e "status_code" -e "status=\{" <that binary path>`. Zero counts close this; any hit needs a literal positive in tests/drivers/test_adapter_failure_classes.py.
+KNOWN:
+- (none)
+
+```
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```
+
+**Done.** All 13 prior-cycle findings are resolved, and the rework adds no regression. 5 new low (⚪) findings: 4 fix, 1 verify.
+**Next:** You: send the four FIX items and the VERIFY item to the cycle-2 decision gate.

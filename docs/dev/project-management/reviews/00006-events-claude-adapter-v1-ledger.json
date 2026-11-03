@@ -1,0 +1,314 @@
+[
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "high",
+    "issue": "Built-in driver registration is not implemented: `discover_drivers` requires callers to supply an arbitrary built-in iterable, and the public driver package defines no registry or factory that registers Claude by its unique name, so production discovery can return no Claude driver",
+    "file": "src/ovcaq/drivers/base.py:165",
+    "reason": "The accepted design explicitly defines discover_drivers(builtins: Iterable[DriverPlugin]); _register_driver registers each driver by unique name and checks duplicates. tests/drivers/test_registry.py:10 exercises Claude registration through a closure. Automatic supervisor composition belongs to PRD 00007; an implicit provider import into neutral discovery would break the boundary."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "high",
+    "issue": "LaunchSpec.env is the child's whole environment (OwnedProcess.spawn passes it straight to Popen; test_claude_process checks that HOST_ONLY_MARKER is None in the child), and ClaudeDriver sets only CLAUDE_UNATTENDED, CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS and WARDEN_UNATTENDED. With no PATH, Popen looks up a bare `command=[\"claude\"]` only in /bin:/usr/bin, so launch fails with FileNotFoundError while probe() (shutil.which with the host PATH) still reports healthy. The agent's Bash tool also gets no PATH/HOME, so mise, git and uv go missing. The source runner.py child_env() passed the full host env through, dropping only host markers, and the PRD says \"environment additions\". Confirmed by reading the code; the fake-claude test hides it because it uses an absolute path",
+    "file": "src/ovcaq/drivers/claude.py:66",
+    "reason": "The accepted design states LaunchSpec.env is an overlay and its Data flow step 2 assigns deliberate host-environment merging to the later supervisor. OwnedProcess.spawn accepts the final environment, so the test passes a self-contained fake environment deliberately. No production supervisor caller exists in this PRD. Keep provider code from copying os.environ; clarify overlay composition in the protocol documentation task."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "A hand-rolled 1 MiB-per-driver Bloom filter guards against message-id replays after more than 4096 other message ids, which may never happen in Claude stream-json",
+    "file": "src/ovcaq/drivers/claude.py:73",
+    "reason": "The committed task-7 decision explicitly requires a bounded exact cache and fixed Bloom filter to suppress evicted replays. The requirement is deduplication with bounded memory, not proof that a current captured run exceeds 4096 identities. Deleting the filter on absence of such logs would reintroduce a required replay failure. Inferred/possibly undercounted usage is fixed under O6."
+  },
+  {
+    "cycle": 1,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "The prompt is the last positional argument with no `--` before it, so a prompt starting with \"-\" would be parsed as a CLI option",
+    "file": "src/ovcaq/drivers/claude.py:84",
+    "reason": "Exact argv matches the characterized runner and this phase's accepted launch contract; the built-in workflow prompts begin with '/'. General arbitrary leading-hyphen prompt handling is outside the current exact-port contract. Preserve the limitation for batch-end review rather than change argv without that contract decision."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "40 touched test(s) pass against the pre-change code: test_shared_modules_do_not_import_provider_modules +34 more",
+    "file": "tests/drivers/test_neutrality.py",
+    "reason": "The 40 tests that pass on base are provider-neutrality backfill guards and existing behavior coverage; the base already satisfies those invariants. Ten changed test files fail collection against the old code. A guard intentionally passing on a clean base is not tautological. Its assertions fail on prohibited imports or source identifiers."
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "high",
+    "issue": "A nonzero process exit is ignored after `session.completed`, so a crashed session can produce `success=True` and incorrectly drive later workflow decisions",
+    "file": "src/ovcaq/events/reducer.py:105",
+    "reason": "The accepted terminal conflict matrix makes completed terminal authoritative; test_last_completion_supplies_serialized_usage pins exit codes 0 and 1."
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "Key matching by substring now rejects real non-secret Claude settings such as MAX_THINKING_TOKENS and CLAUDE_CODE_MAX_OUTPUT_TOKENS. The rework also flipped the earlier test that accepted TOKENIZER",
+    "file": "src/ovcaq/config.py:45",
+    "reason": "The accepted design explicitly rejects configuration keys containing token or other credential words; changing that contract needs a separate decision."
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "R1-R7: 167 touched tests (decoder, launch, driver-contract, model rework, raw writer, configuration, configuration-rework) pass against the pre-change code",
+    "file": "tests/",
+    "reason": "Split/moved or pre-existing behavior guards; 133 of 300 touched tests fail against the prior code and carry the change signal."
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "Extra driver option `allow_explicit_model` (bypasses the tier map so raw model IDs can be passed) and `fallback_model` validation go beyond the PRD, which says the model resolves through the agent tier map and names only model/effort/fallback",
+    "file": "src/ovcaq/drivers/claude.py:41",
+    "reason": "Accepted cycle-1 launch-option decision: models resolve through tiers and explicit models are opt-in only; fallback_model is the cycle-1 A3 design contract."
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "Structure deviates from the PRD layout. Decoding and classification live in an extra module `drivers/claude_events.py`, though the PRD says `drivers/claude.py` holds all Claude behavior. Tests are named differently from the PRD list. `LaunchSpec` has no stdin field, so the \"exact stdin\" test requirement is unmet by construction, and the prompt is passed as an argv element",
+    "file": "src/ovcaq/drivers/claude_events.py",
+    "reason": "The helper module stays inside the Claude driver edge (no provider code leaks to shared modules); exact argv with the prompt as an argument is the characterized launch contract."
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "The usage deduplication Bloom filter is a fixed 1 MiB bytearray per driver. It can undercount on false positives (documented in a comment), which sits uneasily with the \"deduplicate by provider identity\" requirement and costs memory",
+    "file": "src/ovcaq/drivers/claude.py:72",
+    "reason": "Re-raise of the settled cycle-1 Bloom filter entry (required by the task-7 decision)."
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "R1-R3: 18 touched tests (neutrality directory guard, model rework negative params and prose guards, direct AgentSettings validation) pass against the pre-change code",
+    "file": "tests/",
+    "reason": "L1/L2-requested guards of existing behavior and negative-branch params; the pinning cases (x-api-key/apiKey redaction, rate-limit shape, sanitize-before-truncate) fail at base."
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "Loud preflight for unattended permissions is only a constructor error plus a probe detail string",
+    "file": "src/ovcaq/drivers/claude.py:74",
+    "reason": "Recurs cycle-1 O16 (fixed). The PRD contrasts a loud preflight with an implicit global default: a missing permission_mode fails loudly at construction and probe detail names the configured mode. A configured mode is not a failure."
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "Empty 0-byte placeholder files for out-of-scope Codex/generic drivers sit in the tree",
+    "file": "src/ovcaq/drivers/codex.py",
+    "reason": "P00-T03 import-only package skeleton (commit 2beab41), pinned by tests/test_package_baseline.py and tests/packaging/packaging_support.py; PRD 00009 fills codex.py."
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "Fixture matrix bundles failure classes into one failures.jsonl instead of distinct files",
+    "file": "tests/fixtures/claude/v1/failures.jsonl",
+    "reason": "PRD layout is fixtures/claude/*.jsonl; the matrix requirement is class coverage, which failures.jsonl provides one class per line. Splitting files is churn."
+  },
+  {
+    "cycle": 3,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "`rejected → allowed → banner`: clearing `_limit_live` lets the banner emit a new `rate_limit.started`, though task 16 says \"no rejected event decoded earlier in this session\"",
+    "file": "src/ovcaq/drivers/claude.py:191",
+    "reason": "Task 20 adversarial round: honoring the literal task-16 wording forces a limit the provider already cleared to drive the retry time. After `allowed`, a fresh terminal banner is new evidence and applies. Only a reset-less rejection stops marking the limit live (M4)."
+  },
+  {
+    "cycle": 4,
+    "disposition": "discarded",
+    "severity": "high",
+    "issue": "Spec says normalized events must redact environment values. The code only redacts key names (token, secret and similar) and likely-secret patterns (`sk-`, Bearer) in `sanitize_text` and `sanitize_json`. Nothing matches the configured `AgentSettings.environment` values, so a WARDEN_UNATTENDED-style value or a non-secret-shaped env value can appear in normalized activity text, tool detail or previews",
+    "file": "src/ovcaq/events/model.py:22",
+    "reason": "Configuration rejects credential-shaped environment keys and values (cycle-1 A1 fix, src/ovcaq/config.py), so the configured overlay holds only non-secret control flags such as CLAUDE_UNATTENDED=1. The accepted design reads the PRD's 'redact environment values' as key-based redaction plus narrow likely-secret patterns; value-matching '1' or 'auto' in free text would corrupt ordinary prose."
+  },
+  {
+    "cycle": 4,
+    "disposition": "discarded",
+    "severity": "high",
+    "issue": "ClaudeDriver is never registered as a built-in. `discover_drivers` takes `builtins` as an argument, but no `DriverPlugin` for Claude exists and no entry point is declared. Spec requires built-ins to register by unique name. Only tests can exercise the registry",
+    "file": "src/ovcaq/drivers/base.py:165",
+    "reason": "Re-raise of the settled cycle-1 registration entry (accepted design discover_drivers(builtins); supervisor composition belongs to PRD 00007)."
+  },
+  {
+    "cycle": 4,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "Extra behavior beyond spec. The Claude driver adds `allow_explicit_model` and `fallback_model` options, a 1 MiB Bloom filter for usage eviction, a banner-parsing fallback for reset times, and ISO-reset parsing",
+    "file": "src/ovcaq/drivers/claude.py:39",
+    "reason": "Re-raise of settled cycle-1/cycle-3 entries (launch options, Bloom filter); banner and ISO reset parsing are the ported rate-limit behavior tasks 16 and 20 required."
+  },
+  {
+    "cycle": 4,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "Fixture matrix is thin. `tests/fixtures/claude/v1` has only healthy, failures and malformed files; no separate tool-active or lane/subagent fixture files; `tests/drivers/test_registry.py` has a single test",
+    "file": "tests/fixtures/claude/v1/healthy.jsonl",
+    "reason": "Re-raise of the settled cycle-3 fixture entry: class coverage is met one class per line."
+  },
+  {
+    "cycle": 4,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "Failure classification is substring-based and can misclassify benign text",
+    "file": "src/ovcaq/drivers/claude_events.py:223",
+    "reason": "Marker substrings are the characterized classification contract; hardening needs real failure captures. Deferred to batch end."
+  },
+  {
+    "cycle": 4,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "Cannot statically verify: reported runtime results at 82a12fe for `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy src/ovcaq`, and `uv build`; the supplied work-phase record reports success.",
+    "file": "N/A",
+    "reason": "Resolved: last-verification.json at 82a12fe records all five commands exit 0."
+  },
+  {
+    "cycle": 5,
+    "disposition": "settled-deferral",
+    "severity": "medium",
+    "issue": "`_preview` still preserves a whitespace-free truncated window unless it contains `sk-`, contrary to Task 22’s unconditional empty-preview contract; replace the conditional with `end = 0` and update the older test that expects an `x` preview.",
+    "file": "src/ovcaq/events/tail.py:148",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 5,
+    "disposition": "settled-deferral",
+    "severity": "high",
+    "issue": "The reducer binds identity only on start or terminal events, allowing earlier observations from another session to contaminate a successful summary and its usage",
+    "file": "src/ovcaq/events/reducer.py:42",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 5,
+    "disposition": "settled-deferral",
+    "severity": "high",
+    "issue": "Failure classification misses standard authentication, rate-limit, and connectivity forms such as expired OAuth tokens, HTTP 429, and ECONNRESET, classifying them as generic agent failures",
+    "file": "src/ovcaq/drivers/claude_events.py:223",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 5,
+    "disposition": "settled-deferral",
+    "severity": "medium",
+    "issue": "The provider-neutral events layer imports both the downstream driver layer and runtime persistence, reversing the mandated `events <- drivers <- runtime` dependency direction",
+    "file": "src/ovcaq/events/tail.py:8",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 5,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "The required normalized-event tailing interface is absent; `events/tail.py` only provides writing and raw-stream decoding",
+    "file": "src/ovcaq/events/tail.py:21",
+    "reason": "No Phase 4 source task or specified callable requires a normalized-file reader here. P06-T01 of the accepted source plan owns log tailing; the accepted design explicitly assigns normalized tailing to PRD 00008. This phase provides record conversion, the writer and raw-first decoder."
+  },
+  {
+    "cycle": 5,
+    "disposition": "settled-deferral",
+    "severity": "medium",
+    "issue": "Claude process conformance exercises only normal completion and does not verify the specified live TERM/KILL response",
+    "file": "tests/drivers/test_claude_process.py:119",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 5,
+    "disposition": "settled-deferral",
+    "severity": "medium",
+    "issue": "Authorization values that use a scheme other than Bearer still leak. sanitize_text(\"Authorization: Basic dXNlcjpwYXNzd29yZA==\") gives \"Authorization: [REDACTED] dXNlcjpwYXNzd29yZA==\": only the scheme word is redacted. The same happens with `token ghp_…` and `Digest …`. This gap already existed at 82a12fe, but the diff rewrote this exact clause as `(?:bearer\\s+)?`. No test covers it",
+    "file": "src/ovcaq/events/model.py:29",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 5,
+    "disposition": "settled-deferral",
+    "severity": "medium",
+    "issue": "Once `continue` became `return None`, the `for … else: return None` branch can no longer run: the year+1 pass either raises or builds a time later than `local`. The loop can become one constructor plus `replace(year=local.year + 1)`, which raises ValueError for Feb 29 and gives the same results",
+    "file": "src/ovcaq/drivers/claude_events.py:200",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 5,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "JSON keys with escaped quotes inside raw previews are not redacted. In `{\\\"apiKey\\\": \\\"v\\\"}` the key is followed by a backslash, so `[\"']?\\s*[:=]` fails and `v` survives in raw.unknown previews (claude.py:151, tail.py:152). This already existed at 82a12fe. It matters most when stream records change shape and many records fall back to raw.unknown",
+    "file": "src/ovcaq/events/model.py:29",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 5,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "The protocol doc describes the preview wrongly. It says \"512-byte window\", but the window is _PREVIEW_WINDOW_BYTES = 4096 (or the frame-buffer cap if smaller). It says a trailing CR \"never\" reaches the preview, but finish() on an unterminated `…\\r` frame keeps it (trim_cr needs `terminated`)",
+    "file": "docs/driver-protocol.md:77",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 5,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "Two asserts are redundant: each `not any(...)` / `\"ABCDE\" not in preview` check follows `assert preview == \"\"` and can never add anything",
+    "file": "tests/events/test_tail.py:668",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 5,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "Cannot statically verify: full `uv run pytest` at 0228eb0 (the context says \"currently running\"; tasks 22 and 23 record no suite output, including the DST time-only banner tests)",
+    "file": "N/A",
+    "reason": "Resolved by the current review session: uv run pytest -q at 0228eb00f39a3152a008351212fee3b01603a646 exited 0 with 3003 passed, 0 failed, 0 skipped. Bob had read the context before the foreground suite completed."
+  },
+  {
+    "cycle": 5,
+    "disposition": "settled-deferral",
+    "severity": "high",
+    "issue": "Normalized sanitization preserves arbitrary values nested under `environment`, so credentials with non-sensitive variable names can leak into normalized logs",
+    "file": "src/ovcaq/events/model.py:95",
+    "reason": "rework cap reached with this finding unresolved"
+  },
+  {
+    "cycle": 5,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "29 touched test(s) pass against the pre-change code: test_banner_reset_never_skips_invalid_year_to_later_leap_day, test_banner_applies_after_credible_then_resetless_rejection, test_banner_reset_resolves_dated_banner_in_anchor_local_year +23 more",
+    "file": "tests/drivers/test_claude_rate_limit.py",
+    "reason": "Behavior-preserving date construction and explicit coverage backfill intentionally pass on the base. Task 23 explicitly required pinning rejected(R)->rejected(no reset)->banner without changing behavior. Existing date parameters plus the leap-day-already-passed negative case also pass on base; the non-leap-anchor case fails. Replay found 10 changed cases failing, not a tautological assertion."
+  },
+  {
+    "cycle": 5,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "1 touched test(s) pass against the pre-change code: test_text_sanitization_redacts_assignment_with_long_sensitive_key",
+    "file": "tests/events/test_model_rework.py",
+    "reason": "The suffix=10 parameter is a pre-existing behavior guard; suffix=65 and suffix=1000 fail against the base. The computed replay groups parameter cases under one function name. Passing the short-key control is intentional."
+  },
+  {
+    "cycle": 5,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "The undocumented `allow_explicit_model` option bypasses the required agent-tier model resolution contract",
+    "file": "src/ovcaq/drivers/claude.py:41",
+    "reason": "The accepted cycle-1/3 decision explicitly allows opt-in model literals; the Blake ledger matcher correctly retained that prior decision."
+  },
+  {
+    "cycle": 5,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "The required full failure-session fixture matrix is represented by unrelated one-line terminal records, so stateful rate-limit, connectivity, permission, and terminal-failure sessions are not covered",
+    "file": "tests/fixtures/claude/v1/failures.jsonl:1",
+    "reason": "Class coverage is represented one class per line and sequence behavior is tested in the decoder/rate-limit modules; the accepted cycle-3/4 fixture-layout decision remains in force."
+  }
+]

@@ -1,0 +1,47 @@
+Verified disposition: retract the initial `--ceiling` finding.
+
+TEST-012 explicitly requires override semantics and CLI exposure. DEC-071 defines the policy as task count greater than the supplied ceiling and specifies no positive-only domain. The migration contract assigns this behavior to PRD 00004/P02-T04.
+
+Initial audit preserved: one 🟡 finding; B1, B6, B7, and B10 failed; all other rules passed.
+
+Corrected raw report:
+
+[BLAKE] ✅ No issues found
+
+B1: pass
+B2: pass
+B3: pass
+B4: pass
+B5: pass
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: pass
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: pass
+B16: pass
+B17: pass
+B18: pass
+B19: pass
+
+Coverage:
+
+- P02-T01: `selection.py`, `paths.py`; ordering, hold exclusion, missing/invalid/symlink directories.
+- P02-T02: `frontmatter.py`; defaults, overrides, malformed input, warnings, tier resolution, CAS application.
+- P02-T03: `transitions.py`; all six transitions, rejection matrix, full effects, drained terminal state, compound mutation.
+- P02-T04: `resume.py`, `policy.py`; resume precedence, plan validation, TEST-012 ceiling overrides.
+- P02-T05: `records.py`; reset ownership, batch preservation, deterministic summaries, idempotent completion.
+- P02-T06: `_files.py`; operation-ID deduplication, conflicts, publication boundaries, replay.
+- P02-T07: `records.py`; intent/move/record/reset/commit, seven interruption boundaries, identity and publication races.
+- P02-T08: `reports.py`; deterministic goldens, idempotent publication, malformed input and path safety.
+- P02-T09: configuration/path tests and forbidden legacy/provider string guards.
+- P02-T10: parser registry, generated documentation, and exact `docs/operations.md` equality.
+- Phase A exit: characterized fixtures and pure lifecycle suites.
+- Phase B exit: saga boundary, replay, identity, ledger, and publication suites.
+- Phase C exit: installed command surface, renderer goldens, generated docs, import and provider guards.
+
+Executed: `mise exec -- uv run pytest -q tests/workflow` — 373 passed, with two unrelated pytest temporary-directory cleanup warnings. Packaging tests, Ruff, and mypy were statically inspected where relevant but not executed.

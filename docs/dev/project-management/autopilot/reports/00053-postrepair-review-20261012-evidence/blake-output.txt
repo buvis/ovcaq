@@ -1,0 +1,26 @@
+Ran myself: the 6 acceptance test files (279 passed), the full suite (7159 passed), ruff check, ruff format --check, mypy and uv build (all clean), plus `uv sync --all-groups --locked` (I used `--locked` to avoid rewriting the lockfile). I also called `classify_failure` directly on extra inputs. No Critical or High issues. All four findings are Low, three of them confirmed by those runs and one suspected.
+
+[BLAKE] ⚪ Some real-looking HTTP lines that lack an "HTTP"/"status"/"error code" prefix are now `unknown`. Confirmed by direct call: "429 Too Many Requests", "503 Service Unavailable", "502 Bad Gateway", "403 Forbidden", `{"status": 429}` and `statusCode: 503`. Before this change they were classified, so a bare "429 Too Many Requests" now takes the immediate generic retry instead of the rate-limit wait or halt. "401 Unauthorized" still works through the word "unauthorized", so the four codes behave differently. The forms Codex actually emits ("unexpected status 503 …", "last status: 429 …", reqwest, HTTP/x) are covered and pinned | File: src/ovcaq/drivers/codex_events.py:300 | Task: P0-T1
+[BLAKE] ⚪ The bare word "status" counts as an HTTP context, so ordinary counts after it still get a failure class. Confirmed: "status 401 files processed" and "exit status 401" both return `authentication`. Inside the PRD's wording, but no negative control is pinned for it | File: src/ovcaq/drivers/codex_events.py:302 | Task: P0-T1
+[BLAKE] ⚪ Suspected, not reproduced: health checks look up the executable relative to the supervisor's own working directory, but the real launch runs in the project root (`cwd=request.root`). The Claude check uses `shutil.which`; the Codex check starts its probe without setting a working directory. A relative PATH entry, an empty PATH segment, or a relative command can therefore pass the check and fail at launch, or the reverse, whenever `--root` differs from the process directory. The documented empty-host-PATH case also differs: Claude reports unhealthy while the launch would search the root directory. The exit criterion "health checks and actual spawn agree" holds only for absolute PATH entries | File: src/ovcaq/drivers/claude.py:82 | Task: P1-T2
+[BLAKE] ⚪ A late update for a lane that already finished is now dropped with no `raw_unknown` record, while a late close status for the same lane does emit one. So a contradictory late "errored" after "completed" leaves no trace in the normalized stream; only raw.jsonl keeps it. `item_lanes(started_lanes=None)` also keeps its optional default: a caller that leaves it out never fails a lane on close (review R1 asked for it to be required) | File: src/ovcaq/drivers/codex.py:383 | Task: P0-T1
+
+B1: pass
+B2: pass
+B3: pass
+B4: pass
+B5: pass
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: pass
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: pass
+B16: pass
+B17: pass
+B18: pass
+B19: pass

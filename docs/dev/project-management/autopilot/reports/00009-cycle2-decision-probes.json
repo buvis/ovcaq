@@ -1,0 +1,5 @@
+{
+  "helper_reassembles_synthetic_secret": true,
+  "normalized_payload_contains_synthetic_secret": false,
+  "surrogate_result": "UnicodeEncodeError"
+}

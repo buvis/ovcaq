@@ -1,0 +1,81 @@
+[BOB] 🟠 The TUI follows `paths.events` (`<runtime>/events.jsonl`), but no production code writes that file. The supervisor's `RawFirstDecoder` writes normalized observations only to `sessions/<id>/normalized.jsonl` (`supervisor.py:421`). In a real run, every poll therefore gets "events missing", lanes and live usage never fill in, provider stays "unknown", and telemetry is stuck at "partial". The integration suite never checks lanes or provider, so nothing caught this. | File: src/ovcaq/tui/model.py:274 | Task: P06-T01
+[BOB] 🟠 When the selected supervisor exits (drain, halt, boundary pause, stop), `cleanup_run_records` removes its registry entry. `_identity_live` then returns False and `_observe` stops reading state, so the view drops to status "unknown" with no capabilities. The post-drain capability failure, its retry command, the halted/paused status and the completed status all disappear. `ProjectApp` exits on its own only if a poll happens to land in the sub-second window where the batch shows "completed". The unit tests keep the identity live with a stub, so this path is untested. | File: src/ovcaq/tui/model.py:396 | Task: P06-T04
+[BOB] 🟡 The raw-file degradation path never fires in production. `observe_run().active_session_id` comes from run.json, whose `session_id` the supervisor sets to the run_id (`supervisor.py:207`). Real sessions get fresh uuids (`supervisor.py:371`), so `observe_session_evidence(paths, run_id)` always looks in a directory that doesn't exist. `test_raw_only_telemetry_survives_missing_normalization` injects an arbitrary session id, so it passes anyway. | File: src/ovcaq/tui/model.py:376 | Task: P06-T07
+[BOB] 🟡 Interactive `run`/`resume` on a batch that finishes right away reports a crash. The child supervisor exits 0, but `_run` writes the launch report only when `exit_code != 0`, so the launcher prints "exited with code 0: unhandled crash before publishing a failure report". Alternatively, attach races cleanup and fails with "No matching run selection". | File: src/ovcaq/supervisor_cli.py:138 | Task: P06-T08
+[BOB] 🟡 The production fleet pickers print registry `root` and `agent` without `display_text`. `run_plain_fleet` writes them raw to the terminal, and the registry only checks that they are non-empty strings, so control sequences get through. Meanwhile the sanitized `fleet_table` (`panels.py:46`), which `test_fleet_table_sanitizes_agent_run_and_path_text` covers, has no production caller. | File: src/ovcaq/tui/app.py:354 | Task: P06-T02
+[BOB] 🟡 `save_theme` has no production caller; only tests call it. No binding or theme watcher persists a theme change, so the saving half of the theme port is dead code. | File: src/ovcaq/tui/app.py:152 | Task: P06-T06
+[BOB] 🟡 `_linked_dirs` rejects a symlinked `XDG_CONFIG_HOME` (it checks `path.parent.parent`). `config.py` trusts the same anchor on purpose (`tests/runtime/test_paths.py:357`), so the two disagree. Users with a symlinked `~/.config` always get the theme gap. `_config_root` also re-implements XDG resolution and treats an empty value differently from `config.py`. | File: src/ovcaq/tui/app.py:123 | Task: P06-T06
+[BOB] 🟡 `cli.py` imports `ovcaq.tui.app` at module top, and that module imports Textual and Rich at import time. Every `ovcaq` call, including the frequent agent `ovcaq state ...` calls, now pays the Textual import. The cost is my guess (about 100 ms or more, not measured). | File: src/ovcaq/cli.py:61 | Task: P06-T08
+[BOB] 🟡 `_resume_and_attach` repeats existing services. It builds a `FleetRun` from a `FleetEntry` by hand and runs verify, then CAS-resume, but skips the post-write re-verify that `RunControlService.resume` does. The same `FleetEntry`→`FleetRun` copy also appears at `supervisor_cli.py:260` and `tui/discovery.py:22`. | File: src/ovcaq/cli.py:492 | Task: P06-T08
+[BOB] 🟡 `except BaseException` followed by `if not isinstance(error, Exception): raise` behaves exactly like `except Exception:`. Ruff runs default rules with no BLE, so there is no lint reason for this shape. | File: src/ovcaq/events/tail.py:316 | Task: P06-T01
+[BOB] 🟡 `run_plain` prints the whole five-panel frame every 0.25 s even when nothing changed. Over a multi-hour session that floods the terminal or any piped log. | File: src/ovcaq/tui/app.py:338 | Task: P06-T09
+[BOB] 🟡 CHANGELOG has no Added entry for `ovcaq attach`, TTY-default `ovcaq run`, the TUI with plain fallback, or interactive `resume` that launches or attaches. In this range only a paths Fixed line was added, but `rules/changelog.md` requires an entry with each feat commit. | File: CHANGELOG.md:9 | Task: general
+[BOB] 🟡 The capability view drops the last attempt's `session_id`, so "retained evidence" shows only the detail string, with no pointer to the durable session logs the PRD's post-drain feature names. | File: src/ovcaq/tui/model.py:236 | Task: P06-T04
+[BOB] ⚪ `verify_run`, `launch_supervisor` and `stop_supervisor` (process ownership) live in the CLI dispatch module, so the TUI imports `supervisor_cli`. AGENTS.md and the PRD structure put process ownership under `runtime/`. | File: src/ovcaq/supervisor_cli.py:158 | Task: P06-T05
+[BOB] ⚪ Production code never produces `AttachResult` reason "fallback"; only test doubles do. | File: src/ovcaq/tui/app.py:97 | Task: P06-T09
+[BOB] ⚪ The `ControlService.pause` `reason` parameter has no production caller: the TUI never passes one, only `test_supervisor_cli` does. | File: src/ovcaq/tui/app.py:43 | Task: P06-T05
+[BOB] ⚪ The `EOFError` handlers in `run_plain` and `run_plain_fleet` can never fire: `readline` returns "" at EOF, and `poll` never reads stdin. `test_plain_project_interrupt_or_eof_is_detach` injects an EOFError that cannot happen. | File: src/ovcaq/tui/app.py:342 | Task: P06-T09
+[BOB] ⚪ One backlog condition produces 2 or 3 gaps: the follower's "truncated: read budget reached" plus "backlog: ..." (`session.py:277`), or plus "event backlog pending" and "event history incomplete" (`model.py:416`). `TailGap` kind "truncated" also covers two different things, a hit read budget and a truncated file. | File: src/ovcaq/events/tail.py:242 | Task: P06-T01
+[BOB] ⚪ The fleet picker hides `malformed_entries`/`stale_entries`. With no live runs it opens an empty picker, and plain mode just waits at "run id:". | File: src/ovcaq/tui/app.py:209 | Task: P06-T02
+[BOB] ⚪ `resume` help still says "clear a pause request", but interactive resume now launches or attaches. The operator docs don't mention the q/p/s/? keys, the theme path, or the plain fallback. | File: src/ovcaq/cli.py:203 | Task: general
+[BOB] ⚪ [MECH] `assert config.is_dir() or config.is_symlink()` hedges with `or`, so it doesn't pin the collision kind for each parameter. | File: tests/state/test_cli.py:361 | Task: general
+[BOB] ⚪ `RunControlService.stop` calls `stop_supervisor(run)`, which builds its own `FleetRegistry` instead of using the injected `self._registry` that pause and resume use. | File: src/ovcaq/tui/app.py:77 | Task: P06-T05
+[BOB] ⚪ The new metric validator accepts an int `cost_usd` (`session.py:118`), but `_usage_view` sums only floats. An int cost shows as "unknown" and isn't flagged partial. `events.model.Usage` requires float. | File: src/ovcaq/tui/model.py:221 | Task: P06-T01
+[BOB] ⚪ When a supervisor already owns the root, interactive `run` fails with "ambiguous or unrelated ownership ... end it with `ovcaq stop`". That `stop` would kill the healthy existing run, not the child that failed. | File: src/ovcaq/supervisor_cli.py:252 | Task: P06-T08
+[BOB] ⚪ Cannot statically verify: fail-first replay. The replay runner timed out after 600 s (`review-replay-00008-c1-20261003.md`). | File: N/A | Task: general
+[BOB] ⚪ `launch_supervisor` creates the derived runtime tree (`ensure_runtime_directory`) but writes its report under the configured `runtime_root`. These may differ when the runtime root is configured. | File: src/ovcaq/supervisor_cli.py:279 | Task: P06-T08
+[BOB] ⚪ `observe_metrics` imports `JsonlFollower` inside the function to avoid a `runtime.session` ↔ `events.tail` import cycle. | File: src/ovcaq/runtime/session.py:254 | Task: P06-T01
+[BOB] ⚪ `verify_run` reads run.json with an unbounded `read_text()` that follows symlinks, while `observe_run` does a bounded O_NOFOLLOW read. | File: src/ovcaq/supervisor_cli.py:158 | Task: P06-T05
+[BOB] ⚪ `tests/runtime/test_runtime_cli.py` is 1234 lines, over the 800 limit. | File: tests/runtime/test_runtime_cli.py | Task: general
+
+R1: fail
+R2: fail
+R3: pass
+R4: fail
+R6: pass
+R7: fail
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+FIX:
+- events.jsonl has no writer — src/ovcaq/tui/model.py:274 — Tee each normalized observation into `paths.events` from the supervisor (an aggregate writer next to the session `NormalizedEventWriter`), or follow the active session's `normalized.jsonl`. Then add an integration assertion that a live run shows the provider and a lane.
+- Ended run hides terminal state — src/ovcaq/tui/model.py:396 — In `_identity_live`, tell "ended" (no live entry for the root) apart from "replaced" (another live entry). When ended, read state one final time, then re-check that no replacement registered. Show the terminal status (halted, attention, paused, completed, failed capability with retry), and have `ProjectApp` exit with that last frame printed.
+- `active_session_id` is the run id — src/ovcaq/tui/model.py:376 — Take the active session from the selected run's pending metric row (`row.run_id == run.run_id` with no completion), or have the supervisor publish the current session id. Add a test that uses a real supervisor's run.json.
+- Exit 0 reported as a crash — src/ovcaq/supervisor_cli.py:138 — Write the decision reason to the report for every outcome. In `launch_supervisor`, treat exit 0 as a finished run, so the CLI prints the decision and returns 0, not `LaunchError`.
+- Unsanitized fleet rows and dead `fleet_table` — src/ovcaq/tui/app.py:354 — Build one row formatter that runs `display_text` on run_id, root and agent, use it in `FleetApp` and `run_plain_fleet`, delete `fleet_table` (or use it in the plain picker), and point the sanitize test at the real pickers.
+- Dead `save_theme` — src/ovcaq/tui/app.py:152 — Add `watch_theme` to both apps that calls `save_theme`, or delete `save_theme` and its 4 tests.
+- Symlinked XDG anchor rejected — src/ovcaq/tui/app.py:123 — Reject only a symlinked `ovcaq` component (`path.parent`), reuse `config.py`'s anchor resolution, and change `test_symlinked_config_component_is_rejected` to cover only that component.
+- Eager Textual import — src/ovcaq/cli.py:61 — Import `attach`/`RunControlService` inside `_attach_view`.
+- Duplicated resume path — src/ovcaq/cli.py:492 — Use `select_run(discover_fleet(registry), run_id=None, root=root)` plus `RunControlService(registry).resume(run, revision)`, and add one `FleetRun.from_entry` for all three conversions.
+- BaseException shape — src/ovcaq/events/tail.py:316 — Replace with `except Exception as error:` and drop the isinstance re-raise.
+- Plain renderer reprints — src/ovcaq/tui/app.py:338 — Print only when `view != last_view` (`ProjectView` is a frozen dataclass).
+- CHANGELOG — CHANGELOG.md:9 — Add Added entries for `attach`, TTY-default `run` with detach, the TUI with plain fallback, and interactive `resume` launching or attaching.
+- Retained evidence pointer — src/ovcaq/tui/model.py:236 — Carry `attempts[-1]["session_id"]` into `CapabilityView` and render `evidence: ovcaq logs --session <id>`.
+- Process ownership in the CLI module — src/ovcaq/supervisor_cli.py:158 — Move `verify_run`, `launch_supervisor`, `stop_supervisor` and `operator_notice` to a `runtime/` module, and keep `supervisor_cli` for dispatch only.
+- Unused "fallback" reason — src/ovcaq/tui/app.py:97 — Drop it from the Literal and the parametrized tests.
+- Unused pause `reason` — src/ovcaq/tui/app.py:43 — Remove the parameter, or wire a reason prompt into `p`.
+- Unreachable EOFError — src/ovcaq/tui/app.py:342 — Catch only `KeyboardInterrupt` in both functions and drop the EOFError test case.
+- Duplicate backlog gaps — src/ovcaq/events/tail.py:242 — Emit a single "backlog" gap kind from the follower and remove the extra gaps in `observe_metrics` and `_apply`.
+- Fleet diagnostics hidden — src/ovcaq/tui/app.py:209 — Show the malformed and stale counts, and return "no live runs" when the fleet is empty.
+- Stale `resume` help and missing docs — src/ovcaq/cli.py:203 — Update the help text (the docs are generated from it) and add a short operations section on keys, theme path and fallback.
+- MECH hedge — tests/state/test_cli.py:361 — Record `config.lstat().st_mode` before running and assert it is unchanged afterwards.
+- `stop` ignores the injected registry — src/ovcaq/tui/app.py:77 — Pass `self._registry` through `stop_supervisor(run, registry)`.
+- `cost_usd` int/float mismatch — src/ovcaq/tui/model.py:221 — Make the metric validator float-only, matching `events.model.Usage`.
+- Misleading ownership advice — src/ovcaq/supervisor_cli.py:252 — Before spawning, reject when a live run already owns the root ("already running; use `ovcaq attach`").
+VERIFY:
+- Fail-first replay timed out — Rerun the replay with a longer cap, or split it by test directory, against 1f500258065d. Every new or changed test in tests/tui, tests/events/test_tail_reader.py, tests/runtime/test_attach.py and tests/integration/test_terminal_lifecycle.py must fail there.
+- Runtime root mismatch — After `ovcaq init`, in a project whose `ovcaq.toml` sets a non-default runtime root, run `ovcaq --root P run` in a PTY. Confirm the launch succeeds and no `docs/dev/project-management/ovcaq` directory is created.
+KNOWN:
+- Import cycle worked around with a local import — The PRD structure puts tailing in `events/tail.py`, so moving `JsonlFollower` is a layout change beyond this rework.
+- `verify_run` unbounded read — This is pre-existing `_stop` logic that the diff moved, not new code. Hardening it belongs to the runtime hardening scope.
+- `test_runtime_cli.py` over 800 lines — It was already over the limit; this diff changed only two path strings in it.
+
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass

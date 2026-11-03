@@ -1,0 +1,14 @@
+{
+  "attempt": 1,
+  "model": "sonnet",
+  "outcome": "completed",
+  "review_cycle": 16,
+  "cause": null,
+  "implementor": "codex",
+  "preflight_outcome": null,
+  "pipeline": "lean",
+  "qwen_excluded_reason": "files",
+  "self_deslop": "noop",
+  "style_gate": "clean",
+  "split_hygiene": "clean"
+}

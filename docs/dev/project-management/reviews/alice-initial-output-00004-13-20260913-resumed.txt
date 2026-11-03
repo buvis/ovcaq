@@ -1,0 +1,14 @@
+[ALICE] 🟡 `_ensure_directory_chain` read-opens every ancestor from `/`, so a configured runtime beneath a valid search-only ancestor is rejected as “not a real directory”; walk only the missing suffix plus the existing boundary that requires durability confirmation, using descriptor-relative traversal where identity checks are needed | File: src/ovcaq/workflow/_files.py:252 | Task: P02-T06/P02-T09
+[ALICE] 🟡 `_ensure_directory_chain` includes `/` as a level although `/` is its own parent, causing a redundant open, identity verification, and fsync; start at the first component below `/`, whose parent confirmation already verifies and syncs `/` | File: src/ovcaq/workflow/_files.py:255 | Task: P02-T06
+R1: fail
+R2: fail
+R3: pass
+R4: fail
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: fail
+R13: fail

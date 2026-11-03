@@ -1,0 +1,17 @@
+{
+  "provider": "claude",
+  "model_provider": "anthropic",
+  "lens": "bob",
+  "model": "opus",
+  "started": 1791810445.283712,
+  "completed": 1791810804.82675,
+  "output": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/bob-output-00053-c2-postsweep-20261012.txt",
+  "sha256": "ff50d52bcc97a60dbdf6839c2009ca467c1532877e3713a9b5e7d4c3272799c5",
+  "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/bob-output-00053-c2-postsweep-20261012-fa107f9cf6d14f7d9878c651c416815d.jsonl",
+  "raw_sha256": "6b827e984c3509e71ef21dd9a1349fbe5a0b1a25c0cf7b51cef64b505de9bcb2",
+  "thread_id": "b5cef0a1-309b-46a1-bc91-e1c9237267cb",
+  "root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+  "prd": "00053-adapter-operational-corrections-v1.md",
+  "cycle": 2,
+  "implementation_fingerprint": "dc3a1730423571328f86544292cb0e93894ba9a48656555cf2efbf0411757b4b"
+}

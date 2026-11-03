@@ -1,0 +1,311 @@
+[
+  {
+    "task": "5",
+    "agent": "tess_5",
+    "session": "01a12563-eda6-7cd1-904f-6abc2463ec74",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "7819970d7f807d6fad07b115af4f0df1fbc4a248",
+    "models": [
+      [
+        8,
+        "gpt-6.1-sol",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/tess_5-rollout-2026-10-10T12-37-48-01a12563-eda6-7cd1-904f-6abc2463ec74.jsonl"
+  },
+  {
+    "task": "5",
+    "agent": "tess_5_strengthen",
+    "session": "01a1256b-5e70-7a10-b173-31767b9534c0",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "179148cd92740ce3fcee90cba656646f59817a96",
+    "models": [
+      [
+        8,
+        "gpt-6.1-sol",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/tess_5_strengthen-rollout-2026-10-10T12-45-55-01a1256b-5e70-7a10-b173-31767b9534c0.jsonl"
+  },
+  {
+    "task": "5",
+    "agent": "ivan_5",
+    "session": "01a1256d-2a93-70f2-a11a-e7f8016a3f00",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "b36e72ae28c3e4fb2916199f5ce541c8c2e0ef0b",
+    "models": [
+      [
+        8,
+        "gpt-6.1-sol",
+        "high"
+      ],
+      [
+        61,
+        "gpt-6.1-sol",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/ivan_5-rollout-2026-10-10T12-47-53-01a1256d-2a93-70f2-a11a-e7f8016a3f00.jsonl"
+  },
+  {
+    "task": "6",
+    "agent": "tess_6",
+    "session": "01a1256f-a3f7-75e2-a996-23e21c05a817",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "2b7a62d0663160a8a9ab4ab13727773eeedd53e5",
+    "models": [
+      [
+        8,
+        "gpt-6.1-sol",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/tess_6-rollout-2026-10-10T12-50-35-01a1256f-a3f7-75e2-a996-23e21c05a817.jsonl"
+  },
+  {
+    "task": "6",
+    "agent": "tess_6_interface",
+    "session": "01a12575-2fdb-7592-8d80-d4da98980196",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "11261fa440065fa30a20122b7f4d15afb013eeea",
+    "models": [
+      [
+        8,
+        "gpt-6.1-sol",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/tess_6_interface-rollout-2026-10-10T12-56-39-01a12575-2fdb-7592-8d80-d4da98980196.jsonl"
+  },
+  {
+    "task": "6",
+    "agent": "tess_6_strengthen",
+    "session": "01a12579-e43e-7fa2-8697-2ecfaf0ebb24",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "9b0c49abf0f2fc6486b6a9721b7c53a20dbd9b4d",
+    "models": [
+      [
+        8,
+        "gpt-6.1-sol",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/tess_6_strengthen-rollout-2026-10-10T13-01-47-01a12579-e43e-7fa2-8697-2ecfaf0ebb24.jsonl"
+  },
+  {
+    "task": "6",
+    "agent": "ivan_6",
+    "session": "01a1257b-7994-7a30-ada3-382d34279d26",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "2593b97d5a49c49d0aa7304ccad5c9bac2b4f000",
+    "models": [
+      [
+        8,
+        "gpt-6.1-sol",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/ivan_6-rollout-2026-10-10T13-03-31-01a1257b-7994-7a30-ada3-382d34279d26.jsonl"
+  },
+  {
+    "task": "2",
+    "agent": "tess_2",
+    "session": "01a1257f-0555-7891-bc0a-9cc852e4be16",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "407440342063d2fc8da5c96e2f2a1d23b87161b9",
+    "models": [
+      [
+        8,
+        "gpt-6.1-sol",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/tess_2-rollout-2026-10-10T13-07-23-01a1257f-0555-7891-bc0a-9cc852e4be16.jsonl"
+  },
+  {
+    "task": "2",
+    "agent": "tess_2_strengthen",
+    "session": "01a12589-50f8-7370-9967-aaa607f37385",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "8b0a2cb00d7d6c0e9ebe3fb29227b318fafa400f",
+    "models": [
+      [
+        8,
+        "gpt-6.1-sol",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/tess_2_strengthen-rollout-2026-10-10T13-18-38-01a12589-50f8-7370-9967-aaa607f37385.jsonl"
+  },
+  {
+    "task": "2",
+    "agent": "ivan_2_current",
+    "session": "01a1258d-d5e8-7ff2-bd56-564762d91666",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "dab1e78fa3331bbb0aaa759ec034902460467643",
+    "models": [
+      [
+        8,
+        "gpt-6.1-sol",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/ivan_2_current-rollout-2026-10-10T13-23-34-01a1258d-d5e8-7ff2-bd56-564762d91666.jsonl"
+  },
+  {
+    "task": "3",
+    "agent": "tess_3_current",
+    "session": "01a12590-45f8-7373-8770-0aea39dc3ba0",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "b137ad1cab2cfd0a04a86718960f3aafd99c4010",
+    "models": [
+      [
+        8,
+        "gpt-6.1-sol",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/tess_3_current-rollout-2026-10-10T13-26-14-01a12590-45f8-7373-8770-0aea39dc3ba0.jsonl"
+  },
+  {
+    "task": "3",
+    "agent": "tess_3_quality_current",
+    "session": "01a12593-b073-7b91-a8da-9c1fd1cb6421",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "b137ad1cab2cfd0a04a86718960f3aafd99c4010",
+    "models": [
+      [
+        8,
+        "gpt-6.1-sol",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/tess_3_quality_current-rollout-2026-10-10T13-29-58-01a12593-b073-7b91-a8da-9c1fd1cb6421.jsonl"
+  },
+  {
+    "task": "3",
+    "agent": "tess_3_strengthen_current",
+    "session": "01a12598-3682-75b0-99c2-c96af917308d",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "7fb839e4ac306063067bbe6dfda1ea29d29e7806",
+    "models": [
+      [
+        8,
+        "gpt-6.1-sol",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/tess_3_strengthen_current-rollout-2026-10-10T13-34-54-01a12598-3682-75b0-99c2-c96af917308d.jsonl"
+  },
+  {
+    "task": "3",
+    "agent": "ivan_3_current",
+    "session": "01a1259a-368d-7cc0-a13c-6508d855e6a1",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "59194293374c584f592dcb9f65b29cd2cce1bf8a",
+    "models": [
+      [
+        8,
+        "gpt-6.1-sol",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/ivan_3_current-rollout-2026-10-10T13-37-05-01a1259a-368d-7cc0-a13c-6508d855e6a1.jsonl"
+  },
+  {
+    "task": "4",
+    "agent": "ivan_4_current",
+    "session": "01a1259c-9163-7e91-aba2-00ac86f909e2",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "115a453cb952ccf556f624e37f20f0e02271c633",
+    "models": [
+      [
+        8,
+        "gpt-6.1-sol",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/ivan_4_current-rollout-2026-10-10T13-39-40-01a1259c-9163-7e91-aba2-00ac86f909e2.jsonl"
+  },
+  {
+    "task": "4",
+    "agent": "ivan_4_correction",
+    "session": "01a1259e-a86e-7991-a8f6-10e6fdbb3b27",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "9f6ea759460e6001777aa1b47eb9b64357fb26cc",
+    "models": [
+      [
+        8,
+        "gpt-6-astra",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/ivan_4_correction-rollout-2026-10-10T13-41-57-01a1259e-a86e-7991-a8f6-10e6fdbb3b27.jsonl"
+  },
+  {
+    "task": "5",
+    "agent": "ivan_format_5",
+    "session": "01a125a4-4a43-7053-8bd7-3d710ff4e836",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "6c1b3f278892310a87688e5e0ab9a5b09909cfa8",
+    "models": [
+      [
+        8,
+        "gpt-6-astra",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/ivan_format_5-rollout-2026-10-10T13-48-06-01a125a4-4a43-7053-8bd7-3d710ff4e836.jsonl"
+  },
+  {
+    "task": "2",
+    "agent": "ivan_format_2",
+    "session": "01a125a8-3296-7a82-b8c1-ffba26eb9c8b",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "85d6029638fc6f7c77a36411e4f172c9c8ea8236",
+    "models": [
+      [
+        8,
+        "gpt-6-astra",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/ivan_format_2-rollout-2026-10-10T13-52-22-01a125a8-3296-7a82-b8c1-ffba26eb9c8b.jsonl"
+  },
+  {
+    "task": "3",
+    "agent": "ivan_format_3",
+    "session": "01a125a9-1e1c-7410-9ac5-a2be36a4a33b",
+    "parent": "01a12559-8901-7332-aa0b-0024846e1348",
+    "provider": "openai",
+    "source_head": "68b15e6875c71605c350d59c7a34b77bc7f8f817",
+    "models": [
+      [
+        8,
+        "gpt-6-astra",
+        "high"
+      ]
+    ],
+    "path": "docs/dev/project-management/autopilot/reports/00053-model-evidence/ivan_format_3-rollout-2026-10-10T13-53-22-01a125a9-1e1c-7410-9ac5-a2be36a4a33b.jsonl"
+  }
+]

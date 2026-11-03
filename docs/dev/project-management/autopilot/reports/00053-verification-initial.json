@@ -1,0 +1,34 @@
+{
+  "sha": "6c1b3f278892310a87688e5e0ab9a5b09909cfa8",
+  "cycle": 1,
+  "commands": [
+    {
+      "command": "UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache uv sync --all-groups",
+      "exit": 0
+    },
+    {
+      "command": "UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache uv run pytest",
+      "exit": 0
+    },
+    {
+      "command": "UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache uv run ruff check .",
+      "exit": 0
+    },
+    {
+      "command": "UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache uv run ruff format --check .",
+      "exit": 1
+    },
+    {
+      "command": "UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache uv run mypy src/ovcaq",
+      "exit": 0
+    },
+    {
+      "command": "UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache uv build",
+      "exit": 0
+    }
+  ],
+  "pytest_summary": "7165 passed, 2 warnings in 231.59s (0:03:51)",
+  "passed": 7165,
+  "failed": 0,
+  "skipped": 0
+}

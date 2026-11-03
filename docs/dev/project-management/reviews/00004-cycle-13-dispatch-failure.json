@@ -1,0 +1,45 @@
+{
+  "cycle": 13,
+  "provider": "claude",
+  "requested_model": "opus",
+  "actual_model": null,
+  "logical_tier": "opus",
+  "provider_inference": false,
+  "exit": 1,
+  "api_status": 429,
+  "reason": "You've hit your session limit \u00b7 resets 7:50pm (Europe/Prague)",
+  "reset_at": "2026-09-07T19:50:00+02:00",
+  "rate_limit": {
+    "status": "rejected",
+    "resetsAt": 1788803400,
+    "rateLimitType": "five_hour",
+    "overageStatus": "rejected",
+    "overageDisabledReason": "out_of_credits",
+    "isUsingOverage": false,
+    "unifiedWindows": {
+      "five_hour": {
+        "utilization": 1.04,
+        "resetsAt": 1788803400
+      },
+      "seven_day": {
+        "utilization": 0.8,
+        "resetsAt": 1789290000
+      }
+    }
+  },
+  "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00004-cycle-13-bob-output-8e22f932bdb843f896b7c570679c4ab6.jsonl",
+  "raw_sha256": "05fd83bf9f356f44802ad4d4aab80064ae2d015d84e9d5ad08f8a981019329fa",
+  "stderr": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00004-cycle-13-bob-output-8e22f932bdb843f896b7c570679c4ab6.stderr",
+  "receipt": null,
+  "retry": "not attempted: confirmed quota rejection; retrying unchanged quota is forbidden by dispatch error taxonomy",
+  "carl": {
+    "exit": 3,
+    "reason": "refusing nested dispatch (already inside a CLI agent)",
+    "provider_inference": false
+  },
+  "watcher": {
+    "status": "terminated",
+    "session_id": 39333,
+    "result": "WAITING; command completed and no active wait process remains"
+  }
+}

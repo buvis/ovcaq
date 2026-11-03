@@ -1,0 +1,5 @@
+Command: mise exec -- uv run pytest -q --tb=line
+Exit: 0
+7154 passed, 2 warnings in 256.04s (0:04:16)
+Two pytest temporary-directory cleanup warnings (Errno 66 Directory not empty).
+Source: coordinator exec session 6217, terminal chunk e1d742. Historical failed full-suite evidence retained unchanged.

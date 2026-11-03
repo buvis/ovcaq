@@ -1,0 +1,43 @@
+[BOB] 🟠 The numeric-code check only accepts "HTTP", "HTTP status", "status code" and "error code" before the number. Bare "status N" and "status: N" are no longer recognized. Real Codex messages now come back `unknown`: "unexpected status 503 Service Unavailable", "unexpected status 429 Too Many Requests" and "exceeded retry limit, last status: 429 Too Many Requests". These used to be connectivity or rate_limit, so they lose their bounded connectivity retries and genuine quota handling. The installed codex 0.162.1 binary contains both message templates, and running the classifier on these strings returns unknown (Alice's and Blake's runs this cycle). The PRD says "HTTP/status/error-code contexts", and docs/driver-protocol.md says "HTTP, status or error-code context". | File: src/ovcaq/drivers/codex_events.py:301 | Task: 6
+[BOB] 🟡 The docs say an empty host `PATH` searches the current directory, but the Claude probe calls `shutil.which(cmd, path="")`, which returns None (stdlib shutil.py:1535). So Claude reports unhealthy, and `test_claude_probe_keeps_empty_host_path_unhealthy` pins that. Only Codex's subprocess probe searches the current directory. | File: docs/driver-protocol.md:37 | Task: 4
+[BOB] 🟡 The new filter that passes only unfinished lanes (codex.py:372) has no test pinning it. The skip at codex.py:383 alone blocks the late `lane.failed`. The filter's only visible effect is the raw-unknown record for a late close on a completed lane, and no test checks for it. Revert the filter and every test still passes (traced by hand). | File: tests/drivers/test_adapter_outcomes.py:89 | Task: 5
+[BOB] 🟡 `assert retries.rate_limit == 0` can never fail. `RetryState` is a frozen dataclass (decision.py:84), the test builds it with rate_limit=0 at line 185, and `decide` never changes it. | File: tests/drivers/test_adapter_failure_classes.py:191 | Task: 6
+[BOB] 🟡 `_ResolvedModelCodexDriver.build_launch` copies `_ResolvedModelClaudeDriver.build_launch` line for line, including the reverse tier-map rule. If one copy changes and the other doesn't, the two adapters drift apart. | File: src/ovcaq/drivers/edge.py:29 | Task: 2
+[BOB] ⚪ Unrequested widening of the classifier: it now collapses whitespace (line 300) and adds the phrase "authentication failed" (line 307). Both "Rate\tlimit reached" and "Authentication failed" were `unknown` before. The test is named `..._retain_case_and_whitespace_variants`, but it pins new behavior. | File: src/ovcaq/drivers/codex_events.py:300 | Task: 6
+[BOB] ⚪ `test_non_json_output_retains_raw_unknown` re-tests generic handling of malformed lines that test_codex_fixtures.py already covers. It has nothing to do with lane stability and passes against the old code. | File: tests/drivers/test_adapter_outcomes.py:265 | Task: 5
+[BOB] ⚪ The design lists "bounded identity eviction must retain raw fallback" as an edge case: a completed lane evicted at 4096 identities, then a late close. test_adapter_outcomes.py has no test for this. | File: tests/drivers/test_adapter_outcomes.py | Task: 5
+[BOB] ⚪ On an empty host PATH the two adapters disagree. The Claude probe reports unhealthy, while the Codex probe spawns and can run `./cmd` from the current directory. | File: src/ovcaq/drivers/claude.py:82 | Task: 3
+[BOB] ⚪ Cannot statically verify: the PRD exit gates (`uv run ruff check .`, `ruff format --check`, `mypy src/ovcaq`, `uv build`) pass. | File: N/A | Task: general
+
+R1: fail
+R2: fail
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+FIX:
+- Bare "status N" codes are not recognized, so real Codex messages come back unknown — src/ovcaq/drivers/codex_events.py:301 — change the pattern to `status = r"(?:http(?: status)?|status(?: code)?|error code)\s*:?\s*"`. Add positive cases to test_adapter_failure_classes.py for "unexpected status 503 Service Unavailable" (connectivity) and "exceeded retry limit, last status: 429 Too Many Requests" (rate_limit). The existing count negatives stay as they are.
+- The docs claim an empty host PATH searches the current directory — docs/driver-protocol.md:37 — reword to: "an empty host `PATH` makes the Claude probe unhealthy; the Codex subprocess probe searches the current directory."
+- Nothing pins the unfinished-lane filter — tests/drivers/test_adapter_outcomes.py:89 — in `test_completed_lane_remains_completed_after_close_status`, assert that `closed` contains a `RAW_UNKNOWN` whose `raw_sha256` matches the close record.
+- The `retries.rate_limit == 0` check can never fail — tests/drivers/test_adapter_failure_classes.py:191 — replace it with `assert decision.reason == ("Waiting to retry connectivity" if expected_kind is DecisionKind.WAIT else "Connectivity retries exhausted")`. That ties the test to the connectivity branch.
+- The reverse tier-map code is duplicated — src/ovcaq/drivers/edge.py:19 and :29 — move it into `def _as_tier_key(tiers, request): keys = {m: t for t, m in tiers.items()}; return replace(request, model=keys.get(request.model, request.model))`. Each subclass then just calls `super().build_launch(_as_tier_key(self._settings.tiers, request))`.
+- The test name claims "retain" for new classifier behavior — tests/drivers/test_adapter_failure_classes.py:105 — rename it to `test_word_diagnostics_match_across_case_and_whitespace` and add the widening to the CHANGELOG classification entry. Or drop the whitespace collapse and the "authentication failed" phrase.
+- A duplicate non-JSON test — tests/drivers/test_adapter_outcomes.py:265 — delete `test_non_json_output_retains_raw_unknown`, since test_codex_fixtures.py already covers malformed lines.
+VERIFY:
+- No test covers a late close on an evicted lane — run `rg -n "4096|Identity capacity gap" tests/drivers`. If no test fills the lane identities and then decodes a late `shutdown` for the evicted lane while asserting `RAW_UNKNOWN` and no `LANE_FAILED`, add that test.
+- The PRD exit gates — run `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy src/ovcaq` and `uv build`, and confirm each exits 0.
+KNOWN:
+- The adapters disagree on an empty host PATH (Claude unhealthy, Codex searches the current directory) — the design chose "empty PATH conservative unhealthy lookup" for Claude and said not to change Codex's probe "gratuitously". Only the doc wording needs fixing (see FIX).
+
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass

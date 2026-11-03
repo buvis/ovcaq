@@ -1,0 +1,757 @@
+I001 [*] Import block is un-sorted or un-formatted
+  --> docs/dev/project-management/plans/fast-track-handoffs/00004-workflow-core-v1/rework-10-report-probe.py:3:1
+   |
+ 1 |   """Rerun the R10 installed comparison and require repaired report equality."""
+ 2 |
+ 3 | / import json
+ 4 | | import os
+ 5 | | from pathlib import Path
+ 6 | | import subprocess
+ 7 | | import sys
+ 8 | | import tempfile
+ 9 | |
+10 | | from ovcaq.state.schema import new_state
+11 | | from ovcaq.state.store import StateStore
+   | |________________________________________^
+12 |
+13 |   ROOT = Path.cwd()
+   |
+help: Organize imports
+  |
+4 | import os
+  - from pathlib import Path
+5 | import subprocess
+6 | import sys
+7 | import tempfile
+8 + from pathlib import Path
+9 |
+  |
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+  --> docs/dev/project-management/reviews/00004-cycle-08-probes.py:65:18
+   |
+63 |                   raise RuntimeError("simulated interruption")
+64 |
+65 |           kwargs = dict(store=store, paths=paths, runtime_root=runtime,
+   |  __________________^
+66 | |                       operation_id_factory=lambda: "probe-08", boundary_hook=boundary,
+67 | |                       now=lambda: "2026-09-05T10:00:00Z")
+   | |_________________________________________________________^
+68 |           if kind == "stall":
+69 |               kwargs.update(prd=PRD, site="probe", detail="identity check")
+   |
+help: Rewrite as a literal
+
+BLE001 Do not catch blind exception: `Exception`
+  --> docs/dev/project-management/reviews/00004-cycle-08-probes.py:82:16
+   |
+80 |                     kwargs["boundary_hook"] = None
+81 |                     getattr(records, kind)(**kwargs)
+82 |         except Exception as exc:
+   |                ^^^^^^^^^
+83 |             error = f"{type(exc).__name__}: {exc}"
+84 |         state = store.read()
+   |
+
+BLE001 Do not catch blind exception: `Exception`
+   --> docs/dev/project-management/reviews/00004-cycle-08-probes.py:143:20
+    |
+141 |             try:
+142 |                 records.record_defer(runtime, PRD, "review-08", {"op_id": "new"})
+143 |             except Exception as exc:
+    |                    ^^^^^^^^^
+144 |                 error = f"{type(exc).__name__}: {exc}"
+145 |             rows.append({"case": f"deferred-{case}", "error": error, "accepted": error is None,
+    |
+
+F841 Local variable `result` is assigned to but never used
+   --> docs/dev/project-management/reviews/00004-cycle-08-probes.py:193:17
+    |
+191 | …     timeout = False
+192 | …     try:
+193 | …         result = subprocess.run([sys.executable, "-m", "ovcaq", "--root", str(root), "--json", "workflow", *arguments, "--runtime-r…
+    |           ^^^^^^
+194 | …                                 env={**os.environ, "XDG_CONFIG_HOME": str(root / "xdg")},
+195 | …                                 capture_output=True, text=True, check=False, timeout=2)
+    |
+help: Remove assignment to unused variable `result`
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+  --> docs/dev/project-management/reviews/00004-cycle-08-replay.py:47:17
+   |
+45 | …     result = subprocess.run(["mise", "exec", "--", "uv", "run", "pytest", "tests", "-q", "-rA", "-p", "no:cacheprovider", "--continu…
+46 | …                             cwd=worktree, capture_output=True, text=True, check=False, timeout=120)
+47 | …     rows = [dict(outcome=outcome, file=path, test=name) for outcome, path, name in module.parse_results(result.stdout)
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+48 | …             if path in touched and (touched[path] is None or name in touched[path])]
+49 | …     counts = {name: sum(row["outcome"] == name for row in rows) for name in ("PASSED", "FAILED", "ERROR", "SKIPPED")}
+   |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+  --> docs/dev/project-management/reviews/00004-cycle-09-adjudication-probes.py:90:16
+   |
+88 |           source.unlink()
+89 |           errors = []
+90 |           args = dict(store=store, paths=paths, runtime_root=runtime, prd=old.PRD,
+   |  ________________^
+91 | |                     site="probe", detail="identity check",
+92 | |                     operation_id_factory=lambda: "missing-source-09")
+   | |_____________________________________________________________________^
+93 |           try:
+94 |               records.stall(**args)
+   |
+help: Rewrite as a literal
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> docs/dev/project-management/reviews/00004-cycle-09-audit.py:1:1
+  |
+1 | / import datetime, hashlib, json, re, subprocess, tomllib
+2 | | from pathlib import Path
+  | |________________________^
+3 |
+4 |   root=Path.cwd()
+  |
+help: Organize imports
+  |
+  - import datetime, hashlib, json, re, subprocess, tomllib
+1 + import datetime
+2 + import hashlib
+3 + import json
+4 + import re
+5 + import subprocess
+6 + import tomllib
+7 | from pathlib import Path
+  |
+
+F401 [*] `tomllib` imported but unused
+ --> docs/dev/project-management/reviews/00004-cycle-09-audit.py:1:49
+  |
+1 | import datetime, hashlib, json, re, subprocess, tomllib
+  |                                                 ^^^^^^^
+2 | from pathlib import Path
+  |
+help: Remove unused import: `tomllib`
+  |
+  - import datetime, hashlib, json, re, subprocess, tomllib
+1 + import datetime, hashlib, json, re, subprocess
+2 | from pathlib import Path
+  |
+
+FURB167 [*] Use of regular expression alias `re.M`
+  --> docs/dev/project-management/reviews/00004-cycle-09-audit.py:24:70
+   |
+22 |     owned=owned["owned"]
+23 | owned_ids={r["id"] for r in owned}
+24 | row_ids=re.findall(r"^\| ((?:ART|CMD|DEC|ENV|STATE|TEST)-\d+) \|",ev,re.M)
+   |                                                                      ^^^^
+25 | assert len(owned_ids)==len(row_ids)==55 and set(row_ids)==owned_ids
+26 | task_ids=re.findall(r"^\| (P02-T\d+) \|",ev,re.M)
+   |
+help: Replace with `re.MULTILINE`
+   |
+23 | owned_ids={r["id"] for r in owned}
+   - row_ids=re.findall(r"^\| ((?:ART|CMD|DEC|ENV|STATE|TEST)-\d+) \|",ev,re.M)
+24 + row_ids=re.findall(r"^\| ((?:ART|CMD|DEC|ENV|STATE|TEST)-\d+) \|",ev,re.MULTILINE)
+25 | assert len(owned_ids)==len(row_ids)==55 and set(row_ids)==owned_ids
+   |
+
+FURB167 [*] Use of regular expression alias `re.M`
+  --> docs/dev/project-management/reviews/00004-cycle-09-audit.py:26:45
+   |
+24 | row_ids=re.findall(r"^\| ((?:ART|CMD|DEC|ENV|STATE|TEST)-\d+) \|",ev,re.M)
+25 | assert len(owned_ids)==len(row_ids)==55 and set(row_ids)==owned_ids
+26 | task_ids=re.findall(r"^\| (P02-T\d+) \|",ev,re.M)
+   |                                             ^^^^
+27 | assert task_ids==[f"P02-T{n:02d}" for n in range(1,11)]
+28 | rubrics={}
+   |
+help: Replace with `re.MULTILINE`
+   |
+25 | assert len(owned_ids)==len(row_ids)==55 and set(row_ids)==owned_ids
+   - task_ids=re.findall(r"^\| (P02-T\d+) \|",ev,re.M)
+26 + task_ids=re.findall(r"^\| (P02-T\d+) \|",ev,re.MULTILINE)
+27 | assert task_ids==[f"P02-T{n:02d}" for n in range(1,11)]
+   |
+
+FURB167 [*] Use of regular expression alias `re.M`
+  --> docs/dev/project-management/reviews/00004-cycle-09-audit.py:37:60
+   |
+35 |     section=body.split(f"## {name.title()}\n",1)[1].split(f"\n## {next_name}\n",1)[0]
+36 |     assert raw in section, name
+37 |     verdicts=re.findall(r"^([RBD])(\d+): (pass|fail)$",raw,re.M)
+   |                                                            ^^^^
+38 |     assert len(verdicts)==sum(map(len,prefixes.values()))
+39 |     for prefix,numbers in prefixes.items():
+   |
+help: Replace with `re.MULTILINE`
+   |
+36 |     assert raw in section, name
+   -     verdicts=re.findall(r"^([RBD])(\d+): (pass|fail)$",raw,re.M)
+37 +     verdicts=re.findall(r"^([RBD])(\d+): (pass|fail)$",raw,re.MULTILINE)
+38 |     assert len(verdicts)==sum(map(len,prefixes.values()))
+   |
+
+UP017 [*] Use `datetime.UTC` alias
+  --> docs/dev/project-management/reviews/00004-cycle-09-audit.py:75:32
+   |
+73 | artifact_hashes={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in files if p.is_file() and p!=pending}
+74 | print(json.dumps({
+75 |     "at":datetime.datetime.now(datetime.timezone.utc).isoformat(),
+   |                                ^^^^^^^^^^^^^^^^^^^^^
+76 |     "head":head,"branch":branch,"status":status,"stashes":stashes,"worktrees":worktrees,
+77 |     "ten_tasks":task_ids,"owned_row_count":len(row_ids),"rubric_verdicts":rubrics,
+   |
+help: Convert to `datetime.UTC` alias
+   |
+74 | print(json.dumps({
+   -     "at":datetime.datetime.now(datetime.timezone.utc).isoformat(),
+75 +     "at":datetime.datetime.now(datetime.UTC).isoformat(),
+76 |     "head":head,"branch":branch,"status":status,"stashes":stashes,"worktrees":worktrees,
+   |
+
+F401 [*] `os` imported but unused
+ --> docs/dev/project-management/reviews/00004-cycle-09-repair-replay.py:6:8
+  |
+5 | import json
+6 | import os
+  |        ^^
+7 | import shutil
+8 | import subprocess
+  |
+help: Remove unused import: `os`
+  |
+5 | import json
+  - import os
+6 | import shutil
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> docs/dev/project-management/reviews/00004-cycle-10-final-audit.py:3:1
+   |
+ 1 |   """Audit the review record and prove prior evidence/source preservation."""
+ 2 |
+ 3 | / import datetime
+ 4 | | import hashlib
+ 5 | | import json
+ 6 | | from pathlib import Path
+ 7 | | import re
+ 8 | | import subprocess
+ 9 | | import sys
+   | |__________^
+10 |
+11 |   ROOT = Path.cwd()
+   |
+help: Organize imports
+   |
+5  | import json
+   - from pathlib import Path
+6  | import re
+7  | import subprocess
+8  | import sys
+9  + from pathlib import Path
+10 |
+   |
+
+FURB167 [*] Use of regular expression alias `re.M`
+  --> docs/dev/project-management/reviews/00004-cycle-10-final-audit.py:44:76
+   |
+42 | body = review.read_text()
+43 | ev = evidence.read_text()
+44 | owned_ids = re.findall(r"^\| ((?:ART|CMD|DEC|ENV|STATE|TEST)-\d+) \|", ev, re.M)
+   |                                                                            ^^^^
+45 | tasks = re.findall(r"^\| (P02-T\d+) \|", ev, re.M)
+46 | assert len(owned_ids) == len(set(owned_ids)) == 55
+   |
+help: Replace with `re.MULTILINE`
+   |
+43 | ev = evidence.read_text()
+   - owned_ids = re.findall(r"^\| ((?:ART|CMD|DEC|ENV|STATE|TEST)-\d+) \|", ev, re.M)
+44 + owned_ids = re.findall(r"^\| ((?:ART|CMD|DEC|ENV|STATE|TEST)-\d+) \|", ev, re.MULTILINE)
+45 | tasks = re.findall(r"^\| (P02-T\d+) \|", ev, re.M)
+   |
+
+FURB167 [*] Use of regular expression alias `re.M`
+  --> docs/dev/project-management/reviews/00004-cycle-10-final-audit.py:45:46
+   |
+43 | ev = evidence.read_text()
+44 | owned_ids = re.findall(r"^\| ((?:ART|CMD|DEC|ENV|STATE|TEST)-\d+) \|", ev, re.M)
+45 | tasks = re.findall(r"^\| (P02-T\d+) \|", ev, re.M)
+   |                                              ^^^^
+46 | assert len(owned_ids) == len(set(owned_ids)) == 55
+47 | assert set(owned_ids) == {row["id"] for row in source["owned"]}
+   |
+help: Replace with `re.MULTILINE`
+   |
+44 | owned_ids = re.findall(r"^\| ((?:ART|CMD|DEC|ENV|STATE|TEST)-\d+) \|", ev, re.M)
+   - tasks = re.findall(r"^\| (P02-T\d+) \|", ev, re.M)
+45 + tasks = re.findall(r"^\| (P02-T\d+) \|", ev, re.MULTILINE)
+46 | assert len(owned_ids) == len(set(owned_ids)) == 55
+   |
+
+FURB167 [*] Use of regular expression alias `re.M`
+  --> docs/dev/project-management/reviews/00004-cycle-10-final-audit.py:60:61
+   |
+58 |     section = body.split(f"## {name.title()}\n", 1)[1].split(f"\n## {next_name}\n", 1)[0]
+59 |     assert raw in section, name
+60 |     found = re.findall(r"^([RBD])(\d+): (pass|fail)$", raw, re.M)
+   |                                                             ^^^^
+61 |     assert len(found) == sum(map(len, prefixes.values()))
+62 |     for prefix, numbers in prefixes.items():
+   |
+help: Replace with `re.MULTILINE`
+   |
+59 |     assert raw in section, name
+   -     found = re.findall(r"^([RBD])(\d+): (pass|fail)$", raw, re.M)
+60 +     found = re.findall(r"^([RBD])(\d+): (pass|fail)$", raw, re.MULTILINE)
+61 |     assert len(found) == sum(map(len, prefixes.values()))
+   |
+
+UP017 [*] Use `datetime.UTC` alias
+  --> docs/dev/project-management/reviews/00004-cycle-10-final-audit.py:81:33
+   |
+79 | hashes = {str(path.relative_to(ROOT)): sha(path) for path in artifacts if path.is_file() and path != target}
+80 | result = {
+81 |     "at": datetime.datetime.now(datetime.timezone.utc).isoformat(), "head": HEAD,
+   |                                 ^^^^^^^^^^^^^^^^^^^^^
+82 |     "branch": "master", "git_status": "", "stashes": "", "worktrees": worktrees,
+83 |     "source_tasks": tasks, "owned_rows": owned_ids, "owned_row_count": 55,
+   |
+help: Convert to `datetime.UTC` alias
+   |
+80 | result = {
+   -     "at": datetime.datetime.now(datetime.timezone.utc).isoformat(), "head": HEAD,
+81 +     "at": datetime.datetime.now(datetime.UTC).isoformat(), "head": HEAD,
+82 |     "branch": "master", "git_status": "", "stashes": "", "worktrees": worktrees,
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> docs/dev/project-management/reviews/00004-cycle-10-prepare.py:3:1
+   |
+ 1 |   """Prepare isolated review inputs without touching product or prior evidence."""
+ 2 |
+ 3 | / import hashlib
+ 4 | | import json
+ 5 | | import os
+ 6 | | from pathlib import Path
+ 7 | | import re
+ 8 | | import subprocess
+ 9 | | import sys
+10 | | import tomllib
+   | |______________^
+11 |
+12 |   ROOT = Path.cwd()
+   |
+help: Organize imports
+   |
+5  | import os
+   - from pathlib import Path
+6  | import re
+7  | import subprocess
+8  | import sys
+9  | import tomllib
+10 + from pathlib import Path
+11 |
+   |
+
+FURB167 [*] Use of regular expression alias `re.S`
+  --> docs/dev/project-management/reviews/00004-cycle-10-prepare.py:50:92
+   |
+48 | plan = plan_path.read_text()
+49 | phase = plan.split("### Phase 2 — deterministic workflow core\n", 1)[1].split("### Phase 3", 1)[0]
+50 | tasks = re.findall(r"- \[ \] \[(P02-T\d+)\] (.*?)(?=\n- \[ \]|\n\nExit criteria:)", phase, re.S)
+   |                                                                                            ^^^^
+51 | assert [ident for ident, _ in tasks] == [f"P02-T{n:02d}" for n in range(1, 11)]
+52 | exits = phase.split("Exit criteria:\n", 1)[1].strip()
+   |
+help: Replace with `re.DOTALL`
+   |
+49 | phase = plan.split("### Phase 2 — deterministic workflow core\n", 1)[1].split("### Phase 3", 1)[0]
+   - tasks = re.findall(r"- \[ \] \[(P02-T\d+)\] (.*?)(?=\n- \[ \]|\n\nExit criteria:)", phase, re.S)
+50 + tasks = re.findall(r"- \[ \] \[(P02-T\d+)\] (.*?)(?=\n- \[ \]|\n\nExit criteria:)", phase, re.DOTALL)
+51 | assert [ident for ident, _ in tasks] == [f"P02-T{n:02d}" for n in range(1, 11)]
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> docs/dev/project-management/reviews/00004-cycle-10-probes.py:3:1
+   |
+ 1 |   """Retain fresh original-harness results and independent installed lock probes."""
+ 2 |
+ 3 | / import importlib.util
+ 4 | | import json
+ 5 | | import os
+ 6 | | from pathlib import Path
+ 7 | | import subprocess
+ 8 | | import sys
+ 9 | | import tempfile
+10 | | from unittest.mock import patch
+11 | |
+12 | | from ovcaq.state.schema import new_state
+13 | | from ovcaq.state.store import StateStore
+14 | | from ovcaq.workflow import _files, records
+   | |__________________________________________^
+15 |
+16 |   ROOT = Path.cwd()
+   |
+help: Organize imports
+   |
+5  | import os
+   - from pathlib import Path
+6  | import subprocess
+7  | import sys
+8  | import tempfile
+9  + from pathlib import Path
+10 | from unittest.mock import patch
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> docs/dev/project-management/reviews/00004-cycle-10-report-probe.py:3:1
+   |
+ 1 |   """Compare installed report JSON text and the updated published artifact."""
+ 2 |
+ 3 | / import json
+ 4 | | import os
+ 5 | | from pathlib import Path
+ 6 | | import subprocess
+ 7 | | import sys
+ 8 | | import tempfile
+ 9 | |
+10 | | from ovcaq.state.schema import new_state
+11 | | from ovcaq.state.store import StateStore
+   | |________________________________________^
+12 |
+13 |   ROOT = Path.cwd()
+   |
+help: Organize imports
+  |
+4 | import os
+  - from pathlib import Path
+5 | import subprocess
+6 | import sys
+7 | import tempfile
+8 + from pathlib import Path
+9 |
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> docs/dev/project-management/reviews/00004-cycle-10-save-review.py:3:1
+  |
+1 |   """Save FT-04R10 findings, source coverage, dispatch provenance and handoff."""
+2 |
+3 | / import json
+4 | | from pathlib import Path
+5 | | import re
+6 | | import subprocess
+7 | | import sys
+  | |__________^
+8 |
+9 |   ROOT = Path.cwd()
+  |
+help: Organize imports
+  |
+3 | import json
+  - from pathlib import Path
+4 | import re
+5 | import subprocess
+6 | import sys
+7 + from pathlib import Path
+8 |
+  |
+
+FURB167 [*] Use of regular expression alias `re.M`
+  --> docs/dev/project-management/reviews/00004-cycle-10-save-review.py:21:67
+   |
+19 | source = json.loads((REV / f"{TAG}-owned-rows.json").read_text())
+20 | for name, prefixes in {"alice": {"R": {1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13}}, "blake": {"B": set(range(1, 20))}, "bob": {"R": {1, 2…
+21 |     lines = re.findall(r"^([RBD])(\d+): (pass|fail)$", raw[name], re.M)
+   |                                                                   ^^^^
+22 |     assert len(lines) == sum(len(values) for values in prefixes.values())
+23 |     for prefix, expected in prefixes.items():
+   |
+help: Replace with `re.MULTILINE`
+   |
+20 | for name, prefixes in {"alice": {"R": {1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13}}, "blake": {"B": set(range(1, 20))}, "bob": {"R": {1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13}, "D": set(range(1, 6))}}.items():
+   -     lines = re.findall(r"^([RBD])(\d+): (pass|fail)$", raw[name], re.M)
+21 +     lines = re.findall(r"^([RBD])(\d+): (pass|fail)$", raw[name], re.MULTILINE)
+22 |     assert len(lines) == sum(len(values) for values in prefixes.values())
+   |
+
+PLC0206 Extracting value from dictionary without calling `.items()`
+   --> docs/dev/project-management/reviews/00004-cycle-10-save-review.py:429:5
+    |
+428 | """
+429 | for name in raw:
+    |     ^^^^^^^^^^^
+430 |     review += f"## {name.title()}\n\n{raw[name]}\n\n"
+    |                                       ---------
+431 | review += f"""## Handoff
+    |
+help: Use `for name, value in raw.items()` instead
+
+FURB167 [*] Use of regular expression alias `re.M`
+   --> docs/dev/project-management/reviews/00004-cycle-10-save-review.py:585:277
+    |
+583 | …
+584 | …
+585 | …lidation_rows": len(re.findall(r"^\| \[", consolidation.stdout, re.M))}, indent=2))
+    |                                                                  ^^^^
+help: Replace with `re.MULTILINE`
+    |
+584 | (REV / f"{TAG}-contract-card.md").write_text(card)
+    - print(json.dumps({"review": str(REV / f"{STEM}.md"), "evidence": str(REV / f"{STEM}-evidence.md"), "handoff": str(HANDOFF / "review-10.md"), "terminal": {"fix": 1, "verify": 0, "known": 4, "total": 5}, "raw_consolidation_rows": len(re.findall(r"^\| \[", consolidation.stdout, re.M))}, indent=2))
+585 + print(json.dumps({"review": str(REV / f"{STEM}.md"), "evidence": str(REV / f"{STEM}-evidence.md"), "handoff": str(HANDOFF / "review-10.md"), "terminal": {"fix": 1, "verify": 0, "known": 4, "total": 5}, "raw_consolidation_rows": len(re.findall(r"^\| \[", consolidation.stdout, re.MULTILINE))}, indent=2))
+    |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> docs/dev/project-management/reviews/00004_cycle_11_final_audit.py:3:1
+   |
+ 1 |   """Read-only final integrity and evidence audit; prints the durable record."""
+ 2 |
+ 3 | / import ast
+ 4 | | import hashlib
+ 5 | | import json
+ 6 | | from pathlib import Path
+ 7 | | import re
+ 8 | | import subprocess
+ 9 | | import tomllib
+   | |______________^
+10 |
+11 |   ROOT = Path.cwd()
+   |
+help: Organize imports
+   |
+5  | import json
+   - from pathlib import Path
+6  | import re
+7  | import subprocess
+8  | import tomllib
+9  + from pathlib import Path
+10 |
+   |
+
+FURB167 [*] Use of regular expression alias `re.M`
+  --> docs/dev/project-management/reviews/00004_cycle_11_final_audit.py:51:62
+   |
+49 | for name, expected in {"alice": [f"R{i}" for i in (1,2,3,4,6,7,8,9,10,11,12,13)], "blake": [f"B{i}" for i in range(1,20)], "bob": [f"R…
+50 |     output = (tmp / f"{name}-output-00004-cycle-11.txt").read_text()
+51 |     found = re.findall(r"^([RBD]\d+): (pass|fail)$", output, re.M)
+   |                                                              ^^^^
+52 |     assert len(found) == len(expected) and {rule for rule, _ in found} == set(expected)
+53 |     assert output.strip() in review
+   |
+help: Replace with `re.MULTILINE`
+   |
+50 |     output = (tmp / f"{name}-output-00004-cycle-11.txt").read_text()
+   -     found = re.findall(r"^([RBD]\d+): (pass|fail)$", output, re.M)
+51 +     found = re.findall(r"^([RBD]\d+): (pass|fail)$", output, re.MULTILINE)
+52 |     assert len(found) == len(expected) and {rule for rule, _ in found} == set(expected)
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> docs/dev/project-management/reviews/00004_cycle_11_prepare.py:3:1
+   |
+ 1 |   """Prepare isolated review inputs without touching product or prior evidence."""
+ 2 |
+ 3 | / import hashlib
+ 4 | | import json
+ 5 | | import os
+ 6 | | from pathlib import Path
+ 7 | | import re
+ 8 | | import subprocess
+ 9 | | import sys
+10 | | import tomllib
+11 | | import tempfile
+   | |_______________^
+12 |
+13 |   OUTPUTS = {}
+   |
+help: Organize imports
+   |
+5  | import os
+   - from pathlib import Path
+6  | import re
+7  | import subprocess
+8  | import sys
+9  + import tempfile
+10 | import tomllib
+   - import tempfile
+11 + from pathlib import Path
+12 |
+   |
+
+FURB167 [*] Use of regular expression alias `re.S`
+  --> docs/dev/project-management/reviews/00004_cycle_11_prepare.py:53:92
+   |
+51 | plan = plan_path.read_text()
+52 | phase = plan.split("### Phase 2 — deterministic workflow core\n", 1)[1].split("### Phase 3", 1)[0]
+53 | tasks = re.findall(r"- \[ \] \[(P02-T\d+)\] (.*?)(?=\n- \[ \]|\n\nExit criteria:)", phase, re.S)
+   |                                                                                            ^^^^
+54 | assert [ident for ident, _ in tasks] == [f"P02-T{n:02d}" for n in range(1, 11)]
+55 | exits = phase.split("Exit criteria:\n", 1)[1].strip()
+   |
+help: Replace with `re.DOTALL`
+   |
+52 | phase = plan.split("### Phase 2 — deterministic workflow core\n", 1)[1].split("### Phase 3", 1)[0]
+   - tasks = re.findall(r"- \[ \] \[(P02-T\d+)\] (.*?)(?=\n- \[ \]|\n\nExit criteria:)", phase, re.S)
+53 + tasks = re.findall(r"- \[ \] \[(P02-T\d+)\] (.*?)(?=\n- \[ \]|\n\nExit criteria:)", phase, re.DOTALL)
+54 | assert [ident for ident, _ in tasks] == [f"P02-T{n:02d}" for n in range(1, 11)]
+   |
+
+PERF102 When using only the keys of a dict use the `keys()` method
+   --> docs/dev/project-management/reviews/00004_cycle_11_prepare.py:147:29
+    |
+145 | snapshot[str(PRD.relative_to(ROOT))] = sha(PRD)
+146 | write(REV / f"{TAG}-prior-artifact-hashes.json", json.dumps(snapshot, indent=2) + "\n")
+147 | for destination, content in OUTPUTS.items():
+    |                             ^^^^^^^^^^^^^
+148 |     assert not Path(destination).exists(), destination
+149 | bundle = Path("/tmp/ft04r11_inputs.json")
+    |
+help: Replace `.items()` with `.keys()`
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> docs/dev/project-management/reviews/00004_cycle_11_probes.py:8:1
+   |
+ 6 |   """
+ 7 |
+ 8 | / from __future__ import annotations
+ 9 | |
+10 | | import json
+11 | | import os
+12 | | from pathlib import Path
+13 | | import select
+14 | | import stat
+15 | | import subprocess
+16 | | import sys
+17 | | import tempfile
+18 | | from unittest.mock import patch
+   | |_______________________________^
+help: Organize imports
+   |
+11 | import os
+   - from pathlib import Path
+12 | import select
+--------------------------------------------------------------------------------
+16 | import tempfile
+17 + from pathlib import Path
+18 | from unittest.mock import patch
+   |
+
+BLE001 Do not catch blind exception: `Exception`
+  --> docs/dev/project-management/reviews/00004_cycle_11_probes.py:69:16
+   |
+67 |         try:
+68 |             loaded = {"ids": [row["op_id"] for row in load_deferred_records(runtime, "batch")]}
+69 |         except Exception as error:
+   |                ^^^^^^^^^
+70 |             loaded = {"error_type": type(error).__name__, "detail": str(error)}
+71 |         replay = capture(args, cwd=project, env=env)
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+   --> docs/dev/project-management/reviews/00004_cycle_11_probes.py:153:5
+    |
+152 |   def fsync_probe(root: Path) -> dict:
+153 | /     from ovcaq.cli import main
+154 | |     from ovcaq.workflow.records import load_deferred_records
+155 | |     from contextlib import redirect_stdout, redirect_stderr
+156 | |     import io
+    | |_____________^
+157 |       project = root / "fsync"
+158 |       runtime = project / "new/nested"
+    |
+help: Organize imports
+    |
+152 | def fsync_probe(root: Path) -> dict:
+153 +     import io
+154 +     from contextlib import redirect_stderr, redirect_stdout
+155 +
+156 |     from ovcaq.cli import main
+157 |     from ovcaq.workflow.records import load_deferred_records
+    -     from contextlib import redirect_stdout, redirect_stderr
+    -     import io
+158 |     project = root / "fsync"
+    |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> docs/dev/project-management/reviews/00004_cycle_12_crash_probe.py:3:1
+   |
+ 1 |   """Reproduce an interrupted runtime-directory confirmation using installed code."""
+ 2 |
+ 3 | / from __future__ import annotations
+ 4 | |
+ 5 | | import json
+ 6 | | import os
+ 7 | | import subprocess
+ 8 | | import sys
+ 9 | | import tempfile
+10 | | from pathlib import Path
+   | |________________________^
+help: Organize imports
+   |
+11 |
+   -
+12 | ACTOR = r'''
+   |
+
+BLE001 Do not catch blind exception: `Exception`
+  --> docs/dev/project-management/reviews/ancestry_handoff_probe_14.py:62:20
+   |
+60 |                 result = record_defer(runtime, "00004-a.md", "batch", record)
+61 |                 status, error = "success", None
+62 |             except Exception as caught:
+   |                    ^^^^^^^^^
+63 |                 result = None
+64 |                 status, error = "refused", repr(caught)
+   |
+
+BLE001 Do not catch blind exception: `Exception`
+  --> docs/dev/project-management/reviews/ancestry_reparent_probe_15.py:62:20
+   |
+60 |                 result = record_defer(runtime, "00004-a.md", "batch", record)
+61 |                 status, error = "success", None
+62 |             except Exception as caught:
+   |                    ^^^^^^^^^
+63 |                 result, status, error = None, "refused", repr(caught)
+64 |         index = next(i for i, row in enumerate(events) if row["event"] == "replace-ancestor-and-reparent")
+   |
+
+BLE001 Do not catch blind exception: `Exception`
+  --> docs/dev/project-management/reviews/ancestry_replacement_probe_13.py:54:20
+   |
+52 |                 status = "success"
+53 |                 error = None
+54 |             except Exception as caught:
+   |                    ^^^^^^^^^
+55 |                 result = None
+56 |                 status = "refused"
+   |
+
+RUF100 [*] Unused `noqa` directive (non-enabled: `E402`)
+  --> docs/dev/project-management/reviews/claude_connectivity_probe_20260913.py:14:16
+   |
+12 | sys.dont_write_bytecode = True
+13 | sys.path.insert(0, str(Path.home() / ".config/autocodex"))
+14 | import driver  # noqa: E402
+   |                ^^^^^^^^^^^^
+help: Remove unused `noqa` directive
+   |
+13 | sys.path.insert(0, str(Path.home() / ".config/autocodex"))
+   - import driver  # noqa: E402
+14 + import driver
+15 |
+   |
+
+BLE001 Do not catch blind exception: `Exception`
+  --> docs/dev/project-management/reviews/final_stat_probe_16.py:66:20
+   |
+64 |                 result = record_defer(runtime, "00004-a.md", "batch", record)
+65 |                 outcome, error = "success", None
+66 |             except Exception as caught:
+   |                    ^^^^^^^^^
+67 |                 result, outcome, error = None, "refused", repr(caught)
+68 |         events.append({"event": "returned", "outcome": outcome})
+   |
+
+Found 41 errors.
+[*] 28 fixable with the `--fix` option (5 hidden fixes can be enabled with the `--unsafe-fixes` option).

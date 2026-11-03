@@ -1,0 +1,9 @@
+{
+  "name": "[C2] Report purge lock contention safely (S)",
+  "description": "Preserve both required locks and map concurrent run/purge contention and retention-lock refusal through the stable CLI error boundary.\n\nDisposition: deferred at cycle/cap 2/2. Review evidence only; no automatic repair dispatch is authorized by this task record. Keep it unstarted for operator/batch-end triage.\nSource review: dev/local/reviews/00005-runtime-substrate-v1-review-02.md\n\n### Findings (verbatim)\n[BOB] ⚪ A second concurrent `logs purge --apply` is refused with \"cannot purge while a run is active\", because run.lock is taken first. That message is wrong for this case. retention.lock can never be the contended lock, since its only taker already holds run.lock. If it ever were contended, its DuplicateRunError (a RuntimeError) would escape `_dispatch_logs` and `main` as a traceback. | File: src/ovcaq/runtime/_retention.py:363 | Task: 12\n\nAcceptance criteria:\n- [ ] Resolve every linked finding against PRD 00005 and its accepted source contracts.\n- [ ] Preserve single state writer, provider-neutral boundaries, owned-process signaling, and retained evidence.\n- [ ] Add only meaningful regression coverage and run the applicable quality gates when repair is authorized.\n\nFinding IDs: C2F29",
+  "review_cycle": 2,
+  "finding_ids": [
+    "C2F29"
+  ],
+  "deferred_at_cap": true
+}

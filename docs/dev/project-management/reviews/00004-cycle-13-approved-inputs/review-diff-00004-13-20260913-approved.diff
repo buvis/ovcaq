@@ -1,0 +1,493 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 246ef08..5d12c9e 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -21,6 +21,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+ 
+ ### Fixed
+ 
++- Shared publication contention reports `publication busy; retry: <path>` for both reports and deferred ledgers.
++- Deferred retries and replays confirm existing runtime ancestry after abrupt exits and preserve directories created by concurrent callers when confirmation fails.
+ - Deferred publication validates the complete prospective ledger and persists newly created runtime ancestors; overlapping report renders no longer lose successful sections.
+ - Report JSON returns the complete published batch text after PRD updates and exact rerenders.
+ - Deferred ledgers reject duplicate keys and excessive nesting; replaced sidecar locks refuse publication without losing competing appends.
+diff --git a/src/ovcaq/workflow/_files.py b/src/ovcaq/workflow/_files.py
+index 1c73ce2..0c01264 100644
+--- a/src/ovcaq/workflow/_files.py
++++ b/src/ovcaq/workflow/_files.py
+@@ -72,7 +72,7 @@ def _serialize_deferred_publication(path: Path, directory: int) -> Iterator[None
+     try:
+         fcntl.flock(directory, fcntl.LOCK_EX | fcntl.LOCK_NB)
+     except BlockingIOError as error:
+-        raise OSError(f"deferred publication busy; retry: {path}") from error
++        raise OSError(f"publication busy; retry: {path}") from error
+     try:
+         yield
+     finally:
+@@ -250,24 +250,17 @@ def _sync_deferred_directory(path: Path, directory: int) -> None:
+ 
+ 
+ def _ensure_directory_chain(path: Path) -> None:
+-    """Durably create only the missing suffix of ``path``'s directory chain.
+-
+-    A level is removed again if confirming its parent's fsync fails, so an
+-    existing level is always already durably confirmed; a retry only redoes
+-    the missing suffix starting at the boundary that failed.
+-    """
+-    missing: list[Path] = []
+-    level = path
+-    while not level.exists():
+-        missing.append(level)
+-        level = level.parent
+-    for level in reversed(missing):
+-        level.mkdir()
+-        try:
+-            _fsync_directory(level.parent)
+-        except OSError:
+-            level.rmdir()
+-            raise
++    """Confirm every ancestor, including levels left by interrupted creators."""
++    path = path.resolve()
++    for level in (*reversed(path.parents), path):
++        with _open_lifecycle_directory(level.parent, label="runtime") as parent:
++            level.mkdir(exist_ok=True)
++            with _open_lifecycle_directory(level, label="runtime") as directory:
++                os.fsync(parent)
++                _verify_lifecycle_directory_identity(
++                    level.parent, parent, label="runtime"
++                )
++                _verify_lifecycle_directory_identity(level, directory, label="runtime")
+ 
+ 
+ @contextmanager
+diff --git a/tests/packaging/rework_12_scripts.py b/tests/packaging/rework_12_scripts.py
+new file mode 100644
+index 0000000..c6cfb4f
+--- /dev/null
++++ b/tests/packaging/rework_12_scripts.py
+@@ -0,0 +1,134 @@
++"""Installed-interpreter programs for runtime ancestry durability regressions."""
++
++__all__ = ["ANCESTRY_ACTOR", "ORIGIN_CHECK"]
++
++ORIGIN_CHECK = r"""
++import json
++import sys
++from pathlib import Path
++
++def installed_origins() -> dict[str, str]:
++    origins = {}
++    prefix = Path(sys.prefix).resolve()
++    for name, module in tuple(sys.modules.items()):
++        if name == "ovcaq" or name.startswith("ovcaq."):
++            filename = getattr(module, "__file__", None)
++            assert filename, f"product module has no origin: {name}"
++            path = Path(filename).resolve()
++            assert path.is_relative_to(prefix), (name, filename, str(prefix))
++            assert "site-packages" in path.parts, (name, filename)
++            origins[name] = str(path)
++    assert "ovcaq" in origins
++    return origins
++"""
++
++_COMMON = (
++    ORIGIN_CHECK
++    + r"""
++import errno
++import io
++import os
++import stat
++from contextlib import redirect_stderr, redirect_stdout
++from unittest.mock import patch
++from ovcaq.cli import main
++from ovcaq.workflow.records import record_defer
++
++project = Path(sys.argv[1])
++target = project / sys.argv[2]
++mode = sys.argv[3]
++runtime = project / "new/nested"
++directories = (project, project / "new", runtime, runtime / "deferred")
++state_path = project / "independent/state.json"
++real_mkdir = Path.mkdir
++real_fsync = os.fsync
++created = False
++paused = False
++peer_seen = None
++synced = []
++failed_parent = False
++
++def identity(path: Path) -> list[int]:
++    current = path.stat()
++    return [current.st_dev, current.st_ino]
++
++def pause(event: str) -> None:
++    message = {"event": event, "origins": installed_origins()}
++    if event == "peer-created":
++        message["identity"] = identity(target)
++    print(json.dumps(message), file=sys.__stdout__, flush=True)
++    assert sys.stdin.readline() == "continue\n", "actor was not resumed"
++
++def observing_mkdir(path: Path, *args, **kwargs) -> None:
++    global created, paused, peer_seen
++    selected = path == target
++    if selected and mode.startswith("racer") and not paused:
++        paused = True
++        pause("before-mkdir")
++        peer_seen = identity(target)
++    existed = path.exists()
++    result = real_mkdir(path, *args, **kwargs)
++    if selected and not existed:
++        created = True
++        if mode == "peer" and not paused:
++            paused = True
++            pause("peer-created")
++    return result
++
++def observing_fsync(descriptor: int) -> None:
++    global failed_parent
++    opened = os.fstat(descriptor)
++    matched = None
++    if stat.S_ISDIR(opened.st_mode):
++        descriptor_identity = [opened.st_dev, opened.st_ino]
++        for candidate in directories:
++            if candidate.exists() and identity(candidate) == descriptor_identity:
++                matched = candidate
++                break
++    if mode == "crash" and created and matched == target.parent:
++        print(json.dumps({
++            "event": "exit-before-parent-fsync", "target": str(target),
++            "identity": identity(target), "parent_identity": descriptor_identity,
++            "origins": installed_origins(),
++        }), file=sys.__stdout__, flush=True)
++        os._exit(73)
++    real_fsync(descriptor)
++    if matched is not None:
++        synced.append({"path": str(matched), "identity": descriptor_identity})
++    if mode == "racer-fail" and peer_seen and matched == target.parent:
++        failed_parent = True
++        raise OSError(errno.EIO, "injected peer parent fsync failure", str(matched))
++
++def invoke_cli() -> dict:
++    stdout, stderr = io.StringIO(), io.StringIO()
++    argv = [
++        "--root", str(project), "--json", "workflow", "defer",
++        "--runtime-root", str(runtime), "--state", str(state_path),
++        "--prd", "00004-a.md", "--record", str(project / "record.json"),
++    ]
++    with redirect_stdout(stdout), redirect_stderr(stderr):
++        status = main(argv)
++    return {"exit": status, "stdout": stdout.getvalue(), "stderr": stderr.getvalue()}
++
++def invoke_record() -> dict:
++    try:
++        path = record_defer(runtime, "00004-a.md", "batch", {"op_id": "crash-one"})
++    except Exception as error:
++        return {"exit": 2, "error": str(error)}
++    return {"exit": 0, "path": str(path)}
++"""
++)
++
++_RUN = r"""
++installed_origins()
++with patch.object(Path, "mkdir", observing_mkdir), patch.object(os, "fsync", observing_fsync):
++    result = invoke_record() if mode in {"peer", "racer", "racer-fail"} else invoke_cli()
++result.update({
++    "origins": installed_origins(), "fsyncs": synced,
++    "peer_seen": peer_seen, "failed_parent": failed_parent,
++})
++print(json.dumps(result), flush=True)
++raise SystemExit(result["exit"])
++"""
++
++ANCESTRY_ACTOR = _COMMON + _RUN
+diff --git a/tests/packaging/test_rework_11.py b/tests/packaging/test_rework_11.py
+index 9402d59..40725a4 100644
+--- a/tests/packaging/test_rework_11.py
++++ b/tests/packaging/test_rework_11.py
+@@ -275,7 +275,7 @@ def test_installed_defer_retries_every_new_directory_fsync_after_failure(
+         retry["directories"].index(label) for label in required_after_failure
+     ]
+     assert retry_positions == sorted(retry_positions)
+-    assert retry["delegated_calls"] >= len(retry["directories"])
++    assert not evidence["state_changed_while_interrupted"]
+     assert evidence["state_valid_after_failure"]
+     assert evidence["state_unchanged_after_retry"]
+ 
+@@ -308,12 +308,18 @@ def _render_command(installed: InstalledWheel, root: Path) -> list[str | Path]:
+     ]
+ 
+ 
+-def _assert_retry_error(result: subprocess.CompletedProcess[str]) -> None:
++def _assert_retry_error(
++    result: subprocess.CompletedProcess[str], report_path: Path
++) -> None:
+     assert result.returncode != 0
+     assert result.stdout == ""
+     error = json.loads(result.stderr)["error"]
+-    assert error["code"]
+-    assert "retry" in json.dumps(error).lower()
++    if error["code"] == "state_io":
++        assert result.returncode == 2
++        assert error["message"] == f"publication busy; retry: {report_path}"
++    else:
++        assert error["code"]
++        assert "retry" in json.dumps(error).lower()
+     assert "Traceback" not in result.stderr
+ 
+ 
+@@ -471,14 +477,14 @@ def _retry_failed_overlap_publications(
+     b_publication: str | None,
+ ) -> tuple[str | None, str | None]:
+     if a_result.returncode != 0:
+-        _assert_retry_error(a_result)
++        _assert_retry_error(a_result, report_path)
+         _set_prd(installed_wheel, root, state_path, "00004-a.md")
+         before = state_path.read_bytes()
+         retried_a = _run(command, cwd=root, installed_wheel=installed_wheel)
+         a_publication = _successful_report_text(retried_a, report_path)
+         assert state_path.read_bytes() == before
+     if b_result.returncode != 0:
+-        _assert_retry_error(b_result)
++        _assert_retry_error(b_result, report_path)
+         _set_prd(installed_wheel, root, state_path, "00005-b.md")
+         before = state_path.read_bytes()
+         retried_b = _run(command, cwd=root, installed_wheel=installed_wheel)
+diff --git a/tests/packaging/test_rework_12.py b/tests/packaging/test_rework_12.py
+new file mode 100644
+index 0000000..0606377
+--- /dev/null
++++ b/tests/packaging/test_rework_12.py
+@@ -0,0 +1,220 @@
++from __future__ import annotations
++
++import json
++import select
++import subprocess
++from collections.abc import Iterator
++from contextlib import contextmanager
++from pathlib import Path
++from typing import Any
++
++import pytest
++from packaging_support import InstalledWheel, run_checked
++from rework_11_scripts import INITIALIZE_STATE
++from rework_12_scripts import ANCESTRY_ACTOR, ORIGIN_CHECK
++
++PRD = "00004-a.md"
++
++
++def _assert_installed(origins: dict[str, str], installed: InstalledWheel) -> None:
++    assert "ovcaq" in origins
++    for module, filename in origins.items():
++        path = Path(filename).resolve()
++        assert path.is_relative_to(installed.root.resolve()), (module, filename)
++        assert "site-packages" in path.parts, (module, filename)
++
++
++def _prepare(installed: InstalledWheel, tmp_path: Path) -> Path:
++    project = tmp_path / "project"
++    project.mkdir()
++    state = project / "independent/state.json"
++    script = (
++        INITIALIZE_STATE + ORIGIN_CHECK + "\nprint(json.dumps(installed_origins()))\n"
++    )
++    result = run_checked(
++        [installed.python, "-I", "-c", script, project, state, PRD],
++        cwd=project,
++        env=installed.environment,
++    )
++    _assert_installed(json.loads(result.stdout), installed)
++    (project / "record.json").write_text('{"op_id": "crash-one"}', encoding="utf-8")
++    assert not (project / "new").exists()
++    return project
++
++
++def _state_bytes(project: Path) -> dict[str, bytes | None]:
++    state = project / "independent/state.json"
++    backup = state.with_suffix(".json.bak")
++    return {
++        "state": state.read_bytes(),
++        "backup": backup.read_bytes() if backup.exists() else None,
++    }
++
++
++def _identity(path: Path) -> list[int]:
++    value = path.stat()
++    return [value.st_dev, value.st_ino]
++
++
++def _command(
++    installed: InstalledWheel, project: Path, target: str, mode: str
++) -> list[str]:
++    return [
++        str(installed.python),
++        "-I",
++        "-c",
++        ANCESTRY_ACTOR,
++        str(project),
++        target,
++        mode,
++    ]
++
++
++def _invoke(
++    installed: InstalledWheel, project: Path, target: str, mode: str, expected: int = 0
++) -> dict[str, Any]:
++    result = subprocess.run(
++        _command(installed, project, target, mode),
++        cwd=project,
++        env=installed.environment,
++        capture_output=True,
++        text=True,
++        check=False,
++        timeout=20,
++    )
++    assert result.returncode == expected, (result.stdout, result.stderr)
++    value: dict[str, Any] = json.loads(result.stdout)
++    _assert_installed(value["origins"], installed)
++    return value
++
++
++def _assert_confirmed(value: dict[str, Any], project: Path) -> None:
++    assert value["exit"] == 0, value
++    confirmations = {entry["path"]: entry["identity"] for entry in value["fsyncs"]}
++    for parent in (project, project / "new", project / "new/nested"):
++        assert str(parent) in confirmations, (str(parent), value)
++        assert confirmations[str(parent)] == _identity(parent)
++
++
++def _assert_one_record(project: Path) -> bytes:
++    ledger = project / "new/nested/deferred/batch-deferred.json"
++    content = ledger.read_bytes()
++    value = json.loads(content)
++    assert value["batch_id"] == "batch"
++    assert len(value["items"]) == 1
++    assert value["items"][0]["op_id"] == "crash-one"
++    assert value["items"][0]["prd"] == PRD
++    return content
++
++
++@contextmanager
++def _actor(
++    installed: InstalledWheel, project: Path, target: str, mode: str
++) -> Iterator[subprocess.Popen[str]]:
++    process = subprocess.Popen(
++        _command(installed, project, target, mode),
++        cwd=project,
++        env=installed.environment,
++        stdin=subprocess.PIPE,
++        stdout=subprocess.PIPE,
++        stderr=subprocess.PIPE,
++        text=True,
++    )
++    try:
++        yield process
++    finally:
++        if process.poll() is None:
++            process.kill()
++        process.communicate(timeout=10)
++
++
++def _await_event(
++    process: subprocess.Popen[str], event: str, installed: InstalledWheel
++) -> dict[str, Any]:
++    assert process.stdout is not None
++    ready, _, _ = select.select([process.stdout], [], [], 10)
++    assert ready, f"actor did not reach {event}; status={process.poll()}"
++    line = process.stdout.readline()
++    assert line, f"actor exited before {event}; status={process.poll()}"
++    value: dict[str, Any] = json.loads(line)
++    assert value["event"] == event, value
++    _assert_installed(value["origins"], installed)
++    return value
++
++
++def _finish(
++    process: subprocess.Popen[str], installed: InstalledWheel, expected: int = 0
++) -> dict[str, Any]:
++    stdout, stderr = process.communicate(input="continue\n", timeout=20)
++    assert process.returncode == expected, (stdout, stderr)
++    value: dict[str, Any] = json.loads(stdout)
++    assert value["exit"] == expected, value
++    _assert_installed(value["origins"], installed)
++    return value
++
++
++@pytest.mark.parametrize("target", ("new", "new/nested"))
++def test_installed_retry_and_replay_confirm_ancestry_after_abrupt_exit(
++    installed_wheel: InstalledWheel, tmp_path: Path, target: str
++) -> None:
++    project = _prepare(installed_wheel, tmp_path)
++    authoritative = _state_bytes(project)
++    interrupted = _invoke(installed_wheel, project, target, "crash", expected=73)
++    directory = project / target
++    assert interrupted["event"] == "exit-before-parent-fsync"
++    assert interrupted["target"] == str(directory)
++    assert directory.is_dir()
++    assert interrupted["identity"] == _identity(directory)
++    assert interrupted["parent_identity"] == _identity(directory.parent)
++    assert _state_bytes(project) == authoritative
++    assert not (project / "new/nested/deferred/batch-deferred.json").exists()
++
++    retry = _invoke(installed_wheel, project, target, "retry")
++    _assert_confirmed(retry, project)
++    assert _identity(directory) == interrupted["identity"]
++    assert _state_bytes(project) == authoritative
++    ledger_after_retry = _assert_one_record(project)
++
++    replay = _invoke(installed_wheel, project, target, "replay")
++    _assert_confirmed(replay, project)
++    assert _identity(directory) == interrupted["identity"]
++    assert _state_bytes(project) == authoritative
++    assert _assert_one_record(project) == ledger_after_retry
++
++
++@pytest.mark.parametrize("fail_confirmation", (False, True))
++def test_installed_concurrent_creation_confirms_and_preserves_peer_directory(
++    installed_wheel: InstalledWheel, tmp_path: Path, fail_confirmation: bool
++) -> None:
++    project = _prepare(installed_wheel, tmp_path)
++    authoritative = _state_bytes(project)
++    mode = "racer-fail" if fail_confirmation else "racer"
++    with _actor(installed_wheel, project, "new", mode) as racer:
++        _await_event(racer, "before-mkdir", installed_wheel)
++        assert not (project / "new").exists()
++        with _actor(installed_wheel, project, "new", "peer") as peer:
++            created = _await_event(peer, "peer-created", installed_wheel)
++            assert (project / "new").is_dir()
++            assert _identity(project / "new") == created["identity"]
++            result = _finish(racer, installed_wheel, 2 if fail_confirmation else 0)
++            assert result["peer_seen"] == created["identity"]
++            assert result["failed_parent"] is fail_confirmation
++            assert {"path": str(project), "identity": _identity(project)} in result[
++                "fsyncs"
++            ]
++            assert (project / "new").is_dir()
++            assert _identity(project / "new") == created["identity"]
++            assert _state_bytes(project) == authoritative
++            if fail_confirmation:
++                assert "injected peer parent fsync failure" in result["error"]
++            completed = _finish(peer, installed_wheel)
++            assert completed["path"] == str(
++                project / "new/nested/deferred/batch-deferred.json"
++            )
++    assert _state_bytes(project) == authoritative
++    assert _identity(project / "new") == created["identity"]
++    ledger_after_callers = _assert_one_record(project)
++    replay = _invoke(installed_wheel, project, "new", "replay")
++    _assert_confirmed(replay, project)
++    assert _state_bytes(project) == authoritative
++    assert _assert_one_record(project) == ledger_after_callers
+diff --git a/tests/workflow/test_ledger_publication.py b/tests/workflow/test_ledger_publication.py
+index e28b503..499a1ae 100644
+--- a/tests/workflow/test_ledger_publication.py
++++ b/tests/workflow/test_ledger_publication.py
+@@ -70,7 +70,7 @@ def test_sidecar_replacement_inside_native_publish_cannot_lose_successful_append
+     rows = load_deferred_records(tmp_path, "batch")
+     assert successful <= {row["op_id"] for row in rows}
+     assert len(rival_errors) == 1
+-    assert "deferred publication busy" in str(rival_errors[0])
++    assert rival_errors[0] == f"publication busy; retry: {path}"
+     assert [row["op_id"] for row in rows] == ["seed", "first"]
+     for op_id in ("second", "first"):
+         record_defer(tmp_path, "00004.md", "batch", {"op_id": op_id})

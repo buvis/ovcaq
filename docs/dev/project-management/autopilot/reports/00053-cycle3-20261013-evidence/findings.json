@@ -1,0 +1,31 @@
+{
+  "actionable": [
+    {
+      "ref": "R1",
+      "severity": "low",
+      "issue": "Changelog intra-PRD backtracking entry and user-facing PATH wording"
+    },
+    {
+      "ref": "R3",
+      "severity": "medium",
+      "issue": "Some explicit status-code messages now classify as `unknown`. Before this change they classified correctly. Probed: `status=429`, `Error 429: Too Many Requests`, `HTTP error 503`, and bare reason-phrase forms like `429 Too Many Requests` and `503 Service Unavailable`. The spec allows numbers only in explicit HTTP/status/error-code context, and `status=429` and `Error 429:` are exactly that. Worse, tests/drivers/test_adapter_failure_classes.py:115 locks `status=429` and `Error 429:` in as `unknown`, so the wrong answer is now enforced as the expected class. Impact: a real 429 or 503 in these forms goes to the generic retry-then-PARK path instead of the bounded WAIT or rate-limit path. The native Codex forms (\"unexpected status N\", reqwest, HTTP/x) are covered.",
+      "file": "src/ovcaq/drivers/codex_events.py:300"
+    }
+  ],
+  "resolved": [
+    "R2"
+  ],
+  "discarded": [
+    "R4",
+    "R5",
+    "R6",
+    "R7",
+    "R8",
+    "R9",
+    "R10",
+    "R11"
+  ],
+  "automatic_ledger_dismissal_reversed": [
+    "R3"
+  ]
+}

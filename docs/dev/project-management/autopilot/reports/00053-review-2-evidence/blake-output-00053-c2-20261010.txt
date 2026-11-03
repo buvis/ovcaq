@@ -1,0 +1,42 @@
+[BLAKE] 🟡 Some real HTTP failure messages now classify as `unknown`. The status regex only matches when the code comes right after `http`, `status`, `status code` or `error code`. I ran these through `classify_failure` and all came back `unknown`: `HTTP status client error (403 Forbidden) for url (...)`, `HTTP status server error (503 Service Unavailable)`, `HTTP status client error (429 Too Many Requests)`, `HTTP/1.1 503 Service Unavailable`, `{"status": 429}` and `status=429`. Before this PRD, the bare-number match classified them. As `unknown`, a 403 or 429 is retried as a dead session instead of halting for operator access or rate limit, and a 503 skips the connectivity WAIT path. Confirmed at the regex level; whether Codex 0.160 actually emits these forms is suspected, not proven. | File: src/ovcaq/drivers/codex_events.py:301 | Task: 6
+[BLAKE] ⚪ The context prefix still lets some ordinary counts through. `error code 401 files processed`, `exit status 401` and `http 401 redirects counted` classify as authentication, and `status: 503 lines` as connectivity (confirmed by running them). The negative tests only cover counts with no context word, so the PRD's "never masquerade" error case is only partly pinned. | File: tests/drivers/test_adapter_failure_classes.py:84 | Task: 6
+[BLAKE] ⚪ The probe and the real launch resolve a relative command path like `./bin/codex` from different directories. The Codex probe's `Popen` has no `cwd`, and the Claude probe's `shutil.which` uses the process cwd. So both use the directory the supervisor was started from, which is the caller's directory for `ovcaq --root X run`. The launch runs with `cwd=request.root` (src/ovcaq/runtime/supervisor.py:504). Running from outside the root can wrongly pass or fail the probe, which breaks the exit criterion "health checks and actual spawn agree". | File: src/ovcaq/drivers/codex.py:47 | Task: 3
+[BLAKE] ⚪ With an empty host `PATH`, the two probes disagree with each other and with the launch, and the docs describe this instead of fixing it. The Claude probe reports unhealthy, though the launch would search the root directory. The Codex probe runs an executable from the supervisor's own directory, not the root. Rare case, but probes can run a file from an unexpected directory. | File: docs/driver-protocol.md:38 | Task: 3
+
+What checks out:
+- **Lanes:** only remembered unfinished lanes can fail on interrupted, shutdown or not_found. Completed lanes stay completed (codex.py:370-384).
+- **Capacity:** "Selected model is at capacity" now classifies as connectivity. A test covers WAIT through retry exhaustion.
+- **Fixtures:** all four failure fixtures now have literal expected classes.
+- **Model routing:** the Codex edge maps the resolved model back to its tier key before launch, so `{default: o3, o3: o3-pro}` launches o3. Calling `build_launch` directly still gives tier keys precedence.
+- **Health gate:** both probes use the configured PATH. A test shows an unhealthy probe stops both adapters before spawn.
+- **Docs and changelog:** updated.
+- **Unchanged:** driver API 2, observation protocol 1 and the state schema. TUI and reset-parsing code did not change.
+
+Gates all pass:
+```
+acceptance tests: 261 passed
+uv run pytest: 7141 passed, 0 skipped
+ruff check: All checks passed | ruff format --check: 236 files already formatted
+mypy src/ovcaq: no issues in 61 files | uv sync --all-groups: ok
+uv build (--out-dir /tmp, scratch dir since deleted): sdist + wheel built
+```
+
+B1: pass
+B2: pass
+B3: pass
+B4: pass
+B5: pass
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: pass
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: pass
+B16: pass
+B17: pass
+B18: pass
+B19: pass

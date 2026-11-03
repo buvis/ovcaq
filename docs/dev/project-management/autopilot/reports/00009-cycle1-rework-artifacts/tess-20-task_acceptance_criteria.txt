@@ -1,0 +1,1 @@
+Real subprocess Supervisor.run_once handles distinct native thread identity as unknown failure. Consistent identity control succeeds. No state handoff is attempted in emitter; no live homes or workflow mutations beyond temp StateStore fixture.

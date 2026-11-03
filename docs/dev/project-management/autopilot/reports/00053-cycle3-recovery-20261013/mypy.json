@@ -1,0 +1,10 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "mypy",
+    "src/ovcaq"
+  ],
+  "exit": 0,
+  "seconds": 0.31
+}

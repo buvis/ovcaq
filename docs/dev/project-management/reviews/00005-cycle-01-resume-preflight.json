@@ -1,0 +1,34 @@
+{
+  "head": "e34547e734339e31bcba89e26b3fd3cd58e99690",
+  "state_sha256": "9ff0434cc21163937dcf4d0a51557a8d6ecc412c990243e852665b6e4a21da21",
+  "schema": "valid",
+  "tasks_completed": 11,
+  "tasks_total": 21,
+  "cycle": 1,
+  "cap": 2,
+  "review_and_bob_receipt": "verified by adapter.review_gap",
+  "loop_lock": "available",
+  "plugin_versions": {
+    "aegis@buvis-plugins": "0.3.2",
+    "warden@buvis-plugins": "0.14.0"
+  },
+  "evidence_sha256": {
+    "dev/local/reviews/00005-alice-output-c1-20260914.txt": "b6b2851afdce804dfcdcb5bc47ff3c6ac8da3146e796741c1f76e64232c0bd7d",
+    "dev/local/reviews/00005-blake-output-c1-20260914.txt": "3a7c7363e9305175b2bfff6bc0a2be3bc7db92c3b2a2d3d6f21ee21f2a0934b6",
+    "dev/local/reviews/00005-bob-output-c1-20260914-9026826e3fcf4bf7b9db2aa95b18ea9f.jsonl": "850887b79ab2a22f0cc6b8cb496e7b4d62a2e04877f29f1d8b30ff8908f3a16d",
+    "dev/local/reviews/00005-bob-output-c1-20260914-9026826e3fcf4bf7b9db2aa95b18ea9f.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "dev/local/reviews/00005-bob-output-c1-20260914.txt": "5c3f6303822891c1818560b55d7286a8b68f0af2e2117c2dee8e9a398ee72796",
+    "dev/local/reviews/00005-bob-output-c1-20260914.txt.receipt.json": "3ab4654eeb9097e78691656c0fff38adcd563f44dcc3e4caf37aed1c5819e2fc",
+    "dev/local/reviews/00005-purge-root-swap-proof-1.py": "5bc63098183d1e097b37b08646c7c5b948027033e46fb4ce2c68c690bdf3876b",
+    "dev/local/reviews/00005-purge-root-swap-result-1.json": "a1f66803dc4f3426fb5ffbf206dffd68dc3f4b2f3dbe75db93bfc6b76d69ff06",
+    "dev/local/reviews/00005-runtime-substrate-v1-checks-1.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "dev/local/reviews/00005-runtime-substrate-v1-consolidation-raw-1.md": "b9225f6119bf024b3fd2eeae1946629cd876696a9f61fd481d93b8d399f75dcb",
+    "dev/local/reviews/00005-runtime-substrate-v1-ledger.json": "c24bd7c8aedb540759401ea90c1aa6e7a0435ce2f2829d750e7440d5c2eacb78",
+    "dev/local/reviews/00005-runtime-substrate-v1-mechanical-1.md": "df34d7b9b7a85f17f8afd4fa84afa6e97c1fc4e4dab800fe4fd31e3ae7793506",
+    "dev/local/reviews/00005-runtime-substrate-v1-preflight-1.md": "1be62435067ae5b00b7ac6e0177155fc40403547bbdc01c8c1f04f73a04cab22",
+    "dev/local/reviews/00005-runtime-substrate-v1-review-01.md": "5783d2280db56fa87892a35a4814c454a65064f8e3fa4721902b53add052c27b",
+    "dev/local/designs/00005-runtime-substrate-v1-design.md": "9cf6cd204d2afaf50549dc4bb4ce933be7ee0c25f3eaee737a6f14a7546724c1",
+    "dev/local/prds/wip/00005-runtime-substrate-v1.md": "1dfc789ca6859ca1f6d5cfed8f8ee2c8513c0507a1ca09e941f7b5741c0a153a",
+    "dev/local/autopilot/last-verification.json": "05a8f027747c2546bd113c99be26a5d0179b8df8b55189baaef0a02f42a1e674"
+  }
+}

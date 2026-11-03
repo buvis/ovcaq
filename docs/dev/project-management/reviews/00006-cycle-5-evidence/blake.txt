@@ -1,0 +1,27 @@
+[BLAKE] 🟠 Normalized sanitization preserves arbitrary values nested under `environment`, so credentials with non-sensitive variable names can leak into normalized logs | File: src/ovcaq/events/model.py:95 | Task: general
+[BLAKE] 🟠 The reducer binds identity only on start or terminal events, allowing earlier observations from another session to contaminate a successful summary and its usage | File: src/ovcaq/events/reducer.py:42 | Task: general
+[BLAKE] 🟠 Failure classification misses standard authentication, rate-limit, and connectivity forms such as expired OAuth tokens, HTTP 429, and ECONNRESET, classifying them as generic agent failures | File: src/ovcaq/drivers/claude_events.py:223 | Task: general
+[BLAKE] 🟡 The undocumented `allow_explicit_model` option bypasses the required agent-tier model resolution contract | File: src/ovcaq/drivers/claude.py:41 | Task: general
+[BLAKE] 🟡 The provider-neutral events layer imports both the downstream driver layer and runtime persistence, reversing the mandated `events <- drivers <- runtime` dependency direction | File: src/ovcaq/events/tail.py:8 | Task: general
+[BLAKE] 🟡 The required normalized-event tailing interface is absent; `events/tail.py` only provides writing and raw-stream decoding | File: src/ovcaq/events/tail.py:21 | Task: general
+[BLAKE] 🟡 The required full failure-session fixture matrix is represented by unrelated one-line terminal records, so stateful rate-limit, connectivity, permission, and terminal-failure sessions are not covered | File: tests/fixtures/claude/v1/failures.jsonl:1 | Task: general
+[BLAKE] 🟡 Claude process conformance exercises only normal completion and does not verify the specified live TERM/KILL response | File: tests/drivers/test_claude_process.py:119 | Task: general
+B1: fail
+B2: fail
+B3: fail
+B4: pass
+B5: fail
+B6: fail
+B7: fail
+B8: pass
+B9: fail
+B10: fail
+B11: fail
+B12: pass
+B13: pass
+B14: pass
+B15: fail
+B16: fail
+B17: fail
+B18: pass
+B19: pass

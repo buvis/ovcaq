@@ -1,0 +1,23 @@
+[
+  {
+    "lens": "alice",
+    "models": [
+      "claude-opus-5-5"
+    ],
+    "receipt": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-cycle4-20261013-evidence/alice.txt.receipt.json"
+  },
+  {
+    "lens": "blake",
+    "models": [
+      "claude-opus-5-5"
+    ],
+    "receipt": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-cycle4-20261013-evidence/blake.txt.receipt.json"
+  },
+  {
+    "lens": "bob",
+    "models": [
+      "claude-opus-5-5"
+    ],
+    "receipt": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-cycle4-20261013-evidence/bob.txt.receipt.json"
+  }
+]

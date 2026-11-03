@@ -1,0 +1,22 @@
+diff --git a/tests/drivers/test_codex_decode_terminals.py b/tests/drivers/test_codex_decode_terminals.py
+index 5d57391..6385974 100644
+--- a/tests/drivers/test_codex_decode_terminals.py
++++ b/tests/drivers/test_codex_decode_terminals.py
+@@ -9,7 +9,7 @@ import pytest
+ from ovcaq.config import AgentSettings
+ from ovcaq.drivers.codex import CodexDriver
+ from ovcaq.drivers.codex_events import classify_failure
+-from ovcaq.events.model import FailureClass, Observation, sanitize_text
++from ovcaq.events.model import FailureClass, Observation
+ from ovcaq.events.reducer import reduce_session, session_failure_observation
+ 
+ FIXTURES = Path(__file__).parents[1] / "fixtures" / "codex" / "v1"
+@@ -143,7 +143,7 @@ def test_top_level_error_is_sanitized_provisional_activity(driver: CodexDriver)
+     assert activity.payload["kind"] == "error"
+     assert activity.payload["failure_class"] == "authentication"
+     assert activity.payload["reset_at"] is None
+-    assert activity.payload["detail"] == sanitize_text(detail)
++    assert activity.payload["detail"] == "Unauthorized [REDACTED]"
+     assert FAKE_CREDENTIAL not in activity.payload["detail"]
+     assert "[REDACTED]" in activity.payload["detail"]
+ 

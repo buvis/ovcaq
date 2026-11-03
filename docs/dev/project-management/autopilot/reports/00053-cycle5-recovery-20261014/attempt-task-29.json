@@ -1,0 +1,20 @@
+{
+  "attempt": 1,
+  "model": "sonnet",
+  "outcome": "completed",
+  "review_cycle": 5,
+  "cause": null,
+  "implementor": "codex",
+  "actual_model": "gpt-6.1-sol",
+  "actual_provider": "openai",
+  "preflight_outcome": null,
+  "pipeline": "lean",
+  "red_check": "n/a:test-only-task",
+  "self_deslop": "skipped:test-only",
+  "style_gate": "clean",
+  "split_hygiene": "clean",
+  "commit": "18b500c",
+  "verification": "136 passed in 0.25s; exit 0",
+  "review": "Pat: 3 resolved CLOSURE verdicts, NO FINDINGS; parsed output valid",
+  "host_adaptation": "Test-only native Ivan logical sonnet mapped to observed gpt-6.1-sol/medium; coordinator did not edit tests. Tess/Devon skipped per test-only task rule."
+}

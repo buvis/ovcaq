@@ -1,0 +1,182 @@
+Abort and report if you read more than 100K of total input. Return the partial result and an abort_reason: context_overrun field.
+A diff has been written to satisfy this task. The implementation passed its
+tests. Your job: prune slop from the diff while keeping every test green.
+This is best-effort cleanup, not a correctness rework — do not change
+behavior, do not modify tests, do not refactor.
+
+Task: [D16] Close deferred diagnostic and regression cleanup tail (M)
+
+Description:
+Fix the seven bounded cycle-16 diagnostic/test/style findings. This tail introduces full configured-path context for deferred-directory creation errors while preserving each original OSError as __cause__. Preserve the existing filesystem publication/locking/fsync algorithm and its chronology.
+
+Contract:
+- /Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/workflow/_files.py: private deferred-directory diagnostics and behavior-preserving function extraction; public record_defer(runtime_root: Path, prd: str, batch_id: str, record: dict, *, boundary_hook=None) -> Path is unchanged.
+- /Users/bob/git/src/github.com/buvis/ovcaq/tests/workflow/test_deferred_diagnostics.py: Tess-owned new behavioral regressions, read-only for Ivan.
+- /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/test_rework_13.py: preserve installed-wheel/reparent direct and replay chronology and all parameter cases while shortening the 80-line test, using subprocess.run timeout handling, and pinning direct refusal before ledger creation.
+- /Users/bob/git/src/github.com/buvis/ovcaq/CHANGELOG.md: mention the full-path diagnostics for open/create errors.
+No exported signature/schema/wire format change; no new algorithm or persisted-data transform.
+
+### Findings (verbatim)
+🟡 The restored deferred-directory diagnostic has no committed regression covering initial file/symlink refusal or the vanished-directory second open, including full path and preserved cause/errno | File: tests/packaging/test_rework_13.py | Consensus: [2/3]
+🟡 `_ensure_directory_chain` is 51 lines because it embeds the 13-line ancestry verifier; move that verifier to a named helper to satisfy the function-size limit and simplify the chain walk | File: src/ovcaq/workflow/_files.py:268 | Consensus: [2/3]
+🟡 `test_installed_defer_never_succeeds_through_unconfirmed_reparented_ancestry` is 80 lines; extract the safe-result and retry/replay assertion flows into helpers while retaining the parameterized chronology | File: tests/packaging/test_rework_13.py:357 | Consensus: [2/3]
+🟡 F4: _invoke reimplements subprocess.run's timeout kill/reap as a 16-line Popen block plus a framework-verifying `assert process.poll() is not None`; subprocess.run(timeout=20) already kills and waits on TimeoutExpired, and test_rework_12._invoke in the same diff keeps subprocess.run | File: tests/packaging/test_rework_13.py:58 | Consensus: [1/3]
+⚪ F5: os.mkdir(deferred.name, dir_fd=runtime) failures other than EEXIST (EACCES, ENOSPC, EBADF) still surface raw errno text with the bare name 'deferred'; same class as R15-03, on the create step the acceptance ("every failing open") did not name | File: src/ovcaq/workflow/_files.py:340 | Consensus: [1/3]
+⚪ F6: fix commit 93c049b changed a user-visible diagnostic (full deferred path on open failure) without a CHANGELOG entry; the only added Fixed line covers ancestry revalidation | File: CHANGELOG.md:24 | Consensus: [1/3]
+⚪ F7: reparent-refusal branch hedges `if _ledger(runtime).exists(): _assert_one_record(runtime)`; the shipped chronology deterministically refuses inside the first _read_record_content before any write, so the direct case should pin that no ledger exists | File: tests/packaging/test_rework_13.py:406 | Consensus: [1/3]
+
+Acceptance criteria:
+- Every quoted finding no longer reproduces.
+- Committed tests cover existing deferred path as real regular file and symlink, the second open after disappearance, and creation OSErrors EACCES/ENOSPC/EBADF; full path is in the outer error and original cause errno is retained. Existing file/symlink and target sentinel remain untouched; no deferred record is published on refusal.
+- Both open failures use "deferred directory is not a real directory: <full path>"; creation failure uses "deferred directory could not be created: <full path>".
+- Named function extraction keeps all modified Python functions <=50 lines. Maintain all real durability checks, direct/replay parameter cases and installed module-origin checks. Subprocess timeouts remain bounded and reaped by subprocess.run(timeout=20).
+- No ledger is created on the direct reparent-refusal chronology; replay preserves authoritative bytes.
+Verify: mise exec -- uv run pytest tests/workflow/test_deferred_diagnostics.py
+
+
+Acceptance criteria:
+- Every quoted finding no longer reproduces.
+- Committed tests cover existing deferred path as real regular file and symlink, the second open after disappearance, and creation OSErrors EACCES/ENOSPC/EBADF; full path is in the outer error and original cause errno is retained. Existing file/symlink and target sentinel remain untouched; no deferred record is published on refusal.
+- Both open failures use "deferred directory is not a real directory: <full path>"; creation failure uses "deferred directory could not be created: <full path>".
+- Named function extraction keeps all modified Python functions <=50 lines. Maintain all real durability checks, direct/replay parameter cases and installed module-origin checks. Subprocess timeouts remain bounded and reaped by subprocess.run(timeout=20).
+- No ledger is created on the direct reparent-refusal chronology; replay preserves authoritative bytes.
+
+Tests that the diff made pass (do NOT modify):
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/workflow/test_deferred_diagnostics.py
+
+Files in the diff:
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/workflow/_files.py, /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/test_rework_13.py, /Users/bob/git/src/github.com/buvis/ovcaq/CHANGELOG.md
+
+Procedure:
+
+1. Read the diff for each file in scope (`git diff HEAD~1..HEAD <file>` or
+   equivalent in your environment).
+2. For each line, block, helper, comment or docstring added in the
+   diff, ask:
+     "Does this trace to a failing test, an acceptance criterion, or
+     existing-behavior preservation?"
+   If the answer is no, mark the construct for removal.
+3. Apply removals one at a time. After each individual removal, re-run the
+   tests listed above (the narrow set Tess wrote). If any test fails,
+   restore that single removal and move on to the next candidate. Never
+   delete the test that fails — the test is authoritative.
+4. If no removal survived its test re-run, exit WITHOUT committing. Return
+   the literal string "no slop found" so the caller can record a noop.
+5. If at least one removal survived, commit with message:
+     chore: prune slop from [D16] Close deferred diagnostic and regression cleanup tail (M)
+   No CHANGELOG entry. No HEREDOC. No Co-Authored-By trailer. One commit
+   only — do not split into multiple cleanup commits.
+
+Rules:
+
+- **Do not modify tests.** If a test reads as weak, that is the per-task
+  reviewer's call (step 5.7), not yours. Leave it. Dead bindings a split left
+  behind in a test file are not yours either: `check_split_hygiene.py` answers
+  that mechanically at the task boundary (step 5.65), with `ast` rather than
+  judgment, so you never have to guess which test binding is safe to drop.
+- **Do not change behavior.** Tests prove behavior; if you cannot satisfy
+  the tests, the deletion is wrong. Restore.
+- **Do not refactor.** This pass deletes; it does not move code around,
+  rename symbols, or extract helpers. If a slop pattern would only resolve
+  through restructuring, note it in the return message instead of acting.
+- **Do not touch files outside the diff.** The cleanup is scoped to what
+  the implementor just produced. Adjacent slop in untouched files is out
+  of scope here — the post-session codex pass catches it separately.
+
+Slop patterns to look for (catalog inlined from `prompts/de-sloppify.md`):
+
+## What to remove
+
+### 1. Language/framework verification tests
+
+Tests that only prove the runtime or framework works, not the project's behavior.
+
+### 2. Weak or tautological tests
+
+Replace existence checks, mock-confirming tests, self-referential assertions, and unexplained magic assertions with behavior-focused assertions. If an important boundary or failure case is missing, add the smallest useful test.
+
+### 3. Redundant type checks
+
+Remove runtime checks that duplicate compile-time guarantees, except at system boundaries.
+
+### 4. Impossible-state error handling
+
+Remove defensive handling for states that cannot occur from the current control flow. Keep validation and error handling at boundaries.
+
+### 5. Swallowed errors and empty catch blocks
+
+Do not hide failures. Re-throw, surface, or handle them meaningfully.
+
+### 6. Debug statements
+
+Remove development-only prints and logs.
+
+### 7. Commented-out code
+
+Delete dead code kept in comments.
+
+### 8. Obvious comments
+
+Remove comments that restate the code. Keep comments that explain intent, constraints, workarounds, or why.
+
+### 9. Over-abstraction and unnecessary indirection
+
+Inline abstractions that have only one consumer and no current testability or architectural value.
+
+### 10. Duplicate code
+
+Reuse existing code or standard library helpers instead of introducing parallel logic.
+
+### 11. Suspicious dependencies
+
+Verify any newly added dependency exists, is used, and is justified. Remove hallucinated, unused, or speculative dependencies.
+
+### 12. Hardcoded secrets and placeholder credentials
+
+Replace with environment variables, secret storage, or project-approved configuration.
+
+### 13. Deprecated APIs and outdated patterns
+
+Modernize only when the newer approach is already supported by the project and the change stays in scope.
+
+### 14. Naive performance patterns
+
+Fix only if the code is on a hot path or clearly scales poorly with input size.
+
+### 15. Leftover artifacts
+
+Remove temp files, scratch scripts, backup files, unrelated lockfile churn, and agent-generated planning docs.
+
+### 16. AI-style docstrings
+
+Remove multi-paragraph docstrings on trivial functions. Remove docstrings that paraphrase the function name or restate its arguments — when the function is well-named, the docstring is noise. Remove "this function does X by calling Y" preambles that describe implementation rather than contract. Keep docstrings that capture non-obvious intent, invariants, or constraints.
+
+### 17. Trivial-type validation
+
+Remove runtime type guards, JSON schemas, or pydantic models that duplicate compile-time guarantees in a fully-typed file. Examples: `isinstance(x, int)` inside a function whose signature is `x: int`; a pydantic model declared for a function-internal dict whose shape is already pinned by the caller's types. Keep validation at real system boundaries (request bodies, file inputs, external API responses).
+
+### 18. Single-instantiation factories
+
+Inline factory functions, builders, or wrapper classes called from exactly one place where direct construction reads more clearly. A factory pattern only earns its complexity when multiple call sites benefit; before there are multiple call sites, the abstraction is speculative.
+
+### 19. Speculative configuration
+
+Remove config flags, env vars, options parameters that have exactly one used value across the codebase. Configuration is a contract with future readers — exposing one without a current consumer adds maintenance burden for no benefit.
+
+### 20. Restating comments
+
+Remove comments that say what the next line of code already says. Examples: `// increment counter` above `counter += 1`; `# parse the response` above `data = json.loads(raw)`. Keep comments that explain non-obvious why (invariants, workarounds, constraints).
+
+### 21. Framework-verification tests
+
+A more explicit subsection of #2. Remove tests asserting only "import works", "function exists", "method returns truthy" without exercising business logic. Remove mock-confirming tests (the only assertion is `mock.assert_called_with(...)`). Remove snapshot tests where the shape itself is not the contract — they catch any change, including correct ones. Keep behavior assertions that fail when business logic changes.
+
+
+Return one of:
+  - "no slop found" — exited without commit, nothing to clean.
+  - "committed {sha}" — committed `chore: prune slop from ...` at {sha},
+    test suite green.
+  - "errored: {short reason}" — dispatch problem; do not commit, just
+    explain so the caller can record the failure.
+
+Host: work from /Users/bob/git/src/github.com/buvis/ovcaq. Native Codex gpt-5.6-sol = logical sonnet. No state edits. Only mise exec -- uv run pytest tests/workflow/test_deferred_diagnostics.py after a removal; no full suite. Native exec_command lacks timeout: use yield_time_ms<=10000, 60s inspection/300s narrow command deadlines. Parent watches 15-minute progress/45-minute cap. Do not modify test files, including existing packaging tests, in this cleanup lane. Do not remove requested error context or the function extraction that fixes a measured style violation.

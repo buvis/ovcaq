@@ -1,0 +1,31 @@
+[ALICE] 🟠 Confirmed ancestor identities are discarded when `_ensure_directory_chain` returns; replacing `runtime_root` before `deferred.mkdir()` lets publication or replay succeed in a replacement tree whose parent entry was never fsynced, leaving R13-01’s durability risk open. Keep the confirmed runtime ancestry bound through ledger creation/publication and reverify before success. | File: src/ovcaq/workflow/_files.py:288 | Task: P02-T06/P02-T07/P02-T09
+[ALICE] 🟡 The replacement regression varies absolute depth but always replaces `runtime.parent`, so an implementation checking only the final two ancestors passes. Commit the retained distance-3/5 probe as an installed regression to bind the every-ancestor requirement. | File: tests/packaging/test_rework_13.py:143 | Task: P02-T06/P02-T07/P02-T09
+
+P02-T01: pass — selection and configured lifecycle resolution remain reconciled.
+P02-T02: pass — frontmatter parsing/defaults/warnings remain reconciled.
+P02-T03: pass — transition rows and compound phase completion remain reconciled.
+P02-T04: pass — resume mapping and plan policy remain reconciled.
+P02-T05: pass — reset and deterministic completion remain reconciled.
+P02-T06: fail — durable defer publication retains the caller-boundary ancestry gap.
+P02-T07: fail — stall/park use the same affected deferred-ledger boundary.
+P02-T08: pass — exact report contention assertions close R13-04.
+P02-T09: fail — configured runtime ancestry is not bound through publication.
+P02-T10: pass — parser-generated documentation remains reconciled.
+Phase A exit: pass.
+Phase B exit: fail — safe retry at every durable boundary remains unproven and incomplete.
+Phase C exit: pass.
+
+R13-02, R13-03, R13-04, and R13-05 are closed. The supported launcher sandbox evidence resolves R13-06 for the current macOS milestone. R13-01 remains open at the caller boundary.
+
+R1: fail
+R2: fail
+R3: pass
+R4: fail
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: pass
+R13: pass

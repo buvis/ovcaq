@@ -1,0 +1,35 @@
+{
+  "attempt": 1,
+  "model": "sonnet",
+  "actual_model": "gpt-6.1-sol",
+  "actual_provider": "openai",
+  "actual_effort": "medium",
+  "implementor": "codex",
+  "host_role_mapping": "source Claude-tier native worker to Codex native worker",
+  "preflight_outcome": null,
+  "qwen_excluded_reason": "files",
+  "pipeline": "lean",
+  "outcome": "completed",
+  "cause": null,
+  "review_cycle": 1,
+  "self_deslop": "noop",
+  "style_gate": "clean",
+  "split_hygiene": "clean",
+  "verification": "14 passed; named probe regression file; exit0",
+  "review": "Four closures resolved by conforming full Pat; LOW only. Earlier nonconforming review retained and superseded.",
+  "review_evidence": "docs/dev/project-management/reviews/00009-cycle1-task24-pat.md",
+  "dispatch_ids": [
+    "953bf986",
+    "12e05d55",
+    "5ad49f2a",
+    "92169f2e",
+    "d817e494",
+    "c78022e3"
+  ],
+  "implementation_commits": [
+    "bd8949d",
+    "1720aee",
+    "d1ed561"
+  ],
+  "test_commit": "b420cfa"
+}

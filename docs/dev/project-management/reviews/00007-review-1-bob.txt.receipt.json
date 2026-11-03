@@ -1,0 +1,14 @@
+{
+  "provider": "claude",
+  "model": "opus",
+  "started": 1790965873.905045,
+  "completed": 1790966470.11192,
+  "output": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00007-review-1-bob.txt",
+  "sha256": "b81e5877cacb9e4b8b41f5ec4d52f6359dfc95c7cdc56b8cfba3ada31c6954ca",
+  "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00007-review-1-bob-f8e315dd43144031b570824605f64ac3.jsonl",
+  "raw_sha256": "9e90906fe80df6ae1250dfdde7723e983314dfda22222ca7c6eb6bd74aa97ab7",
+  "thread_id": "da490e13-2213-43e8-b05e-b5c24cfeb69a",
+  "root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+  "prd": "00007-supervisor-loop-v1.md",
+  "cycle": 1
+}

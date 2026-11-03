@@ -1,0 +1,10 @@
+Full mandatory suite: uv --cache-dir /private/tmp/ovcaq-rework-uv run pytest
+Exit1:1failed5590passed2warnings in218.78s.
+FAILED tests/drivers/test_codex_decode_terminals.py::test_top_level_error_is_sanitized_provisional_activity
+detail = f"Unauthorized {FAKE_CREDENTIAL}\x1b[31m"
+assert activity.payload["detail"] == sanitize_text(detail)
+Actual 'Unauthorized [REDACTED]'; expected 'Unauthorized [REDACTED]\x1b[31m'.
+
+Task23 new test_failure_classifies_full_text_before_sanitizing_and_capping_detail uses a long detail containing ESC/NUL and asserts neither ESC nor NUL in bounded payload for both error and turn.failed.
+Preserve every test/assertion. Investigate minimal legitimate production correction inside driver edge only; do not introduce arbitrary length/input-specific semantics merely to satisfy tests, do not change shared sanitizer contract or tests. If the requirements conflict under one consistent sanitized-detail contract, report a precise blocker and evidence rather than changing assertions.
+Named diagnostic verification only tests/drivers/test_codex_decode_terminals.py tests/drivers/test_codex_rework_decode.py; coordinator reruns failed fullsuite after any valid correction.

@@ -1,0 +1,2 @@
+consolidate_findings: row 3 merged citations that matched only after suffix stripping: src/ovcaq/tui/model.py:575 ~ src/ovcaq/tui/model.py:592
+consolidate_findings: row 6 merged citations that matched only after suffix stripping: CHANGELOG.md:44 ~ CHANGELOG.md:43

@@ -1,0 +1,6 @@
+Operator-approved R2 behavior-preserving cleanup only. Replace the first string in classify_failure.status with:
+        r"(?:http(?:/\d+(?:\.\d+)?| status (?:client|server) error \()?"
+Keep the second string, possessive whitespace and every other pattern unchanged. This removes both redundant HTTP-group alternatives, as requested in the raw Bob finding. All existing classifier behavior must remain intact.
+Verify: mise exec -- uv run pytest tests/drivers/test_adapter_failure_classes.py -q --tb=line
+Read-only test context (no edits): /Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_failure_classes.py
+Use the python-patterns skill at /Users/bob/.agents/skills/python-patterns/SKILL.md.

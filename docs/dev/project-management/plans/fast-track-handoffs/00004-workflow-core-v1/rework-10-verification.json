@@ -1,0 +1,80 @@
+{
+  "date": "2026-09-05",
+  "repair_start": "72562f6fd12fb039e91e4c7b1be29758d1901ec8",
+  "checks": {
+    "sync": {
+      "chunk_id": "2b9bc3",
+      "wall_time_seconds": 0.000002125,
+      "exit_code": 0,
+      "original_token_count": 14,
+      "output": "Resolved 25 packages in 3ms\nChecked 24 packages in 4ms\n"
+    },
+    "ruff": {
+      "cmd": "mise exec -- uv run ruff check .",
+      "chunk_id": "44a219",
+      "wall_time_seconds": 0.000001458,
+      "exit_code": 0,
+      "original_token_count": 5,
+      "output": "All checks passed!\n"
+    },
+    "format": {
+      "cmd": "mise exec -- uv run ruff format --check .",
+      "chunk_id": "874caf",
+      "wall_time_seconds": 6.67e-7,
+      "exit_code": 0,
+      "original_token_count": 7,
+      "output": "117 files already formatted\n"
+    },
+    "mypy": {
+      "cmd": "mise exec -- uv run mypy src/ovcaq",
+      "chunk_id": "f5fc79",
+      "wall_time_seconds": 0.085000041,
+      "exit_code": 0,
+      "original_token_count": 11,
+      "output": "Success: no issues found in 51 source files\n"
+    },
+    "whitespace": {
+      "cmd": "git diff --check b43bf2c94d5eb0fddafca55542ef2570b45e8d52",
+      "chunk_id": "4dbaed",
+      "wall_time_seconds": 0.000002167,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    },
+    "build": {
+      "cmd": "mise exec -- uv build",
+      "chunk_id": "1e2050",
+      "wall_time_seconds": 8.33e-7,
+      "session_id": 96314,
+      "original_token_count": 38,
+      "output": "Building source distribution...\nBuilding wheel from source distribution...\nSuccessfully built dist/ovcaq-0.1.0.dev0.tar.gz\nSuccessfully built dist/ovcaq-0.1.0.dev0-py3-none-any.whl\n",
+      "exit_code": 0
+    },
+    "full": {
+      "command": "mise exec -- uv run pytest",
+      "chunk_id": "11ba2d",
+      "wall_time_seconds": 0.000001,
+      "exit_code": 0,
+      "original_token_count": 586,
+      "output": "============================= test session starts ==============================\nplatform darwin -- Python 3.13.13, pytest-9.1.1, pluggy-1.6.0\nrootdir: /Users/bob/git/src/github.com/buvis/ovcaq\nconfigfile: pyproject.toml\ncollected 1339 items\n\ntests/characterization/test_migration_contract.py ......                 [  0%]\ntests/packaging/test_distribution.py ........                            [  1%]\ntests/packaging/test_input_integrity.py ............                     [  1%]\ntests/packaging/test_installed_cli.py ...........                        [  2%]\ntests/packaging/test_installed_reports.py .............                  [  3%]\ntests/packaging/test_installed_sagas.py .................                [  5%]\ntests/packaging/test_report_updates.py .                                 [  5%]\ntests/packaging/test_workflow_inputs.py ................                 [  6%]\ntests/state/test_cli.py ................................................ [  9%]\n......                                                                   [ 10%]\ntests/state/test_cli_limits.py ...............................           [ 12%]\ntests/state/test_commands.py ..........................                  [ 14%]\ntests/state/test_crosswalk.py .......                                    [ 15%]\ntests/state/test_durability.py ..............                            [ 16%]\ntests/state/test_installed_state.py ...                                  [ 16%]\ntests/state/test_paths.py .............................................. [ 19%]\n........................................................................ [ 25%]\n..........................                                               [ 27%]\ntests/state/test_recovery_mutations.py .............                     [ 28%]\ntests/state/test_schema.py ......                                        [ 28%]\ntests/state/test_schema_constraints.py ................................. [ 30%]\n........................................................................ [ 36%]\n........................................................................ [ 41%]\n...........................                                              [ 43%]\ntests/state/test_schema_invariants.py .................................. [ 46%]\n.......................                                                  [ 48%]\ntests/state/test_schema_limits.py ...................................... [ 50%]\n.....................................                                    [ 53%]\ntests/state/test_service_commands.py ................................... [ 56%]\n........................                                                 [ 58%]\ntests/state/test_service_contracts.py ..                                 [ 58%]\ntests/state/test_store.py .............................................  [ 61%]\ntests/state/test_store_concurrency.py .......................            [ 63%]\ntests/state/test_store_transactions.py ................................. [ 65%]\n.............................                                            [ 67%]\ntests/test_package_baseline.py ......................................... [ 70%]\n............                                                             [ 71%]\ntests/test_packaging.py ....                                             [ 72%]\ntests/workflow/test_applications.py ..........                           [ 72%]\ntests/workflow/test_blank_decisions.py ................                  [ 74%]\ntests/workflow/test_boundaries.py ...                                    [ 74%]\ntests/workflow/test_characterized_fixtures.py ...                        [ 74%]\ntests/workflow/test_configuration.py ........                            [ 75%]\ntests/workflow/test_deferred_ledger.py ...................               [ 76%]\ntests/workflow/test_frontmatter.py ...........................           [ 78%]\ntests/workflow/test_ledger_integrity.py ............                     [ 79%]\ntests/workflow/test_ledger_publication.py ...                            [ 79%]\ntests/workflow/test_policy.py ............                               [ 80%]\ntests/workflow/test_records.py ............                              [ 81%]\ntests/workflow/test_report_identity.py ................                  [ 82%]\ntests/workflow/test_report_recovery.py ..........                        [ 83%]\ntests/workflow/test_reports.py ..................................        [ 85%]\ntests/workflow/test_resume.py .............                              [ 86%]\ntests/workflow/test_saga_artifacts.py ..........                         [ 87%]\ntests/workflow/test_saga_identity.py ...............                     [ 88%]\ntests/workflow/test_saga_publication.py ................................ [ 91%]\n................                                                         [ 92%]\ntests/workflow/test_sagas.py ................................            [ 94%]\ntests/workflow/test_selection.py .........................               [ 96%]\ntests/workflow/test_transitions.py ..................................    [ 99%]\ntests/workflow/test_workflow_cli.py ...........                          [100%]\n\n============================ 1339 passed in 23.42s =============================\n"
+    },
+    "workflow_packaging": {
+      "command": "mise exec -- uv run pytest tests/workflow/ tests/packaging/ -q",
+      "exit_code": 0,
+      "result": "451 passed in 13.34s"
+    },
+    "focused": {
+      "command": "mise exec -- uv run pytest tests/packaging/test_report_updates.py tests/workflow/test_report_identity.py tests/workflow/test_report_recovery.py tests/workflow/test_reports.py -q",
+      "exit_code": 0,
+      "result": "61 passed in 1.85s"
+    },
+    "probe": {
+      "command": "mise exec -- uv run python dev/local/plans/fast-track-handoffs/00004-workflow-core-v1/rework-10-report-probe.py",
+      "chunk_id": "88846a",
+      "wall_time_seconds": 0.000002292,
+      "exit_code": 0,
+      "original_token_count": 73,
+      "output": "{\n  \"exit\": 0,\n  \"first_text_matches_file\": true,\n  \"second_text_matches_file\": true,\n  \"first_prd_in_json_text\": true,\n  \"first_prd_in_published_file\": true,\n  \"second_prd_in_both\": true,\n  \"rerender_json_stable\": true,\n  \"rerender_file_stable\": true,\n  \"state_unchanged_by_render\": true\n}\n"
+    }
+  }
+}

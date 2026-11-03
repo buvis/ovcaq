@@ -1,0 +1,17 @@
+{
+  "name": "[D1] Separate capability metrics from workflow-session reports (M)",
+  "description": "Separate capability metrics from workflow-session reports\n\nLocation: src/ovcaq/workflow/reports.py; tests/workflow/test_canonical_metrics.py\n\nReuse: existing StateStore/StateService, pure decisions, shared runtime ownership and test fixtures.\n\nContract (source requirement/design excerpts):\nFor `kind=\"phase\"`, `phase_launched` and `model` are required and\n`capability` is null. For `kind=\"capability\"`, `capability` is required while\nphase/model are null.\nThe tolerant legacy report loader continues to accept characterized legacy rows.\n\nDetails:\nReplace the hidden usage-filter comprehension with an explicit canonical projection that retains legacy compatibility and makes invalid usage observable instead of silently dropping a row. Treat canonical kind=capability rows distinctly from phase sessions so capability attempts do not inflate workflow session counts or turn otherwise known phase usage totals unknown. Preserve capability raw/canonical metrics and deterministic batch filtering. Cover mixed legacy, phase, capability and malformed usage rows with behavior assertions.\n\n### Findings (verbatim)\n- 🟡 Reports count capability metric rows as workflow sessions. Canonical rows always carry `phase_launched` (None for capabilities) and `_metric_partitions` selects sessions by key presence. One capability attempt therefore inflates the session count and turns batch cost/token totals to unknown. No test covers it (test_canonical_metrics only has phase rows) | File: src/ovcaq/workflow/reports.py:222 | Consensus: [1/3]\n- 🟡 `_metric_partitions` silently drops any row whose `usage` is not a Mapping, using a `for usage in [...] if isinstance(...)` comprehension trick. That swallows an error and is hard to read | File: src/ovcaq/workflow/reports.py:217 | Consensus: [1/3]\n\nAcceptance criteria:\n- Every quoted finding no longer reproduces.\n- Every decision is explainable from committed state plus summary.\n- Metrics, pause, stop, retry, park, and halt contracts pass.\n- Required post-drain capability lifecycle and independent retry pass.\n\nVerify: tests fail for the quoted regression before implementation and pass after; run applicable focused tests, source quality gates, and the work skill's mandatory final verification. Do not read live launcher homes in tests.\n",
+  "files": [
+    "src/ovcaq/workflow/reports.py",
+    "tests/workflow/test_canonical_metrics.py"
+  ],
+  "blocked_by": [
+    12
+  ],
+  "model": "sonnet",
+  "tier_reason": "default",
+  "estimated_tokens": 70669,
+  "est_context_peak": 90669,
+  "qwen_eligible": false,
+  "qwen_excluded_reason": "files"
+}

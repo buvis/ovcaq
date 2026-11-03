@@ -1,0 +1,4 @@
+{
+  "command": "mise exec -- uv build --out-dir docs/dev/tmp/00053-cycle5-build",
+  "exit": 0
+}

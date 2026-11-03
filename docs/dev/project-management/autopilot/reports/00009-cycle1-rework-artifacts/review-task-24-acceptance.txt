@@ -1,0 +1,1 @@
+Every quoted finding closed. Preserve strict argv, 5second deadline and existing version diagnostic fragments; no spool or unbounded captured output.

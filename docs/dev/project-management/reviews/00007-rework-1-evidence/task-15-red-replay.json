@@ -1,0 +1,15 @@
+{
+  "base": "4e3502723c474cee41f69e3a090bc952be5185ab",
+  "copied_test": "tests/runtime/test_supervisor_cli.py",
+  "command": [
+    "/Users/bob/git/src/github.com/buvis/ovcaq/.venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/runtime/test_supervisor_cli.py::test_incomplete_lifecycle_commands_fail_with_json_usage_errors",
+    "--tb=short",
+    "-q"
+  ],
+  "exit": 1,
+  "isolation": "/private/tmp/ovcaq-replay15-d1y59hjf",
+  "log": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/00007-15-red-replay.txt"
+}

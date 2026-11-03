@@ -1,0 +1,10 @@
+{
+  "command": "mise exec -- uv run python dev/local/reviews/00005-purge-root-swap-proof-1.py",
+  "exit": 0,
+  "head_sha": "e34547e734339e31bcba89e26b3fd3cd58e99690",
+  "scope": "synthetic files in a TemporaryDirectory; no real runtime evidence used",
+  "runtime_swapped_after_open": true,
+  "original_run_lock_still_held": true,
+  "apply_returned_success": true,
+  "active_evidence_deleted": true
+}

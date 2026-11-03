@@ -1,0 +1,52 @@
+[BLAKE] 🟠 Frontmatter application silently discards the effective catchup, design, design-gate, and pause-on-ambiguity controls: `apply_to_store` parses and returns them but removes their extension keys and persists only rework cap and tier, violating CMD-014’s requirement to transactionally apply derived state fields | File: src/ovcaq/workflow/frontmatter.py:191 | Task: P02-T02
+
+P02-T01: Inspected `workflow/selection.py`, `workflow/paths.py`, configuration tests, and selection tests. WIP priority, numeric ordering, backlog fallback, hold exclusion, configured lifecycle roots, missing/non-directory handling, and symlink refusal are implemented.
+
+P02-T02: Inspected `workflow/frontmatter.py`, application tests, parser tests, the frozen CMD-014 characterization, and state crosswalk. Parsing, defaults, tier validation, and warnings exist, but durable application drops four parsed controls as reported above.
+
+P02-T03: Inspected `workflow/transitions.py`, CLI dispatch, and transition tests. All six accepted rows, rejection rows, drained terminal behavior, complete effect checks, recovery fencing, and single-store CAS mutation are covered.
+
+P02-T04: Inspected `workflow/resume.py`, `workflow/policy.py`, and their tests. Recovery precedence, build/review/paused/done mappings, plan validation, dependency-cycle checks, and the 15-task policy are implemented.
+
+P02-T05: Inspected `workflow/records.py`, application tests, and transition tests. Reset ownership preserves batch state, clears per-PRD owners, and completed summaries are validated, deterministic, conflict-aware, and idempotent.
+
+P02-T06: Inspected `workflow/_files.py`, deferred-ledger tests, publication tests, and installed saga tests. Operation-ID deduplication, conflicting replay rejection, locked atomic publication, directory fsync, bounded validation, and interruption retry are implemented.
+
+P02-T07: Inspected `workflow/records.py`, `_files.py`, `_rename.py`, and saga/failpoint/identity/publication tests. Durable intent, verified exclusive move, record, reset, commit, replay, artifact identity, and every declared boundary are covered.
+
+P02-T08: Inspected `workflow/reports.py`, golden fixtures, report identity/recovery tests, and installed report tests. Audit/report/metrics projections are deterministic, safely published, replayable, and batch-filtered.
+
+P02-T09: Inspected workflow/configuration paths and repository searches. Defaults use `dev/local/ovcaq`; no production workflow hardcoding of `dev/local/autopilot`, personal paths, or legacy skill roots was found.
+
+P02-T10: Inspected `cli.py`, `workflow_cli.py`, `docs/operations.md`, and parser/docs tests. The installed workflow family is registered centrally and operations documentation is generated and checked from the live parser.
+
+Phase A exit: fail. Lifecycle fixture/resume and transition evidence passes, but frontmatter outcomes are not equivalent because several effective controls are not committed.
+
+Phase B exit: pass. The declared defer and park/stall interruption boundaries, replay paths, duplicate prevention, identity checks, and installed-package sagas are covered.
+
+Phase C exit: pass. All accepted workflow commands and renderers are present; parser-generated documentation is checked; static inspection found no workflow imports from runtime, drivers, events, TUI, or provisioning and no provider strings.
+
+Evidence inspected: mandatory PRD-only prompt; accepted implementation plan; coverage manifest; resolved discovery; frozen characterization and migration manifests; workflow source, CLI registration, generated operations documentation, workflow fixtures, workflow tests, and relevant installed-package tests. Verification ran 420 focused tests successfully, plus Ruff and mypy successfully.
+
+Limits: Read-only blind review. I did not inspect git history/diffs, workflow state, implementation task plans, designs, reviews, handoffs, sibling findings, or other reviewer prompts. I did not mutate files or state.
+
+B1: fail
+B2: fail
+B3: fail
+B4: pass
+B5: pass
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: fail
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: fail
+B16: pass
+B17: pass
+B18: pass
+B19: pass
+

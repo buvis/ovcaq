@@ -1,0 +1,62 @@
+Command: mise exec -- uv run --offline --no-sync pytest tests/packaging/test_rework_13.py -q --tb=short
+Test commit: c1b9345787cfb0534d70d3a96fc905b414468b57
+Exit: 1
+
+=================================== FAILURES ===================================
+_ test_installed_defer_refuses_replaced_ancestry_until_fresh_attempt[parent-direct] _
+tests/packaging/test_rework_13.py:169: in test_installed_defer_refuses_replaced_ancestry_until_fresh_attempt
+    assert interrupted["exit"] == 2, interrupted
+E   AssertionError: {'exit': 0, 'path': '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-6531/test_installed...observed', 'path': '/', 'identity': [16777230, 2]}, {'kind': 'observed', 'path': '/', 'identity': [16777230, 2]}, ...]}
+E   assert 0 == 2
+_ test_installed_defer_refuses_replaced_ancestry_until_fresh_attempt[parent-exact-replay] _
+tests/packaging/test_rework_13.py:169: in test_installed_defer_refuses_replaced_ancestry_until_fresh_attempt
+    assert interrupted["exit"] == 2, interrupted
+E   AssertionError: {'exit': 0, 'path': '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-6531/test_installed...observed', 'path': '/', 'identity': [16777230, 2]}, {'kind': 'observed', 'path': '/', 'identity': [16777230, 2]}, ...]}
+E   assert 0 == 2
+_ test_installed_defer_refuses_replaced_ancestry_until_fresh_attempt[nested-parent-direct] _
+tests/packaging/test_rework_13.py:169: in test_installed_defer_refuses_replaced_ancestry_until_fresh_attempt
+    assert interrupted["exit"] == 2, interrupted
+E   AssertionError: {'exit': 0, 'path': '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-6531/test_installed...observed', 'path': '/', 'identity': [16777230, 2]}, {'kind': 'observed', 'path': '/', 'identity': [16777230, 2]}, ...]}
+E   assert 0 == 2
+_ test_installed_defer_refuses_replaced_ancestry_until_fresh_attempt[nested-parent-exact-replay] _
+tests/packaging/test_rework_13.py:169: in test_installed_defer_refuses_replaced_ancestry_until_fresh_attempt
+    assert interrupted["exit"] == 2, interrupted
+E   AssertionError: {'exit': 0, 'path': '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-6531/test_installed...observed', 'path': '/', 'identity': [16777230, 2]}, {'kind': 'observed', 'path': '/', 'identity': [16777230, 2]}, ...]}
+E   assert 0 == 2
+____ test_installed_defer_confirms_parent_through_native_search_only_access ____
+tests/packaging/test_rework_13.py:210: in test_installed_defer_confirms_parent_through_native_search_only_access
+    assert result["exit"] == 0, result
+E   AssertionError: {'exit': 2, 'error': 'runtime directory is not a real directory: /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-6531/test_installed_defer_confirms_0/project/ancestor', 'os_error': True, 'euid': 501, ...}
+E   assert 2 == 0
+_ test_installed_defer_confirms_first_descendant_without_root_self_confirmation _
+tests/packaging/test_rework_13.py:233: in test_installed_defer_confirms_first_descendant_without_root_self_confirmation
+    assert not any(
+E   AssertionError: {'exit': 0, 'path': '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-6531/test_installed...observed', 'path': '/', 'identity': [16777230, 2]}, {'kind': 'observed', 'path': '/', 'identity': [16777230, 2]}, ...]}
+E   assert not True
+E    +  where True = any(<generator object test_installed_defer_confirms_first_descendant_without_root_self_confirmation.<locals>.<genexpr> at 0x107706c00>)
+_ test_installed_defer_avoids_creation_attempts_on_existing_external_ancestors _
+tests/packaging/test_rework_13.py:260: in test_installed_defer_avoids_creation_attempts_on_existing_external_ancestors
+    assert not [
+E   AssertionError: {'exit': 0, 'path': '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-6531/test_installed...observed', 'path': '/', 'identity': [16777230, 2]}, {'kind': 'observed', 'path': '/', 'identity': [16777230, 2]}, ...]}
+E   assert not [{'kind': 'mkdir', 'path': '/', 'forbidden': True}, {'kind': 'mkdir', 'path': '/private', 'forbidden': True}, {'kind':...n': True}, {'kind': 'mkdir', 'path': '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn', 'forbidden': True}, ...]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-5f858a32-1ff5-47b9-88d5-eb5808d7a730
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-5f858a32-1ff5-47b9-88d5-eb5808d7a730'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-05efae30-39f1-4559-8cc3-86c9c1bead0d
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-05efae30-39f1-4559-8cc3-86c9c1bead0d'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/packaging/test_rework_13.py::test_installed_defer_refuses_replaced_ancestry_until_fresh_attempt[parent-direct]
+FAILED tests/packaging/test_rework_13.py::test_installed_defer_refuses_replaced_ancestry_until_fresh_attempt[parent-exact-replay]
+FAILED tests/packaging/test_rework_13.py::test_installed_defer_refuses_replaced_ancestry_until_fresh_attempt[nested-parent-direct]
+FAILED tests/packaging/test_rework_13.py::test_installed_defer_refuses_replaced_ancestry_until_fresh_attempt[nested-parent-exact-replay]
+FAILED tests/packaging/test_rework_13.py::test_installed_defer_confirms_parent_through_native_search_only_access
+FAILED tests/packaging/test_rework_13.py::test_installed_defer_confirms_first_descendant_without_root_self_confirmation
+FAILED tests/packaging/test_rework_13.py::test_installed_defer_avoids_creation_attempts_on_existing_external_ancestors
+7 failed, 2 warnings in 1.06s

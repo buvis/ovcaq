@@ -1,0 +1,531 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 5d12c9e..337e86e 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+ 
+ ### Fixed
+ 
++- Deferred ancestry confirmation detects replaced ancestors on reopen, supports search-only access, and avoids redundant ancestor creation and root confirmation.
+ - Shared publication contention reports `publication busy; retry: <path>` for both reports and deferred ledgers.
+ - Deferred retries and replays confirm existing runtime ancestry after abrupt exits and preserve directories created by concurrent callers when confirmation fails.
+ - Deferred publication validates the complete prospective ledger and persists newly created runtime ancestors; overlapping report renders no longer lose successful sections.
+diff --git a/src/ovcaq/workflow/_files.py b/src/ovcaq/workflow/_files.py
+index 0c01264..3e50fd4 100644
+--- a/src/ovcaq/workflow/_files.py
++++ b/src/ovcaq/workflow/_files.py
+@@ -6,6 +6,7 @@ import fcntl
+ import json
+ import os
+ import stat
++import sys
+ import uuid
+ from collections.abc import Callable, Iterator
+ from contextlib import contextmanager
+@@ -252,15 +253,29 @@ def _sync_deferred_directory(path: Path, directory: int) -> None:
+ def _ensure_directory_chain(path: Path) -> None:
+     """Confirm every ancestor, including levels left by interrupted creators."""
+     path = path.resolve()
+-    for level in (*reversed(path.parents), path):
+-        with _open_lifecycle_directory(level.parent, label="runtime") as parent:
+-            level.mkdir(exist_ok=True)
+-            with _open_lifecycle_directory(level, label="runtime") as directory:
++    levels = (*reversed(path.parents), path)
++    confirmed: tuple[int, int] | None = None
++    for level in levels[1:]:
++        with _open_lifecycle_directory(
++            level.parent, label="runtime", search_only=True
++        ) as parent:
++            opened = os.fstat(parent)
++            if confirmed is not None and confirmed != (opened.st_dev, opened.st_ino):
++                raise OSError(
++                    f"runtime directory identity changed; retry: {level.parent}"
++                )
++            if not level.exists():
++                level.mkdir(exist_ok=True)
++            with _open_lifecycle_directory(
++                level, label="runtime", search_only=True
++            ) as directory:
+                 os.fsync(parent)
+                 _verify_lifecycle_directory_identity(
+                     level.parent, parent, label="runtime"
+                 )
+                 _verify_lifecycle_directory_identity(level, directory, label="runtime")
++                opened = os.fstat(directory)
++                confirmed = (opened.st_dev, opened.st_ino)
+ 
+ 
+ @contextmanager
+@@ -376,13 +391,20 @@ def _open_lifecycle_directory(
+     *,
+     create: bool = False,
+     label: str = "lifecycle",
++    search_only: bool = False,
+ ) -> Iterator[int]:
+     """Open a verified lifecycle directory without following its final link."""
+     if create:
+         directory.mkdir(exist_ok=True)
+         _fsync_directory(directory.parent)
++    access = os.O_RDONLY
++    if search_only:
++        # Python may omit Darwin's native, fsync-capable O_SEARCH constant.
++        access = getattr(
++            os, "O_SEARCH", 0x40000000 if sys.platform == "darwin" else os.O_RDONLY
++        )
+     flags = (
+-        os.O_RDONLY
++        access
+         | getattr(os, "O_DIRECTORY", 0)
+         | getattr(os, "O_NOFOLLOW", 0)
+         | getattr(os, "O_CLOEXEC", 0)
+@@ -390,6 +412,17 @@ def _open_lifecycle_directory(
+     try:
+         descriptor = os.open(directory, flags)
+     except OSError as error:
++        if (
++            search_only
++            and access == os.O_RDONLY
++            and isinstance(error, PermissionError)
++        ):
++            raise PermissionError(
++                error.errno,
++                f"{label} directory requires read access for durable ancestry "
++                "confirmation on this platform",
++                directory,
++            ) from error
+         raise OSError(
+             f"{label} directory is not a real directory: {directory}"
+         ) from error
+diff --git a/tests/packaging/rework_13_scripts.py b/tests/packaging/rework_13_scripts.py
+new file mode 100644
+index 0000000..100bada
+--- /dev/null
++++ b/tests/packaging/rework_13_scripts.py
+@@ -0,0 +1,147 @@
++from __future__ import annotations
++
++from rework_12_scripts import ORIGIN_CHECK
++
++__all__ = ["ANCESTRY_BOUNDARY_ACTOR"]
++
++ANCESTRY_BOUNDARY_ACTOR = (
++    ORIGIN_CHECK
++    + r"""
++import errno
++import os
++import stat
++from unittest.mock import patch
++from ovcaq.workflow.records import record_defer
++
++project = Path(sys.argv[1])
++mode = sys.argv[2]
++runtime = Path(sys.argv[3])
++ancestor = Path(sys.argv[4])
++displaced = project / "displaced"
++real_open = os.open
++real_stat = os.stat
++real_mkdir = os.mkdir
++real_fsync = os.fsync
++events = []
++replaced = False
++ancestor_confirmed = False
++known_directories = {}
++
++def identity(value):
++    return [value.st_dev, value.st_ino]
++
++for directory in (*runtime.parents, runtime, runtime / "deferred"):
++    try:
++        known_directories[tuple(identity(real_stat(directory)))] = str(directory)
++    except FileNotFoundError:
++        pass
++
++def absolute(path, dir_fd=None):
++    if isinstance(path, int):
++        return known_directories.get(tuple(identity(os.fstat(path))))
++    name = os.fsdecode(path)
++    if not os.path.isabs(name) and dir_fd is not None:
++        parent = known_directories[tuple(identity(os.fstat(dir_fd)))]
++        name = os.path.join(parent, name)
++    return os.path.abspath(name)
++
++def observed(path, value):
++    if stat.S_ISDIR(value.st_mode):
++        key = identity(value)
++        known_directories[tuple(key)] = path
++        events.append({"kind": "observed", "path": path, "identity": key})
++
++def observing_stat(path, *args, **kwargs):
++    value = real_stat(path, *args, **kwargs)
++    observed(absolute(path, kwargs.get("dir_fd")), value)
++    return value
++
++def observing_open(path, flags, *args, **kwargs):
++    global replaced
++    name = absolute(path, kwargs.get("dir_fd"))
++    if mode == "replace" and name == str(ancestor) and ancestor_confirmed and not replaced:
++        previous = identity(real_stat(ancestor))
++        os.rename(ancestor, displaced)
++        real_mkdir(ancestor)
++        replaced = True
++        events.append({
++            "kind": "replaced", "path": str(ancestor), "previous": previous,
++            "displaced": identity(real_stat(displaced)),
++            "replacement": identity(real_stat(ancestor)),
++            "boundary": "before-reopen",
++        })
++    descriptor = real_open(path, flags, *args, **kwargs)
++    observed(name, os.fstat(descriptor))
++    return descriptor
++
++def observing_mkdir(path, *args, **kwargs):
++    name = absolute(path, kwargs.get("dir_fd"))
++    forbidden = mode == "forbid-ancestor-mkdir" and Path(name) in runtime.parents
++    events.append({"kind": "mkdir", "path": name, "forbidden": forbidden})
++    if forbidden:
++        raise PermissionError(errno.EPERM, "injected forbidden ancestor mkdir", name)
++    return real_mkdir(path, *args, **kwargs)
++
++def observing_fsync(descriptor):
++    global ancestor_confirmed
++    value = os.fstat(descriptor)
++    real_fsync(descriptor)
++    if not stat.S_ISDIR(value.st_mode):
++        return
++    name = known_directories.get(tuple(identity(value)))
++    events.append({"kind": "fsync", "path": name, "identity": identity(value)})
++    if name == str(ancestor.parent):
++        ancestor_confirmed = True
++
++def search_capability():
++    if os.geteuid() == 0:
++        return {"skip": "root bypasses execute-only directory permissions"}
++    # Darwin exposes O_SEARCH natively even when Python omits the constant.
++    search = getattr(os, "O_SEARCH", 0x40000000 if sys.platform == "darwin" else None)
++    if search is None:
++        return {"skip": "platform has no native fsync-capable O_SEARCH descriptor"}
++    try:
++        descriptor = real_open(ancestor, os.O_RDONLY | os.O_DIRECTORY)
++    except PermissionError:
++        pass
++    else:
++        os.close(descriptor)
++        raise AssertionError("read access bypasses the real 0111 directory mode")
++    descriptor = None
++    try:
++        descriptor = real_open(ancestor, search | os.O_DIRECTORY)
++        real_fsync(descriptor)
++    except OSError as error:
++        return {"skip": f"native O_SEARCH directory fsync unavailable: {error}"}
++    finally:
++        if descriptor is not None:
++            os.close(descriptor)
++    return {"euid": os.geteuid(), "read_denied": True, "search_fsync": True}
++
++def invoke():
++    capability = search_capability() if mode == "search" else {}
++    if "skip" in capability:
++        return {"exit": 0, **capability}
++    try:
++        with (
++            patch.object(os, "open", observing_open),
++            patch.object(os, "stat", observing_stat),
++            patch.object(os, "mkdir", observing_mkdir),
++            patch.object(os, "fsync", observing_fsync),
++        ):
++            path = record_defer(
++                runtime, "00004-a.md", "batch", {"op_id": "replacement-probe"}
++            )
++    except Exception as error:
++        return {
++            "exit": 2, "error": str(error), "os_error": isinstance(error, OSError),
++            **capability,
++        }
++    return {"exit": 0, "path": str(path), **capability}
++
++result = invoke()
++result.update({"origins": installed_origins(), "events": events})
++print(json.dumps(result), flush=True)
++raise SystemExit(result["exit"])
++"""
++)
+diff --git a/tests/packaging/test_rework_13.py b/tests/packaging/test_rework_13.py
+new file mode 100644
+index 0000000..5a90f4d
+--- /dev/null
++++ b/tests/packaging/test_rework_13.py
+@@ -0,0 +1,274 @@
++from __future__ import annotations
++
++import json
++import stat
++import subprocess
++from pathlib import Path
++from typing import Any
++from uuid import uuid4
++
++import pytest
++from packaging_support import InstalledWheel, run_checked
++from rework_11_scripts import INITIALIZE_STATE
++from rework_12_scripts import ORIGIN_CHECK
++from rework_13_scripts import ANCESTRY_BOUNDARY_ACTOR
++
++PRD = "00004-a.md"
++
++
++def _assert_installed(origins: dict[str, str], installed: InstalledWheel) -> None:
++    assert "ovcaq.workflow.records" in origins
++    for module, filename in origins.items():
++        path = Path(filename).resolve()
++        assert path.is_relative_to(installed.root.resolve()), (module, filename)
++        assert "site-packages" in path.parts, (module, filename)
++
++
++def _prepare(installed: InstalledWheel, tmp_path: Path) -> Path:
++    project = tmp_path.resolve() / "project"
++    state = project / "independent/state.json"
++    project.mkdir()
++    script = (
++        INITIALIZE_STATE
++        + ORIGIN_CHECK
++        + "\nfrom ovcaq.workflow.records import record_defer\n"
++        + "print(json.dumps(installed_origins()))\n"
++    )
++    result = run_checked(
++        [installed.python, "-I", "-c", script, project, state, PRD],
++        cwd=project,
++        env=installed.environment,
++    )
++    _assert_installed(json.loads(result.stdout), installed)
++    state.with_suffix(".json.bak").write_bytes(state.read_bytes())
++    (project / "ancestor").mkdir()
++    return project
++
++
++def _state_bytes(project: Path) -> tuple[bytes, bytes]:
++    state = project / "independent/state.json"
++    return state.read_bytes(), state.with_suffix(".json.bak").read_bytes()
++
++
++def _identity(path: Path) -> list[int]:
++    value = path.stat()
++    return [value.st_dev, value.st_ino]
++
++
++def _invoke(
++    installed: InstalledWheel,
++    project: Path,
++    mode: str,
++    *,
++    runtime: Path | None = None,
++    ancestor: Path | None = None,
++) -> dict[str, Any]:
++    if runtime is None:
++        runtime = project / "ancestor/runtime"
++    if ancestor is None:
++        ancestor = runtime.parent
++    result = subprocess.run(
++        [
++            installed.python,
++            "-I",
++            "-c",
++            ANCESTRY_BOUNDARY_ACTOR,
++            str(project),
++            mode,
++            str(runtime),
++            str(ancestor),
++        ],
++        cwd=project,
++        env=installed.environment,
++        capture_output=True,
++        text=True,
++        check=False,
++        timeout=20,
++    )
++    value: dict[str, Any] = json.loads(result.stdout)
++    _assert_installed(value["origins"], installed)
++    assert result.returncode == value["exit"], (result.stdout, result.stderr)
++    return value
++
++
++def _ledger(runtime: Path) -> Path:
++    return runtime / "deferred/batch-deferred.json"
++
++
++def _assert_one_record(runtime: Path) -> bytes:
++    content = _ledger(runtime).read_bytes()
++    assert json.loads(content) == {
++        "batch_id": "batch",
++        "items": [{"op_id": "replacement-probe", "prd": PRD}],
++    }
++    return content
++
++
++def _assert_replaced_after_confirmation(
++    interrupted: dict[str, Any], project: Path, ancestor: Path, previous: list[int]
++) -> None:
++    events = interrupted["events"]
++    replacements = [event for event in events if event["kind"] == "replaced"]
++    assert len(replacements) == 1, interrupted
++    replacement = replacements[0]
++    assert replacement["previous"] == previous
++    assert replacement["displaced"] == previous == _identity(project / "displaced")
++    assert replacement["replacement"] == _identity(ancestor)
++    assert replacement["replacement"] != previous
++    assert replacement["boundary"] == "before-reopen"
++    index = events.index(replacement)
++    assert {
++        "kind": "fsync",
++        "path": str(ancestor.parent),
++        "identity": _identity(ancestor.parent),
++    } in events[:index]
++    assert {
++        "kind": "observed",
++        "path": str(ancestor),
++        "identity": previous,
++    } in events[:index]
++    assert events[index + 1] == {
++        "kind": "observed",
++        "path": str(ancestor),
++        "identity": replacement["replacement"],
++    }
++    assert not any(
++        event["kind"] == "fsync" and event["path"] == str(ancestor)
++        for event in events[:index]
++    ), interrupted
++
++
++@pytest.mark.parametrize("replay", (False, True), ids=("direct", "exact-replay"))
++@pytest.mark.parametrize("position", ("parent", "nested-parent"))
++def test_installed_defer_refuses_replaced_ancestry_until_fresh_attempt(
++    installed_wheel: InstalledWheel, tmp_path: Path, replay: bool, position: str
++) -> None:
++    project = _prepare(installed_wheel, tmp_path)
++    authoritative = _state_bytes(project)
++    container = project if position == "parent" else project / "branch"
++    ancestor = container / uuid4().hex
++    ancestor.mkdir(parents=True)
++    runtime = ancestor / "runtime"
++    displaced_runtime = project / "displaced" / runtime.relative_to(ancestor)
++    previous = _identity(ancestor)
++    seeded = None
++    if replay:
++        assert (
++            _invoke(
++                installed_wheel, project, "normal", runtime=runtime, ancestor=ancestor
++            )["exit"]
++            == 0
++        )
++        seeded = _assert_one_record(runtime)
++        assert _state_bytes(project) == authoritative
++
++    interrupted = _invoke(
++        installed_wheel, project, "replace", runtime=runtime, ancestor=ancestor
++    )
++    _assert_replaced_after_confirmation(interrupted, project, ancestor, previous)
++    assert interrupted["exit"] == 2, interrupted
++    assert interrupted["os_error"] is True, interrupted
++    assert "identity changed; retry" in interrupted["error"]
++    assert str(ancestor) in interrupted["error"].split("identity changed; retry", 1)[1]
++    assert "path" not in interrupted
++    assert not _ledger(runtime).exists()
++    assert _state_bytes(project) == authoritative
++    if replay:
++        assert _ledger(displaced_runtime).read_bytes() == seeded
++    else:
++        assert not _ledger(displaced_runtime).exists()
++
++    retry = _invoke(
++        installed_wheel, project, "normal", runtime=runtime, ancestor=ancestor
++    )
++    assert retry["exit"] == 0, retry
++    assert retry["path"] == str(_ledger(runtime))
++    _assert_one_record(runtime)
++    assert _state_bytes(project) == authoritative
++    if replay:
++        assert _ledger(displaced_runtime).read_bytes() == seeded
++
++
++def test_installed_defer_confirms_parent_through_native_search_only_access(
++    installed_wheel: InstalledWheel, tmp_path: Path
++) -> None:
++    project = _prepare(installed_wheel, tmp_path)
++    authoritative = _state_bytes(project)
++    ancestor = project / "ancestor"
++    runtime = ancestor / "runtime"
++    runtime.mkdir()
++    original_mode = stat.S_IMODE(ancestor.stat().st_mode)
++    try:
++        ancestor.chmod(0o111)
++        assert stat.S_IMODE(ancestor.stat().st_mode) == 0o111
++        result = _invoke(installed_wheel, project, "search")
++    finally:
++        ancestor.chmod(original_mode)
++    assert _state_bytes(project) == authoritative
++    if "skip" in result:
++        pytest.skip(result["skip"])
++    assert result["exit"] == 0, result
++    assert result["euid"] != 0
++    assert result["read_denied"] is True
++    assert result["search_fsync"] is True
++    assert {
++        "kind": "fsync",
++        "path": str(ancestor),
++        "identity": _identity(ancestor),
++    } in result["events"]
++    assert result["path"] == str(_ledger(runtime))
++    _assert_one_record(runtime)
++
++
++def test_installed_defer_confirms_first_descendant_without_root_self_confirmation(
++    installed_wheel: InstalledWheel, tmp_path: Path
++) -> None:
++    project = _prepare(installed_wheel, tmp_path)
++    authoritative = _state_bytes(project)
++    result = _invoke(installed_wheel, project, "normal")
++    assert result["exit"] == 0, result
++    root = Path(project.anchor)
++    first_descendant = root / project.parts[1]
++    events = result["events"]
++    assert not any(
++        event["kind"] == "mkdir" and event["path"] == str(root) for event in events
++    ), result
++    confirmations = [
++        event
++        for event in events
++        if event["kind"] == "fsync" and event["path"] == str(root)
++    ]
++    assert confirmations == [
++        {"kind": "fsync", "path": str(root), "identity": _identity(root)}
++    ], result
++    assert {
++        "kind": "observed",
++        "path": str(first_descendant),
++        "identity": _identity(first_descendant),
++    } in events[: events.index(confirmations[0])]
++    _assert_one_record(project / "ancestor/runtime")
++    assert _state_bytes(project) == authoritative
++
++
++def test_installed_defer_avoids_creation_attempts_on_existing_external_ancestors(
++    installed_wheel: InstalledWheel, tmp_path: Path
++) -> None:
++    project = _prepare(installed_wheel, tmp_path)
++    authoritative = _state_bytes(project)
++    result = _invoke(installed_wheel, project, "forbid-ancestor-mkdir")
++    assert result["exit"] == 0, result
++    assert not [
++        event
++        for event in result["events"]
++        if event["kind"] == "mkdir" and event["forbidden"]
++    ], result
++    runtime = project / "ancestor/runtime"
++    for parent in runtime.parents:
++        assert {
++            "kind": "fsync",
++            "path": str(parent),
++            "identity": _identity(parent),
++        } in result["events"], (str(parent), result)
++    assert result["path"] == str(_ledger(runtime))
++    _assert_one_record(runtime)
++    assert _state_bytes(project) == authoritative

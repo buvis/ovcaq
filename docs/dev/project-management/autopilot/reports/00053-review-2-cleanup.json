@@ -1,0 +1,19 @@
+{
+  "worktrees": [
+    "main/master only"
+  ],
+  "orphan_batch_branches": [],
+  "plans_removed": [],
+  "architecture_plan_retained": true,
+  "scratch_policy": "Cycle-owned inputs copied to durable evidence; receipt-addressed original outputs/raw/context remain because live PRD evidence references them. No historical assets deleted.",
+  "all_reviewers_awaited": true,
+  "final_checks": {
+    "schema": "pass",
+    "tasks": "10 completed / 14 total; four queued unstarted",
+    "provider_receipt_boundary": "adapter.review_gap returned None at cycle2 with preserved reviewed snapshot",
+    "review_shape_and_constraint": "pass",
+    "git_diff_check": "pass",
+    "cap": 2,
+    "phase": "paused"
+  }
+}

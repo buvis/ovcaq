@@ -1,0 +1,30 @@
+FT-04F11 installed-wheel fail-first evidence
+Repository HEAD: 22d9193a0d00486b09ebea169e7a38a9f858799d
+Production files were unchanged.
+Command: mise exec -- uv run pytest tests/packaging/test_rework_11.py -q --tb=line
+
+.FF.FF..F                                                                [100%]
+=================================== FAILURES ===================================
+E   assert 0 == 11
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/test_rework_11.py:130: assert 0 == 11
+E   assert 0 == 11
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/test_rework_11.py:130: assert 0 == 11
+E   assert 0 == 2
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/test_rework_11.py:182: assert 0 == 2
+E   assert 0 == 2
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/test_rework_11.py:182: assert 0 == 2
+E   AssertionError: assert '## 00005-b.md\n' in '# Workflow report: batch\n...'
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/test_rework_11.py:356: AssertionError
+=========================== short test summary info ============================
+FAILED tests/packaging/test_rework_11.py::test_installed_defer_keeps_the_composed_ledger_within_reader_depth_limit[31]
+FAILED tests/packaging/test_rework_11.py::test_installed_defer_keeps_the_composed_ledger_within_reader_depth_limit[32]
+FAILED tests/packaging/test_rework_11.py::test_installed_defer_retries_every_new_directory_fsync_after_failure[project-parent]
+FAILED tests/packaging/test_rework_11.py::test_installed_defer_retries_every_new_directory_fsync_after_failure[new-parent]
+FAILED tests/packaging/test_rework_11.py::test_installed_report_overlap_preserves_every_successful_publication
+5 failed, 4 passed in 1.83s
+Process exit: 1
+
+The longer first run also demonstrated the old runtime-root interruption path;
+after correcting a test-only null-sentinel bug, the canonical red run above
+contains only the five intended product failures. The depth-33 rejection,
+runtime-root/deferred-leaf legacy sync points, and four preservation cases pass.

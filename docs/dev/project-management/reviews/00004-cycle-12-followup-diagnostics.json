@@ -1,0 +1,4 @@
+{
+  "name": "[D12] Correct publication contention context (S)",
+  "description": "### Findings (verbatim)\n[BOB] 🟡 F1: Report publication contention reuses the deferred ledger's message and the generic state_io code, so a supervisor can only tell \"retry me\" from a real disk failure by string-matching the word \"retry\" | File: src/ovcaq/workflow/_files.py:75 | Task: P02-T08\n\n### Acceptance\nRemove the inaccurate deferred-ledger label when report publication is busy; report a precise publication path and contextual retry. The optional proposal to remap contention into revision_conflict is not adopted: this finding establishes misleading context, not a new runtime retry-policy contract. Preserve the current public error taxonomy and state_io exit unless the accepted CLI contract provides a specific existing mapping. This is a bounded diagnostic fix. Keep publication serialization and all behavior intact."
+}

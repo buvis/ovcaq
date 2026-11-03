@@ -1,0 +1,14 @@
+[ALICE] ⚪ CHANGELOG.md:46 still says completed and failed Codex receiver lanes stay terminal "under late updates", with no qualifier. Task 16 fixed this same overclaim in docs/driver-protocol.md:243, which now says "Remembered completed and failed lanes". Lanes stop being remembered once they are evicted (src/ovcaq/drivers/codex.py:413 evicts finished identities first, at 4096 identities). After that, a late `running` update starts the lane again. Add "remembered" to the CHANGELOG entry so it matches the protocol doc | File: CHANGELOG.md | Task: 16
+
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass

@@ -1,0 +1,7 @@
+{
+  "name": "[C2] Audit behavior-specific failing-base evidence (S)",
+  "withdrawn": true,
+  "reason": "Temporarily assigned task 30 was removed before handoff because the exact Bob VERIFY command is routed to checks-2.json; source step 7 forbids duplicate verification tasks.",
+  "finding_id": "C2F34",
+  "review_cycle": 2
+}

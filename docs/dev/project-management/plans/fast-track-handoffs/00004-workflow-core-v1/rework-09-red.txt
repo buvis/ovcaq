@@ -1,0 +1,947 @@
+FFFF                                                   [100%]
+=================================== FAILURES ===================================
+_ test_sidecar_replacement_inside_native_publish_cannot_lose_successful_append[nested] _
+
+tmp_path = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_sidecar_replacement_insid0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10abfd940>
+writer = 'nested'
+
+    @pytest.mark.parametrize("writer", ("nested", "process"))
+    def test_sidecar_replacement_inside_native_publish_cannot_lose_successful_append(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, writer: str
+    ) -> None:
+        path = record_defer(tmp_path, "00004.md", "batch", {"op_id": "seed"})
+        native_replace = os.replace
+        rival_errors: list[str | None] = []
+        successful = {"seed"}
+        replaced = False
+    
+        def replace(source: str, destination: str, **kwargs: int) -> None:
+            nonlocal replaced
+            if destination == path.name and not replaced:
+                replaced = True
+                lock = path.with_suffix(".json.lock")
+                lock.rename(lock.with_suffix(".retained"))
+                rival_errors.append(_rival(tmp_path, writer))
+                if rival_errors[0] is None:
+                    successful.add("second")
+            native_replace(source, destination, **kwargs)
+    
+        with monkeypatch.context() as patches:
+            patches.setattr(os, "replace", replace)
+            with pytest.raises(OSError, match="deferred lock identity changed"):
+                record_defer(tmp_path, "00004.md", "batch", {"op_id": "first"})
+    
+        rows = load_deferred_records(tmp_path, "batch")
+>       assert successful <= {row["op_id"] for row in rows}
+E       AssertionError: assert {'second', 'seed'} <= {'first', 'seed'}
+E         
+E         Extra items in the left set:
+E         'second'
+
+tests/workflow/test_ledger_publication.py:71: AssertionError
+_ test_sidecar_replacement_inside_native_publish_cannot_lose_successful_append[process] _
+
+tmp_path = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_sidecar_replacement_insid1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ac56570>
+writer = 'process'
+
+    @pytest.mark.parametrize("writer", ("nested", "process"))
+    def test_sidecar_replacement_inside_native_publish_cannot_lose_successful_append(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, writer: str
+    ) -> None:
+        path = record_defer(tmp_path, "00004.md", "batch", {"op_id": "seed"})
+        native_replace = os.replace
+        rival_errors: list[str | None] = []
+        successful = {"seed"}
+        replaced = False
+    
+        def replace(source: str, destination: str, **kwargs: int) -> None:
+            nonlocal replaced
+            if destination == path.name and not replaced:
+                replaced = True
+                lock = path.with_suffix(".json.lock")
+                lock.rename(lock.with_suffix(".retained"))
+                rival_errors.append(_rival(tmp_path, writer))
+                if rival_errors[0] is None:
+                    successful.add("second")
+            native_replace(source, destination, **kwargs)
+    
+        with monkeypatch.context() as patches:
+            patches.setattr(os, "replace", replace)
+            with pytest.raises(OSError, match="deferred lock identity changed"):
+                record_defer(tmp_path, "00004.md", "batch", {"op_id": "first"})
+    
+        rows = load_deferred_records(tmp_path, "batch")
+>       assert successful <= {row["op_id"] for row in rows}
+E       AssertionError: assert {'second', 'seed'} <= {'first', 'seed'}
+E         
+E         Extra items in the left set:
+E         'second'
+
+tests/workflow/test_ledger_publication.py:71: AssertionError
+_ test_displaced_publication_chain_refuses_then_retries_at_configured_path[report--replace] _
+
+publication = (<function publication.<locals>.<lambda> at 0x10ac90f40>, PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40...var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_displaced_publication_cha0/state.json'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ab5dd00>
+boundary = 'replace'
+
+    @pytest.mark.parametrize("boundary", ("replace", "replay-sync"))
+    def test_displaced_publication_chain_refuses_then_retries_at_configured_path(
+        publication: tuple[Callable[[], Path], Path, Path],
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+        publish, component, state_path = publication
+        path = publish()
+        payload, state_before = path.read_bytes(), state_path.read_bytes()
+        output_inode = path.parent.stat().st_ino
+        retained = component.with_name(component.name + "-retained")
+        native_replace, native_sync = os.replace, os.fsync
+        if boundary == "replace":
+            path.unlink()
+    
+        def displace() -> None:
+            component.rename(retained)
+            component.mkdir()
+    
+        def replace(source: str, destination: str, **kwargs: int) -> None:
+            displace()
+            native_replace(source, destination, **kwargs)
+    
+        def sync(descriptor: int) -> None:
+            if os.fstat(descriptor).st_ino == output_inode:
+                displace()
+            native_sync(descriptor)
+    
+        with monkeypatch.context() as patches:
+            patches.setattr(os, "replace" if boundary == "replace" else "fsync",
+                            replace if boundary == "replace" else sync)
+>           with pytest.raises(OSError, match="output directory identity changed"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE OSError
+
+tests/workflow/test_report_identity.py:72: Failed
+_ test_displaced_publication_chain_refuses_then_retries_at_configured_path[report--replay-sync] _
+
+publication = (<function publication.<locals>.<lambda> at 0x10ac81080>, PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40...var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_displaced_publication_cha1/state.json'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ac09950>
+boundary = 'replay-sync'
+
+    @pytest.mark.parametrize("boundary", ("replace", "replay-sync"))
+    def test_displaced_publication_chain_refuses_then_retries_at_configured_path(
+        publication: tuple[Callable[[], Path], Path, Path],
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+        publish, component, state_path = publication
+        path = publish()
+        payload, state_before = path.read_bytes(), state_path.read_bytes()
+        output_inode = path.parent.stat().st_ino
+        retained = component.with_name(component.name + "-retained")
+        native_replace, native_sync = os.replace, os.fsync
+        if boundary == "replace":
+            path.unlink()
+    
+        def displace() -> None:
+            component.rename(retained)
+            component.mkdir()
+    
+        def replace(source: str, destination: str, **kwargs: int) -> None:
+            displace()
+            native_replace(source, destination, **kwargs)
+    
+        def sync(descriptor: int) -> None:
+            if os.fstat(descriptor).st_ino == output_inode:
+                displace()
+            native_sync(descriptor)
+    
+        with monkeypatch.context() as patches:
+            patches.setattr(os, "replace" if boundary == "replace" else "fsync",
+                            replace if boundary == "replace" else sync)
+>           with pytest.raises(OSError, match="output directory identity changed"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE OSError
+
+tests/workflow/test_report_identity.py:72: Failed
+_ test_displaced_publication_chain_refuses_then_retries_at_configured_path[report-reports-replace] _
+
+publication = (<function publication.<locals>.<lambda> at 0x10ac90860>, PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40...var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_displaced_publication_cha2/state.json'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ac0c8c0>
+boundary = 'replace'
+
+    @pytest.mark.parametrize("boundary", ("replace", "replay-sync"))
+    def test_displaced_publication_chain_refuses_then_retries_at_configured_path(
+        publication: tuple[Callable[[], Path], Path, Path],
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+        publish, component, state_path = publication
+        path = publish()
+        payload, state_before = path.read_bytes(), state_path.read_bytes()
+        output_inode = path.parent.stat().st_ino
+        retained = component.with_name(component.name + "-retained")
+        native_replace, native_sync = os.replace, os.fsync
+        if boundary == "replace":
+            path.unlink()
+    
+        def displace() -> None:
+            component.rename(retained)
+            component.mkdir()
+    
+        def replace(source: str, destination: str, **kwargs: int) -> None:
+            displace()
+            native_replace(source, destination, **kwargs)
+    
+        def sync(descriptor: int) -> None:
+            if os.fstat(descriptor).st_ino == output_inode:
+                displace()
+            native_sync(descriptor)
+    
+        with monkeypatch.context() as patches:
+            patches.setattr(os, "replace" if boundary == "replace" else "fsync",
+                            replace if boundary == "replace" else sync)
+>           with pytest.raises(OSError, match="output directory identity changed"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE OSError
+
+tests/workflow/test_report_identity.py:72: Failed
+_ test_displaced_publication_chain_refuses_then_retries_at_configured_path[report-reports-replay-sync] _
+
+publication = (<function publication.<locals>.<lambda> at 0x10ac91940>, PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40...var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_displaced_publication_cha3/state.json'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ad10130>
+boundary = 'replay-sync'
+
+    @pytest.mark.parametrize("boundary", ("replace", "replay-sync"))
+    def test_displaced_publication_chain_refuses_then_retries_at_configured_path(
+        publication: tuple[Callable[[], Path], Path, Path],
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+        publish, component, state_path = publication
+        path = publish()
+        payload, state_before = path.read_bytes(), state_path.read_bytes()
+        output_inode = path.parent.stat().st_ino
+        retained = component.with_name(component.name + "-retained")
+        native_replace, native_sync = os.replace, os.fsync
+        if boundary == "replace":
+            path.unlink()
+    
+        def displace() -> None:
+            component.rename(retained)
+            component.mkdir()
+    
+        def replace(source: str, destination: str, **kwargs: int) -> None:
+            displace()
+            native_replace(source, destination, **kwargs)
+    
+        def sync(descriptor: int) -> None:
+            if os.fstat(descriptor).st_ino == output_inode:
+                displace()
+            native_sync(descriptor)
+    
+        with monkeypatch.context() as patches:
+            patches.setattr(os, "replace" if boundary == "replace" else "fsync",
+                            replace if boundary == "replace" else sync)
+>           with pytest.raises(OSError, match="output directory identity changed"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE OSError
+
+tests/workflow/test_report_identity.py:72: Failed
+_ test_displaced_publication_chain_refuses_then_retries_at_configured_path[audit--replace] _
+
+publication = (<function publication.<locals>.<lambda> at 0x10ac92200>, PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40...var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_displaced_publication_cha4/state.json'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10acccb90>
+boundary = 'replace'
+
+    @pytest.mark.parametrize("boundary", ("replace", "replay-sync"))
+    def test_displaced_publication_chain_refuses_then_retries_at_configured_path(
+        publication: tuple[Callable[[], Path], Path, Path],
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+        publish, component, state_path = publication
+        path = publish()
+        payload, state_before = path.read_bytes(), state_path.read_bytes()
+        output_inode = path.parent.stat().st_ino
+        retained = component.with_name(component.name + "-retained")
+        native_replace, native_sync = os.replace, os.fsync
+        if boundary == "replace":
+            path.unlink()
+    
+        def displace() -> None:
+            component.rename(retained)
+            component.mkdir()
+    
+        def replace(source: str, destination: str, **kwargs: int) -> None:
+            displace()
+            native_replace(source, destination, **kwargs)
+    
+        def sync(descriptor: int) -> None:
+            if os.fstat(descriptor).st_ino == output_inode:
+                displace()
+            native_sync(descriptor)
+    
+        with monkeypatch.context() as patches:
+            patches.setattr(os, "replace" if boundary == "replace" else "fsync",
+                            replace if boundary == "replace" else sync)
+>           with pytest.raises(OSError, match="output directory identity changed"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE OSError
+
+tests/workflow/test_report_identity.py:72: Failed
+_ test_displaced_publication_chain_refuses_then_retries_at_configured_path[audit--replay-sync] _
+
+publication = (<function publication.<locals>.<lambda> at 0x10ac927a0>, PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40...var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_displaced_publication_cha5/state.json'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10aca95a0>
+boundary = 'replay-sync'
+
+    @pytest.mark.parametrize("boundary", ("replace", "replay-sync"))
+    def test_displaced_publication_chain_refuses_then_retries_at_configured_path(
+        publication: tuple[Callable[[], Path], Path, Path],
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+        publish, component, state_path = publication
+        path = publish()
+        payload, state_before = path.read_bytes(), state_path.read_bytes()
+        output_inode = path.parent.stat().st_ino
+        retained = component.with_name(component.name + "-retained")
+        native_replace, native_sync = os.replace, os.fsync
+        if boundary == "replace":
+            path.unlink()
+    
+        def displace() -> None:
+            component.rename(retained)
+            component.mkdir()
+    
+        def replace(source: str, destination: str, **kwargs: int) -> None:
+            displace()
+            native_replace(source, destination, **kwargs)
+    
+        def sync(descriptor: int) -> None:
+            if os.fstat(descriptor).st_ino == output_inode:
+                displace()
+            native_sync(descriptor)
+    
+        with monkeypatch.context() as patches:
+            patches.setattr(os, "replace" if boundary == "replace" else "fsync",
+                            replace if boundary == "replace" else sync)
+>           with pytest.raises(OSError, match="output directory identity changed"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE OSError
+
+tests/workflow/test_report_identity.py:72: Failed
+_ test_displaced_publication_chain_refuses_then_retries_at_configured_path[audit-dev-replace] _
+
+publication = (<function publication.<locals>.<lambda> at 0x10ac914e0>, PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40...var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_displaced_publication_cha6/state.json'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ac91770>
+boundary = 'replace'
+
+    @pytest.mark.parametrize("boundary", ("replace", "replay-sync"))
+    def test_displaced_publication_chain_refuses_then_retries_at_configured_path(
+        publication: tuple[Callable[[], Path], Path, Path],
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+        publish, component, state_path = publication
+        path = publish()
+        payload, state_before = path.read_bytes(), state_path.read_bytes()
+        output_inode = path.parent.stat().st_ino
+        retained = component.with_name(component.name + "-retained")
+        native_replace, native_sync = os.replace, os.fsync
+        if boundary == "replace":
+            path.unlink()
+    
+        def displace() -> None:
+            component.rename(retained)
+            component.mkdir()
+    
+        def replace(source: str, destination: str, **kwargs: int) -> None:
+            displace()
+            native_replace(source, destination, **kwargs)
+    
+        def sync(descriptor: int) -> None:
+            if os.fstat(descriptor).st_ino == output_inode:
+                displace()
+            native_sync(descriptor)
+    
+        with monkeypatch.context() as patches:
+            patches.setattr(os, "replace" if boundary == "replace" else "fsync",
+                            replace if boundary == "replace" else sync)
+>           with pytest.raises(OSError, match="output directory identity changed"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE OSError
+
+tests/workflow/test_report_identity.py:72: Failed
+_ test_displaced_publication_chain_refuses_then_retries_at_configured_path[audit-dev-replay-sync] _
+
+publication = (<function publication.<locals>.<lambda> at 0x10ac920c0>, PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40...var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_displaced_publication_cha7/state.json'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10acdd1c0>
+boundary = 'replay-sync'
+
+    @pytest.mark.parametrize("boundary", ("replace", "replay-sync"))
+    def test_displaced_publication_chain_refuses_then_retries_at_configured_path(
+        publication: tuple[Callable[[], Path], Path, Path],
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+        publish, component, state_path = publication
+        path = publish()
+        payload, state_before = path.read_bytes(), state_path.read_bytes()
+        output_inode = path.parent.stat().st_ino
+        retained = component.with_name(component.name + "-retained")
+        native_replace, native_sync = os.replace, os.fsync
+        if boundary == "replace":
+            path.unlink()
+    
+        def displace() -> None:
+            component.rename(retained)
+            component.mkdir()
+    
+        def replace(source: str, destination: str, **kwargs: int) -> None:
+            displace()
+            native_replace(source, destination, **kwargs)
+    
+        def sync(descriptor: int) -> None:
+            if os.fstat(descriptor).st_ino == output_inode:
+                displace()
+            native_sync(descriptor)
+    
+        with monkeypatch.context() as patches:
+            patches.setattr(os, "replace" if boundary == "replace" else "fsync",
+                            replace if boundary == "replace" else sync)
+>           with pytest.raises(OSError, match="output directory identity changed"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE OSError
+
+tests/workflow/test_report_identity.py:72: Failed
+_ test_displaced_publication_chain_refuses_then_retries_at_configured_path[audit-dev/local-replace] _
+
+publication = (<function publication.<locals>.<lambda> at 0x10ac91800>, PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40...var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_displaced_publication_cha8/state.json'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10acd49d0>
+boundary = 'replace'
+
+    @pytest.mark.parametrize("boundary", ("replace", "replay-sync"))
+    def test_displaced_publication_chain_refuses_then_retries_at_configured_path(
+        publication: tuple[Callable[[], Path], Path, Path],
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+        publish, component, state_path = publication
+        path = publish()
+        payload, state_before = path.read_bytes(), state_path.read_bytes()
+        output_inode = path.parent.stat().st_ino
+        retained = component.with_name(component.name + "-retained")
+        native_replace, native_sync = os.replace, os.fsync
+        if boundary == "replace":
+            path.unlink()
+    
+        def displace() -> None:
+            component.rename(retained)
+            component.mkdir()
+    
+        def replace(source: str, destination: str, **kwargs: int) -> None:
+            displace()
+            native_replace(source, destination, **kwargs)
+    
+        def sync(descriptor: int) -> None:
+            if os.fstat(descriptor).st_ino == output_inode:
+                displace()
+            native_sync(descriptor)
+    
+        with monkeypatch.context() as patches:
+            patches.setattr(os, "replace" if boundary == "replace" else "fsync",
+                            replace if boundary == "replace" else sync)
+>           with pytest.raises(OSError, match="output directory identity changed"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE OSError
+
+tests/workflow/test_report_identity.py:72: Failed
+_ test_displaced_publication_chain_refuses_then_retries_at_configured_path[audit-dev/local-replay-sync] _
+
+publication = (<function publication.<locals>.<lambda> at 0x10ac91260>, PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40...var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_displaced_publication_cha9/state.json'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ac43700>
+boundary = 'replay-sync'
+
+    @pytest.mark.parametrize("boundary", ("replace", "replay-sync"))
+    def test_displaced_publication_chain_refuses_then_retries_at_configured_path(
+        publication: tuple[Callable[[], Path], Path, Path],
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+        publish, component, state_path = publication
+        path = publish()
+        payload, state_before = path.read_bytes(), state_path.read_bytes()
+        output_inode = path.parent.stat().st_ino
+        retained = component.with_name(component.name + "-retained")
+        native_replace, native_sync = os.replace, os.fsync
+        if boundary == "replace":
+            path.unlink()
+    
+        def displace() -> None:
+            component.rename(retained)
+            component.mkdir()
+    
+        def replace(source: str, destination: str, **kwargs: int) -> None:
+            displace()
+            native_replace(source, destination, **kwargs)
+    
+        def sync(descriptor: int) -> None:
+            if os.fstat(descriptor).st_ino == output_inode:
+                displace()
+            native_sync(descriptor)
+    
+        with monkeypatch.context() as patches:
+            patches.setattr(os, "replace" if boundary == "replace" else "fsync",
+                            replace if boundary == "replace" else sync)
+>           with pytest.raises(OSError, match="output directory identity changed"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE OSError
+
+tests/workflow/test_report_identity.py:72: Failed
+_ test_displaced_publication_chain_refuses_then_retries_at_configured_path[audit-dev/local/reviews-replace] _
+
+publication = (<function publication.<locals>.<lambda> at 0x10ac93380>, PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40...ar/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_displaced_publication_cha10/state.json'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10abf6ba0>
+boundary = 'replace'
+
+    @pytest.mark.parametrize("boundary", ("replace", "replay-sync"))
+    def test_displaced_publication_chain_refuses_then_retries_at_configured_path(
+        publication: tuple[Callable[[], Path], Path, Path],
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+        publish, component, state_path = publication
+        path = publish()
+        payload, state_before = path.read_bytes(), state_path.read_bytes()
+        output_inode = path.parent.stat().st_ino
+        retained = component.with_name(component.name + "-retained")
+        native_replace, native_sync = os.replace, os.fsync
+        if boundary == "replace":
+            path.unlink()
+    
+        def displace() -> None:
+            component.rename(retained)
+            component.mkdir()
+    
+        def replace(source: str, destination: str, **kwargs: int) -> None:
+            displace()
+            native_replace(source, destination, **kwargs)
+    
+        def sync(descriptor: int) -> None:
+            if os.fstat(descriptor).st_ino == output_inode:
+                displace()
+            native_sync(descriptor)
+    
+        with monkeypatch.context() as patches:
+            patches.setattr(os, "replace" if boundary == "replace" else "fsync",
+                            replace if boundary == "replace" else sync)
+>           with pytest.raises(OSError, match="output directory identity changed"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE OSError
+
+tests/workflow/test_report_identity.py:72: Failed
+_ test_displaced_publication_chain_refuses_then_retries_at_configured_path[audit-dev/local/reviews-replay-sync] _
+
+publication = (<function publication.<locals>.<lambda> at 0x10ac93740>, PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40...ar/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_displaced_publication_cha11/state.json'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ac429e0>
+boundary = 'replay-sync'
+
+    @pytest.mark.parametrize("boundary", ("replace", "replay-sync"))
+    def test_displaced_publication_chain_refuses_then_retries_at_configured_path(
+        publication: tuple[Callable[[], Path], Path, Path],
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+        publish, component, state_path = publication
+        path = publish()
+        payload, state_before = path.read_bytes(), state_path.read_bytes()
+        output_inode = path.parent.stat().st_ino
+        retained = component.with_name(component.name + "-retained")
+        native_replace, native_sync = os.replace, os.fsync
+        if boundary == "replace":
+            path.unlink()
+    
+        def displace() -> None:
+            component.rename(retained)
+            component.mkdir()
+    
+        def replace(source: str, destination: str, **kwargs: int) -> None:
+            displace()
+            native_replace(source, destination, **kwargs)
+    
+        def sync(descriptor: int) -> None:
+            if os.fstat(descriptor).st_ino == output_inode:
+                displace()
+            native_sync(descriptor)
+    
+        with monkeypatch.context() as patches:
+            patches.setattr(os, "replace" if boundary == "replace" else "fsync",
+                            replace if boundary == "replace" else sync)
+>           with pytest.raises(OSError, match="output directory identity changed"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE OSError
+
+tests/workflow/test_report_identity.py:72: Failed
+_ test_displaced_publication_chain_refuses_then_retries_at_configured_path[archive--replace] _
+
+publication = (<function publication.<locals>.<lambda> at 0x10ac91080>, PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40...ar/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_displaced_publication_cha12/state.json'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ac43d90>
+boundary = 'replace'
+
+    @pytest.mark.parametrize("boundary", ("replace", "replay-sync"))
+    def test_displaced_publication_chain_refuses_then_retries_at_configured_path(
+        publication: tuple[Callable[[], Path], Path, Path],
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+        publish, component, state_path = publication
+        path = publish()
+        payload, state_before = path.read_bytes(), state_path.read_bytes()
+        output_inode = path.parent.stat().st_ino
+        retained = component.with_name(component.name + "-retained")
+        native_replace, native_sync = os.replace, os.fsync
+        if boundary == "replace":
+            path.unlink()
+    
+        def displace() -> None:
+            component.rename(retained)
+            component.mkdir()
+    
+        def replace(source: str, destination: str, **kwargs: int) -> None:
+            displace()
+            native_replace(source, destination, **kwargs)
+    
+        def sync(descriptor: int) -> None:
+            if os.fstat(descriptor).st_ino == output_inode:
+                displace()
+            native_sync(descriptor)
+    
+        with monkeypatch.context() as patches:
+            patches.setattr(os, "replace" if boundary == "replace" else "fsync",
+                            replace if boundary == "replace" else sync)
+>           with pytest.raises(OSError, match="output directory identity changed"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE OSError
+
+tests/workflow/test_report_identity.py:72: Failed
+_ test_displaced_publication_chain_refuses_then_retries_at_configured_path[archive--replay-sync] _
+
+publication = (<function publication.<locals>.<lambda> at 0x10ac923e0>, PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40...ar/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_displaced_publication_cha13/state.json'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ad1d780>
+boundary = 'replay-sync'
+
+    @pytest.mark.parametrize("boundary", ("replace", "replay-sync"))
+    def test_displaced_publication_chain_refuses_then_retries_at_configured_path(
+        publication: tuple[Callable[[], Path], Path, Path],
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+        publish, component, state_path = publication
+        path = publish()
+        payload, state_before = path.read_bytes(), state_path.read_bytes()
+        output_inode = path.parent.stat().st_ino
+        retained = component.with_name(component.name + "-retained")
+        native_replace, native_sync = os.replace, os.fsync
+        if boundary == "replace":
+            path.unlink()
+    
+        def displace() -> None:
+            component.rename(retained)
+            component.mkdir()
+    
+        def replace(source: str, destination: str, **kwargs: int) -> None:
+            displace()
+            native_replace(source, destination, **kwargs)
+    
+        def sync(descriptor: int) -> None:
+            if os.fstat(descriptor).st_ino == output_inode:
+                displace()
+            native_sync(descriptor)
+    
+        with monkeypatch.context() as patches:
+            patches.setattr(os, "replace" if boundary == "replace" else "fsync",
+                            replace if boundary == "replace" else sync)
+>           with pytest.raises(OSError, match="output directory identity changed"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE OSError
+
+tests/workflow/test_report_identity.py:72: Failed
+_ test_displaced_publication_chain_refuses_then_retries_at_configured_path[archive-reports-replace] _
+
+publication = (<function publication.<locals>.<lambda> at 0x10ac93b00>, PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40...ar/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_displaced_publication_cha14/state.json'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ad1c600>
+boundary = 'replace'
+
+    @pytest.mark.parametrize("boundary", ("replace", "replay-sync"))
+    def test_displaced_publication_chain_refuses_then_retries_at_configured_path(
+        publication: tuple[Callable[[], Path], Path, Path],
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+        publish, component, state_path = publication
+        path = publish()
+        payload, state_before = path.read_bytes(), state_path.read_bytes()
+        output_inode = path.parent.stat().st_ino
+        retained = component.with_name(component.name + "-retained")
+        native_replace, native_sync = os.replace, os.fsync
+        if boundary == "replace":
+            path.unlink()
+    
+        def displace() -> None:
+            component.rename(retained)
+            component.mkdir()
+    
+        def replace(source: str, destination: str, **kwargs: int) -> None:
+            displace()
+            native_replace(source, destination, **kwargs)
+    
+        def sync(descriptor: int) -> None:
+            if os.fstat(descriptor).st_ino == output_inode:
+                displace()
+            native_sync(descriptor)
+    
+        with monkeypatch.context() as patches:
+            patches.setattr(os, "replace" if boundary == "replace" else "fsync",
+                            replace if boundary == "replace" else sync)
+>           with pytest.raises(OSError, match="output directory identity changed"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE OSError
+
+tests/workflow/test_report_identity.py:72: Failed
+_ test_displaced_publication_chain_refuses_then_retries_at_configured_path[archive-reports-replay-sync] _
+
+publication = (<function publication.<locals>.<lambda> at 0x10acd8360>, PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40...ar/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_displaced_publication_cha15/state.json'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ad1e4a0>
+boundary = 'replay-sync'
+
+    @pytest.mark.parametrize("boundary", ("replace", "replay-sync"))
+    def test_displaced_publication_chain_refuses_then_retries_at_configured_path(
+        publication: tuple[Callable[[], Path], Path, Path],
+        monkeypatch: pytest.MonkeyPatch,
+        boundary: str,
+    ) -> None:
+        publish, component, state_path = publication
+        path = publish()
+        payload, state_before = path.read_bytes(), state_path.read_bytes()
+        output_inode = path.parent.stat().st_ino
+        retained = component.with_name(component.name + "-retained")
+        native_replace, native_sync = os.replace, os.fsync
+        if boundary == "replace":
+            path.unlink()
+    
+        def displace() -> None:
+            component.rename(retained)
+            component.mkdir()
+    
+        def replace(source: str, destination: str, **kwargs: int) -> None:
+            displace()
+            native_replace(source, destination, **kwargs)
+    
+        def sync(descriptor: int) -> None:
+            if os.fstat(descriptor).st_ino == output_inode:
+                displace()
+            native_sync(descriptor)
+    
+        with monkeypatch.context() as patches:
+            patches.setattr(os, "replace" if boundary == "replace" else "fsync",
+                            replace if boundary == "replace" else sync)
+>           with pytest.raises(OSError, match="output directory identity changed"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE OSError
+
+tests/workflow/test_report_identity.py:72: Failed
+_ test_installed_deep_toml_refuses_contextually_without_mutation[prd_root-project] _
+
+installed_wheel = InstalledWheel(root=PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/ovca...e/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/ovcaq-installed-wheel0/sandbox/xdg-state'})
+tmp_path = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_installed_deep_toml_refus0')
+scope = 'project', key = 'prd_root'
+
+    @pytest.mark.parametrize("scope", ("project", "user"))
+    @pytest.mark.parametrize("key", ("prd_root", "ignored"))
+    def test_installed_deep_toml_refuses_contextually_without_mutation(
+        installed_wheel: InstalledWheel, tmp_path: Path, scope: str, key: str
+    ) -> None:
+        root = _installed_workflow_root(installed_wheel, tmp_path)
+        config = root / "ovcaq.toml"
+        if scope == "user":
+            config = Path(installed_wheel.environment["XDG_CONFIG_HOME"]) / "ovcaq/config.toml"
+        config.parent.mkdir(parents=True, exist_ok=True)
+        original = config.read_bytes() if config.exists() else None
+        payload = f"[workflow]\n{key} = " + "[" * 2000 + '"prds"' + "]" * 2000 + "\n"
+        config.write_text(payload)
+        state = root / "dev/local/ovcaq/state.json"
+        before = state.read_bytes()
+        try:
+            result = _run_unchecked(
+                [installed_wheel.console_script, "--root", root, "--json", "workflow", "select"],
+                cwd=root,
+                installed_wheel=installed_wheel,
+            )
+            assert result.returncode == 1
+            assert result.stdout == ""
+>           assert "Traceback" not in result.stderr
+E           assert 'Traceback' not in 'Traceback (...h exceeded\n'
+E             
+E             'Traceback' is contained here:
+E               Traceback (most recent call last):
+E             ? +++++++++
+E                 File "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/ovcaq-installed-wheel0/venv/bin/ovcaq", line 10, in <module>
+E                   sys.exit(main())
+E                            ~~~~^^...
+E             
+E             ...Full output truncated (2500 lines hidden), use '-vv' to show
+
+tests/packaging/test_input_integrity.py:135: AssertionError
+_ test_installed_deep_toml_refuses_contextually_without_mutation[prd_root-user] _
+
+installed_wheel = InstalledWheel(root=PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/ovca...e/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/ovcaq-installed-wheel0/sandbox/xdg-state'})
+tmp_path = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_installed_deep_toml_refus1')
+scope = 'user', key = 'prd_root'
+
+    @pytest.mark.parametrize("scope", ("project", "user"))
+    @pytest.mark.parametrize("key", ("prd_root", "ignored"))
+    def test_installed_deep_toml_refuses_contextually_without_mutation(
+        installed_wheel: InstalledWheel, tmp_path: Path, scope: str, key: str
+    ) -> None:
+        root = _installed_workflow_root(installed_wheel, tmp_path)
+        config = root / "ovcaq.toml"
+        if scope == "user":
+            config = Path(installed_wheel.environment["XDG_CONFIG_HOME"]) / "ovcaq/config.toml"
+        config.parent.mkdir(parents=True, exist_ok=True)
+        original = config.read_bytes() if config.exists() else None
+        payload = f"[workflow]\n{key} = " + "[" * 2000 + '"prds"' + "]" * 2000 + "\n"
+        config.write_text(payload)
+        state = root / "dev/local/ovcaq/state.json"
+        before = state.read_bytes()
+        try:
+            result = _run_unchecked(
+                [installed_wheel.console_script, "--root", root, "--json", "workflow", "select"],
+                cwd=root,
+                installed_wheel=installed_wheel,
+            )
+            assert result.returncode == 1
+            assert result.stdout == ""
+>           assert "Traceback" not in result.stderr
+E           assert 'Traceback' not in 'Traceback (...h exceeded\n'
+E             
+E             'Traceback' is contained here:
+E               Traceback (most recent call last):
+E             ? +++++++++
+E                 File "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/ovcaq-installed-wheel0/venv/bin/ovcaq", line 10, in <module>
+E                   sys.exit(main())
+E                            ~~~~^^...
+E             
+E             ...Full output truncated (2500 lines hidden), use '-vv' to show
+
+tests/packaging/test_input_integrity.py:135: AssertionError
+_ test_installed_deep_toml_refuses_contextually_without_mutation[ignored-project] _
+
+installed_wheel = InstalledWheel(root=PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/ovca...e/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/ovcaq-installed-wheel0/sandbox/xdg-state'})
+tmp_path = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_installed_deep_toml_refus2')
+scope = 'project', key = 'ignored'
+
+    @pytest.mark.parametrize("scope", ("project", "user"))
+    @pytest.mark.parametrize("key", ("prd_root", "ignored"))
+    def test_installed_deep_toml_refuses_contextually_without_mutation(
+        installed_wheel: InstalledWheel, tmp_path: Path, scope: str, key: str
+    ) -> None:
+        root = _installed_workflow_root(installed_wheel, tmp_path)
+        config = root / "ovcaq.toml"
+        if scope == "user":
+            config = Path(installed_wheel.environment["XDG_CONFIG_HOME"]) / "ovcaq/config.toml"
+        config.parent.mkdir(parents=True, exist_ok=True)
+        original = config.read_bytes() if config.exists() else None
+        payload = f"[workflow]\n{key} = " + "[" * 2000 + '"prds"' + "]" * 2000 + "\n"
+        config.write_text(payload)
+        state = root / "dev/local/ovcaq/state.json"
+        before = state.read_bytes()
+        try:
+            result = _run_unchecked(
+                [installed_wheel.console_script, "--root", root, "--json", "workflow", "select"],
+                cwd=root,
+                installed_wheel=installed_wheel,
+            )
+            assert result.returncode == 1
+            assert result.stdout == ""
+>           assert "Traceback" not in result.stderr
+E           assert 'Traceback' not in 'Traceback (...h exceeded\n'
+E             
+E             'Traceback' is contained here:
+E               Traceback (most recent call last):
+E             ? +++++++++
+E                 File "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/ovcaq-installed-wheel0/venv/bin/ovcaq", line 10, in <module>
+E                   sys.exit(main())
+E                            ~~~~^^...
+E             
+E             ...Full output truncated (2500 lines hidden), use '-vv' to show
+
+tests/packaging/test_input_integrity.py:135: AssertionError
+_ test_installed_deep_toml_refuses_contextually_without_mutation[ignored-user] _
+
+installed_wheel = InstalledWheel(root=PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/ovca...e/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/ovcaq-installed-wheel0/sandbox/xdg-state'})
+tmp_path = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/test_installed_deep_toml_refus3')
+scope = 'user', key = 'ignored'
+
+    @pytest.mark.parametrize("scope", ("project", "user"))
+    @pytest.mark.parametrize("key", ("prd_root", "ignored"))
+    def test_installed_deep_toml_refuses_contextually_without_mutation(
+        installed_wheel: InstalledWheel, tmp_path: Path, scope: str, key: str
+    ) -> None:
+        root = _installed_workflow_root(installed_wheel, tmp_path)
+        config = root / "ovcaq.toml"
+        if scope == "user":
+            config = Path(installed_wheel.environment["XDG_CONFIG_HOME"]) / "ovcaq/config.toml"
+        config.parent.mkdir(parents=True, exist_ok=True)
+        original = config.read_bytes() if config.exists() else None
+        payload = f"[workflow]\n{key} = " + "[" * 2000 + '"prds"' + "]" * 2000 + "\n"
+        config.write_text(payload)
+        state = root / "dev/local/ovcaq/state.json"
+        before = state.read_bytes()
+        try:
+            result = _run_unchecked(
+                [installed_wheel.console_script, "--root", root, "--json", "workflow", "select"],
+                cwd=root,
+                installed_wheel=installed_wheel,
+            )
+            assert result.returncode == 1
+            assert result.stdout == ""
+>           assert "Traceback" not in result.stderr
+E           assert 'Traceback' not in 'Traceback (...h exceeded\n'
+E             
+E             'Traceback' is contained here:
+E               Traceback (most recent call last):
+E             ? +++++++++
+E                 File "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5309/ovcaq-installed-wheel0/venv/bin/ovcaq", line 10, in <module>
+E                   sys.exit(main())
+E                            ~~~~^^...
+E             
+E             ...Full output truncated (2500 lines hidden), use '-vv' to show
+
+tests/packaging/test_input_integrity.py:135: AssertionError
+=========================== short test summary info ============================
+FAILED tests/workflow/test_ledger_publication.py::test_sidecar_replacement_inside_native_publish_cannot_lose_successful_append[nested]
+FAILED tests/workflow/test_ledger_publication.py::test_sidecar_replacement_inside_native_publish_cannot_lose_successful_append[process]
+FAILED tests/workflow/test_report_identity.py::test_displaced_publication_chain_refuses_then_retries_at_configured_path[report--replace]
+FAILED tests/workflow/test_report_identity.py::test_displaced_publication_chain_refuses_then_retries_at_configured_path[report--replay-sync]
+FAILED tests/workflow/test_report_identity.py::test_displaced_publication_chain_refuses_then_retries_at_configured_path[report-reports-replace]
+FAILED tests/workflow/test_report_identity.py::test_displaced_publication_chain_refuses_then_retries_at_configured_path[report-reports-replay-sync]
+FAILED tests/workflow/test_report_identity.py::test_displaced_publication_chain_refuses_then_retries_at_configured_path[audit--replace]
+FAILED tests/workflow/test_report_identity.py::test_displaced_publication_chain_refuses_then_retries_at_configured_path[audit--replay-sync]
+FAILED tests/workflow/test_report_identity.py::test_displaced_publication_chain_refuses_then_retries_at_configured_path[audit-dev-replace]
+FAILED tests/workflow/test_report_identity.py::test_displaced_publication_chain_refuses_then_retries_at_configured_path[audit-dev-replay-sync]
+FAILED tests/workflow/test_report_identity.py::test_displaced_publication_chain_refuses_then_retries_at_configured_path[audit-dev/local-replace]
+FAILED tests/workflow/test_report_identity.py::test_displaced_publication_chain_refuses_then_retries_at_configured_path[audit-dev/local-replay-sync]
+FAILED tests/workflow/test_report_identity.py::test_displaced_publication_chain_refuses_then_retries_at_configured_path[audit-dev/local/reviews-replace]
+FAILED tests/workflow/test_report_identity.py::test_displaced_publication_chain_refuses_then_retries_at_configured_path[audit-dev/local/reviews-replay-sync]
+FAILED tests/workflow/test_report_identity.py::test_displaced_publication_chain_refuses_then_retries_at_configured_path[archive--replace]
+FAILED tests/workflow/test_report_identity.py::test_displaced_publication_chain_refuses_then_retries_at_configured_path[archive--replay-sync]
+FAILED tests/workflow/test_report_identity.py::test_displaced_publication_chain_refuses_then_retries_at_configured_path[archive-reports-replace]
+FAILED tests/workflow/test_report_identity.py::test_displaced_publication_chain_refuses_then_retries_at_configured_path[archive-reports-replay-sync]
+FAILED tests/packaging/test_input_integrity.py::test_installed_deep_toml_refuses_contextually_without_mutation[prd_root-project]
+FAILED tests/packaging/test_input_integrity.py::test_installed_deep_toml_refuses_contextually_without_mutation[prd_root-user]
+FAILED tests/packaging/test_input_integrity.py::test_installed_deep_toml_refuses_contextually_without_mutation[ignored-project]
+FAILED tests/packaging/test_input_integrity.py::test_installed_deep_toml_refuses_contextually_without_mutation[ignored-user]
+22 failed, 8 deselected in 2.11s
+

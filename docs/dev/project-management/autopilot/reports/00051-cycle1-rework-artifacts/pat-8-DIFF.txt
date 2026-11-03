@@ -1,0 +1,23 @@
+diff --git a/tests/drivers/test_codex_detail_safety.py b/tests/drivers/test_codex_detail_safety.py
+index c535c2f..aef9a95 100644
+--- a/tests/drivers/test_codex_detail_safety.py
++++ b/tests/drivers/test_codex_detail_safety.py
+@@ -113,8 +113,8 @@ def assert_safe_details(
+         assert len(observation.payload["detail"]) <= 4096
+         assert "\x1b" not in observation.payload["detail"]
+         assert "\x00" not in observation.payload["detail"]
+-        assert TOKEN not in expected
+-        assert "sk-abcdefghijkl" not in expected
++        assert TOKEN not in observation.payload["detail"]
++        assert "sk-abcdefghijkl" not in observation.payload["detail"]
+     path = tmp_path / "normalized.jsonl"
+     writer = NormalizedEventWriter(path, max_bytes=1 << 20, min_free_bytes=0)
+     try:
+@@ -331,6 +331,4 @@ def test_receiver_lane_redacts_message_payload_and_saved_jsonl(
+     assert isinstance(lane_detail, str)
+     assert "\x1b" not in lane_detail
+     assert "\x00" not in lane_detail
+-    if detail != CAP_REPRODUCER:
+-        assert expected in lane_detail
+-    assert_safe_details(tmp_path, lanes, lane_detail)
++    assert_safe_details(tmp_path, lanes, expected)

@@ -1,0 +1,17 @@
+{
+  "provider": "claude",
+  "model_provider": "anthropic",
+  "lens": "alice",
+  "model": "opus",
+  "started": 1791626825.538319,
+  "completed": 1791627086.274017,
+  "output": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/alice-output-00051-c2-20261010.txt",
+  "sha256": "3bf0a480d035d1d682d6d2958ff43db0465ae43e163dc881e4736976d43edb23",
+  "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/alice-output-00051-c2-20261010-2fb74890bfcc4f3092abfb39497572d9.jsonl",
+  "raw_sha256": "e87cf6126298bd5013f11c9f9fe3b14f539411c7c000cd30037813e8771ef7fe",
+  "thread_id": "916003ca-85fa-4f2e-9c98-3b6bf6e07d2e",
+  "root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+  "prd": "00051-triage-a-single-valid-codex-record-can-crash-th-v1.md",
+  "cycle": 2,
+  "implementation_fingerprint": "a846ee47d04ac26cb2b04ef37a3bc446546df9c4297b34cdfe3bb7ad31453645"
+}

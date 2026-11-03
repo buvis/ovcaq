@@ -1,0 +1,12 @@
+{
+  "site": "operator_review_decision",
+  "detail": "Cycle 5 review passes all rubrics and six gates, but new actionable low findings R1/R3/R4/R5/R6 require operator disposition under cycle-4 authorization; no repairs or cap above 5 authorized. See 00053-adapter-operational-corrections-v1-review-5.md.",
+  "review_file": "docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-5.md",
+  "pending_refs": [
+    "R1",
+    "R3",
+    "R4",
+    "R5",
+    "R6"
+  ]
+}

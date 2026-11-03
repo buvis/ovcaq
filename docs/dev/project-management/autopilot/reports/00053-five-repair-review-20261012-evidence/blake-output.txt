@@ -1,0 +1,32 @@
+```
+Gates (run 2026-10-12): acceptance set 275 passed | full suite run 1: 1 failed/3473 passed (-x), run 2: 7155 passed
+ruff check: All checks passed | ruff format --check: 236 files already formatted | mypy: no issues in 61 files | uv build: sdist+wheel built
+Prod diff since 7819970: claude.py +4, codex.py +8, codex_events.py +20/-?, edge.py +25 (43 ins / 14 del); DRIVER_API_VERSION=2, PROTOCOL_VERSION=1, SCHEMA_VERSION=1 unchanged; no pyproject/uv.lock/tui changes
+```
+
+[BLAKE] ⚪ The numeric grammar only accepts `HTTP[/x.y]`, `HTTP status [client|server error (]`, `status [code][:]` and `error code[:]`. Other explicit HTTP or error forms used to classify through the bare number and now return `unknown`. Confirmed by running the classifier: "HTTP Error 503: Service Unavailable" gives unknown (was connectivity), "HTTP Error 429: Too Many Requests" gives unknown (was rate_limit), "Error 403: Forbidden" gives unknown (was permission), "status=429" gives unknown. The tests pin `status=429` and `Error 429:` as UNKNOWN. Codex's own Rust forms (`unexpected status N ...`, `last status: N`, reqwest `HTTP status ... error (N ...)`) are covered, so the risk is limited to non-native formats. | File: src/ovcaq/drivers/codex_events.py:300 | Task: general
+[BLAKE] ⚪ The probe and the spawn resolve relative names against different directories. Both probes run with no `cwd`: Codex Popen and Claude `shutil.which` use the supervisor's working directory. The spawn uses `cwd=spec.cwd`, which is the project root. So a relative command (`./bin/codex`), a relative PATH overlay entry (`bin:/usr/bin`), or Codex's empty-PATH current-directory lookup can be healthy at probe and missing at launch, or the reverse, when `ovcaq --root X run` starts outside X. This breaks the exit criterion "health checks and actual spawn agree". Suspected from subprocess semantics, not reproduced. | File: src/ovcaq/drivers/codex.py:47 | Task: general
+[BLAKE] ⚪ With an empty host PATH, the Claude probe reports unhealthy because `shutil.which(path="")` returns None. The launch would still find the command in the project root, because subprocess treats an empty PATH as the current directory. The Codex probe reports healthy in the same environment, so the two adapters disagree. This is documented as intentional and fails safe (false unhealthy), but it does not "resolve under the launch environment". | File: src/ovcaq/drivers/claude.py:82 | Task: general
+[BLAKE] ⚪ The normal subagent lifecycle (wait → completed, then close_agent → shutdown) emits `raw.unknown` with reason "Malformed or unsupported Codex record" on every healthy run, which sets the TUI raw indicator (tui/model.py:548). Late running/errored/completed updates on terminal lanes are dropped silently. The two cases are inconsistent, and a healthy close looks like a malformed record. The tests pin this behavior (test_adapter_outcomes.py:89). | File: src/ovcaq/drivers/codex.py:378 | Task: general
+[BLAKE] ⚪ Flaky test: `test_installed_foreground_signals_return_shell_status_and_stop_the_driver[15]` failed once under full-suite load (returncode 1, expected 143). It passed in isolation (3/3) and in a second full run (7155 passed). Not traced to this diff, but this PRD's exit gate depends on `uv run pytest` passing. | File: tests/packaging/test_installed_supervisor_cli.py:591 | Task: general
+[BLAKE] ⚪ A 16 MB binary review artifact is committed to the tracked project-management tree. This is permanent history bloat for evidence that could be regenerated or summarized. | File: docs/dev/project-management/autopilot/reports/00053-postrepair-review-20261012-evidence/review-diff-00053-postrepair-20261012.diff.gz | Task: general
+
+B1: pass
+B2: pass
+B3: pass
+B4: pass
+B5: pass
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: pass
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: pass
+B16: pass
+B17: pass
+B18: pass
+B19: pass

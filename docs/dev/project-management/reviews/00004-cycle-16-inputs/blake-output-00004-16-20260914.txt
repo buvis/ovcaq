@@ -1,0 +1,41 @@
+[BLAKE] 🟠 Configured `prd_root` is never containment-checked, and absolute or `..` paths are resolved directly; `stall`/`park` can therefore move files outside the resolved project despite the source security contract allowing only an explicitly external state root | File: src/ovcaq/config.py:87 | Task: P02-T01
+[BLAKE] 🟠 The frontmatter port is incomplete: characterized `doubt_reviewer` and `consensus_engine` controls are silently ignored, while accepted `catchup`, `design`, `design_gate`, and `pause_on_ambiguity` values are returned but not committed, making later overwrite warnings impossible on fresh v1 state | File: src/ovcaq/workflow/frontmatter.py:15 | Task: P02-T02
+[BLAKE] 🟡 Deferred-ledger reads validate only that items are objects; missing, unsafe, or duplicate `op_id` values survive loading, after which report rendering silently drops or collapses them, violating the operation-ID and no-lost-record contracts | File: src/ovcaq/workflow/_files.py:227 | Task: P02-T06
+
+P02-T01: fail
+P02-T02: fail
+P02-T03: pass
+P02-T04: pass
+P02-T05: pass
+P02-T06: fail
+P02-T07: pass
+P02-T08: fail
+P02-T09: pass
+P02-T10: pass
+
+Phase A exit: fail
+Phase B exit: pass
+Phase C exit: fail
+Phase 2 lifecycle-equivalence exit: fail
+Phase 2 interruption-recovery exit: pass
+Phase 2 dependency-boundary exit: pass
+
+B1: fail
+B2: fail
+B3: fail
+B4: pass
+B5: fail
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: fail
+B11: pass
+B12: fail
+B13: pass
+B14: fail
+B15: fail
+B16: pass
+B17: fail
+B18: pass
+B19: pass

@@ -1,0 +1,374 @@
+
+You are Pat, the per-task code reviewer. Review the single task's committed
+diff below. This review is READ-ONLY: report findings, change nothing.
+
+## Task
+
+Subject: [D1] src/ovcaq/
+
+Description:
+Source review: docs/dev/project-management/reviews/00051-triage-a-single-valid-codex-record-can-crash-th-v1-review-1.md
+
+Disposition and bounded acceptance:
+Review-cycle correction: the transmitted original strip-first recipe lost original regex word boundaries. This is a specification gap, not a capability failure. Preserve original-token redaction AND redact reconstructed tokens after removing the unchanged recognized controls, then cap to 4096. A bounded candidate is sanitize original detail, remove the existing controls, sanitize the full cleaned result, then truncate. Preserve classification/reset extraction from untouched full native text, all existing cap/control/Unicode regressions, and public signatures. Amend the design with a review-1 contract correction citing R5; retain its historical recipe/review evidence rather than erase it. Independently test C0/DEL/lone-ESC boundary destruction for bare tokens and Bearer values through helper and actual native normalized payloads/JSONL, plus original R2 control-split cap cases. Never weaken shared sanitizer boundaries or expand recognized control forms.
+
+R4 scan optimization must preserve original full-container scalar validation before redaction, valid non-BMP scalars and subclass handling. Avoid bypassing sanitize_json in a caller not already fully checked. A precompiled surrogate regex is sufficient if eliminating repeated validation risks the contract.
+
+R7 needs an independent native-parser reason/adapter-state assertion for a bounded deeply nested JSON frame that raises RecursionError in the preflight. R8 must preserve tolerant validation/decode handling and fatal publication boundaries; helper extraction inside the current catch is acceptable, literal hoisting that widens escaping failures is not.
+
+Acceptance: every quoted finding is resolved without scope expansion, all original source R7/R2 regressions remain pinned, and focused events/detail tests pass. Do not add cyclic-container guards or TUI changes. Keep the witnessed out-of-scope limitations in the review ledger.
+
+### Findings (verbatim)
+- ⚪ src/ovcaq/events/model.py:224: Hot-path scan cost. `_payload` scans the whole payload at line 224, then `sanitize_json` scans it again at line 252, and `_usage_payload` scans again through `sanitize_json`. Each scan uses a per-character Python generator: about 22 ms per MiB, against about 2.5 ms for a precompiled `re.compile("[\ud800-\udfff]").search`. Every frame also gets re-validated by `replace()` in `_bind_observations` and by `observation_record` in the writer. Behavior-preserving fix: use the regex in the predicate, and call `_sanitize_json` inside `_payload` and `_usage_payload` once the up-front check has passed (found by: ALICE, BOB)
+- 🟠 src/ovcaq/drivers/codex_events.py:64: Removing controls before redaction now leaks tokens that the old order caught. When a bare C0 control, DEL or lone ESC sits between a word character and a token, removal glues them together: `"x\x00sk-" + "a"*30` becomes `xsk-aaaa…` and `"auth\x00Bearer " + "a"*26` becomes `authBearer …`. `_LIKELY_SECRET` needs `\b` before `sk-`/`Bearer`, so neither `bounded_detail` nor the Observation's second sanitizer redacts them. The old order redacted both, because the control supplied the word boundary. Confirmed by tracing the regex by hand; not executed (read-only sandbox) (found by: BOB)
+- 🟡 src/ovcaq/events/tail.py:119: The preflight's `except (ValueError, RecursionError)` branch, which hands the frame to the driver, has no test. No RawFirstDecoder test feeds a deeply nested frame. Narrowing it to `except ValueError` would still pass the suite: deep frames would then get "driver failed to decode frame" instead of the driver's own native gap, against the contract's "ValueError or RecursionError → delegate unchanged" (found by: BOB)
+- 🟡 src/ovcaq/events/tail.py:116: The preflight parse and scan sit inside the tolerant driver catch, so the try blocks nest 4 levels deep (the limit). Hoist the `json.loads` try and the scalar check above it and wrap only `tuple(self._driver.decode(frame))` in `except Exception`. This also matches the contract's "consume decode under the existing tolerant catch" (found by: BOB)
+
+
+Acceptance criteria:
+Every in-scope quoted finding no longer reproduces; preserve settled deferrals and existing contracts.
+
+## Diff under review
+
+```diff
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 648cc59..16a5250 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -40,6 +40,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+ 
+ ### Fixed
+ 
++- **drivers**: redact diagnostic credentials both before and after terminal control removal, preserving original token boundaries and hiding reconstructed tokens before truncation.
++- **events**: speed up surrogate detection while preserving original-container validation and tolerant native preflight handling.
+ - **runtime**: continue supervised sessions after native Unicode gaps while propagating normalized gap publication failures and cleaning up the live child.
+ - **drivers**: remove terminal controls before redacting and bounding Codex diagnostic details so split credentials cannot survive normalization.
+ - **events**: retain native JSON frames containing invalid Unicode scalars as raw gaps before adapter state can change.
+diff --git a/docs/dev/project-management/designs/00051-triage-a-single-valid-codex-record-can-crash-th-v1-design.md b/docs/dev/project-management/designs/00051-triage-a-single-valid-codex-record-can-crash-th-v1-design.md
+index 12d33d5..7094660 100644
+--- a/docs/dev/project-management/designs/00051-triage-a-single-valid-codex-record-can-crash-th-v1-design.md
++++ b/docs/dev/project-management/designs/00051-triage-a-single-valid-codex-record-can-crash-th-v1-design.md
+@@ -375,3 +375,47 @@ dispatch 2 (codex): cardinal-sin 0, blocker 0, non-blocker 4, question 2
+ Host adaptation: mandatory rival dispatch used Anthropic Sonnet/high through installed use-sonnet wrapper, with no tools. Review is draft-based; source-code claims were not independently verified by this reviewer. Parseable section-anchored findings satisfied engagement; no blocker and no dispatch 3 required.
+ Non-blockers: terminating cycle/shared-container handling; deep JSON parse fallback relies on driver parse failure; name supervisor writer-failure injection mechanism; repeated root scans are bounded overhead.
+ Questions: shadowed duplicate-key values admission meaning; whether post-detail stages remove characters beyond redaction. These remain recorded per design review non-blocker/question policy.
++
++## Review-1 contract correction (R5)
++
++Review-1 R5 identified a specification gap in the historical strip-first recipe
++above: removing C0 controls, DEL or a lone ESC can destroy the original word
++boundary before a bare token or Bearer value. The recipe and review evidence
++remain recorded; the following order supersedes that recipe:
++
++```python
++controls = r"\x1b\[[0-?]*[ -/]*[@-~]|[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]"
++protected = re.sub(
++    controls,
++    lambda match: "\x00" if match[0] == "\x1b" else match[0],
++    detail,
++)
++cleaned = re.sub(controls, "", sanitize_text(protected))
++return sanitize_text(cleaned)[:4096]
++```
++
++Before redaction, mask only originally recognized lone ESC controls as NUL.
++Both controls supply the same regex word boundary and are subsequently removed;
++this prevents a redaction marker from forming a new `ESC[REDACTED]` CSI sequence.
++Original recognized CSI sequences remain intact until control removal.
++
++The first pass retains original regex boundaries; the second pass redacts
++credentials reconstructed by the unchanged control removal before the cap.
++Shared sanitizer boundaries and recognized control forms remain unchanged.
++Failure classification and reset extraction still consume full untouched native
++text. Read-only regressions cover C0/DEL/lone-ESC boundaries and token interiors
++through the helper, native payloads and saved JSONL, alongside the original
++control-split cap cases.
++
++Review-1 R4 uses a precompiled surrogate-range regex while retaining the full
++original-container validation before redaction, including sensitive values,
++valid non-BMP scalars and subclass handling. Existing public sanitizer calls
++remain validated. R7 independently pins deeply nested JSON parse recursion to
++the driver's native gap reason and unchanged adapter state. For R8, extracted
++preflight parsing and scalar validation remain inside the existing tolerant
++decode catch; malformed or recursive JSON delegates unchanged, and genuine raw
++or normalized publication failures still propagate outside that catch.
++
++The witnessed cyclic/repeated-container and direct-adapter limitations remain
++out of scope and recorded in the historical review ledger; no cycle guards,
++TUI changes or wider control recognition are introduced.
+diff --git a/src/ovcaq/drivers/codex_events.py b/src/ovcaq/drivers/codex_events.py
+index 4b3cbe9..b815bc8 100644
+--- a/src/ovcaq/drivers/codex_events.py
++++ b/src/ovcaq/drivers/codex_events.py
+@@ -55,12 +55,15 @@ def item_activity(item: object) -> dict[str, JSONValue] | None:
+ 
+ 
+ def bounded_detail(detail: str) -> str:
+-    """Remove terminal controls, redact credentials, then bound detail."""
+-    cleaned = re.sub(
+-        r"\x1b\[[0-?]*[ -/]*[@-~]|[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]",
+-        "",
++    """Redact original and control-reconstructed credentials, then bound detail."""
++    controls = r"\x1b\[[0-?]*[ -/]*[@-~]|[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]"
++    # A lone ESC must not turn a new [REDACTED] marker into an ANSI sequence.
++    protected = re.sub(
++        controls,
++        lambda match: "\x00" if match[0] == "\x1b" else match[0],
+         detail,
+     )
++    cleaned = re.sub(controls, "", sanitize_text(protected))
+     return sanitize_text(cleaned)[:4096]
+ 
+ 
+diff --git a/src/ovcaq/events/model.py b/src/ovcaq/events/model.py
+index ebc5c21..ab737ed 100644
+--- a/src/ovcaq/events/model.py
++++ b/src/ovcaq/events/model.py
+@@ -36,6 +36,7 @@ _LIKELY_SECRET = re.compile(
+     re.IGNORECASE,
+ )
+ _UTC_TEXT = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|\+00:00)")
++_INVALID_UNICODE_SCALAR = re.compile(r"[\ud800-\udfff]")
+ 
+ 
+ class ObservationType(StrEnum):
+@@ -80,7 +81,7 @@ def has_invalid_unicode_scalar(value: object) -> bool:
+     while pending:
+         current = pending.pop()
+         if isinstance(current, str):
+-            if any(0xD800 <= ord(character) <= 0xDFFF for character in current):
++            if _INVALID_UNICODE_SCALAR.search(current):
+                 return True
+         elif isinstance(current, Mapping):
+             for key, child in current.items():
+diff --git a/src/ovcaq/events/tail.py b/src/ovcaq/events/tail.py
+index df8a38b..6598ee8 100644
+--- a/src/ovcaq/events/tail.py
++++ b/src/ovcaq/events/tail.py
+@@ -100,6 +100,14 @@ class RawFirstDecoder:
+         self._raw.flush()
+         return self._complete(terminated=False) if self._length else ()
+ 
++    @staticmethod
++    def _has_invalid_json_scalar(frame: str) -> bool:
++        try:
++            record = json.loads(frame)
++        except (ValueError, RecursionError):
++            return False
++        return has_invalid_unicode_scalar(record)
++
+     def _complete(self, *, terminated: bool) -> tuple[Observation, ...]:
+         trim_cr = terminated and self._last == b"\r"
+         length = self._length - int(trim_cr)
+@@ -114,11 +122,7 @@ class RawFirstDecoder:
+                 reason = "frame contains invalid UTF-8"
+             else:
+                 try:
+-                    try:
+-                        record = json.loads(frame)
+-                    except (ValueError, RecursionError):
+-                        record = None
+-                    if has_invalid_unicode_scalar(record):
++                    if self._has_invalid_json_scalar(frame):
+                         reason = "frame contains invalid Unicode scalar value"
+                     else:
+                         # Consume lazy iterables before publishing any part of a frame.
+diff --git a/tests/drivers/test_codex_detail_safety.py b/tests/drivers/test_codex_detail_safety.py
+index 2a98afb..c535c2f 100644
+--- a/tests/drivers/test_codex_detail_safety.py
++++ b/tests/drivers/test_codex_detail_safety.py
+@@ -48,6 +48,35 @@ SPLIT_DETAILS = [
+         ]
+     ],
+ ]
++CONTROL_DETAILS = [
++    pytest.param(detail, expected, id=f"{kind}-{placement}-{ord(control):02x}")
++    for control in [
++        "\x00",
++        "\x08",
++        "\x0b",
++        "\x0c",
++        "\x0e",
++        "\x1b",
++        "\x1f",
++        "\x7f",
++    ]
++    for kind, token, prefix in [
++        ("bare", TOKEN, ""),
++        ("bearer", "Q7" * 20, "Bearer "),
++    ]
++    for placement, detail, expected in [
++        (
++            "boundary",
++            "Before" + control + prefix + token + " After",
++            "Before" + prefix + "[REDACTED] After",
++        ),
++        (
++            "inside",
++            "Before " + prefix + token[:6] + control + token[6:] + " After",
++            "Before " + prefix + "[REDACTED] After",
++        ),
++    ]
++]
+ 
+ 
+ @pytest.fixture
+@@ -104,6 +133,30 @@ def assert_safe_details(
+     assert all(record["payload"]["detail"] == expected for record in records)
+ 
+ 
++@pytest.mark.parametrize(("detail", "expected"), CONTROL_DETAILS)
++def test_bounded_detail_redacts_control_boundaries_and_reconstructed_credentials(
++    detail: str, expected: str
++) -> None:
++    assert bounded_detail(detail) == expected
++
++
++@pytest.mark.parametrize("kind", ["error", "turn.failed"])
++@pytest.mark.parametrize(("detail", "expected"), CONTROL_DETAILS)
++def test_native_failure_saves_redaction_at_control_boundaries_and_inside_credentials(
++    driver: CodexDriver,
++    tmp_path: Path,
++    kind: str,
++    detail: str,
++    expected: str,
++) -> None:
++    observations = decode_failure(driver, kind, detail)
++    assert [value.type for value in observations] == [
++        "activity.message" if kind == "error" else "session.failed"
++    ]
++    assert observations[0].payload["failure_class"] == "unknown"
++    assert_safe_details(tmp_path, observations, expected)
++
++
+ @pytest.mark.parametrize(("detail", "expected"), SPLIT_DETAILS)
+ def test_bounded_detail_redacts_reconstructed_tokens_before_capping(
+     detail: str, expected: str
+diff --git a/tests/events/test_unicode_frames.py b/tests/events/test_unicode_frames.py
+index dd6cc7e..d7397b9 100644
+--- a/tests/events/test_unicode_frames.py
++++ b/tests/events/test_unicode_frames.py
+@@ -288,6 +288,40 @@ def test_malformed_and_non_json_frames_keep_native_delegation(
+     assert unicode_normalized(normalized_path) == observations
+ 
+ 
++def test_deep_json_recursion_preserves_native_gap_and_durable_evidence(
++    unicode_tail: Any,
++) -> None:
++    driver, decoder, raw_path, normalized_path, durable = unicode_tail
++    driver.decode(json.dumps({"type": "thread.started", "thread_id": "healthy-parent"}))
++    driver.decode(json.dumps(native_unicode_record("completion")))
++    depth = 100_000
++    frame = (
++        b'{"type":"thread.started","thread_id":"poisoned-parent","ignored":'
++        + b"[" * depth
++        + b"0"
++        + b"]" * depth
++        + b"}"
++    )
++    with pytest.raises(RecursionError):
++        json.loads(frame)
++    expected = native_unicode_driver().decode(frame.decode())
++    assert len(expected) == 1
++    assert expected[0].type is ObservationType.RAW_UNKNOWN
++    before = unicode_adapter_state(driver)
++    observations = decoder.feed(frame + b"\n") + decoder.finish()
++    assert len(observations) == 1
++    gap = observations[0]
++    assert gap.type is ObservationType.RAW_UNKNOWN
++    assert gap.run_id == "unicode-run"
++    assert gap.session_id == "owned-session"
++    assert dict(gap.payload) == dict(expected[0].payload)
++    assert gap.payload["reason"] != "frame contains invalid Unicode scalar value"
++    assert gap.payload["raw_sha256"] == hashlib.sha256(frame).hexdigest()
++    assert unicode_adapter_state(driver) == before
++    assert raw_path.read_bytes() == durable[-1] == frame + b"\n"
++    assert unicode_normalized(normalized_path) == observations
++
++
+ @pytest.mark.parametrize("stage", ["raw", "normalized"])
+ @pytest.mark.parametrize("error_number", [errno.ENOSPC, errno.EIO])
+ def test_real_writer_failures_propagate_from_unsafe_native_frames(
+
+```
+
+## Recorded verification
+
+The task's tests were run before this review. This is what they reported:
+
+Command: mise exec -- uv run --no-sync pytest tests/drivers/test_codex_detail_safety.py::test_bounded_detail_redacts_control_boundaries_and_reconstructed_credentials tests/drivers/test_codex_detail_safety.py::test_native_failure_saves_redaction_at_control_boundaries_and_inside_credentials tests/events/test_unicode_frames.py::test_deep_json_recursion_preserves_native_gap_and_durable_evidence -q --tb=line
+Environment: UV_CACHE_DIR=/private/tmp/ovcaq-rework-uv-cache
+Exit: 0
+97 passed, 2 warnings in 0.11s
+Warnings: pytest could not clean pre-existing temporary garbage directories in sandbox.
+Worker additionally verified both full named files: 431 passed, exit 0.
+
+
+Judge only from this prompt: the diff above, the task text, and this recorded
+result. Do not read other files, run commands, or re-run the tests. What is not
+in this prompt is not evidence, and a finding you cannot ground in what is here
+is one you should not report.
+
+# Simplification Mandate (step 5.7 reviewer-prompt appendix)
+
+Append this block **verbatim** to every per-task code-reviewer prompt (see
+`SKILL.md` step 5.7). It ships inside the prompt, so it must stay
+self-contained.
+
+> Beyond bugs, actively hunt for simplification in the diff under review. For
+> every added or changed file, ask "what would make this simpler to read
+> without changing what it does?" and flag concrete behavior-preserving
+> opportunities to: reduce complexity (needless indirection, dead branches,
+> single-caller abstractions, nesting deeper than 4 levels, functions over 50
+> lines); eliminate redundancy (logic duplicated within the diff or against
+> existing code, a helper that reimplements a stdlib or existing utility);
+> improve naming (names that state intent, no opaque abbreviations); and
+> remove dead code. Follow CLAUDE.md / AGENTS.md conventions and the
+> surrounding code's style.
+>
+> Report each concrete behavior-preserving simplification as a LOW finding,
+> with file:line, the current shape, and the simpler replacement. LOW findings
+> are carried to the PRD-level review, never retried here.
+>
+> Do not over-simplify: never propose a change that trades clarity for
+> brevity, drops error handling, collapses a deliberate boundary, or removes a
+> documented invariant. Simpler means easier to read and maintain, not shorter
+> at any cost. If a change would alter behavior, it is out of scope — do not
+> flag it.
+
+
+## Reporting contract
+
+Report one finding per line, in exactly this shape:
+
+SEVERITY | file:line | issue | fix
+
+Severities are CRITICAL, HIGH, MEDIUM, LOW.
+
+Severity has a fixed meaning here, and it decides what happens next. MEDIUM is
+reserved for a correctness or security defect this diff introduces that its own
+tests do not catch: a wrong result, an unhandled error path, data loss,
+injection, secret exposure, or a missing authorization check. Style, naming,
+duplication, structure and maintainability are LOW, and so is every
+behavior-preserving simplification, whatever its size. A LOW is noted and
+carried to the PRD-level review; it is never retried in this loop.
+
+If the diff has no findings, emit the literal line:
+
+NO FINDINGS
+
+## Closure verdicts (only when the description carries a findings block)
+
+When the Description above contains a `### Findings (verbatim)` block, this is
+a rework task and each quoted finding is a claim to check. Before your findings
+lines, emit one verdict per quoted finding, in this shape:
+
+CLOSURE | resolved|unresolved | <the finding, quoted> | <one line of evidence from the diff>
+
+Judge each finding against the diff, not against the commit message and not
+against how clean the code reads. A diff that improves the file while leaving
+the quoted defect reachable is `unresolved`. Quote the line that resolves it,
+or say what still reaches the defect. Emit a verdict for every quoted finding,
+including ones you judge already fixed elsewhere.
+
+

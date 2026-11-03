@@ -1,0 +1,23 @@
+{
+  "name": "[D1] Unify capability execution and honor capability timeouts (M)",
+  "description": "Unify capability execution and honor capability timeouts\n\nLocation: src/ovcaq/config.py; src/ovcaq/runtime/capability.py; src/ovcaq/runtime/supervisor.py; src/ovcaq/runtime/session.py; src/ovcaq/supervisor_cli.py; tests/runtime/test_capability_lifecycle.py; tests/runtime/test_supervisor.py; tests/workflow/test_supervisor_configuration.py\n\nReuse: existing StateStore/StateService, pure decisions, shared runtime ownership and test fixtures.\n\nContract (source requirement/design excerpts):\n[capabilities.agoge]\ntimeout_seconds = 3600\n\n`retry()` refuses a live owner, reconciles a stale owner, then starts one new attempt.\nA pending row found at startup is normalized in the aggregate view as `decision=\"interrupted\"` without rewriting the retained canonical evidence.\n\nDetails:\nUse one CapabilityService run/finish/error-evidence path for pending attempts and explicit retry. Keep existing public start() return compatibility unless a clearly necessary internal helper avoids duplication; do not copy SessionPaths construction into the supervisor. Standardize actionable exception details and preserve exactly one canonical row. Remove duplicate aggregate rebuilds and avoid projecting a live pending capability as interrupted; retain startup interrupted reconciliation and final aggregate publication. Resolve the accepted [capabilities.NAME] timeout_seconds setting with normal explicit/project/user/default precedence and positive bounded validation; do not derive capability timeouts from a workflow phase route. Stale-owner reconciliation must work without an agent phase route, including a paused workflow. Do not implement the real launcher runner owned by PRD 00010.\n\n### Findings (verbatim)\n- 🟡 Capability timeout comes from the workflow phase route (`resolve_phase_route(work.phase or next_phase)`), not from capability config (plan §7 `[capabilities.agoge] timeout_seconds`). Startup `_reconcile_capabilities` resolves a full agent route (it needs agent config and a valid tier, and raises on phase `paused`) only to throw the timeout away | File: src/ovcaq/runtime/supervisor.py:236 | Consensus: [1/3]\n- 🟡 Extra `reconcile_metrics` calls. `CapabilityService._begin` rebuilds the aggregate right after publishing the pending row, so the aggregate shows the live capability attempt as `interrupted` for its whole run. `Supervisor._run_capability` calls it again after `finish`→`_finalize` already did | File: src/ovcaq/runtime/capability.py:392 | Consensus: [1/3]\n- 🟡 `Supervisor._run_capability` duplicates CapabilityService. It hand-builds `SessionPaths` that `_begin` already returned and `start` threw away, and re-implements `retry`'s run/finish-on-exception flow with a different failure detail (bare `str(error)` vs \"runner raised …; retry X explicitly\") | File: src/ovcaq/runtime/supervisor.py:260 | Consensus: [1/3]\n\nAcceptance criteria:\n- Every quoted finding no longer reproduces.\n- Every decision is explainable from committed state plus summary.\n- Metrics, pause, stop, retry, park, and halt contracts pass.\n- Required post-drain capability lifecycle and independent retry pass.\n\nVerify: tests fail for the quoted regression before implementation and pass after; run applicable focused tests, source quality gates, and the work skill's mandatory final verification. Do not read live launcher homes in tests.\n",
+  "files": [
+    "src/ovcaq/config.py",
+    "src/ovcaq/runtime/capability.py",
+    "src/ovcaq/runtime/supervisor.py",
+    "src/ovcaq/runtime/session.py",
+    "src/ovcaq/supervisor_cli.py",
+    "tests/runtime/test_capability_lifecycle.py",
+    "tests/runtime/test_supervisor.py",
+    "tests/workflow/test_supervisor_configuration.py"
+  ],
+  "blocked_by": [
+    11
+  ],
+  "model": "opus",
+  "tier_reason": "contract",
+  "estimated_tokens": 102438,
+  "est_context_peak": 122438,
+  "qwen_eligible": false,
+  "qwen_excluded_reason": "tier"
+}

@@ -1,0 +1,3 @@
+uv --cache-dir /private/tmp/ovcaq-rework-uv run ruff format --check .
+exit1: tests/drivers/test_codex_rework_probe.py:121 health = configured_probe(...) .probe() must be one physical line; 227 files already formatted.
+Fix only this formatting regression; preserve every test assertion and behavior. Do not format unrelated files.

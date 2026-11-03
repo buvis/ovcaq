@@ -1,0 +1,25 @@
+Fix the seven bounded cycle-16 diagnostic/test/style findings. This tail introduces full configured-path context for deferred-directory creation errors while preserving each original OSError as __cause__. Preserve the existing filesystem publication/locking/fsync algorithm and its chronology.
+
+Contract:
+- /Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/workflow/_files.py: private deferred-directory diagnostics and behavior-preserving function extraction; public record_defer(runtime_root: Path, prd: str, batch_id: str, record: dict, *, boundary_hook=None) -> Path is unchanged.
+- /Users/bob/git/src/github.com/buvis/ovcaq/tests/workflow/test_deferred_diagnostics.py: Tess-owned new behavioral regressions, read-only for Ivan.
+- /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/test_rework_13.py: preserve installed-wheel/reparent direct and replay chronology and all parameter cases while shortening the 80-line test, using subprocess.run timeout handling, and pinning direct refusal before ledger creation.
+- /Users/bob/git/src/github.com/buvis/ovcaq/CHANGELOG.md: mention the full-path diagnostics for open/create errors.
+No exported signature/schema/wire format change; no new algorithm or persisted-data transform.
+
+### Findings (verbatim)
+🟡 The restored deferred-directory diagnostic has no committed regression covering initial file/symlink refusal or the vanished-directory second open, including full path and preserved cause/errno | File: tests/packaging/test_rework_13.py | Consensus: [2/3]
+🟡 `_ensure_directory_chain` is 51 lines because it embeds the 13-line ancestry verifier; move that verifier to a named helper to satisfy the function-size limit and simplify the chain walk | File: src/ovcaq/workflow/_files.py:268 | Consensus: [2/3]
+🟡 `test_installed_defer_never_succeeds_through_unconfirmed_reparented_ancestry` is 80 lines; extract the safe-result and retry/replay assertion flows into helpers while retaining the parameterized chronology | File: tests/packaging/test_rework_13.py:357 | Consensus: [2/3]
+🟡 F4: _invoke reimplements subprocess.run's timeout kill/reap as a 16-line Popen block plus a framework-verifying `assert process.poll() is not None`; subprocess.run(timeout=20) already kills and waits on TimeoutExpired, and test_rework_12._invoke in the same diff keeps subprocess.run | File: tests/packaging/test_rework_13.py:58 | Consensus: [1/3]
+⚪ F5: os.mkdir(deferred.name, dir_fd=runtime) failures other than EEXIST (EACCES, ENOSPC, EBADF) still surface raw errno text with the bare name 'deferred'; same class as R15-03, on the create step the acceptance ("every failing open") did not name | File: src/ovcaq/workflow/_files.py:340 | Consensus: [1/3]
+⚪ F6: fix commit 93c049b changed a user-visible diagnostic (full deferred path on open failure) without a CHANGELOG entry; the only added Fixed line covers ancestry revalidation | File: CHANGELOG.md:24 | Consensus: [1/3]
+⚪ F7: reparent-refusal branch hedges `if _ledger(runtime).exists(): _assert_one_record(runtime)`; the shipped chronology deterministically refuses inside the first _read_record_content before any write, so the direct case should pin that no ledger exists | File: tests/packaging/test_rework_13.py:406 | Consensus: [1/3]
+
+Acceptance criteria:
+- Every quoted finding no longer reproduces.
+- Committed tests cover existing deferred path as real regular file and symlink, the second open after disappearance, and creation OSErrors EACCES/ENOSPC/EBADF; full path is in the outer error and original cause errno is retained. Existing file/symlink and target sentinel remain untouched; no deferred record is published on refusal.
+- Both open failures use "deferred directory is not a real directory: <full path>"; creation failure uses "deferred directory could not be created: <full path>".
+- Named function extraction keeps all modified Python functions <=50 lines. Maintain all real durability checks, direct/replay parameter cases and installed module-origin checks. Subprocess timeouts remain bounded and reaped by subprocess.run(timeout=20).
+- No ledger is created on the direct reparent-refusal chronology; replay preserves authoritative bytes.
+Verify: mise exec -- uv run pytest tests/workflow/test_deferred_diagnostics.py

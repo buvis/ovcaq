@@ -1,0 +1,77 @@
+**Prior-finding dispositions (cycle 14 → this diff)**
+
+| ID | Disposition |
+|---|---|
+| R14-01 | Resolved: `_ensure_directory_chain` now yields the runtime fd; `deferred` open/mkdir are `dir_fd`-relative; `verify_runtime` is folded into the verify callable run before, during and after publication (`_files.py:306-347`); installed regressions at deferred-mkdir and ledger-open boundaries, direct + exact replay. |
+| R14-02 | Resolved: `distance` parametrize (3, 5) direct/replay committed (`test_rework_13.py:191`). Distance-1 coverage dropped (new F5). |
+| R14-03 | Resolved: `test_installed_defer_refuses_execute_only_ancestor_without_search_descriptor` forces the no-descriptor path on Darwin with real 0o111, pins exit/errno/cause/path. |
+| R14-04 | Resolved: `_O_SEARCH` module constant, `is None` branch; actor uses the same getattr chain; effective flags asserted in-test. |
+| R14-05 | Resolved: `str(directory)`; test asserts no `PosixPath(`. |
+| R14-06 | **Not resolved**: `opened` still reused at `_files.py:277` and `:292`. |
+| R14-07 | Resolved on the assertion side; child still emits the three constant keys (new F6). |
+| R14-08 | Resolved via `packaging_support` helpers, but per-result origin asserts were dropped (new F1). |
+| R14-09 / R14-10 | KNOWN, settled, unchanged. |
+| R14-11 / R14-12 | Discarded, settled, not re-raised. |
+
+**Findings**
+
+```
+[BOB] 🟠 F1: per-result installed-origin verification dropped from test_rework_12 `_invoke`/`_await_event`/`_finish` and test_rework_13 `_invoke`; actor results still carry `origins` but nothing asserts them, contrary to task 6 ("on every subprocess result and event") and task 7/8 ("preserve installed-wheel origin coverage") | File: tests/packaging/test_rework_13.py:71 | Task: 8
+[BOB] 🟡 F2: `_open_deferred_ledger` opens `deferred` via dir_fd with no wrapping, so a symlink/regular-file `deferred` (ELOOP/ENOTDIR) or a vanished dir on the second open surfaces raw errno text with the bare name 'deferred'; pre-change `_open_lifecycle_directory` reported "deferred directory is not a real directory: <full path>" | File: src/ovcaq/workflow/_files.py:325 | Task: 7
+[BOB] 🟡 F3: `test_installed_defer_refuses_runtime_replacement_before_deferred_creation` and `..._during_ledger_publication` are ~50-line near-duplicates (only mode string and assertion helper differ), both at the 50-line ceiling | File: tests/packaging/test_rework_13.py:242 | Task: 7
+[BOB] ⚪ F4: B6 unresolved: `opened` reused for parent fstat then level fstat despite "keep parent and child identities legible" acceptance | File: src/ovcaq/workflow/_files.py:277 | Task: 7
+[BOB] ⚪ F5: distance-1 (runtime.parent) replacement coverage removed when parametrize moved to (3, 5) | File: tests/packaging/test_rework_13.py:192 | Task: 7
+[BOB] ⚪ F6: `search_capability()` still returns `euid`, `read_denied`, `search_fsync` constants no test reads | File: tests/packaging/rework_13_scripts.py:172 | Task: 8
+[BOB] ⚪ F7: `_O_SEARCH` falls back to `os.O_EXEC`; on musl Linux O_EXEC == O_PATH, whose descriptors reject fsync, so every ancestor open in `_ensure_directory_chain` would fail even when readable (suspected, pre-existing via os.O_SEARCH there) | File: src/ovcaq/workflow/_files.py:25 | Task: 8
+[BOB] ⚪ F8: Cannot statically verify: suite/ruff/format/mypy/build and fail-first replay for packaging tests (base collection failed on missing packaging_support helpers); host reports 1364 passed / 0 skipped at 7b41798 | File: N/A | Task: general
+```
+
+**Consensus rubric**
+
+```
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+```
+
+**Buckets**
+
+```
+FIX:
+- F1 dropped origin asserts — tests/packaging/test_rework_13.py:71, test_rework_12.py:52/108/119 — call `assert_installed(value["origins"], installed, "ovcaq.workflow.records")` (13) / `"ovcaq"` (12) at each site; restore `installed` param on `_await_event`/`_finish`
+- F2 raw deferred-open errors — src/ovcaq/workflow/_files.py:325,332 — wrap both `os.open(deferred.name, ...)` in a local `open_deferred()` that re-raises FileNotFoundError and maps other OSError to `OSError(f"deferred directory is not a real directory: {deferred}") from error`
+- F3 duplicate replacement tests — tests/packaging/test_rework_13.py:242-336 — one test parametrized over `(mode, assert_helper)`; give `_assert_runtime_replaced_at_deferred_mkdir` a `replay` kwarg so both helpers share a signature
+- F4 `opened` reuse — src/ovcaq/workflow/_files.py:277,292 — rename to `parent_identity` / `level_identity`
+- F5 distance-1 dropped — tests/packaging/test_rework_13.py:192 — `("distance", (1, 3, 5))`
+- F6 dead capability keys — tests/packaging/rework_13_scripts.py:172-174 — delete `euid`, `read_denied`, `search_fsync`
+VERIFY:
+- (none)
+KNOWN:
+- F7 musl O_EXEC==O_PATH fsync failure — Linux is excluded from the personal-cutover milestone by the resolved discovery (settled B9); behavior is pre-existing, not introduced here
+- F8 runtime gates — fresh suite 1364/0/0 at reviewed HEAD; ruff/format/mypy/build reuse same-HEAD exit-0 records; packaging fail-first binding is the settled R9-K4 limitation (base cannot collect the new helper imports)
+```
+
+**Doubt rubric**
+
+```
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```
+
+Counts: 8 findings = 6 FIX + 0 VERIFY + 2 KNOWN.
+
+**Status**: Done.
+**Changed**: nothing (review only); 8 findings (1 High, 2 Medium, 5 Low), 1 prior finding (R14-06) unresolved.
+**Next**: Task complete. Suggested next: route F1 and F4 into the rework loop first (both are acceptance-text breaches of tasks 6-8).

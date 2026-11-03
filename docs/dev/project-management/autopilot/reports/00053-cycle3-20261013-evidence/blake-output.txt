@@ -1,0 +1,26 @@
+Exit gates run on HEAD e75b50a: `uv sync --all-groups` ok, `uv run pytest` 7151 passed with 0 failed or skipped (2 pytest tmp-cleanup warnings), `ruff check` ok, `ruff format --check` 236 files ok, `mypy` found no issues in 61 files, `uv build` built the sdist and wheel. DRIVER_API_VERSION=2, PROTOCOL_VERSION=1 and SCHEMA_VERSION=1 are unchanged. `failure_reset` is untouched. There are no TUI, config or provisioning changes.
+
+[BLAKE] 🟡 Some explicit status-code messages now classify as `unknown`. Before this change they classified correctly. Probed: `status=429`, `Error 429: Too Many Requests`, `HTTP error 503`, and bare reason-phrase forms like `429 Too Many Requests` and `503 Service Unavailable`. The spec allows numbers only in explicit HTTP/status/error-code context, and `status=429` and `Error 429:` are exactly that. Worse, tests/drivers/test_adapter_failure_classes.py:115 locks `status=429` and `Error 429:` in as `unknown`, so the wrong answer is now enforced as the expected class. Impact: a real 429 or 503 in these forms goes to the generic retry-then-PARK path instead of the bounded WAIT or rate-limit path. The native Codex forms ("unexpected status N", reqwest, HTTP/x) are covered. | File: src/ovcaq/drivers/codex_events.py:300 | Task: Phase 0 task 1
+[BLAKE] ⚪ The normal native lane flow (wait → completed → close_agent `shutdown`) now emits a `raw.unknown` for every completed lane. That sets the TUI raw-evidence flag (src/ovcaq/tui/model.py:548) on routine sessions. It is documented, but it will show up as noise on every multi-lane run. | File: src/ovcaq/drivers/codex_events.py:233 | Task: Phase 0 task 1
+[BLAKE] ⚪ Probe and spawn can resolve a command from different directories. The probe resolves relative commands with a directory part (and, for Codex, commands under an empty host PATH) against the supervisor's own cwd (src/ovcaq/drivers/codex.py:186, src/ovcaq/drivers/claude.py:83). The spawn resolves them against `spec.cwd` = request.root (src/ovcaq/runtime/process.py:118). With `--root` different from cwd, the probe can pass while the spawn fails. Absolute paths are unaffected, as the spec requires. | File: src/ovcaq/drivers/codex.py:186 | Task: Phase 1 task 2
+[BLAKE] ⚪ The Unreleased CHANGELOG has a "quadratic backtracking" fix entry for a regression this same PRD introduced and that never shipped. The PATH entry also describes internals (`os.defpath`, current-directory search) rather than what the user sees. | File: CHANGELOG.md:43 | Task: Phase 2 task 1
+
+B1: pass
+B2: pass
+B3: pass
+B4: pass
+B5: fail
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: pass
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: pass
+B16: pass
+B17: pass
+B18: pass
+B19: pass

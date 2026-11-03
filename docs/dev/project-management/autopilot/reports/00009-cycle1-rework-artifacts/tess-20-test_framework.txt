@@ -1,0 +1,1 @@
+pytest; uv --cache-dir /private/tmp/ovcaq-rework-uv run pytest tests/runtime/test_rework_thread_conflict.py -q --tb=line; real process ps requires approved escalation. Bounded scope. Tests <50lines; format new file only.

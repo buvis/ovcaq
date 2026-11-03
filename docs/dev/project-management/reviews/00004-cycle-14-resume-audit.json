@@ -1,0 +1,61 @@
+{
+  "status": "ready",
+  "prd": "00004-workflow-core-v1.md",
+  "phase": "build",
+  "next_phase": "build",
+  "cycle": 14,
+  "cap": 2,
+  "rework_task_ids": [
+    "7",
+    "8"
+  ],
+  "tasks_completed": 16,
+  "tasks_total": 18,
+  "schema": "current",
+  "resume_target": "/work continues at first non-completed task 7",
+  "state_fields_changed": [
+    "autonomous_decisions",
+    "contract_card",
+    "next_phase",
+    "pause_reason",
+    "phase",
+    "rework_task_ids"
+  ],
+  "authorized_resume_recorded": true,
+  "original_pause_retained_in_decision": true,
+  "all_task_entries_and_histories_unchanged": true,
+  "batch_and_work_base_unchanged": true,
+  "contract_card_matches": true,
+  "schema_startup_gate": "pass; zero launches",
+  "review_shape_and_constraint": "pass; installed CLI exit 0",
+  "raw_rubrics_and_bob_receipt": "pass",
+  "plugin_pins": "unchanged; no drift",
+  "metrics_signature": "matches installed upstream; effort parameter present",
+  "loop_lock": "available",
+  "blocking_markers": [],
+  "protected_artifacts_unchanged": 425,
+  "autocodex_files_and_four_stashes": "unchanged",
+  "dotfiles_note": "Unrelated .codex/config.toml changed during recovery (diff stat increased from 18 to 21 lines; project trust entries). No dotfiles edits were made by this recovery. Existing edits left untouched; bare HEAD and four stashes unchanged.",
+  "dotfiles_diff_before_sha256": "a6ad251900f568db9201b9bdf3e798c99acfa46be86deffab147762a53ad2eb1",
+  "dotfiles_diff_after_sha256": "bcf0580078a39ea1f2a81e81edb793a7d9f3ced06ff5710c4e05b3b7bfab612f",
+  "project_head": "7291d9f80c5b7a55f63c406552e5b3e27025acad",
+  "tracked_worktree": "clean",
+  "worktrees": 1,
+  "branches": [
+    "master"
+  ],
+  "original_state_sha256": "8f26ee434592b6d0596458a7c0f6496a922f61e8bd7b2bbf6ea07bf33796d13a",
+  "resumed_state_sha256": "cd54de22fe27eb0739ffbaf597daa7ebaf3027c43dcdb9fc99f6fd9099ba92cd",
+  "project_verification": {
+    "reused_at_unchanged_head": true,
+    "passed": 1359,
+    "failed": 0,
+    "skipped": 0,
+    "ruff_lint_format_mypy_build": "prior passing records; no rerun for state-only recovery",
+    "source": "dev/local/reviews/autocodex-metrics-recovery-20260913.md"
+  },
+  "implementation_and_review_dispatched": false,
+  "restart_command": "cd /Users/bob/git/src/github.com/buvis/ovcaq && autocodex",
+  "handoff": "dev/local/reviews/00004-cycle-14-repair-handoff.md",
+  "next_review": "all mandatory lenses in a fresh session after completed and verified repair; cycle advances only then"
+}

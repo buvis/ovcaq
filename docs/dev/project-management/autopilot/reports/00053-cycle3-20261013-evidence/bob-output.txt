@@ -1,0 +1,37 @@
+[BOB] ⚪ Cannot statically verify: Phase-2 exit gate `uv run pytest` at HEAD c119229. The last full suite to pass was at 9b8c55a, with 7159 passed. The only full run since then is in docs/dev/project-management/autopilot/reports/00053-recovery-20261013/verification.json: 6425 passed, 555 failed, 172 errors, on a host that denies `ps`. That host also failed the PRD-named routing check 8 of 8 with PermissionError. This cycle's test gate exited 2 and printed no counts. Commits 693e7ae through c119229 (tasks 18-24) have only narrow runs, so the earlier settled "resolved by current-HEAD verification" no longer applies to this HEAD | File: N/A | Task: general
+[BOB] ⚪ CHANGELOG.md:43 says "avoid quadratic backtracking when Codex failure diagnostics contain long whitespace runs after a status prefix". That bug was added and fixed inside this PRD. The pre-PRD classifier had no status prefix and no adjacent `\s*` runs, so users never had this problem. Task 16 deleted an entry of the same kind ("describes no change from the pre-PRD base"). "Quadratic backtracking" is also jargon under the writing rules | File: CHANGELOG.md | Task: 24
+
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+Notes on the cycle-3 changes, all checked by reading the code (none run):
+- **Task 24 regex.** In src/ovcaq/drivers/codex_events.py:302, `\s*+:?\s*+` matches the same strings as `\s*:?\s*`. If the first run gave back whitespace, `:?` cannot take it and the second `\s*` would take it straight back, so possessive changes nothing about what matches. It does remove the backtracking. Every other part of `{status}` is linear: `\d+(?:\.\d+)?` has at most one dot group, and the optional ` status…` group has fixed text. Python ≥3.12 (pyproject.toml:12) supports `*+`.
+- **Task 24 test.** The 200,000-space check runs in a child process because `re` holds the GIL and an in-process timeout could not fire. The red run (red-24.txt) shows it timing out against the old pattern.
+- **Task 23 test.** The merged test in tests/drivers/test_adapter_outcomes.py:208 keeps both discriminator cases and their follow-up close assertion. No helper parameters are left unused.
+- **Model mapping.** `_map_model_to_tier` (src/ovcaq/drivers/edge.py:16) handles collisions, duplicate values and the cycle `{a: b, b: a}` correctly: route a → "b" → key a → launches b.
+- **Claude probe vs launch.** The Claude PATH lookup (src/ovcaq/drivers/claude.py:82) matches the launch merge `os.environ | spec.env` (src/ovcaq/runtime/supervisor.py:504) and `subprocess`'s `os.get_exec_path` fallback to `os.defpath`.
+
+FIX:
+- The changelog entry for the backtracking fix describes no change from the pre-PRD base. Same class as task 16's deletion. — CHANGELOG.md:43 — Delete the line. CHANGELOG.md:46 (numeric-context entry) already covers this classifier change.
+
+VERIFY:
+- Phase-2 exit gate is unproven at HEAD c119229. The last recorded full run has 555 failed and 172 errors on a host that denies `ps`, and this cycle's gate exited 2 with no counts. — On a host where `ps` is allowed, run `uv run pytest -q --tb=line` and record the passed/failed/skipped counts with exit 0 against SHA c119229. Then run `uv run pytest -q tests/runtime/test_adapter_launch_routing.py tests/runtime/test_supervisor_adapters.py` as a separate command and confirm 8 passed.
+
+KNOWN:
+- (none)
+
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass

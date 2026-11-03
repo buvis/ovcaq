@@ -1,0 +1,45 @@
+Command: mise exec -- uv run pytest tests/packaging/test_report_updates.py -q
+Production HEAD: 72562f6fd12fb039e91e4c7b1be29758d1901ec8 (no production edits)
+Exit: 1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________ test_installed_report_updates_return_complete_published_text _________
+
+installed_wheel = InstalledWheel(root=PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5344/ovca...e/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5344/ovcaq-installed-wheel0/sandbox/xdg-state'})
+tmp_path = PosixPath('/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/pytest-5344/test_installed_report_updates_0')
+
+    def test_installed_report_updates_return_complete_published_text(
+        installed_wheel: InstalledWheel, tmp_path: Path
+    ) -> None:
+        root = _installed_workflow_root(installed_wheel, tmp_path)
+        first = _render_snapshot(installed_wheel, root)
+        first_replay = _render_snapshot(installed_wheel, root)
+        path = Path(first[0]["path"])
+        unrelated = "## Operator notes\n\nKeep café and žluťoučký.\n\n"
+        stale = "## 00005-second.md\n\nStale B.\n\n## Batch Summary\n\nStale summary.\n\n"
+        path.write_text(first[1] + "\n" + unrelated + stale * 2, encoding="utf-8")
+        _update_report_state(
+            installed_wheel, root, "00005-second.md", "review", "review", "2"
+        )
+        second = _render_snapshot(installed_wheel, root)
+        second_replay = _render_snapshot(installed_wheel, root)
+        old_a = first[1].split("## Batch Summary")[0].split("\n\n", 1)[1]
+        path.write_text(second[1] + "\n" + old_a * 2, encoding="utf-8")
+        _update_report_state(
+            installed_wheel, root, "00004-workflow-core-v1.md", "done", "", "5"
+        )
+        third = _render_snapshot(installed_wheel, root)
+        third_replay = _render_snapshot(installed_wheel, root)
+        snapshots = [first, first_replay, second, second_replay, third, third_replay]
+    
+>       assert [value["text"] for value, _ in snapshots] == [text for _, text in snapshots]
+E       AssertionError: assert ['# Workflow ... records._\n'] == ['# Workflow ... records._\n']
+E         
+E         At index 2 diff: '# Workflow report: installed-batch\n\n## 00005-second.md\n\n- Phase: review\n- Next phase: review\n- Tasks: 1/1\n\n## Batch Summary\n\n- PRDs completed: 1\n- Total cycles: 2\n- Applied decisions: 4\n- Escalated decisions: 1\n- Deferred records: 0\n- Sessions: 0\n- Wall seconds: 0\n- Cost USD: 0.00\n- Output tokens: 0\n- Review convergences: 0\n- Cycles to converge: 0\n\n### Completed PRDs\n\n| PRD | Cycles | Tasks | Applied decisions | Escalated decisions |\n| --- | --- | ---: | --- | --- |\n| 00003-earlier.md | 2 | 2/2 | 4 | 1 |\n\n### Deferred record...
+E         
+E         ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests/packaging/test_report_updates.py:65: AssertionError
+=========================== short test summary info ============================
+FAILED tests/packaging/test_report_updates.py::test_installed_report_updates_return_complete_published_text
+1 failed in 1.67s

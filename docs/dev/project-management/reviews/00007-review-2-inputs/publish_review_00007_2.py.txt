@@ -1,0 +1,207 @@
+"""Publish cycle-two findings and apply adjudications through statectl only."""
+import hashlib
+import json
+import re
+import shutil
+import subprocess
+from pathlib import Path
+
+ROOT = Path('/Users/bob/git/src/github.com/buvis/ovcaq')
+PLUGIN = Path('/Users/bob/.claude/plugins/cache/buvis-plugins/autopilot/0.6.0')
+REV = ROOT / 'docs/dev/project-management/reviews'
+TMP = ROOT / 'docs/dev/tmp'
+STATE = ROOT / 'docs/dev/project-management/autopilot/state.json'
+STATECTL = PLUGIN / 'skills/run-autopilot/scripts/statectl.py'
+STEM = '00007-supervisor-loop-v1'
+ID = '00007-2-20261003'
+HEAD = '3f5a0bdd3e3268eb08bbef2240beb3f6733eda59'
+BASE = 'bbe7d521321428b670d15c4ede00e31792a61e1c'
+PATTERN = re.compile(r'^\[(ALICE|BLAKE|BOB|MECH)\] ([🔴🟠🟡⚪]) (.*?) \| File: (.*?) \| Task: (.*?)$', re.M)
+SEVERITY = {'🔴': 'critical', '🟠': 'high', '🟡': 'medium', '⚪': 'low'}
+
+def write_json(path: Path, value: object) -> None:
+    path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + '\n')
+
+def statectl(verb: str, field: str, value: object) -> None:
+    argv = ['python3', str(STATECTL), str(STATE), verb, field, json.dumps(value, ensure_ascii=False)]
+    result = subprocess.run(argv, cwd=ROOT, capture_output=True, text=True, timeout=60)
+    if result.returncode:
+        result = subprocess.run(argv, cwd=ROOT, capture_output=True, text=True, timeout=60)
+    if result.returncode:
+        raise RuntimeError(f'State write failed after exact retry; restore procedure required: {result.stderr}')
+
+texts = {who: (REV / f'00007-review-2-{who}.txt').read_text() for who in ('alice', 'blake', 'bob')}
+parsed = {}
+for who, text in texts.items():
+    parsed[who] = [dict(reviewer=m[0], emoji=m[1], issue=m[2], file=m[3], task=m[4]) for m in PATTERN.findall(text)]
+    (TMP / f'{who}-output-{ID}.txt').write_text(text)
+
+command = ['python3', str(PLUGIN / 'skills/review-work-completion/scripts/consolidate_findings.py')]
+command.extend(f'{who.upper()}:{REV / f"00007-review-2-{who}.txt"}' for who in texts)
+command.extend(['--ledger', str(REV / f'{STEM}-ledger.json'), '--ledger-dismiss', 'BLAKE'])
+consolidated = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, timeout=60, check=True)
+(REV / '00007-review-2-consolidation-raw.md').write_text(consolidated.stdout + '\n' + consolidated.stderr)
+
+rows = []
+def add(who: str, index: int, finders: list[str], disposition: str, reason: str) -> None:
+    source = parsed[who][index]
+    rows.append({**source, 'id': f'F{len(rows)+1:02}', 'severity': SEVERITY[source['emoji']], 'finders': finders, 'consensus': f'{len(finders)}/3', 'disposition': disposition, 'reason': reason})
+
+add('blake', 1, ['BLAKE','BOB'], 'cap-overflow', 'Confirmed with a real SIGTERM inside a fake capability runner: exit 1, failed capability, pause_requested=false and pause_reason=null. The broad failed-capability catch swallows SupervisorSignal and may also hide post-commit evidence errors. Expected signal exit 143 and durable operator-stop intent are absent.')
+add('bob', 1, ['BOB'], 'cap-overflow', 'Confirmed: a synthetic launch OSError returns the generic supervisor state-failure outcome and persists supervisor.loop attention, with phase_repeats=0. The store is healthy. This is new evidence invalidating the explicit-spawn-error premise of settled F23; launcher readiness itself remains assigned to PRD 00010. Recovery should use the existing state CLI, never direct state editing.')
+add('blake', 0, ['BLAKE'], 'cap-overflow', 'Confirmed with two fresh supervisor instances: configured connectivity_retries=1 produces WAIT twice while the durable phase counter reaches 2. The global phase cap bounds total attempts but does not preserve the configured per-class budget across restart. Resolving the persistent policy requires care; no schema or policy is changed at the cap.')
+add('blake', 3, ['BLAKE'], 'cap-overflow', 'The launch-error path finalizes HALT and re-raises without consulting the failure decision table. Nuance: OSError is then caught by the outer state-error handler, rather than escaping run(); other launch exceptions still propagate. This broader bootstrap-routing gap is retained separately from F02, whose new regression is misclassifying non-state I/O and obscuring diagnostics.')
+add('bob', 3, ['ALICE','BOB'], 'cap-overflow', 'Confirmed statically: Supervisor._capability_service omits the resolved timeout and CapabilityService._execute reloads supervisor_settings from disk. A follow-up should pass the resolved per-capability value from the supervisor while preserving standalone retry configuration and validation semantics.')
+add('bob', 5, ['ALICE','BOB'], 'cap-overflow', 'Confirmed in the named test bodies. Alice separately raised the shared-limit and bootstrap alternatives; Bob also identified RETRY/WAIT. Assert exact outcomes after the provider-wide shared-limit policy in F12 is resolved; do not blindly hard-code PARK for provider-wide failures.')
+add('bob', 10, ['ALICE','BOB'], 'cap-overflow', 'The optional wall-clock fallback remains in the state service, though the sole production caller now passes injected time and the original production F22 is closed. Retain this LOW cleanup separately; a follow-up must assess the public method signature before making the timestamp mandatory.')
+add('bob', 11, ['ALICE','BOB'], 'cap-overflow', 'Duplicate validation is present. Simplification must preserve the current distinction between an omitted timeout and explicitly invalid None, which the tests require; an internal int-or-None representation can be used only after boundary validation.')
+add('blake', 4, ['BLAKE'], 'discarded', 'The accepted design explicitly removes applicability (required=false) before skipping empty-drain capabilities to preserve the existing schema invariant that completed batches have no unsatisfied required entries. Design lines 22-29 and 195-197 document this deliberate choice. No new contract erosion was introduced by rework.')
+add('blake', 5, ['BLAKE'], 'cap-overflow', 'The predicate checks every running capability although the design names required capabilities. Current compound start methods refuse optional capabilities, limiting the ordinary reachability; valid externally configured state can still expose the discrepancy. Retain the finding with that limitation.')
+add('blake', 6, ['BLAKE'], 'cap-overflow', 'The read-identity/lock checks and os.kill are separate operations, so the static PID-reuse window exists. It is unchanged in this incremental diff and needs a supported platform ownership design rather than an extra check falsely promising atomicity. No signal was sent to an unrelated process during review.')
+add('bob', 2, ['BOB'], 'cap-overflow', 'Confirmed statically: WAIT at the shared repeat limit falls through to PARK with an active PRD, while exhausted class budgets HALT. This needs explicit provider-wide versus PRD-specific policy and exact regression assertions; it is not resolved by merely replacing the existing test hedge with PARK.')
+add('bob', 4, ['BOB'], 'cap-overflow', 'request_pause still overwrites pause_reason unconditionally. The rework preserved a phase-pause reason in resume and operator-stop paths, but the sibling pause command can erase that routing key first. Retain as a bounded recurrence of the notice-preservation problem.')
+add('bob', 6, ['BOB'], 'cap-overflow', 'RevisionConflictError derives from StateError and the shown compare-and-set sites route it to sticky state failure. Re-reading committed state should be evaluated as bounded conflict handling, without weakening genuine store-failure barriers.')
+add('bob', 7, ['BOB'], 'cap-overflow', 'After success clears this capability notice, the nonterminal branch does not restore batch.status from attention to running. The remaining required capability prevents premature completion, but the observable batch status is stale.')
+add('bob', 8, ['BOB'], 'cap-overflow', 'The failure branch assigns control.attention regardless of an existing unrelated notice; subsequent success clears by capability site. Preserve earlier unacknowledged attention while retaining the capability failure detail in its durable attempt.')
+add('bob', 9, ['BOB'], 'cap-overflow', '_capability_timeouts uses get(timeout_seconds, 10800) without rejecting unknown table keys. A misspelled timeout silently uses the default; a bounded validation follow-up should allow only documented capability fields.')
+add('bob', 12, ['BOB'], 'routed to verification', 'The four exact project commands are queued under Bob provenance. No work pass runs on cap-out, so their queue results remain absent. Independent review verification already ran the equivalent suite, root lint/format and mypy checks with retained argv/output: 3863 tests and typing pass; root lint/format retain the pre-existing 41-error/46-file artifact debt. This is not represented as a fresh work-phase queue execution.')
+
+mech_text = (TMP / f'mechanical-{ID}.md').read_text()
+mechanical_reasons = {}
+for line in (REV / '00007-review-2-mechanical-adjudication.md').read_text().splitlines():
+    if line.startswith('| tests/'):
+        cells = line.split('|')
+        mechanical_reasons[cells[1].strip()] = cells[3].strip()
+for match in PATTERN.findall(mech_text):
+    _, emoji, issue, file, task = match
+    file_base = file.split(':', 1)[0]
+    rows.append({'id': f'F{len(rows)+1:02}', 'emoji': emoji, 'severity': SEVERITY[emoji], 'issue': '[MECH] ' + issue, 'file': file, 'task': task, 'finders': ['mech-check'], 'consensus': '1/3', 'disposition': 'discarded', 'reason': mechanical_reasons[file_base]})
+assert len(rows) == 28
+write_json(REV / '00007-review-2-findings.json', rows)
+
+receipt_path = REV / '00007-review-2-bob.txt.receipt.json'
+receipt = json.loads(receipt_path.read_text())
+assert receipt['cycle'] == 2 and receipt['prd'] == STEM + '.md' and receipt['root'] == str(ROOT)
+for path_key, hash_key in [('output','sha256'),('raw','raw_sha256')]:
+    assert hashlib.sha256(Path(receipt[path_key]).read_bytes()).hexdigest() == receipt[hash_key]
+verdicts = []
+audit = {}
+for who, prefix, rules in [('alice','R',[1,2,3,4,6,7,8,9,10,11,12,13]), ('blake','B',range(1,20)), ('bob','R',[1,2,3,4,6,7,8,9,10,11,12,13]), ('bob','D',range(1,6))]:
+    found = dict(re.findall(r'^([RBD]\d+): (pass|fail)$', texts[who], re.M))
+    assert all(f'{prefix}{n}' in found for n in rules)
+    audit[f'{who}_{prefix}'] = {f'{prefix}{n}': found[f'{prefix}{n}'] for n in rules}
+    if prefix == 'D':
+        verdicts = [{'rule_id': f'D{n}', 'verdict': found[f'D{n}'], 'source': 'claude'} for n in rules]
+audit.update(receipt_hashes='valid', reviewed_sha=HEAD, tasks='15/15', reviewers=['alice','blake','bob'], findings=len(rows), cap_deferrals=sum(x['disposition']=='cap-overflow' for x in rows))
+write_json(REV / '00007-review-2-audit.json', audit)
+dispatch_path = REV / '00007-review-2-dispatch.json'
+dispatch = json.loads(dispatch_path.read_text())
+dispatch['bob']['actual_model'] = 'claude-opus-5-5'
+for who in ('alice','blake','bob'):
+    dispatch[who]['status'] = 'completed'
+    dispatch[who]['prompt_sha256'] = hashlib.sha256((TMP / f'{who}-prompt-{ID}.md').read_bytes()).hexdigest()
+write_json(dispatch_path, dispatch)
+
+queue = [{'cycle': 2, 'finding': rows[17]['issue'], 'file': None, 'command': cmd, 'source': 'bob'} for cmd in ('uv run pytest','uv run ruff check .','uv run ruff format --check .','uv run mypy src/ovcaq')]
+write_json(REV / f'{STEM}-checks-2.json', queue)
+previous_queue = json.loads((REV / f'{STEM}-checks-1.json').read_text())
+assert all(type(x.get('result', {}).get('exit')) is int and x['result']['exit'] == 0 for x in previous_queue)
+
+ledger_path = REV / f'{STEM}-ledger.json'
+ledger = json.loads(ledger_path.read_text())
+decisions = []
+deferrals = []
+for row in rows:
+    record = {'cycle': 2, 'finding_id': row['id'], 'issue': row['issue'], 'file': row['file'], 'severity': row['severity'], 'consensus': row['consensus'], 'action': 'cycle 2: ' + row['disposition'], 'reason': row['reason']}
+    if row['disposition'] == 'cap-overflow':
+        record.update(type='cap-overflow', status='open', reason='rework cap reached with this finding unresolved; ' + row['reason'])
+        deferrals.append(record)
+        disposition = 'settled-deferral'
+    else:
+        decisions.append(record)
+        disposition = 'discarded'
+    if row['disposition'] != 'routed to verification':
+        ledger.append({'cycle': 2, 'disposition': disposition, 'severity': row['severity'], 'issue': row['issue'], 'file': row['file'], 'reason': record['reason']})
+write_json(ledger_path, ledger)
+write_json(REV / '00007-review-2-decisions.json', decisions)
+write_json(REV / '00007-review-2-deferrals.json', deferrals)
+
+auto_dismissed = consolidated.stdout.split('### Auto-dismissed (ledger)', 1)[1].strip()
+table = ['| ID | Consensus | Severity | Issue | File | Found by |','|---|---|---|---|---|---|']
+for row in rows:
+    issue = row['issue'].replace('|', '\\|')
+    table.append(f"| {row['id']} | [{row['consensus']}] | {row['emoji']} | {issue} | {row['file']} | {', '.join(row['finders'])} |")
+report = f'''---
+prd: docs/dev/project-management/prds/wip/{STEM}.md
+review: 2
+date: 2026-10-03
+head_sha: {HEAD}
+reviewers: alice,blake,bob
+autocodex_bob_receipt: {receipt_path}
+agents:
+  alice: available
+  blake: available
+  bob: available
+  carl: unavailable
+  eve: disabled
+---
+
+# Review: {STEM}
+
+Diff range: `{BASE}..{HEAD}`
+
+codex_rung_guard: fired (10 codex-implemented task(s)); eve unavailable, doubt lens fell back to claude
+
+Host substitution: isolated native Codex Alice and Blake ran on gpt-5.6-sol (logical sonnet, high effort), without parent context. Fresh external Claude Bob ran on claude-opus-5-5 (logical opus), carrying the full Bob persona, consensus rubric, D1-D5 doubt and de-slop appendices. The requested R1-R5 doubt intent is retained under the source D1-D5 identifiers. No Eve/Fable dispatch occurred or is claimed; the source guard suffix records the explicitly authorized non-Codex doubt substitution, not a failed Eve attempt. Provider independence comes from Claude Bob; Alice and Blake share an actual model. No codex_thread_id is emitted for Claude.
+
+Carl: automatic approval review denied the optional Gemini dispatch before launch because it would export repository context/code to that destination. The denial is preserved in `00007-review-2-carl-denial.md`; no workaround, retry, model-unavailability latch or fabricated output is used. All three required reviewers and the Watcher have completed; all external processes were awaited. Engram pack: unavailable because this repository is not registered with gita; prompts retain the optional-pack sentinel.
+
+## Decision
+
+**Cap-out with deferrals, not a clean review.** Four HIGH, six actionable MEDIUM and six actionable LOW findings remain. Cycle 2 equals the committed cap 2, and this is unattended mode. Per the review gate's non-CRITICAL cap-out branch, all 16 unresolved findings are appended to `state.deferred_decisions` as `cap-overflow`; no repair task is created, no cap is raised, and no production code is changed. The canonical `converged` transition hands off to finalize with these deferrals. Existing capability-runner/provisioning and bootstrap-policy deferrals remain intact.
+
+There are no CRITICAL findings. F09 and all ten computed mechanical findings are discarded with explicit evidence. F18 is routed to the verification queue; no work pass runs on this cap-out, so queue entries intentionally have no result. Independently executed review checks are described below. The previous cycle's queued suite passed and contributes no carry-forward failure.
+
+## Consolidated findings
+
+{chr(10).join(table)}
+
+### Consolidation corrections
+
+The installed consolidator ran first; its unmodified output is `00007-review-2-consolidation-raw.md`. Semantic duplicate grouping then merges Alice's two hedged-assertion findings with Bob's broader test finding (F06), Alice's combined configuration finding with Bob's resolved-settings and duplicate-validation findings separately (F05/F08), and the two wall-clock fallback reports (F07). Every original issue and rubric line remains verbatim in the reviewer sections. The launch-routing finding F04 stays separate from the diagnostic/state-failure regression F02; the probe qualifies F04's exception propagation claim. All ten `[MECH]` lines were absorbed; none was silently dropped.
+
+### Auto-dismissed (ledger)
+
+{auto_dismissed}
+
+## Adjudication
+
+'''
+for row in rows:
+    report += f"- **{row['id']} {row['disposition']}:** {row['reason']}\n"
+report += '\n## Verification\n\n' + (REV / '00007-review-2-verification.md').read_text().split('\n', 1)[1]
+report += '\nSchema validation passed and derived task totals agree at 15/15. The source rubrics were independently checked in raw outputs: Alice R1-R4/R6-R13; Blake B1-B19; Bob R1-R4/R6-R13 and D1-D5. Both receipt SHA-256 values match the immutable output and raw JSONL. The replay helper removed its temporary worktree; only the main checkout remains. Pre-existing AGENTS.md changes and historical untracked artifacts are preserved. No next gate is invoked in this session.\n'
+report += '\n## Reproduction evidence\n\n```json\n' + (REV / '00007-review-2-probes.json').read_text() + '```\n'
+for who in ('alice','blake','bob'):
+    report += f'\n## {who.title()}\n\n' + texts[who] + '\n'
+report += f'\nVerdict: {len(rows)} findings\nTests: 3863 passed, 0 failed, 0 skipped (suite run this cycle)\n'
+(REV / f'{STEM}-review-2.md').write_text(report)
+
+# State changes use only the installed writer. No phase field is set here.
+statectl('set','review_lenses',{'consensus':'done','blind':'done','doubt':'done','ui':'failed'})
+statectl('set','doubts_rubric_verdicts',verdicts)
+for record in decisions:
+    statectl('append','autonomous_decisions',record)
+for record in deferrals:
+    statectl('append','deferred_decisions',record)
+statectl('append','review_cycles',{'cycle':2,'review_file':f'docs/dev/project-management/reviews/{STEM}-review-2.md'})
+
+inputs = REV / '00007-review-2-inputs'
+inputs.mkdir(exist_ok=True)
+for path in TMP.glob(f'*{ID}*'):
+    if path.is_file() and path.suffix != '.diff':
+        shutil.copyfile(path, inputs / path.name)
+for name in ('prepare_review_00007_2.py','verify_review_00007_2.py','probe_review_00007_2.py','publish_review_00007_2.py'):
+    shutil.copyfile(TMP / name, inputs / (name + '.txt'))
+write_json(inputs / 'diff-reconstruction.json', {'argv':['git','diff',f'{BASE}..{HEAD}'], 'sha256':hashlib.sha256((TMP / f'review-diff-{ID}.diff').read_bytes()).hexdigest(), 'reason':'The exact reviewed diff is reproducible from immutable committed objects; avoid recursively archiving prior review diffs.'})
+print(json.dumps({'findings':len(rows),'cap_deferrals':len(deferrals),'discarded':sum(x['disposition']=='discarded' for x in rows),'verification_routed':1,'review_file':str(REV / f'{STEM}-review-2.md')}))

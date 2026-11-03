@@ -1,0 +1,1 @@
+{"command": "mise exec -- uv run pytest tests/integration/test_observer_terminal_cleanup.py -k final_commit_survives_supervisor_cleanup_between_polls -xq --tb=short", "exit": 1}

@@ -1,0 +1,14 @@
+{
+  "removed": [
+    "alice-prompt-00053-three-repair-20261012-fresh.md",
+    "blake-prompt-00053-three-repair-20261012-fresh.md",
+    "bob-prompt-00053-three-repair-20261012-fresh.md",
+    "review-prd-00053-three-repair-20261012-fresh.md",
+    "review-tasks-00053-three-repair-20261012-fresh.md",
+    "review-context-00053-three-repair-20261012-fresh.md",
+    "review-diff-00053-three-repair-20261012-fresh.diff",
+    "review-prd-raw-00053-three-repair-20261012-fresh.md"
+  ],
+  "archived_directory": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/autopilot/reports/00053-three-repair-review-20261012-evidence",
+  "original_evidence_retained": true
+}

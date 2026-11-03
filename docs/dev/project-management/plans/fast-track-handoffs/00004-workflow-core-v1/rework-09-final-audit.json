@@ -1,0 +1,45 @@
+{
+  "head": "72562f6fd12fb039e91e4c7b1be29758d1901ec8",
+  "repair_base": "78f916c366f74105b76e6f07d80a7a1aeb251e9f",
+  "implementation_base": "b43bf2c94d5eb0fddafca55542ef2570b45e8d52",
+  "branch": "master",
+  "status": "clean",
+  "completion_review": "not run; fresh FT-04R10 required",
+  "checks": {
+    "workflow_packaging": {
+      "passed": 450,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 12.03
+    },
+    "full_pytest": {
+      "passed": 1338,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 26.06
+    },
+    "sync": "passed",
+    "ruff": "passed",
+    "format": "116 files formatted",
+    "mypy": "51 source files; no issues",
+    "build": "passed",
+    "full_range_whitespace": "passed after commit"
+  },
+  "artifacts": {
+    "handoff": "rework-09.md",
+    "source_join_and_sizes": "rework-09-contract-and-sizes.json",
+    "red": "rework-09-red.txt",
+    "cycle09_probes": "rework-09-cycle-09-probes.json",
+    "publication_probes": "rework-09-publication-probes.json",
+    "adjudication_raw": "rework-09-adjudication-raw.json",
+    "adjudication_remainder": "rework-09-adjudication-supplement.json",
+    "installed_toml": "rework-09-installed-config.json"
+  },
+  "final_command": {
+    "chunk_id": "0dbefb",
+    "wall_time_seconds": 0.000002125,
+    "exit_code": 0,
+    "original_token_count": 51,
+    "output": "72562f6fd12fb039e91e4c7b1be29758d1901ec8\n/Users/bob/git/src/github.com/buvis/ovcaq 72562f6 [master]\n167 dev/local/plans/fast-track-handoffs/00004-workflow-core-v1/rework-09.md\n2026-09-05 22:23:09 CEST\n"
+  }
+}

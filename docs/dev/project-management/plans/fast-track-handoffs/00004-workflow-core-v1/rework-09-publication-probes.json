@@ -1,0 +1,8 @@
+{
+  "command": "mise exec -- uv run python dev/local/reviews/00004-cycle-09-publication-probes.py",
+  "chunk_id": "4a5632",
+  "wall_time_seconds": 0.000001333,
+  "exit_code": 0,
+  "original_token_count": 249,
+  "output": "[\n  {\n    \"surface\": \"report\",\n    \"error\": \"output directory identity changed: /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r9-publish-4a9ohr4m/reports\",\n    \"returned_success\": false,\n    \"returned_path_exists\": false,\n    \"retained_files\": [\n      \"review-09-report.md\"\n    ],\n    \"configured_files\": []\n  },\n  {\n    \"surface\": \"audit\",\n    \"error\": \"output directory identity changed: /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r9-publish-ue7jpjs_/dev/local/reviews\",\n    \"returned_success\": false,\n    \"returned_path_exists\": false,\n    \"retained_files\": [\n      \"00004-audit.md\"\n    ],\n    \"configured_files\": []\n  },\n  {\n    \"surface\": \"archive\",\n    \"error\": \"output directory identity changed: /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r9-publish-da0uywzw/reports\",\n    \"returned_success\": false,\n    \"returned_path_exists\": false,\n    \"retained_files\": [\n      \"review-09-state-final.json\"\n    ],\n    \"configured_files\": []\n  }\n]\n"
+}

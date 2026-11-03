@@ -1,0 +1,11 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "ruff",
+    "check",
+    "."
+  ],
+  "exit": 0,
+  "seconds": 0.1
+}

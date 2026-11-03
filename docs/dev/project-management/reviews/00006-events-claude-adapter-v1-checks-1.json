@@ -1,0 +1,42 @@
+[
+  {
+    "cycle": 1,
+    "finding": "Cannot statically verify: the test/lint/type/build suite passes at HEAD (reused last-verification.json reports 2731 passed, 0 skipped)",
+    "file": null,
+    "command": "uv run pytest",
+    "source": "bob",
+    "result": {"exit": 1}
+  },
+  {
+    "cycle": 1,
+    "finding": "Cannot statically verify: the test/lint/type/build suite passes at HEAD (reused last-verification.json reports 2731 passed, 0 skipped)",
+    "file": null,
+    "command": "uv run ruff check .",
+    "source": "bob",
+    "result": {"exit": 0}
+  },
+  {
+    "cycle": 1,
+    "finding": "Cannot statically verify: the test/lint/type/build suite passes at HEAD (reused last-verification.json reports 2731 passed, 0 skipped)",
+    "file": null,
+    "command": "uv run ruff format --check .",
+    "source": "bob",
+    "result": {"exit": 0}
+  },
+  {
+    "cycle": 1,
+    "finding": "Cannot statically verify: the test/lint/type/build suite passes at HEAD (reused last-verification.json reports 2731 passed, 0 skipped)",
+    "file": null,
+    "command": "uv run mypy src/ovcaq",
+    "source": "bob",
+    "result": {"exit": 0}
+  },
+  {
+    "cycle": 1,
+    "finding": "Cannot statically verify: the test/lint/type/build suite passes at HEAD (reused last-verification.json reports 2731 passed, 0 skipped)",
+    "file": null,
+    "command": "uv build",
+    "source": "bob",
+    "result": {"exit": 0}
+  }
+]

@@ -1,0 +1,16 @@
+[ALICE] 🟡 The new status prefix in `classify_failure` (src/ovcaq/drivers/codex_events.py:302) ends in `\s*:?\s*`. That is two whitespace runs side by side, so a native error with "status", "HTTP" or "error code" followed by a long run of whitespace backtracks in quadratic time. Measured at HEAD: 16k spaces took 0.55 s and 64k spaces took 8.34 s. The old bare-number regex had no such run. Decode runs inline in the supervisor read loop (src/ovcaq/runtime/supervisor.py:516) on frames up to 1 MiB (src/ovcaq/events/tail.py:60). Python's `re` holds the GIL, so the watchdog cannot fire while it runs. A full 1 MiB frame extrapolates to roughly 35 minutes (a guess, not run). The trigger needs tens of thousands of whitespace characters right after the keyword, so it is unlikely to happen. Fix: use `\s*(?::\s*)?` instead. It took 1.2 ms at 64k and matched the same way on "HTTP status: 429", "status code: 429", "last status: 429", "HTTP 429" and "status=429". Also add a regression test that expects "status" + 200,000 spaces + "x" to classify as unknown | File: src/ovcaq/drivers/codex_events.py | Task: 6
+[ALICE] 🟡 `test_unrelated_item_type_does_not_transition_lane` (tests/drivers/test_adapter_outcomes.py:204) and `test_unrelated_event_type_does_not_transition_lane` (tests/drivers/test_adapter_outcomes.py:231) are line-for-line copies. They differ only in one `collab_record` keyword: `item_type="command_execution"` in one, `event_type="thread.started"` in the other. Merge them into one test parametrized over that keyword dict (passed as `**override`). That cuts about 24 lines and keeps the same coverage | File: tests/drivers/test_adapter_outcomes.py | Task: 5
+[ALICE] ⚪ The recorded verification for this cycle has no green full suite. It shows 555 failed and 172 errors, which it attributes to the sandbox denying `ps`. I reran at HEAD 6761a37 with `mise exec -- uv run pytest -q`: 7154 passed, 0 failed, 0 skipped, exit 0. `ruff check`, `ruff format --check` and `mypy src/ovcaq` also exit 0. Record this green run before closing the phase-2 gate | File: docs/dev/project-management/autopilot/reports/00053-three-repair-20261012-evidence/verification.json | Task: general
+
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass

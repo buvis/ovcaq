@@ -1,0 +1,7 @@
+{
+  "command": "mise exec -- uv run pytest --junitxml=docs/dev/project-management/autopilot/reports/00053-cycle5-recovery-20261014/full-suite.xml",
+  "exit": 130,
+  "status": "interrupted-incomplete",
+  "partial_summary": "85 failed, 3299 passed, 2 warnings, 27 errors in 143.33s",
+  "reason": "Systemic host process-inspection failures. Direct ps exit 126 and required escalated representative test both confirm PermissionError: [Errno 1] Operation not permitted: ps. No complete full-suite verdict; no product suppression or host-policy change."
+}

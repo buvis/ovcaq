@@ -1,0 +1,10 @@
+{
+  "argv": [
+    "mise",
+    "exec",
+    "--",
+    "uv",
+    "build"
+  ],
+  "exit": 0
+}

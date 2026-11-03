@@ -1,0 +1,22 @@
+[BLAKE] 🟠 `ovcaq run --no-tui` and `ovcaq capability retry agoge` always select an unavailable capability runner, so required capabilities can never succeed through the installed public commands | File: src/ovcaq/supervisor_cli.py:49 | Task: P05-T06
+[BLAKE] 🟠 A successful capability retry leaves the prior failure attention intact, while the drained-state boundary ignores attention and declares the batch complete | File: src/ovcaq/state/commands.py:564 | Task: P05-T06
+B1: fail
+B2: pass
+B3: fail
+B4: pass
+B5: fail
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: pass
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: pass
+B16: pass
+B17: fail
+B18: pass
+B19: pass
+

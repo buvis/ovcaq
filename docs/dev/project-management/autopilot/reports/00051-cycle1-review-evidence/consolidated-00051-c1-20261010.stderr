@@ -1,0 +1,2 @@
+consolidate_findings: row 1 merged citations that matched only after suffix stripping: tests/events/test_unicode_frames.py:1 ~ tests/events/test_unicode_frames.py:172
+consolidate_findings: row 4 merged citations that matched only after suffix stripping: src/ovcaq/events/model.py:224 ~ src/ovcaq/events/model.py:83

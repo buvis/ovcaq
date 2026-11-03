@@ -1,0 +1,5 @@
+{
+  "name": "[D13] Remove redundant child origin assertions (S)",
+  "description": "Review cycle 13 follow-up. PAUSED: no execution is authorized by the connectivity recovery or this artifact. Operator recovery must authorize repairs; preserve the fresh work/review boundary.\n\n### Findings (verbatim)\n- low: B4: ORIGIN_CHECK.installed_origins asserts in-child (sys.prefix, site-packages) what every consumer re-asserts test-side through _assert_installed against installed.root; the in-child asserts are redundant | File: tests/packaging/rework_12_scripts.py:84 | Consensus: 1/3\n\n### Acceptance criteria\nEvery quoted finding no longer reproduces. Keep the parent-side installed-root/site-packages/module-origin verification on every subprocess result and event; remove only proven redundant child assertions.\n\n### Evidence\nReview: dev/local/reviews/00004-workflow-core-v1-review-13.md\nProbe: dev/local/reviews/00004-cycle-13-approved-installed-probe.json\nOriginal work base, cycle 13 and cap 2 remain unchanged.\n",
+  "blocked_by": []
+}

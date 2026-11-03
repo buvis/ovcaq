@@ -1,0 +1,35 @@
+[BOB] 🟡 tests/runtime/test_adapter_launch_routing.py:30 re-implements the runpy Claude wrapper from tests/runtime/test_supervisor_adapters.py:44. The wrapper rebinds `fake_codex.workflow.__globals__['__file__']` to the Claude fixture, and the new copy adds only an `edge['emit_invocation'](sys.argv[1:])` call. That leaves two copies of a hack tied to fake_codex.py internals, and they will drift apart. Keep one wrapper builder in test_supervisor_adapters.py that always emits the invocation (Codex `main()` already emits it unconditionally) and call it from both files | File: tests/runtime/test_adapter_launch_routing.py | Task: 11
+[BOB] ⚪ docs/driver-protocol.md:185 says "the driver preserves that resolved value", but only drivers built by `build_driver` do that. A `CodexDriver` constructed directly and passed to `Supervisor` (as in tests/runtime/test_rework_thread_conflict.py:108) still remaps a colliding value through tier-key precedence. Reword to "the driver built by `build_driver` preserves that resolved value" | File: docs/driver-protocol.md | Task: 4
+[BOB] ⚪ CHANGELOG.md:45 puts two fixes in one entry. Its clause "retry model capacity as connectivity through bounded WAIT/retry exhaustion" does not read as a sentence, and "reqwest" is implementation jargon. Split it into a numeric-context entry and a separate entry: "classify 'Selected model is at capacity' as connectivity so it gets bounded WAIT retries instead of rate-limit handling" | File: CHANGELOG.md | Task: 16
+[BOB] ⚪ tests/runtime/test_adapter_health.py:90 runs `command_name` over three names ("fixture-agent-health", "overlay-runner", "queue-worker"). In both probes all three take the same code path, so there are 6 cases where 2 would do. R8 removed the same kind of padding from test_adapter_outcomes.py. Keep one name | File: tests/runtime/test_adapter_health.py | Task: 3
+
+FIX:
+- Duplicated runpy Claude fake wrapper — tests/runtime/test_adapter_launch_routing.py:30 — move the wrapper builder into tests/runtime/test_supervisor_adapters.py so it always calls `emit_invocation`, then use it from `workflow_agent` and `configured_workflow`
+- Resolved-model doc wording claims too much — docs/driver-protocol.md:185 — replace "the driver preserves" with "the driver built by `build_driver` preserves"
+- Fused, hard-to-parse changelog entry — CHANGELOG.md:45 — split it into a numeric HTTP/status/error-code context entry and a capacity-as-connectivity entry, and drop "reqwest"
+- Command-name parametrization adds cases that test nothing new — tests/runtime/test_adapter_health.py:90 — remove the `command_name` parametrize and keep `fixture-agent-health`
+VERIFY:
+- (none)
+KNOWN:
+- (none)
+
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+```
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```

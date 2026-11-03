@@ -1,0 +1,30 @@
+Rubric phases 1–3 map to PRD phases 0–2 in order. Checks I ran: full suite `7165 passed` (0 failed, 0 skipped). `ruff check`, `ruff format --check` and `mypy src/ovcaq` are clean, and `uv build` built the sdist and wheel. I did not run `uv sync --all-groups`. Driver API 2, observation protocol 1 and state schema 1 are unchanged: only `claude.py`, `codex.py`, `codex_events.py` and `edge.py` changed under `src/`. I checked the model fix by hand: mapping a tier value back to its key and forward again always returns the same value, so `{default: o3, o3: o3-pro}` launches o3.
+
+[BLAKE] 🟠 The check for numeric codes is narrower than the spec's "HTTP/status/error-code" contexts. It only accepts `http`, `http status`, `status code` and `error code` before the number. I ran `classify_failure` on these and each returned `unknown`: `status: 429`, `status 503`, `HTTP/1.1 503`, `unexpected status 403 Forbidden`, `unexpected status 502 Bad Gateway` and `exceeded retry limit, last status: 429 Too Many Requests`. Before this change, bare 429, 403, 502 and 503 matched. The last few are Codex's own error wording as I know it from codex-rs (from memory, not checked against a fixture). So real Codex 429s skip the rate-limit wait, and 502/503 skip the bounded connectivity retry. The tests at tests/drivers/test_adapter_failure_classes.py:55 only use forms the regex accepts, and CHANGELOG.md:45 wrongly says genuine rate limits are unchanged. | File: src/ovcaq/drivers/codex_events.py:301 | Task: Phase 0 task 1
+[BLAKE] 🟡 The Phase 0 acceptance command (`tests/drivers/test_adapter_outcomes.py tests/drivers/test_codex_decode_terminals.py`) does not test the capacity WAIT and retry exhaustion, the unrelated-number negatives, or HTTP positives that rely on the number alone. Those tests live in tests/drivers/test_adapter_failure_classes.py, a file the PRD does not list, so the stated acceptance run passes without proving them. | File: tests/drivers/test_adapter_outcomes.py:1 | Task: Phase 0 task 1
+[BLAKE] ⚪ The docs say an empty host PATH "searches the current directory" for both adapters. That is false for Claude: its probe calls `shutil.which(path="")`, which returns None, and tests/runtime/test_adapter_health.py:263 pins that unhealthy result. The real spawn (`os.environ | spec.env` at src/ovcaq/runtime/supervisor.py:504) and the Codex probe both do search the current directory. So in this edge case the Claude probe and the actual spawn disagree, and the doc is wrong for Claude. | File: docs/driver-protocol.md:37 | Task: Phase 1 task 2
+[BLAKE] ⚪ A normal Codex sub-agent run (spawn running, then wait completed, then close_agent shutdown) now emits `raw.unknown` on every close of a completed lane. I confirmed this with a real decode run. It sets the TUI's raw-evidence flag (src/ovcaq/tui/model.py:548). The doc at docs/driver-protocol.md:244 says only unstarted receivers and missing attribution produce raw unknown evidence. | File: src/ovcaq/drivers/codex_events.py:233 | Task: Phase 0 task 1
+
+B1: fail
+B2: pass
+B3: pass
+B4: pass
+B5: fail
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: pass
+B11: fail
+B12: pass
+B13: pass
+B14: pass
+B15: fail
+B16: pass
+B17: pass
+B18: pass
+B19: pass
+
+**Partly done.** The audit is complete: 1 high, 1 medium and 2 low issues, with verdicts for all 19 rules.
+**Not done:** I didn't run `uv sync --all-groups`. Running it closes that gap.
+**Next:** You: send the high finding (numeric status context in `codex_events.py:301`) to the review cycle's rework decision.

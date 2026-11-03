@@ -1,0 +1,45 @@
+[ALICE] 🟡 Runtime directory creation walks from `/` and read-opens/fsyncs every ancestor, so a valid configured runtime beneath a search-only ancestor fails with “not a real directory”; the source-tree `0111` ancestor probe reproduced the failure | File: src/ovcaq/workflow/_files.py:252 | Task: P02-T06/P02-T09
+[ALICE] 🟡 `_ensure_directory_chain` processes `/` as a level and then opens/fsyncs `/` again as the parent of the first real component; skip the root self-step because the following iteration already verifies and syncs that same directory | File: src/ovcaq/workflow/_files.py:255 | Task: P02-T06
+
+Source-inventory reconciliation: all 55 PRD-00004 rows were located in `tests/characterization/migration.toml`, matched to `current_system.toml`, and reconciled by their declared target:
+
+- Frontmatter, 2 rows: `CMD-014`, `TEST-006`. `frontmatter.py`, application tests, CLI tests, and installed tests cover defaults, validation, warnings, tier hints, active-PRD binding, and transactional application.
+- Policy, 3 rows: `CMD-012`, `DEC-071`, `TEST-012`. `policy.py` and policy/CLI tests cover the 15-task ceiling, override, tolerant counting, graph validation, and oversized-plan failure.
+- Records/lifecycle, 31 rows: `ART-016`, `ART-017`, `ART-026`, `CMD-007`, `CMD-008`, `CMD-010`, `CMD-036`, `DEC-076`–`DEC-082`, `ENV-025`, `STATE-112`, `STATE-113`, `STATE-121`, `TEST-001`, `TEST-002`, `TEST-008`, `TEST-013`–`TEST-017`, `TEST-038`, `TEST-052`. `records.py`, `_files.py`, `_rename.py`, unit saga/ledger tests, and installed saga/rework tests cover defer deduplication, lock/publication integrity, lifecycle moves, durable intent and every named boundary, exact replay, conflict refusal, artifact/directory identity, reset ownership, completed summaries, and systemic second-park halt. The search-only ancestor failure leaves this group incomplete.
+- Reports, 13 rows: `ART-012`–`ART-014`, `ART-039`–`ART-041`, `CMD-018`–`CMD-020`, `TEST-018`–`TEST-020`, `TEST-062`. `reports.py`, renderer goldens, identity/recovery tests, overlap tests, and installed report tests cover deterministic audit/report/metrics output, stable sorting, batch scoping, idempotent section replacement, complete returned publication text, contention, nonregular/symlink refusal, and final-state archival.
+- Resume, 2 rows: `CMD-016`, `TEST-021`. `resume.py` and resume/characterized-fixture tests cover recovery precedence, build/review/paused/done branches, and purity.
+- Selection, 3 rows: `ART-036`, `CMD-013`, `TEST-027`. `selection.py`, `paths.py`, and selection/configuration tests cover five-digit ordering, wip priority, backlog fallback, hold exclusion, drain, non-files, symlinks, and configured lifecycle paths.
+- Transitions, 3 rows: `CMD-009`, `CMD-015`, `TEST-029`. `transitions.py`, `records.reset_prd_fields`, transition/application tests, and CLI tests cover every accepted and rejected row, full effects, purity, reset delegation, and one CAS transaction.
+- Parser/docs, 1 row: `TEST-005`. `cli.py`, `workflow_cli.py`, and `test_workflow_docs_are_generated_from_the_live_parser` bind `docs/operations.md` and the state-protocol command inventory to the live parser.
+
+P02 task reconciliation:
+
+- P02-T01–T05: implemented with direct unit and CLI coverage.
+- P02-T06: ledger semantics and crash replay are implemented, but configured-path support is incomplete at restricted ancestors; root handling also has one concrete redundancy.
+- P02-T07–T08: implemented with boundary, replay, publication, golden, and installed-command coverage.
+- P02-T09: configured roots replaced the legacy hardcoded root, but the restricted-ancestor failure prevents unconditional acceptance.
+- P02-T10: parser-generated documentation is directly equality-tested.
+
+Exit reconciliation:
+
+- Phase A: covered by characterized lifecycle fixtures, exhaustive transition/rejection rows, state-application tests, and pure-function tests.
+- Phase B: fail because P02-T06/P02-T09 reject an otherwise traversable configured runtime solely due to permissions outside that runtime.
+- Phase C: covered by installed command-family tests, renderer goldens, parser/document equality, and workflow forbidden-dependency/string checks identified in the reviewed suite.
+- Overall PRD acceptance remains incomplete for the same Phase B/configured-path finding.
+
+Evidence limits: I read the complete workflow implementation, the PRD and Phase 2 source plan, the complete 55-row ownership manifest and inventory summaries/evidence references, and the relevant unit/packaging test bodies or test inventories. I did not inspect the historical external source files named by every frozen evidence reference, did not execute the full suite, and did not independently reproduce every failpoint. The supplied HEAD verification remains the execution evidence: 1352 passed, zero failed/skipped, with ruff, format, mypy, and build successful.
+
+The exact probe directory `/private/tmp/tmp2uu0d1ev` was removed with scoped `rmdir` calls after permissions had already been restored; a subsequent existence check printed `removed`.
+
+R1: fail
+R2: fail
+R3: pass
+R4: fail
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: fail
+R13: fail

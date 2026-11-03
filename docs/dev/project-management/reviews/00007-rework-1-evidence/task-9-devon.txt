@@ -1,0 +1,381 @@
+VERDICT: Tests can be broken. Eight independent mutants each passed the exact supplied selection (13 tests).
+
+Scope: this verdict applies only to the supplied narrow task-9 selection, not the full repository suite. Existing tests outside the selection may already catch some boundary violations. No task spec, architecture, or production source body was read. Production source was copied as opaque bytes and append-only shims supplied behavior from tests/types.
+
+Environment: temporary repository /private/tmp/ovcaq-devon9-8xowjzdc/repo. UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache; UV_NO_SYNC=1; UV_PROJECT_ENVIRONMENT=/private/tmp/ovcaq-devon9-8xowjzdc/repo/.venv; PYTHONPATH=/private/tmp/ovcaq-devon9-8xowjzdc/repo/src. Import verification printed /private/tmp/ovcaq-devon9-8xowjzdc/repo/src/ovcaq/__init__.py. Installed-wheel fixture output confirmed it built this temporary copy. Real tests ran with escalation because sandbox blocks ps. Each subprocess had timeout=300.
+
+Setup caveat: Original pre-task-9 implementation fails supplied new assertions (failure batch status and attention clearing). A test-derived state/runtime shim was therefore included with EVERY mutant. Initial setup runs failed due missing dependencies/network, then sandbox ps/build environment, then UTC timestamp format; none counted as evidence of test robustness. Final runs all passed. Test-derived baseline itself is intentionally narrow and not a production patch.
+
+Exact runner and mutant definitions:
+from pathlib import Path
+import subprocess, json, os, time
+base=Path(__file__).parent
+repo=base/'repo'
+source=repo/'src/ovcaq/state/commands.py'
+original=(base/'original_commands').read_bytes()+(base/'state_shim.txt').read_bytes()
+mutants={
+'01_ignore_revision': '''\nfrom functools import wraps as _devon_wraps\ndef _devon_no_revision(original):\n    @_devon_wraps(original)\n    def mutated(self, *args, **kwargs):\n        kwargs["expected_revision"] = None\n        return original(self, *args, **kwargs)\n    return mutated\nfor _devon_name in ("start_capability", "retry_capability", "finish_capability", "reconcile_capability", "skip_empty_drain_capabilities"):\n    setattr(StateService, _devon_name, _devon_no_revision(getattr(StateService, _devon_name)))\n''',
+'02_ignore_finish_attempt_id': '''\n_devon_finish = StateService.finish_capability\ndef _devon_wrong_finish(self, name, attempt_id, **kwargs):\n    attempt_id = self.show()["batch"]["capabilities"][name]["attempts"][-1]["id"]\n    return _devon_finish(self, name, attempt_id, **kwargs)\nStateService.finish_capability = _devon_wrong_finish\n''',
+'03_ignore_reconcile_attempt_id': '''\n_devon_reconcile = StateService.reconcile_capability\ndef _devon_wrong_reconcile(self, name, attempt_id, **kwargs):\n    attempt_id = self.show()["batch"]["capabilities"][name]["attempts"][-1]["id"]\n    return _devon_reconcile(self, name, attempt_id, **kwargs)\nStateService.reconcile_capability = _devon_wrong_reconcile\n''',
+'04_hardcode_retry_session': '''\n_devon_retry = StateService.retry_capability\ndef _devon_wrong_retry(self, name, attempt, **kwargs):\n    attempt = {**attempt, "session_id": "session-2"}\n    return _devon_retry(self, name, attempt, **kwargs)\nStateService.retry_capability = _devon_wrong_retry\n''',
+'05_discard_success_detail': '''\n_devon_finish = StateService.finish_capability\ndef _devon_wrong_finish(self, name, attempt_id, **kwargs):\n    if kwargs["succeeded"]:\n        kwargs["detail"] = None\n    return _devon_finish(self, name, attempt_id, **kwargs)\nStateService.finish_capability = _devon_wrong_finish\n''',
+'06_hardcode_reconcile_detail': '''\n_devon_reconcile = StateService.reconcile_capability\ndef _devon_wrong_reconcile(self, name, attempt_id, **kwargs):\n    kwargs["detail"] = "Session lost; retry archive"\n    return _devon_reconcile(self, name, attempt_id, **kwargs)\nStateService.reconcile_capability = _devon_wrong_reconcile\n''',
+'07_hardcode_completion_date': '''\n_devon_finish = StateService.finish_capability\ndef _devon_wrong_finish(self, name, attempt_id, **kwargs):\n    kwargs["finished_at"] = "2026-08-26" + kwargs["finished_at"][10:]\n    return _devon_finish(self, name, attempt_id, **kwargs)\nStateService.finish_capability = _devon_wrong_finish\n''',
+'08_missing_capability_start': '''\ndef _devon_missing_start(self, name, attempt, **kwargs):\n    raise NotImplementedError("capability launch is unimplemented")\nStateService.start_capability = _devon_missing_start\n''',
+}
+command=['mise','exec','--','uv','run','pytest','tests/state/test_supervisor_commands.py::test_capability_failure_preserves_work_and_records_actionable_attention','tests/state/test_supervisor_commands.py::test_successful_retry_completes_batch_and_clears_only_its_attention','tests/state/test_supervisor_commands.py::test_success_cannot_complete_batch_with_another_unfinished_required_capability','tests/runtime/test_supervisor_batch_lifecycle.py','tests/packaging/test_installed_supervisor_cli.py::test_installed_init_can_run_without_seeding_batch_identity','--tb=short','-q']
+env={**os.environ,'UV_CACHE_DIR':'/private/tmp/ovcaq-uv-cache','UV_PROJECT_ENVIRONMENT':str(repo/'.venv'),'UV_NO_SYNC':'1','PYTHONPATH':str(repo/'src')}
+results=[]
+try:
+    for name, mutation in mutants.items():
+        source.write_bytes(original+mutation.encode())
+        start=time.monotonic()
+        run=subprocess.run(command,cwd=repo,env=env,text=True,capture_output=True,timeout=300)
+        result={'name':name,'mutation':mutation,'code':run.returncode,'stdout':run.stdout,'stderr':run.stderr,'seconds':round(time.monotonic()-start,2)}
+        results.append(result)
+        (base/'results.json').write_text(json.dumps(results,indent=2))
+        print(name,run.returncode,run.stdout[-700:],run.stderr[-400:],flush=True)
+        source.write_bytes(original)
+finally:
+    source.write_bytes(original)
+
+
+Test-derived state baseline:
+
+# Test-derived baseline for missing task 9 behavior.
+_devon_init = StateService.__init__
+def _devon_init_service(self, store):
+    _devon_init(self, store)
+    self._devon_store = store
+StateService.__init__ = _devon_init_service
+
+def _devon_finish_baseline(self, name, attempt_id, *, succeeded, detail, finished_at, expected_revision=None):
+    def mutate(state):
+        capability = state['batch']['capabilities'][name]
+        attempt = next(a for a in capability['attempts'] if a['id'] == attempt_id)
+        attempt.update(status='succeeded' if succeeded else 'failed', detail=detail, finished_at=finished_at)
+        capability['status'] = attempt['status']
+        if not succeeded:
+            state['control']['attention'] = {'site':'capability:'+name,'detail':f'capability {name} failed: {detail}','created_at':finished_at}
+            state['batch']['status'] = 'attention'
+        else:
+            attention = state['control']['attention']
+            if attention and attention['site'] == 'capability:'+name:
+                state['control']['attention'] = None
+            if all(not c['required'] or c['status'] == 'succeeded' for c in state['batch']['capabilities'].values()):
+                state['batch'].update(status='completed', completed_at=finished_at)
+    return self._devon_store.transaction(mutate, expected_revision=expected_revision)
+StateService.finish_capability = _devon_finish_baseline
+
+def _devon_reconcile_baseline(self, name, attempt_id, *, detail, finished_at, expected_revision=None):
+    return self.finish_capability(name, attempt_id, succeeded=False, detail=detail, finished_at=finished_at, expected_revision=expected_revision)
+StateService.reconcile_capability = _devon_reconcile_baseline
+
+
+Test-derived runtime baseline:
+
+# Test-derived baseline for missing task 9 behavior.
+import json as _devon_json
+import uuid as _devon_uuid
+_devon_supervisor_init = Supervisor.__init__
+_devon_supervisor_run = Supervisor.run
+_devon_supervisor_apply = Supervisor.apply
+
+def _devon_supervisor_capture(self, root, **kwargs):
+    _devon_supervisor_init(self, root, **kwargs)
+    self._devon_args = kwargs
+Supervisor.__init__ = _devon_supervisor_capture
+
+def _devon_complete(self):
+    store = self._devon_args['store']
+    paths = self._devon_args['settings'].runtime.paths
+    before = store.read()
+    archive = paths.reports / (before['batch']['id']+'-state-final.json')
+    if before['batch']['status'] != 'completed':
+        def mutate(state):
+            if not state['batch']['completed_prds']:
+                for cap in state['batch']['capabilities'].values():
+                    if cap['required']:
+                        cap.update(required=False, status='skipped')
+            state['batch'].update(status='completed', completed_at=self._devon_args['clock'].now().isoformat().replace('+00:00', 'Z'))
+        result = store.transaction(mutate)
+    else:
+        result = before
+    if not archive.exists():
+        archive.write_text(_devon_json.dumps(result))
+    return False
+
+def _devon_run_baseline(self):
+    store = self._devon_args['store']
+    state = store.read()
+    if state['work']['next_phase'] == '':
+        _devon_complete(self)
+        return SupervisorOutcome(0, SupervisorDecision(DecisionKind.COMPLETE, 'done'), 0)
+    if state['batch']['started_at'] is None:
+        def mutate(current):
+            current['batch'].update(id=str(_devon_uuid.uuid4()), status='running', started_at=self._devon_args['clock'].now().isoformat().replace('+00:00', 'Z'))
+        store.transaction(mutate)
+    return _devon_supervisor_run(self)
+Supervisor.run = _devon_run_baseline
+
+def _devon_apply_baseline(self, decision):
+    if decision.kind == DecisionKind.COMPLETE:
+        return _devon_complete(self)
+    return _devon_supervisor_apply(self, decision)
+Supervisor.apply = _devon_apply_baseline
+
+
+PROVEN MUTANT 01_ignore_revision
+Wrong implementation appended to baseline:
+
+from functools import wraps as _devon_wraps
+def _devon_no_revision(original):
+    @_devon_wraps(original)
+    def mutated(self, *args, **kwargs):
+        kwargs["expected_revision"] = None
+        return original(self, *args, **kwargs)
+    return mutated
+for _devon_name in ("start_capability", "retry_capability", "finish_capability", "reconcile_capability", "skip_empty_drain_capabilities"):
+    setattr(StateService, _devon_name, _devon_no_revision(getattr(StateService, _devon_name)))
+
+Exit code: 0
+Passing test output:
+.............                                                            [100%]
+=============================== warnings summary ===============================
+../../../../Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-f9a49a63-3bc5-4521-99dd-db5279a3fbfb
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-f9a49a63-3bc5-4521-99dd-db5279a3fbfb'
+    warnings.warn(
+
+../../../../Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-a826ae32-97cf-4b72-8c09-d81ffa8054f8
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-a826ae32-97cf-4b72-8c09-d81ffa8054f8'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+13 passed, 2 warnings in 1.73s
+
+Stderr:
+
+
+PROVEN MUTANT 02_ignore_finish_attempt_id
+Wrong implementation appended to baseline:
+
+_devon_finish = StateService.finish_capability
+def _devon_wrong_finish(self, name, attempt_id, **kwargs):
+    attempt_id = self.show()["batch"]["capabilities"][name]["attempts"][-1]["id"]
+    return _devon_finish(self, name, attempt_id, **kwargs)
+StateService.finish_capability = _devon_wrong_finish
+
+Exit code: 0
+Passing test output:
+.............                                                            [100%]
+=============================== warnings summary ===============================
+../../../../Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-bd4ce2be-418b-4e69-8a42-5aade4c2c321
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-bd4ce2be-418b-4e69-8a42-5aade4c2c321'
+    warnings.warn(
+
+../../../../Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-8fb8e79c-7794-4181-97a2-506fda7135e8
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-8fb8e79c-7794-4181-97a2-506fda7135e8'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+13 passed, 2 warnings in 1.67s
+
+Stderr:
+
+
+PROVEN MUTANT 03_ignore_reconcile_attempt_id
+Wrong implementation appended to baseline:
+
+_devon_reconcile = StateService.reconcile_capability
+def _devon_wrong_reconcile(self, name, attempt_id, **kwargs):
+    attempt_id = self.show()["batch"]["capabilities"][name]["attempts"][-1]["id"]
+    return _devon_reconcile(self, name, attempt_id, **kwargs)
+StateService.reconcile_capability = _devon_wrong_reconcile
+
+Exit code: 0
+Passing test output:
+.............                                                            [100%]
+=============================== warnings summary ===============================
+../../../../Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-754aafa8-05a3-4e66-ae74-2addb3c3e4e4
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-754aafa8-05a3-4e66-ae74-2addb3c3e4e4'
+    warnings.warn(
+
+../../../../Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-6c8d0667-0528-4c15-98f4-10519287068b
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-6c8d0667-0528-4c15-98f4-10519287068b'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+13 passed, 2 warnings in 1.65s
+
+Stderr:
+
+
+PROVEN MUTANT 04_hardcode_retry_session
+Wrong implementation appended to baseline:
+
+_devon_retry = StateService.retry_capability
+def _devon_wrong_retry(self, name, attempt, **kwargs):
+    attempt = {**attempt, "session_id": "session-2"}
+    return _devon_retry(self, name, attempt, **kwargs)
+StateService.retry_capability = _devon_wrong_retry
+
+Exit code: 0
+Passing test output:
+.............                                                            [100%]
+=============================== warnings summary ===============================
+../../../../Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-2688f36f-6b2e-412a-b5a5-664d1c2daae8
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-2688f36f-6b2e-412a-b5a5-664d1c2daae8'
+    warnings.warn(
+
+../../../../Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-fffa0620-7d02-4275-9f8b-07570adfd715
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-fffa0620-7d02-4275-9f8b-07570adfd715'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+13 passed, 2 warnings in 1.61s
+
+Stderr:
+
+
+PROVEN MUTANT 05_discard_success_detail
+Wrong implementation appended to baseline:
+
+_devon_finish = StateService.finish_capability
+def _devon_wrong_finish(self, name, attempt_id, **kwargs):
+    if kwargs["succeeded"]:
+        kwargs["detail"] = None
+    return _devon_finish(self, name, attempt_id, **kwargs)
+StateService.finish_capability = _devon_wrong_finish
+
+Exit code: 0
+Passing test output:
+.............                                                            [100%]
+=============================== warnings summary ===============================
+../../../../Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-fc223ebd-b1c0-43cc-8d72-8aba1e4efd9d
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-fc223ebd-b1c0-43cc-8d72-8aba1e4efd9d'
+    warnings.warn(
+
+../../../../Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-333b460e-add0-424d-a922-5943ce7168ac
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-333b460e-add0-424d-a922-5943ce7168ac'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+13 passed, 2 warnings in 1.64s
+
+Stderr:
+
+
+PROVEN MUTANT 06_hardcode_reconcile_detail
+Wrong implementation appended to baseline:
+
+_devon_reconcile = StateService.reconcile_capability
+def _devon_wrong_reconcile(self, name, attempt_id, **kwargs):
+    kwargs["detail"] = "Session lost; retry archive"
+    return _devon_reconcile(self, name, attempt_id, **kwargs)
+StateService.reconcile_capability = _devon_wrong_reconcile
+
+Exit code: 0
+Passing test output:
+.............                                                            [100%]
+=============================== warnings summary ===============================
+../../../../Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-b1330178-1add-435e-be3c-61780983238e
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-b1330178-1add-435e-be3c-61780983238e'
+    warnings.warn(
+
+../../../../Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-1d6e3e8f-9b10-4af0-90b0-b6269ede7f9f
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-1d6e3e8f-9b10-4af0-90b0-b6269ede7f9f'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+13 passed, 2 warnings in 1.67s
+
+Stderr:
+
+
+PROVEN MUTANT 07_hardcode_completion_date
+Wrong implementation appended to baseline:
+
+_devon_finish = StateService.finish_capability
+def _devon_wrong_finish(self, name, attempt_id, **kwargs):
+    kwargs["finished_at"] = "2026-08-26" + kwargs["finished_at"][10:]
+    return _devon_finish(self, name, attempt_id, **kwargs)
+StateService.finish_capability = _devon_wrong_finish
+
+Exit code: 0
+Passing test output:
+.............                                                            [100%]
+=============================== warnings summary ===============================
+../../../../Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-e95a6b1b-f1d4-4d68-9c61-03b7642f3a0d
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-e95a6b1b-f1d4-4d68-9c61-03b7642f3a0d'
+    warnings.warn(
+
+../../../../Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-b20224ba-5d1a-46f0-bdca-4bf9d95c5fb4
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-b20224ba-5d1a-46f0-bdca-4bf9d95c5fb4'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+13 passed, 2 warnings in 1.62s
+
+Stderr:
+
+
+PROVEN MUTANT 08_missing_capability_start
+Wrong implementation appended to baseline:
+
+def _devon_missing_start(self, name, attempt, **kwargs):
+    raise NotImplementedError("capability launch is unimplemented")
+StateService.start_capability = _devon_missing_start
+
+Exit code: 0
+Passing test output:
+.............                                                            [100%]
+=============================== warnings summary ===============================
+../../../../Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-adb88f52-36ee-4aa5-9c48-2d21d57646d1
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-adb88f52-36ee-4aa5-9c48-2d21d57646d1'
+    warnings.warn(
+
+../../../../Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-89d1a51b-45cb-4690-9544-5e3771cdd92e
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-89d1a51b-45cb-4690-9544-5e3771cdd92e'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+13 passed, 2 warnings in 1.63s
+
+Stderr:
+
+
+Weak points:
+1. test_capability_failure_preserves_work_and_records_actionable_attention / test_successful_retry_completes_batch_and_clears_only_its_attention - All capability transition expected_revision arguments can be discarded - Exercise each transition with a stale revision and assert RevisionConflictError plus unchanged state and backup bytes.
+2. test_capability_failure_preserves_work_and_records_actionable_attention / test_successful_retry_completes_batch_and_clears_only_its_attention - finish_capability can ignore attempt_id and finish the latest attempt - Pass a nonexistent or prior attempt ID while another attempt is active; assert rejection and unchanged state.
+3. test_capability_failure_preserves_work_and_records_actionable_attention[True] - reconcile_capability can ignore attempt_id and reconcile the latest attempt - Reconcile a stale or nonexistent attempt ID and assert rejection with unchanged active attempt.
+4. test_successful_retry_completes_batch_and_clears_only_its_attention - Every retry session_id can be replaced with the constant session-2 - Parameterize retry session IDs including None and assert exact persisted identity.
+5. test_successful_retry_completes_batch_and_clears_only_its_attention / test_success_cannot_complete_batch_with_another_unfinished_required_capability - Successful capability completion may silently discard non-null detail - Complete successfully with nonempty detail and assert the attempt preserves it exactly.
+6. test_capability_failure_preserves_work_and_records_actionable_attention[True] - Reconciliation detail can be hardcoded to Session lost; retry archive - Parameterize reconciliation detail and capability name; assert exact attempt detail and matching attention.
+7. test_capability_failure_preserves_work_and_records_actionable_attention / test_successful_retry_completes_batch_and_clears_only_its_attention - Every capability finish date can be rewritten to 2026-08-26 - Use dates on multiple calendar days and assert exact attempt.finished_at and batch.completed_at.
+8. test_terminal_drain_archives_completed_batch_with_injected_time / test_empty_drain_skips_required_capability_using_injected_time - Capability start can raise NotImplementedError unconditionally because no included runtime case launches required work - Run a nonempty drained batch with a required pending capability; assert runner called, attempt persisted, successful completion and final archive.
+
+Cleanup proof:
+Shared repository source and tests: 179 file SHA256 values checked; 0 differences from pre-run manifest.
+git diff -- src: empty (0 output bytes).
+No shared source, test, workflow state or commit modified. Only requested report written in shared repository.
+/private/tmp/ovcaq-devon9-8xowjzdc/repo/src/ovcaq/state/commands.py: SHA256 2fdf2f649dbfb476437aa0882ce81bd2d7e1d863fe9e5b7a8dcc3b4f8fb58374, equals original backup: True
+/private/tmp/ovcaq-devon9-8xowjzdc/repo/src/ovcaq/runtime/supervisor.py: SHA256 b869a2f3b8be9aef4ac85bd55e082dd92f89aa5b2d00321fdf93132362bdc9a9, equals original backup: True
+Temporary mutation driver, shims, backups, manifest and results overwritten with the required placeholder after their evidence was embedded here. Temporary copy source restored; copied tests left immutable. Temporary dependency environment retained. No rm or deletion used.
+abort_reason: null
+Input budget: substantially below 100K; no context overrun.

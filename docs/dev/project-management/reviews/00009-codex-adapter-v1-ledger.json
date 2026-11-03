@@ -1,0 +1,339 @@
+[
+  {
+    "cycle": 1,
+    "disposition": "settled-deferral",
+    "severity": "medium",
+    "issue": "The rate-limit reset parser only accepts \"reset at <ISO>\" and \"retry after N seconds\". Real Codex 0.160.0 says \"Try again at 3:45 PM.\" or \"try again later\" (upstream `retry_suffix`/`retry_suffix_after_or`). The repo's own rate-limited fixture (\"try again in 60 seconds\") is deliberately left unparsed. Result: every real Codex usage limit has an unknown reset and HALTs, so the \"rate-limit with reset\" path only works for text Codex never emits. tests/drivers/test_conformance.py:241 calls that invented text \"native\".",
+    "file": "src/ovcaq/drivers/codex_events.py:262",
+    "reason": "Requirements ambiguity: accepted design lines 187-192 permits explicit aware ISO or retry-after seconds only and rejects ambiguous local clock prose. Native formatter expansion needs a contract decision; retain unknown deadlines without guessing timezone."
+  },
+  {
+    "cycle": 1,
+    "disposition": "settled-deferral",
+    "severity": "medium",
+    "issue": "All 8 JSONL fixture families are `schema-synthetic`, including healthy and tool-active, even though codex-cli 0.160.0 is installed here. The PRD allows synthesized families only when live capture is impractical (rate-limited, permission-failed). The made-up failure messages (see the connectivity finding) show the drift this causes.",
+    "file": "tests/fixtures/codex/v1/provenance.json:12",
+    "reason": "Requirements ambiguity: PRD prefers live capture when practical; accepted design lines 65-76 authorizes honestly labeled synthesis when a safe existing transcript is unavailable. Provenance confirms none supplied. Decide capture policy at batch end; do not fabricate capture provenance or launch real smoke."
+  },
+  {
+    "cycle": 1,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "Scope creep: the `sandbox` and `approval` driver options are not in the PRD and accept only their one hard-coded value. They add config surface that changes nothing.",
+    "file": "src/ovcaq/drivers/codex.py:51",
+    "reason": "Requirements ambiguity: accepted design lines 99-101 mandates the sandbox/approval options that this finding calls out of scope. Removing accepted config requires a contract decision; preserve safe fixed values."
+  },
+  {
+    "cycle": 1,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "Default phase tiers use Claude family names (`sonnet`/`opus`), so a Codex config must define those tier keys or override every phase. The Codex tests hide this by using `{\"sonnet\":…, \"opus\":…}` (tests/tui/test_codex_projection.py:66). The PRD lists src/ovcaq/config.py, but it was not changed.",
+    "file": "src/ovcaq/drivers/__init__.py:18",
+    "reason": "Requirements ambiguity: accepted design reuses shared config and logical tier mappings. Renaming shared defaults changes configuration behavior; decide neutral naming and migration scope at batch end."
+  },
+  {
+    "cycle": 1,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "On timeout, `subprocess.run(timeout=5)` kills only the direct child, so wrapper descendants can be orphaned.",
+    "file": "src/ovcaq/drivers/codex.py:119",
+    "reason": "Accepted design dispatch-3 non-blocker records probe descendant ownership outside this fixture/fake PRD. Defer ownership policy rather than silently expand process-group behavior."
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "The fix for R21 (interrupted/shutdown/not_found lanes) also catches lanes that already finished. The \"started\" set at codex.py:372 is built from every lane identity, including ones marked done. So a lane that completed and is later reported as `shutdown` (for example by a `close_agent` or `wait` call) emits `lane.failed`, and the TUI accepts the change from completed to failed. Confirmed by running it: running → completed → shutdown gives `['tool.completed', 'lane.failed']`. Fix: pass only lanes that are not done (`{lane for (cat, lane), done in self._identities.items() if cat == \"lane\" and not done}`), make `started_lanes` a required parameter (codex_events.py:205, its only caller always passes it), and add a test for completed-then-shutdown",
+    "file": "src/ovcaq/drivers/codex.py:372",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R1"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "`bounded_detail` redacts credentials first and strips terminal controls second. A key split by an escape sequence therefore survives redaction and is joined back together. Confirmed: `bounded_detail(\"token sk-abc\\x1b[0mdefghijklmnopqrstuvwxyz0123456789ABCDEF\")` returns the full `sk-abcdef…` key unredacted, and that text lands in persisted `session.failed`, `rate_limit.started` and lane payloads. The existing `_bounded` (src/ovcaq/supervisor_cli.py:77) strips first and then sanitizes. Fix: swap the order, add a regression test, and consider sharing one helper instead of a second copy of the ANSI regex",
+    "file": "src/ovcaq/drivers/codex_events.py:57",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R2"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "The R16 activity view drops the detail on error and warning messages. `_observe_activity` reads only `payload[\"text\"]`, but the Codex provisional top-level `error` (codex.py:278) and Claude `rate_limit_warning` (claude_events.py:143) carry their message in `detail`, so they render as a bare \"error\" or \"rate_limit_warning\". These payloads and Codex `turn` messages also have no `message_id`, so they share the key `(\"message\", \"\")`. The next `turn` line then replaces the error line. The test at tests/tui/test_rework_activity.py:86 uses `text` for kind `error`, so it never exercises the real provisional shape. Confirmed by code reading. Fix: fall back to `detail` when `text` is missing, give message_id-less entries a distinct key (for example kind plus sequence), and test the real provisional-error payload",
+    "file": "src/ovcaq/tui/model.py:575",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R3"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "\"Selected model is at capacity\" (upstream ServerOverloaded, a transient overload) is now classified as `rate_limit`. That message never carries a reset time, so decision.py:197-213 halts the batch on the first occurrence. Before this rework it was `unknown` and got one retry. The design taxonomy puts \"server unavailable/503\" under connectivity, which waits and retries with a bound. Move `model is at capacity` to the connectivity pattern and update the expectation at tests/drivers/test_codex_rework_decode.py:94",
+    "file": "src/ovcaq/drivers/codex_events.py:309",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R4"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "Simplify `_report_runtime_error`. It is named as a reporter, but it now raises in 2 of its 3 branches. The third branch returns an `Exception` that the only caller ignores, and the caller then does a bare `raise` (supervisor_cli.py:193-194). Make it `-> None`, drop `return error` (fall through), or rename it `_raise_runtime_error`. Behavior stays the same",
+    "file": "src/ovcaq/supervisor_cli.py:144",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R5"
+  },
+  {
+    "cycle": 2,
+    "severity": "low",
+    "issue": "R6 is only partly fixed. Added now has two bullets, but a blank line still splits the Fixed list (CHANGELOG.md:45). The new Fixed bullet \"**tui**: show bounded normalized tool, message and plan activity\" repeats the Added bullet at :12 for this same unreleased PRD. Fold it into Added and remove the blank line",
+    "file": "CHANGELOG.md:44",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R6"
+  },
+  {
+    "cycle": 2,
+    "severity": "high",
+    "issue": "A single valid Codex record can crash the supervisor, which breaks the \"malformed input degrades to `raw.unknown`\" rule. Any JSON string holding a lone surrogate escape (a `thread_id`, agent text, error message) passes `CodexDriver.decode` unsanitized. `NormalizedEventWriter.write` then raises `UnicodeEncodeError` at `.encode(\"utf-8\")`. That write sits outside the decoder's `try`, so the error escapes `RawFirstDecoder.feed`. `_stream` then SIGKILLs the child, and `_attempt` re-raises. Confirmed with a one-line repro: `{\"type\":\"item.completed\",\"item\":{\"id\":\"m\",\"type\":\"agent_message\",\"text\":\"\\ud800\"}}` gives `UnicodeEncodeError: surrogates not allowed`. The state layer already rejects lone surrogates; the event path does not.",
+    "file": "src/ovcaq/events/tail.py:143",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R7"
+  },
+  {
+    "cycle": 2,
+    "severity": "high",
+    "issue": "The exact version pin rejects the Codex CLI installed on this machine, which blocks the \"PRD 00010 can run the first real Codex smoke\" criterion. `probe()` requires `codex-cli 0.160.0` exactly, but the installed binary reports `codex-cli 0.160.1`. Running the real probe returns `DriverHealth(healthy=False, detail='codex: observed 0.160.1; pinned 0.160.0; refresh the Codex fixture contract')`, and `ovcaq run --agent codex` refuses before launch. Installed `codex exec --help` flags still match the captured help, so only the pin fails. Any patch release breaks the adapter.",
+    "file": "src/ovcaq/drivers/codex.py:200",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R8"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "Simplify: `version[10:]` behind `version.startswith(\"codex-cli \")` is a magic slice of the prefix length. Use `version.removeprefix(\"codex-cli \")` and compare it to `version` to choose between the \"observed\" and \"missing\" detail. Behavior stays the same",
+    "file": "src/ovcaq/drivers/codex.py:202",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R9"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "`activity_panel` prints all kept activity (up to 256 items) oldest first, after the lanes. In a busy session the newest tool call sits at the bottom of a frame that can pass 500 lines, below what the terminal shows. Plain mode reprints that whole frame on every change.",
+    "file": "src/ovcaq/tui/panels.py:92",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R10"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "The fixture docs are stale after the rework. The family table has no `lanes-matched.jsonl` row. Line 45 still says edge tests build matched variants in place, but that in-place rewrite was removed. Lines 72-73 still say activity panels render lanes only. docs/driver-protocol.md:217 also names only `lanes.jsonl`.",
+    "file": "tests/fixtures/README.md:45",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R11"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "The root cause of R10 is still there for three of the four failure fixtures. `test_fixture_error_then_identical_failure_has_one_terminal_and_rate_start` still builds its expected class by calling `classify_failure(detail)`. If the rate-limited, authentication or permission fixture fell back to unknown, the test would still pass. Only connectivity got an independent expected value.",
+    "file": "tests/drivers/test_codex_decode_terminals.py:120",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R12"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "Six new test files are named after the review loop (`test_codex_rework_*`, `test_rework_*`), not after the behavior they guard. `test_codex_rework_placement.py` also re-tests text, reasoning, error and plan items, sanitizing, and rejection of malformed items, which tests/drivers/test_codex_decode.py:80-231 already covers through `decode`. It also pins which module holds the helper.",
+    "file": "tests/drivers/test_codex_rework_placement.py:1",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R13"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "Simplify: `\"; \".join(reason for reason in (gap, X) if reason)` appears three times (here, at :102, and at src/ovcaq/drivers/codex.py:312). In `turn_usage`, collect the reasons in a list and return `\"; \".join(reasons) or None`. In `_usage_observations`, use `gap = f\"{gap}; Conflicting thread identity\" if gap else \"Conflicting thread identity\"`.",
+    "file": "src/ovcaq/drivers/codex_events.py:93",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R14"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "Simplify: `_bind_observations` hides a conditional dict merge (`dict(...) | {...} if A and B else payload`) inside a `replace()` keyword, inside a generator. Reading it right depends on operator precedence. A plain loop that sets `payload` with one `if` and then calls `replace` does the same and is easy to read.",
+    "file": "src/ovcaq/events/tail.py:153",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R15"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "Simplify: `assert_prd_completion` recomputes `handoff_revision`, which its caller already computed (:385), and uses it only in the done branch. Pass it in, or write `before[\"revision\"] + 1` inline there.",
+    "file": "tests/drivers/test_codex_fake.py:323",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R16"
+  },
+  {
+    "cycle": 2,
+    "severity": "low",
+    "issue": "No test pins the 16 KiB per-stream capture cap, which was the core of R3. If the slice at codex.py:76 were removed (unbounded capture), every probe test would still pass, because `_probe_failure` truncates the final detail to 16 KiB anyway (tests/drivers/test_codex_rework_probe.py:140 checks only `len(detail)`). Add a check that a large stdout on the version probe is captured to at most 16 KiB, for example by making the helper's returned buffers observable",
+    "file": "src/ovcaq/drivers/codex.py:76",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R17"
+  },
+  {
+    "cycle": 2,
+    "severity": "low",
+    "issue": "The driver accepts options the PRD never asks for. `sandbox` and `approval` can only equal their fixed defaults, so they do nothing. `allow_explicit_model` lets a launch skip the tier map, which the PRD says the model resolves through.",
+    "file": "src/ovcaq/drivers/codex.py:118",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R18"
+  },
+  {
+    "cycle": 2,
+    "severity": "low",
+    "issue": "On the supervisor path the model is resolved through the tier map twice. `resolve_phase_route` hands over a resolved model value, and `build_launch` maps it through `settings.tiers` again, keys first. A value that also names another tier, such as `{default=\"o3\", o3=\"o3-pro\"}`, launches the wrong model. The Claude edge maps values back to keys first; Codex has no such step.",
+    "file": "src/ovcaq/drivers/codex.py:138",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R19"
+  },
+  {
+    "cycle": 2,
+    "severity": "low",
+    "issue": "Failure classification matches bare status codes anywhere in the message. `\\b401\\b`, `\\b403\\b`, `\\b502\\b` and similar fire on unrelated numbers (\"processed 401 files\"), and authentication wins by precedence, so the wrong retry budget may be used. Suspected; not reproduced.",
+    "file": "src/ovcaq/drivers/codex_events.py:299",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R20"
+  },
+  {
+    "cycle": 2,
+    "severity": "low",
+    "issue": "The full suite passes but warns twice: `PytestWarning: (rm_rf) error removing …/garbage-… Directory not empty`. Suspected cause: a process from a test still writes into tmp after teardown, possibly a fake descendant. Not traced.",
+    "file": "N/A",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R21"
+  },
+  {
+    "cycle": 2,
+    "severity": "low",
+    "issue": "The launch health gate now runs for every adapter, but test_rework_health.py configures only Codex. The decision gate asked for both adapters, and no test shows `ovcaq run --agent claude` stopping before spawn when `ClaudeDriver.probe` fails.",
+    "file": "tests/runtime/test_rework_health.py:86",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R22"
+  },
+  {
+    "cycle": 2,
+    "severity": "low",
+    "issue": "`ClaudeDriver.probe` now gates every launch, but it calls `shutil.which(command)` with the supervisor's PATH, not the PATH from the configured environment overlay that the agent spawn uses. A Claude command found only through an overlay PATH may now be rejected. Suspected, not confirmed.",
+    "file": "src/ovcaq/drivers/claude.py:81",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R23"
+  },
+  {
+    "cycle": 2,
+    "severity": "low",
+    "issue": "The probe now reads from pipes until end-of-file, so a wrapper's background child that keeps stdout open turns a healthy probe into a 5 s timeout.",
+    "file": "src/ovcaq/drivers/codex.py:66",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R25"
+  },
+  {
+    "cycle": 2,
+    "severity": "low",
+    "issue": "An existing test, `test_fake_build_review_done_drain_capability_failure_and_independent_retry`, is 52 lines. This diff does not touch it: test_supervisor.py has no net change against the PRD base.",
+    "file": "tests/runtime/test_supervisor.py:700",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R26"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "Dead fallback: `payload.get(\"detail\", payload.get(\"input\"))` reads an `input` key that no driver emits (searching src for `\"input\"` finds only this line). The Claude case in tests/tui/test_rework_activity.py:57 builds a made-up `input` payload just to reach it. Drop the `input` fallback and make the Claude test use the real `tool.started` shape (`tool_id`, `name`, metadata)",
+    "file": "src/ovcaq/tui/model.py:592",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R27"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "1 touched test(s) pass against the pre-change code: test_command_backed_workflow_handoffs",
+    "file": "tests/drivers/test_codex_fake.py",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R28"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "1 touched test(s) pass against the pre-change code: test_configured_prompts_remain_literal_phase_overrides",
+    "file": "tests/drivers/test_codex_prompt.py",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R29"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "3 touched test(s) pass against the pre-change code: test_explicit_aware_rate_reset_accepts_punctuation_with_six_hour_ceiling",
+    "file": "tests/drivers/test_codex_rework_decode.py",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R30"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "2 touched test(s) pass against the pre-change code: test_probe_rejects_version_aliases_that_are_not_exact_reviewed_evidence",
+    "file": "tests/drivers/test_codex_rework_probe.py",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R31"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "1 touched test(s) pass against the pre-change code: test_repeated_native_thread_succeeds_with_terminal_evidence",
+    "file": "tests/runtime/test_rework_thread_conflict.py",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R32"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "2 touched test(s) pass against the pre-change code: test_builtin_fake_command_handoffs_drain_and_retain_completed_results",
+    "file": "tests/runtime/test_supervisor_adapters.py",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R33"
+  },
+  {
+    "cycle": 2,
+    "severity": "medium",
+    "issue": "5 touched test(s) pass against the pre-change code: test_fake_supervisor_evidence_drives_panels",
+    "file": "tests/tui/test_codex_projection.py",
+    "reason": "rework cap reached with this finding unresolved",
+    "disposition": "settled-deferral",
+    "ref": "R34"
+  }
+]

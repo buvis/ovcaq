@@ -1,0 +1,1 @@
+Every quoted task23 finding no longer reproduces. Scope only quoted task23 findings; other task19 findings are deferred to queued sibling tasks24-26.

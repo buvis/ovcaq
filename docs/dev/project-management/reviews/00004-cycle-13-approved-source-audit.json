@@ -1,0 +1,18 @@
+{
+  "accepted_plan_sha256": "43c75d3d94189351a0c0203c06563eced320889ae2d4cb7ae4e0300873e845a5",
+  "reviewed_head": "be5e385bd9714952b4803ee30f7c72e661c278f2",
+  "source_rows": 55,
+  "targets": {
+    "src/ovcaq/workflow/frontmatter.py": 2,
+    "src/ovcaq/workflow/policy.py": 3,
+    "src/ovcaq/workflow/records.py": 28,
+    "src/ovcaq/workflow/reports.py": 13,
+    "src/ovcaq/workflow/resume.py": 2,
+    "src/ovcaq/workflow/selection.py": 3,
+    "src/ovcaq/workflow/transitions.py": 3,
+    "tests/workflow/": 1
+  },
+  "row_ids_match": true,
+  "inventory_hash_matches": true
+}
+

@@ -1,0 +1,3 @@
+Apply only the approved wording changes. In docs/driver-protocol.md replace the numeric context sentence with: require HTTP, status or error context (for example `HTTP/2 503`, `status=429`, `Error 401:`); ordinary counts alone remain `unknown`. Preserve the adjacent rate-limit and reset statements. In CHANGELOG.md replace only the numeric failure entry with: - **drivers**: prevent ordinary counts such as "processed 401 files" from triggering Codex failure handling; numeric failure codes require an HTTP, status or error label.
+Verify: git diff --check
+No tests or other changes.

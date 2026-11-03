@@ -1,0 +1,290 @@
+[
+  {
+    "consensus": "[3/3]",
+    "severity": "🟠",
+    "issue": "Capability failure leaves `batch.status` as running, and a later successful retry does not clear its stale `control.attention`, violating the lifecycle contract and leaving completed state with failure attention",
+    "file": "src/ovcaq/state/commands.py:554",
+    "task": "4",
+    "finders": "ALICE, BLAKE, BOB",
+    "id": "F01"
+  },
+  {
+    "consensus": "[2/3]",
+    "severity": "🟠",
+    "issue": "`ovcaq run --no-tui` and `ovcaq capability retry agoge` always select an unavailable capability runner, so required capabilities can never succeed through the installed public commands",
+    "file": "src/ovcaq/supervisor_cli.py:49",
+    "task": "P05-T06",
+    "finders": "BLAKE, BOB",
+    "id": "F02"
+  },
+  {
+    "consensus": "[2/3]",
+    "severity": "🟡",
+    "issue": "Extract timeout-observation construction from `_collect`; the new function is 54 lines and exceeds the 50-line limit",
+    "file": "src/ovcaq/runtime/supervisor.py:386",
+    "task": "general",
+    "finders": "ALICE, BOB",
+    "id": "F03"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟠",
+    "issue": "Retry budgets can be dodged forever. `Supervisor._decide` resets `RetryState` whenever the failure class changes, and failure-path RETRY/WAIT decisions never advance `phase_repeats`. Alternating failures (agent death, then connectivity, then agent death...) therefore relaunch sessions without limit. This breaks the PRD's \"Retry storms: Bound every wait/retry\" mitigation. Confirmed by tracing `decide` and `_decide`",
+    "file": "src/ovcaq/runtime/supervisor.py:557",
+    "task": "P05-T04",
+    "finders": "BOB",
+    "id": "F04"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟠",
+    "issue": "No production code ever starts a batch. Nothing in `src/` writes `batch.id` or `batch.status=\"running\"`, and `new_state` leaves `batch.id=\"\"`. So `ovcaq init` followed by `ovcaq run --no-tui` raises at `_open_session` → `publish_session_metric` → `_validate_identifier(\"\")`, and `archive_final_state` also requires the id. The installed drain acceptance test passes only because its SEED script writes the batch fields straight through StateStore",
+    "file": "tests/packaging/test_installed_supervisor_cli.py:68",
+    "task": "P05-T07",
+    "finders": "BOB",
+    "id": "F05"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "A bootstrap repeat-stall (no PRD) returns PAUSE with exit 0 and writes no pause intent; the plan (§12.3 step 11) says halt. CI reads it as success, and every rerun burns another session before pausing again (test asserts `(0, PAUSE, 3)`)",
+    "file": "src/ovcaq/runtime/decision.py:276",
+    "task": "P05-T04",
+    "finders": "BOB",
+    "id": "F06"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "`StateService.resume` always clears `pause_reason` but leaves `work.phase/next_phase == \"paused\"`. After a systemic park (records.py:445) or a `review_cap` pause, it erases the reason and the review_cap routing key that `workflow/resume.py:17` reads. Meanwhile `_boundary` still returns PAUSE, so `ovcaq run` exits 0 with 0 sessions and no explanation",
+    "file": "src/ovcaq/state/commands.py:458",
+    "task": "P05-T05",
+    "finders": "BOB",
+    "id": "F07"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "The batch status lifecycle is incomplete. `apply(COMPLETE)` only archives, so a drain with no *required* capability (non-empty drain, or empty drain with only optional pending capabilities) archives `batch.status` still `running`. A failed capability never sets `batch.status=\"attention\"`, which plan §8.6 step 5 requires",
+    "file": "src/ovcaq/runtime/supervisor.py:236",
+    "task": "P05-T06",
+    "finders": "BOB",
+    "id": "F08"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "Capability timeout comes from the workflow phase route (`resolve_phase_route(work.phase or next_phase)`), not from capability config (plan §7 `[capabilities.agoge] timeout_seconds`). Startup `_reconcile_capabilities` resolves a full agent route (it needs agent config and a valid tier, and raises on phase `paused`) only to throw the timeout away",
+    "file": "src/ovcaq/runtime/supervisor.py:236",
+    "task": "P05-T06",
+    "finders": "BOB",
+    "id": "F09"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "Reports count capability metric rows as workflow sessions. Canonical rows always carry `phase_launched` (None for capabilities) and `_metric_partitions` selects sessions by key presence. One capability attempt therefore inflates the session count and turns batch cost/token totals to unknown. No test covers it (test_canonical_metrics only has phase rows)",
+    "file": "src/ovcaq/workflow/reports.py:222",
+    "task": "P05-T08",
+    "finders": "BOB",
+    "id": "F10"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "`_metric_partitions` silently drops any row whose `usage` is not a Mapping, using a `for usage in [...] if isinstance(...)` comprehension trick. That swallows an error and is hard to read",
+    "file": "src/ovcaq/workflow/reports.py:217",
+    "task": "P05-T08",
+    "finders": "BOB",
+    "id": "F11"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "Extra `reconcile_metrics` calls. `CapabilityService._begin` rebuilds the aggregate right after publishing the pending row, so the aggregate shows the live capability attempt as `interrupted` for its whole run. `Supervisor._run_capability` calls it again after `finish`→`_finalize` already did",
+    "file": "src/ovcaq/runtime/capability.py:392",
+    "task": "P05-T08",
+    "finders": "BOB",
+    "id": "F12"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "`Supervisor._run_capability` duplicates CapabilityService. It hand-builds `SessionPaths` that `_begin` already returned and `start` threw away, and re-implements `retry`'s run/finish-on-exception flow with a different failure detail (bare `str(error)` vs \"runner raised …; retry X explicitly\")",
+    "file": "src/ovcaq/runtime/supervisor.py:260",
+    "task": "P05-T06",
+    "finders": "BOB",
+    "id": "F13"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "`_ResolvedModelClaudeDriver` inverts the tier map to turn the supervisor's resolved model back into a tier key so `ClaudeDriver` can resolve it again. The round trip is a subclass whose only job is undoing work",
+    "file": "src/ovcaq/drivers/edge.py:15",
+    "task": "P05-T02",
+    "finders": "BOB",
+    "id": "F14"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "`DEFAULT_PHASE_TIERS = {\"build\": \"sonnet\", \"review\": \"opus\", ...}` lives in the provider-neutral `ovcaq.drivers` package init and feeds `config._supervisor_phases`. Neutral routing defaults are therefore Claude tier names: any agent without `sonnet`/`opus` tier keys fails with \"Unknown agent tier\" (AGENTS.md: model names live under their adapter)",
+    "file": "src/ovcaq/drivers/__init__.py:18",
+    "task": "P05-T02",
+    "finders": "BOB",
+    "id": "F15"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "Nothing in `src/` reads `SupervisorSettings.phases`. The supervisor routes through `resolve_phase_route(root, …)`, which rebuilds settings from disk (parsing both TOML files twice per call). So the validated `phases=` override and the `**explicit: object` runtime type checks in `supervisor_settings` only matter to tests",
+    "file": "src/ovcaq/config.py:512",
+    "task": "P05-T02",
+    "finders": "BOB",
+    "id": "F16"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "`_boundary` is a second, pre-launch decision table outside decision.py. It imports the private `_capability_decision` and ignores the `control.attention` that `decide` halts on, so a non-drained state with attention launches a session before halting (PRD: every halt is a pure, table-tested decision)",
+    "file": "src/ovcaq/runtime/supervisor.py:103",
+    "task": "P05-T01",
+    "finders": "BOB",
+    "id": "F17"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "`test_incomplete_lifecycle_commands_fail_with_json_usage_errors` passes against the pre-change code, because unknown commands also return `usage`. It pins neither `run` requiring `--no-tui` nor `capability retry` requiring NAME (fail-first replay)",
+    "file": "tests/runtime/test_supervisor_cli.py:111",
+    "task": "P05-T07",
+    "finders": "BOB, mech-check",
+    "id": "F18"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "[MECH] `test_init_rejects_project_config_path_collisions_before_state_publication` hedges with `config.is_dir() or config.is_symlink()`, so either param passes on either outcome (existing test, in a touched file)",
+    "file": "tests/state/test_cli.py:384",
+    "task": "general",
+    "finders": "BOB, mech-check",
+    "id": "F19"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "⚪",
+    "issue": "tests/state/test_cli.py is 812 lines (807 at base); this diff grows a file already over the 800-line cap",
+    "file": "tests/state/test_cli.py",
+    "task": "general",
+    "finders": "BOB",
+    "id": "F20"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "⚪",
+    "issue": "Every lifecycle failure (unknown agent, live capability owner, unavailable runner, unverifiable or failed stop) maps to `runtime_format`. Callers cannot tell \"retry later\" from a config error",
+    "file": "src/ovcaq/supervisor_cli.py:52",
+    "task": "P05-T07",
+    "finders": "BOB",
+    "id": "F21"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "⚪",
+    "issue": "`skip_empty_drain_capabilities` stamps `completed_at` from `datetime.now(UTC)` instead of the injected clock, unlike `finish_capability` (PRD: injectable time)",
+    "file": "src/ovcaq/state/commands.py:601",
+    "task": "P05-T06",
+    "finders": "BOB",
+    "id": "F22"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "⚪",
+    "issue": "`ovcaq run` never calls `driver.probe()` (`build_driver` skips discovery and probe), so a missing agent binary shows up as a spawn exception after session evidence already exists",
+    "file": "src/ovcaq/supervisor_cli.py:57",
+    "task": "P05-T07",
+    "finders": "BOB",
+    "id": "F23"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "⚪",
+    "issue": "New `# noqa: PLC0414` suppression markers re-export `SessionEvidenceWriter`/`EvidenceLimitError` from session.py",
+    "file": "src/ovcaq/runtime/session.py:19",
+    "task": "P05-T08",
+    "finders": "BOB",
+    "id": "F24"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "⚪",
+    "issue": "`ProgressSnapshot.phase_fingerprint` is captured and persisted but `decide` never compares it, so repeat counts carry across restarts even when state changed between runs",
+    "file": "src/ovcaq/runtime/decision.py:127",
+    "task": "P05-T03",
+    "finders": "BOB",
+    "id": "F25"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "⚪",
+    "issue": "Cannot statically verify: the full suite passes at HEAD bbe7d52 (recorded 3501 passed at 18f90e2, before the handoff commit)",
+    "file": "N/A",
+    "task": "general",
+    "finders": "BOB",
+    "id": "F26"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "[MECH] 6 params of `test_incompatible_versions_fail_before_factory_construction` pass against the pre-change code",
+    "file": "tests/drivers/test_discovery.py",
+    "task": "general",
+    "finders": "BOB, mech-check",
+    "id": "F27"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "[MECH] `test_empty_metrics_reduce_to_zero_sessions` passes against the pre-change code",
+    "file": "tests/workflow/test_canonical_metrics.py",
+    "task": "P05-T08",
+    "finders": "BOB, mech-check",
+    "id": "F28"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "Extract finalized metric construction/publication from `_conclude`; the new function is 51 lines and exceeds the 50-line limit",
+    "file": "src/ovcaq/runtime/supervisor.py:501",
+    "task": "general",
+    "finders": "ALICE",
+    "id": "F29"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "`record_state_failure` has no production caller. Supervisor state read/write failures return HALT without emergency evidence, so the `require_no_emergency_failure` gate never fires for a real failure and the next `ovcaq run` relaunches (plan §8.4)",
+    "file": "src/ovcaq/runtime/supervisor.py:583",
+    "task": "P05-T07",
+    "finders": "BOB",
+    "id": "F30"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "⚪",
+    "issue": "`Supervisor.run` reconciles capabilities (a state write) before `require_no_emergency_failure`, so it writes state before checking whether the store was declared broken",
+    "file": "src/ovcaq/runtime/supervisor.py:142",
+    "task": "P05-T07",
+    "finders": "BOB",
+    "id": "F31"
+  },
+  {
+    "consensus": "[1/3]",
+    "severity": "🟡",
+    "issue": "`ovcaq stop` leaves no durable stopped outcome in state. The SIGTERM path only finalizes summary.json and the metric (`decision=\"halt\"`), but plan §6 and §8.4 require \"record the stopped outcome\" as a supervisor-authored state outcome",
+    "file": "src/ovcaq/runtime/supervisor.py:138",
+    "task": "P05-T05",
+    "finders": "BOB",
+    "id": "F32"
+  }
+]

@@ -1,0 +1,1 @@
+Behavior-preserving module placement repair. Move item_activity verbatim from codex_activity.py into codex_events.py and update codex.py import. Delete third module. Packaging inventory is next split task; do not modify it yet. No API/protocol changes. Verification: tests/drivers/test_codex_rework_placement.py.

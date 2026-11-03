@@ -1,0 +1,54 @@
+[
+  {
+    "ref": "R3",
+    "consensus": "[1/3]",
+    "severity": "\ud83d\udfe1",
+    "issue": "The `continue` at codex.py:383 drops every native update for a lane that has already finished. codex-cli 0.162.1 ships a `resume_agent` tool (\"Resume a previously closed agent by id so it can receive send_input\"; I confirmed the string in the binary). So a lane can legitimately go completed \u2192 close \u2192 resume \u2192 running \u2192 errored. With the `continue`, the resumed run's running and errored updates disappear with no trace, and a later interrupt or shutdown of the resumed run becomes raw unknown instead of `lane.failed`. The pre-change code reported these. The TUI already handles a restart, because the last write wins (src/ovcaq/tui/model.py:607). The PRD only requires that close statuses do not fail a completed lane, and the unfinished-only filter at src/ovcaq/drivers/codex.py:372 already does that on its own. Fix: delete lines 383-384. Then flip `test_finished_lane_late_update_retains_only_non_lane_observations` (tests/drivers/test_adapter_outcomes.py:266) so it expects running \u2192 `lane.progress` and errored \u2192 `lane.failed`, and reword docs/driver-protocol.md:243. Confidence: the tool is confirmed; the exact `agents_states` sequence after a resume is my guess",
+    "file": "src/ovcaq/drivers/codex.py:383",
+    "task": "7",
+    "found_by": [
+      "ALICE"
+    ],
+    "classification": "defer",
+    "reason": "Requirements ambiguity: resume/restart generation semantics are not specified by this PRD. The existing contract deliberately freezes completed/failed identities and pins late updates. A binary tool name does not prove a native status sequence; changing this would undo reviewed stability without a fixture. Preserve for separately specified adapter lifecycle work."
+  },
+  {
+    "ref": "R6",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "The normal Codex sequence (`wait` reports completed, then `close_agent` reports shutdown) emits `raw.unknown` on every close of a completed lane. The tests pin this at tests/drivers/test_adapter_outcomes.py:89. The lane result is right, but routine flows now show recurring normalization gaps.",
+    "file": "src/ovcaq/drivers/codex_events.py:233",
+    "task": "P0-T1",
+    "found_by": [
+      "BLAKE"
+    ],
+    "classification": "discard",
+    "reason": "Intentional documented raw-evidence rule: unsupported terminal close statuses on finished lanes retain RAW_UNKNOWN while preserving terminal identity. Exact tests and protocol document it. UI gap-noise redesign is outside this PRD; deleting evidence would contradict the reviewed contract."
+  },
+  {
+    "ref": "R11",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "A status prefix followed by an ordinary count still classifies. `status: 401 tests passed` returns `authentication` and `error code: 503 records` returns `connectivity` (confirmed by probe). The negative tests only cover counts with no status word in front.",
+    "file": "src/ovcaq/drivers/codex_events.py:301",
+    "task": "P0-T1",
+    "found_by": [
+      "BLAKE"
+    ],
+    "classification": "defer",
+    "reason": "Requirements ambiguity: mixed diagnostic-prefix/ordinary-count messages need an explicit precedence contract. Existing scope requires diagnostic status contexts and ordinary count negatives; do not invent a broader prose grammar or silently change precedence. Keep the confirmed counterexamples for later specified work."
+  },
+  {
+    "ref": "R12",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "Suspected, not confirmed: a Codex `turn.failed` reading \"Authentication failed\" classifies as `unknown` (pinned at tests/drivers/test_adapter_failure_classes.py:129). That means a retry or park instead of the operator-access halt. The Claude classifier treats \"authentication\" as authentication, so the two adapters disagree. I could not check whether this was already the behavior before this change.",
+    "file": "src/ovcaq/drivers/codex_events.py:306",
+    "task": "P0-T1",
+    "found_by": [
+      "BLAKE"
+    ],
+    "classification": "discard",
+    "reason": "The old classifier did not match authentication failed; cycle1 deliberately removed that added pattern to retain existing word diagnostics. This is known original behavior, not a lost required diagnostic. Existing authentication fixtures use literal invalid-credentials/unauthorized oracles."
+  }
+]

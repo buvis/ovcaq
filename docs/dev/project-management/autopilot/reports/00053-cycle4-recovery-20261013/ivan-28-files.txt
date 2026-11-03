@@ -1,0 +1,2 @@
+/Users/bob/git/src/github.com/buvis/ovcaq/docs/driver-protocol.md
+/Users/bob/git/src/github.com/buvis/ovcaq/CHANGELOG.md

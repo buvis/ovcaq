@@ -1,0 +1,13 @@
+Review: docs/dev/project-management/reviews/00009-codex-adapter-v1-review-1.md
+Design context: docs/dev/project-management/designs/00009-codex-adapter-v1-design.md
+
+Resolve the provider-edge and shared launch/presentation findings. Preserve driver API 2, observation protocol 1, state schema 1, strict argv and provider neutrality. Verify native failure examples against pinned upstream source before choosing classifications; distinguish quota, capacity, sandbox, network and explicit agent failure without broad prose scanning. Do not change deferred reset grammar or configured options. Test public behavior independently, including exact fixture expectations and direct decode totality. R14 uses generic adapter health checks, never Codex-specific runtime policy. R16 renders normalized activity for both adapters.
+
+Acceptance: every quoted finding no longer reproduces; preserve all existing assertions and full shared conformance. Run source work pipeline, independent behavioral regressions where needed, and its mandatory final verification.
+
+
+Failure-driven split of task 19 (Tess context_overrun, no edits). Scope only findings below; other task-19 findings belong to sequential siblings. Preserve exact findings and all assertions.
+
+### Findings (verbatim)
+- 🟡 src/ovcaq/drivers/edge.py:26: `CodexDriver.probe()` (binary check, exact 0.160.0 version pin, `login status` auth check) never runs in production. `build_driver` and `supervisor_cli` build the driver without probing it. Only `discover_drivers` calls `probe()` (src/ovcaq/drivers/base.py:155), and no code under src calls `discover_drivers`. So the CLI-drift guard and the auth check do nothing in real runs, and a newer CLI would launch unchecked. (found by: BLAKE)
+- 🟡 src/ovcaq/tui/panels.py:86: The TUI Activity panel shows only lanes. Codex command, file-change, MCP, web, plan and message activity is decoded but never displayed, so a Codex session without collaboration lanes shows "no lanes observed". The PRD requires that the "TUI shows Codex identity/activity/usage". docs/driver-protocol.md:273 admits that panels render lanes only. (found by: BLAKE)

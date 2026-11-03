@@ -1,0 +1,146 @@
+[
+  {
+    "file": "src/ovcaq/state/commands.py",
+    "function": "add_task",
+    "line": 148,
+    "lines": 53
+  },
+  {
+    "file": "tests/packaging/conftest.py",
+    "function": "installed_wheel",
+    "line": 69,
+    "lines": 51
+  },
+  {
+    "file": "tests/packaging/test_distribution.py",
+    "function": "test_wheel_contains_exact_declared_package_and_metadata",
+    "line": 226,
+    "lines": 79
+  },
+  {
+    "file": "tests/packaging/test_installed_cli.py",
+    "function": "test_installed_frontmatter_binds_active_prd_and_tracks_explicit_cap_three",
+    "line": 115,
+    "lines": 57
+  },
+  {
+    "file": "tests/packaging/test_installed_cli.py",
+    "function": "test_installed_version_and_every_declared_module_come_from_wheel",
+    "line": 174,
+    "lines": 66
+  },
+  {
+    "file": "tests/packaging/test_installed_reports.py",
+    "function": "test_installed_metrics_order_is_stable_when_primary_keys_collide",
+    "line": 63,
+    "lines": 57
+  },
+  {
+    "file": "tests/packaging/test_installed_reports.py",
+    "function": "test_installed_report_rejects_traversal_and_symlinked_output_parent",
+    "line": 182,
+    "lines": 61
+  },
+  {
+    "file": "tests/packaging/test_installed_reports.py",
+    "function": "test_installed_render_consumes_metrics_and_rejects_control_headings",
+    "line": 245,
+    "lines": 104
+  },
+  {
+    "file": "tests/packaging/test_installed_sagas.py",
+    "function": "test_installed_stall_rejects_conflicting_inflight_intent",
+    "line": 16,
+    "lines": 65
+  },
+  {
+    "file": "tests/packaging/test_installed_sagas.py",
+    "function": "test_installed_deferred_directory_replacement_fails_then_reconciles",
+    "line": 95,
+    "lines": 90
+  },
+  {
+    "file": "tests/packaging/test_installed_sagas.py",
+    "function": "test_installed_defer_distinguishes_exact_replay_from_conflicting_operation_id",
+    "line": 187,
+    "lines": 65
+  },
+  {
+    "file": "tests/packaging/test_installed_sagas.py",
+    "function": "test_installed_stall_rejects_active_held_prd_without_durable_proof",
+    "line": 254,
+    "lines": 70
+  },
+  {
+    "file": "tests/packaging/test_installed_sagas.py",
+    "function": "test_installed_stall_and_park_exact_replay_reject_kind_collision",
+    "line": 327,
+    "lines": 82
+  },
+  {
+    "file": "tests/packaging/test_installed_sagas.py",
+    "function": "test_installed_state_mutations_reject_active_recovery_then_reconcile",
+    "line": 411,
+    "lines": 117
+  },
+  {
+    "file": "tests/packaging/test_workflow_inputs.py",
+    "function": "test_installed_workflow_path_precedence_and_state_override",
+    "line": 154,
+    "lines": 54
+  },
+  {
+    "file": "tests/workflow/test_deferred_ledger.py",
+    "function": "test_defer_io_stays_bound_to_opened_directory",
+    "line": 65,
+    "lines": 58
+  },
+  {
+    "file": "tests/workflow/test_records.py",
+    "function": "test_reset_clears_exact_per_prd_owners_and_preserves_batch",
+    "line": 34,
+    "lines": 79
+  },
+  {
+    "file": "tests/workflow/test_reports.py",
+    "function": "_populated",
+    "line": 64,
+    "lines": 51
+  },
+  {
+    "file": "tests/workflow/test_sagas.py",
+    "function": "test_every_characterized_durable_boundary_replays_exactly_once",
+    "line": 141,
+    "lines": 60
+  },
+  {
+    "file": "tests/workflow/test_sagas.py",
+    "function": "test_exact_replay_uses_recorded_kind_and_rejects_kind_collision",
+    "line": 322,
+    "lines": 93
+  },
+  {
+    "file": "tests/workflow/test_transitions.py",
+    "function": "test_rework_increments_cycle_and_clears_all_cycle_local_review_state",
+    "line": 75,
+    "lines": 87
+  },
+  {
+    "file": "tests/workflow/test_workflow_cli.py",
+    "function": "test_workflow_public_application_commands_use_state_store_and_cas",
+    "line": 81,
+    "lines": 138
+  },
+  {
+    "file": "tests/workflow/test_workflow_cli.py",
+    "function": "test_frontmatter_command_rejects_wrong_prd_and_warns_after_explicit_cap_three",
+    "line": 221,
+    "lines": 65
+  },
+  {
+    "file": "tests/workflow/test_workflow_cli.py",
+    "function": "test_select_resume_check_defer_and_render_commands_execute",
+    "line": 288,
+    "lines": 132
+  }
+]

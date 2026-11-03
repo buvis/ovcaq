@@ -1,0 +1,283 @@
+You are writing tests for a feature. You have NOT seen any implementation and must NOT think about how to implement it.
+
+Task: Preserve durable runtime ancestry across replacement and access boundaries
+
+
+Description:
+Task 4 only. Write bounded installed-wheel regressions for record_defer runtime ancestry. The operator authorized this repair on 2026-09-13.
+Create /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/test_rework_13.py and, if needed, /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/rework_13_scripts.py. Do not modify existing tests or production files. Read only these new files and the explicitly listed supporting test files below. Use public ovcaq.workflow.records.record_defer; its implementation is not provided.
+Read the sample /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/test_rework_12.py. Additional allowed test support: /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/packaging_support.py (InstalledWheel, run_checked); /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/conftest.py (installed_wheel fixture); /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/rework_11_scripts.py (INITIALIZE_STATE); /Users/bob/git/src/github.com/buvis/ovcaq/tests/packaging/rework_12_scripts.py (ORIGIN_CHECK, ANCESTRY_ACTOR). Read named symbols only; keep total reads below 25K. Reuse harness helpers where practical; do not import test modules. No broad repository searches. Do not commit or change workflow state.
+Use real OS filesystem operations and observe/inject only filesystem boundaries such as os.open, os.fsync, os.mkdir or Path.mkdir. Do not patch product internals. Fault injection must be chronological and must demonstrate that the intended interleaving actually occurred.
+Framework config: Python >=3.12; pytest uses tests/packaging/conftest.py and shared installed_wheel fixture. Commands use mise exec -- uv run --offline --no-sync pytest. Do not run a full suite. Tool timeouts are adapted to exec_command yielding and deadline-aware polling on this host.
+
+
+Acceptance Criteria:
+1. Between confirmation of an existing ancestor and creation/confirmation of its next child, rename that ancestor away and create a new directory at its original path. Require a retryable OSError (message includes "identity changed; retry") before ledger publication on that interrupted attempt. This chooses the explicitly allowed fail-closed behavior for this bounded repair. Verify the replacement actually occurred and no successful publication was reported. Cover direct defer and exact replay (preexisting ledger bytes remain unmodified in the displaced tree). A fresh attempt must succeed with one record and unchanged authoritative state/backup bytes.
+2. A runtime below an execute/search-only (0111) ancestor must remain usable on the current macOS host with native O_SEARCH support. Exercise real permissions with unprivileged execution, restore modes on teardown, and observe actual parent confirmation. If the platform has no fsync-capable search descriptor or permissions are bypassed as root, document an explicit platform skip instead of weakening assertions.
+3. The filesystem root must not be treated as its own child: no mkdir('/') or redundant root self-confirmation. Preserve confirmation of the actual first descendant's entry.
+4. Do not attempt mkdir on already-existing system/project ancestors outside the requested writable runtime subtree. Existing ancestors still need required durability checks. Test this boundary with deterministic EPERM on forbidden creation attempts; do not claim this synthetic test alone proves launcher sandbox integration. Existing peer creation, abrupt-exit retry/replay and exactly-once tests remain unchanged and will run as preservation checks.
+5. Keep test functions small, test one behavior per test, no tautological/hedged assertions. Installed subprocess origins must be checked in the parent, subprocesses must be bounded/reaped, and state/backup bytes must remain unchanged.
+
+
+Existing test patterns (follow these conventions):
+from __future__ import annotations
+
+import json
+import select
+import subprocess
+from collections.abc import Iterator
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Any
+
+import pytest
+from packaging_support import InstalledWheel, run_checked
+from rework_11_scripts import INITIALIZE_STATE
+from rework_12_scripts import ANCESTRY_ACTOR, ORIGIN_CHECK
+
+PRD = "00004-a.md"
+
+
+def _assert_installed(origins: dict[str, str], installed: InstalledWheel) -> None:
+    assert "ovcaq" in origins
+    for module, filename in origins.items():
+        path = Path(filename).resolve()
+        assert path.is_relative_to(installed.root.resolve()), (module, filename)
+        assert "site-packages" in path.parts, (module, filename)
+
+
+def _prepare(installed: InstalledWheel, tmp_path: Path) -> Path:
+    project = tmp_path / "project"
+    project.mkdir()
+    state = project / "independent/state.json"
+    script = (
+        INITIALIZE_STATE + ORIGIN_CHECK + "\nprint(json.dumps(installed_origins()))\n"
+    )
+    result = run_checked(
+        [installed.python, "-I", "-c", script, project, state, PRD],
+        cwd=project,
+        env=installed.environment,
+    )
+    _assert_installed(json.loads(result.stdout), installed)
+    (project / "record.json").write_text('{"op_id": "crash-one"}', encoding="utf-8")
+    assert not (project / "new").exists()
+    return project
+
+
+def _state_bytes(project: Path) -> dict[str, bytes | None]:
+    state = project / "independent/state.json"
+    backup = state.with_suffix(".json.bak")
+    return {
+        "state": state.read_bytes(),
+        "backup": backup.read_bytes() if backup.exists() else None,
+    }
+
+
+def _identity(path: Path) -> list[int]:
+    value = path.stat()
+    return [value.st_dev, value.st_ino]
+
+
+def _command(
+    installed: InstalledWheel, project: Path, target: str, mode: str
+) -> list[str]:
+    return [
+        str(installed.python),
+        "-I",
+        "-c",
+        ANCESTRY_ACTOR,
+        str(project),
+        target,
+        mode,
+    ]
+
+
+def _invoke(
+    installed: InstalledWheel, project: Path, target: str, mode: str, expected: int = 0
+) -> dict[str, Any]:
+    result = subprocess.run(
+        _command(installed, project, target, mode),
+        cwd=project,
+        env=installed.environment,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=20,
+    )
+    assert result.returncode == expected, (result.stdout, result.stderr)
+    value: dict[str, Any] = json.loads(result.stdout)
+    _assert_installed(value["origins"], installed)
+    return value
+
+
+def _assert_confirmed(value: dict[str, Any], project: Path) -> None:
+    assert value["exit"] == 0, value
+    confirmations = {entry["path"]: entry["identity"] for entry in value["fsyncs"]}
+    for parent in (project, project / "new", project / "new/nested"):
+        assert str(parent) in confirmations, (str(parent), value)
+        assert confirmations[str(parent)] == _identity(parent)
+
+
+def _assert_one_record(project: Path) -> bytes:
+    ledger = project / "new/nested/deferred/batch-deferred.json"
+    content = ledger.read_bytes()
+    value = json.loads(content)
+    assert value["batch_id"] == "batch"
+    assert len(value["items"]) == 1
+    assert value["items"][0]["op_id"] == "crash-one"
+    assert value["items"][0]["prd"] == PRD
+    return content
+
+
+@contextmanager
+def _actor(
+    installed: InstalledWheel, project: Path, target: str, mode: str
+) -> Iterator[subprocess.Popen[str]]:
+    process = subprocess.Popen(
+        _command(installed, project, target, mode),
+        cwd=project,
+        env=installed.environment,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        yield process
+    finally:
+        if process.poll() is None:
+            process.kill()
+        process.communicate(timeout=10)
+
+
+def _await_event(
+    process: subprocess.Popen[str], event: str, installed: InstalledWheel
+) -> dict[str, Any]:
+    assert process.stdout is not None
+    ready, _, _ = select.select([process.stdout], [], [], 10)
+    assert ready, f"actor did not reach {event}; status={process.poll()}"
+    line = process.stdout.readline()
+    assert line, f"actor exited before {event}; status={process.poll()}"
+    value: dict[str, Any] = json.loads(line)
+    assert value["event"] == event, value
+    _assert_installed(value["origins"], installed)
+    return value
+
+
+def _finish(
+    process: subprocess.Popen[str], installed: InstalledWheel, expected: int = 0
+) -> dict[str, Any]:
+    stdout, stderr = process.communicate(input="continue\n", timeout=20)
+    assert process.returncode == expected, (stdout, stderr)
+    value: dict[str, Any] = json.loads(stdout)
+    assert value["exit"] == expected, value
+    _assert_installed(value["origins"], installed)
+    return value
+
+
+@pytest.mark.parametrize("target", ("new", "new/nested"))
+def test_installed_retry_and_replay_confirm_ancestry_after_abrupt_exit(
+    installed_wheel: InstalledWheel, tmp_path: Path, target: str
+) -> None:
+    project = _prepare(installed_wheel, tmp_path)
+    authoritative = _state_bytes(project)
+    interrupted = _invoke(installed_wheel, project, target, "crash", expected=73)
+    directory = project / target
+    assert interrupted["event"] == "exit-before-parent-fsync"
+    assert interrupted["target"] == str(directory)
+    assert directory.is_dir()
+    assert interrupted["identity"] == _identity(directory)
+    assert interrupted["parent_identity"] == _identity(directory.parent)
+    assert _state_bytes(project) == authoritative
+    assert not (project / "new/nested/deferred/batch-deferred.json").exists()
+
+    retry = _invoke(installed_wheel, project, target, "retry")
+    _assert_confirmed(retry, project)
+    assert _identity(directory) == interrupted["identity"]
+    assert _state_bytes(project) == authoritative
+    ledger_after_retry = _assert_one_record(project)
+
+    replay = _invoke(installed_wheel, project, target, "replay")
+    _assert_confirmed(replay, project)
+    assert _identity(directory) == interrupted["identity"]
+    assert _state_bytes(project) == authoritative
+    assert _assert_one_record(project) == ledger_after_retry
+
+
+@pytest.mark.parametrize("fail_confirmation", (False, True))
+def test_installed_concurrent_creation_confirms_and_preserves_peer_directory(
+    installed_wheel: InstalledWheel, tmp_path: Path, fail_confirmation: bool
+) -> None:
+    project = _prepare(installed_wheel, tmp_path)
+    authoritative = _state_bytes(project)
+    mode = "racer-fail" if fail_confirmation else "racer"
+    with _actor(installed_wheel, project, "new", mode) as racer:
+        _await_event(racer, "before-mkdir", installed_wheel)
+        assert not (project / "new").exists()
+        with _actor(installed_wheel, project, "new", "peer") as peer:
+            created = _await_event(peer, "peer-created", installed_wheel)
+            assert (project / "new").is_dir()
+            assert _identity(project / "new") == created["identity"]
+            result = _finish(racer, installed_wheel, 2 if fail_confirmation else 0)
+            assert result["peer_seen"] == created["identity"]
+            assert result["failed_parent"] is fail_confirmation
+            assert {"path": str(project), "identity": _identity(project)} in result[
+                "fsyncs"
+            ]
+            assert (project / "new").is_dir()
+            assert _identity(project / "new") == created["identity"]
+            assert _state_bytes(project) == authoritative
+            if fail_confirmation:
+                assert "injected peer parent fsync failure" in result["error"]
+            completed = _finish(peer, installed_wheel)
+            assert completed["path"] == str(
+                project / "new/nested/deferred/batch-deferred.json"
+            )
+    assert _state_bytes(project) == authoritative
+    assert _identity(project / "new") == created["identity"]
+    ledger_after_callers = _assert_one_record(project)
+    replay = _invoke(installed_wheel, project, "new", "replay")
+    _assert_confirmed(replay, project)
+    assert _state_bytes(project) == authoritative
+    assert _assert_one_record(project) == ledger_after_callers
+
+
+Public interfaces/types relevant to this task:
+Public interface (signature only):
+from ovcaq.workflow.records import record_defer
+record_defer(runtime_root: pathlib.Path, prd: str, batch_id: str, record: dict[str, object], *, boundary_hook=None) -> pathlib.Path
+Returns runtime_root/deferred/{batch_id}-deferred.json. Stored JSON: {"batch_id": "batch", "items": [{"op_id": "replacement-probe", "prd": "00004-a.md"}]}. Exact identical operation-ID replay is idempotent. Runtime ancestors may be absent initially. Authoritative state is not an input to this function and must not change.
+For this repair, new ancestry-replacement refusals must be OSError with a message containing "identity changed; retry" followed by the affected path. Existing unrelated directory-error messages need not change.
+The configured runtime in tests can be project/ancestor/runtime; keep authoritative state separately at project/independent/state.json. Initial state support comes from INITIALIZE_STATE, which accepts project, state path, PRD argv.
+
+
+Test framework: pytest
+
+Rules:
+1. Write tests from requirements only. You are a USER of this API, not its builder.
+2. Each test name describes a behavior: "rejects empty email", "returns 404 for missing user"
+3. Assert on outputs, return values, side effects, and errors. Never assert on mock existence.
+4. Cover edge cases: empty input, null/undefined, boundary values, error conditions
+5. Use real code paths. Mock only external dependencies (network, filesystem, databases).
+6. For EACH test, ask yourself: "What wrong implementation would still pass this?" If easy to answer, add constraints.
+7. Do not write implementation code. Do not modify non-test files.
+8. Do not add test-only methods to production classes. Use test utilities instead.
+9. SIMPLICITY FIRST: Test only the behavior in the acceptance criteria. Do not add tests for features nobody asked for. If you write 20 tests when 6 cover the spec, cut back.
+10. THINK BEFORE CODING: If the acceptance criteria are ambiguous (unclear input shape, unstated error behavior, multiple valid interpretations), STOP and report the ambiguity instead of picking an interpretation silently.
+10a. NEVER INVENT A CONTRACT: If the task names a data structure (JSON object, API response, enum, config schema, record type) but does not pin its EXACT field names, enum values, or types, STOP and report it as a blocker. Do not invent a plausible schema and test against it — a self-consistent wrong contract is worse than a reported gap, because the implementer will build to your tests and the mistake survives until PRD-level review. Likewise for "which kind of thing" choices the task leaves open (e.g. which hook event, which file location). The task description must hand you the exact strings; if it does not, that is a blocker, not a judgement call.
+11. SURGICAL: Only create/modify test files. Match the existing test file's style (quote style, import order, assertion library, naming). Do not reformat sample files you were given for reference.
+
+Do NOT:
+- Think about how to implement the feature
+- Read or reference implementation files
+- Write stubs, placeholders, or TODO comments
+- Mock internal modules (only mock external boundaries)
+- Create tests that just check a function exists or returns truthy
+
+Read only the files listed above. If a file or symbol you need is not listed, stop and report it as a blocker — do not run broad `rg` sweeps to discover scope.
+
+Abort and report if you read more than 100K of total input. Return the partial result and an abort_reason: context_overrun field.
+
+Read every file before your first Edit to it. Never call bash `head`, `tail`, `cat`, `grep`, or `find` - a hook blocks them. Use the Read tool (offset/limit), `rg`, or `rg --files` instead. Never combine an inspection (read, list, search, diff) with a test, lint or build invocation in one Bash call - run them as two calls, because a combined command has two ways to hang and one exit code. Pass an explicit `timeout` on every Bash call: 60000 ms for an inspection, 300000 ms for a lint run or a narrow test run, 600000 ms for a full suite or a full build.
+
+End your report with `ASSUMPTIONS:` - one line per assumption you made where the task, tests, or listed files were silent (guessed interface, data shape, resolved ambiguity, unstated behavior). Write `ASSUMPTIONS: none` if you made none.

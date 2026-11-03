@@ -1,0 +1,64 @@
+{
+  "head": "39ecaf4f95c79df6a88c30e4626386a352d1505b",
+  "source_tree_unchanged": true,
+  "tests": {
+    "command": "uv run pytest --basetemp /private/tmp/ovcaq-review-12-pytest",
+    "exit": 0,
+    "passed": 1348,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 22.14,
+    "permissions": "authorized outside sandbox"
+  },
+  "checks": [
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-review-12-uv-cache uv sync --all-groups",
+      "exit": 0
+    },
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-review-12-uv-cache uv run ruff check .",
+      "exit": 0
+    },
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-review-12-uv-cache uv run ruff format --check .",
+      "exit": 0,
+      "files": 119
+    },
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-review-12-uv-cache uv run mypy src/ovcaq",
+      "exit": 0,
+      "files": 51
+    },
+    {
+      "command": "uv build",
+      "exit": 0,
+      "artifacts": [
+        "dist/ovcaq-0.1.0.dev0.tar.gz",
+        "dist/ovcaq-0.1.0.dev0-py3-none-any.whl"
+      ]
+    },
+    {
+      "command": "git diff --check b43bf2c94d5eb0fddafca55542ef2570b45e8d52..HEAD",
+      "exit": 0
+    }
+  ],
+  "initial_sandbox_run": {
+    "passed": 1338,
+    "failed": 6,
+    "errors": 4,
+    "seconds": 37.98,
+    "causes": [
+      "Unix-domain socket bind denied by sandbox",
+      "Hatchling build dependency DNS lookup denied"
+    ],
+    "resolved_by": "authorized full suite and build rerun; no source edits"
+  },
+  "replay": {
+    "exit": 0,
+    "result": "skipped",
+    "reason": "runner produced no results (exit 4: ModuleNotFoundError: No module named 'packaging_support')",
+    "scope": "full PRD implementation base",
+    "temporary_worktree_cleaned": true
+  },
+  "mechanical_finding": "[MECH] 🟡 test_init_rejects_project_config_path_collisions_before_state_publication hedges with `or`: either outcome satisfies it | File: tests/state/test_cli.py:372 | Task: general"
+}

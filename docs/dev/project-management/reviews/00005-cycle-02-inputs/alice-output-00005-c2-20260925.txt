@@ -1,0 +1,26 @@
+[ALICE] 🟠 Fleet entry reads are not identity-bound to deletion: `_scan` records a pre-open inode without comparing it to the opened descriptor, while `remove` validates contents and then unlinks the pathname without rechecking its inode; a replacement during either gap can make prune delete a live record or remove delete a new owner’s record | File: src/ovcaq/runtime/registry.py:317 | Task: 13
+[ALICE] 🟡 `RuntimePaths._identities` remains a comparison field, so two objects with identical public contract fields compare unequal when their private filesystem snapshots differ; declare it with `compare=False` | File: src/ovcaq/paths.py:169 | Task: 18
+[ALICE] 🟡 F31 remains: `_private_directory` still duplicates the two path-layout creators and creates every missing ancestor with mode `0700`; consolidate the descriptor-walk primitive so intermediate project directories retain the established layout policy | File: src/ovcaq/runtime/session.py:193 | Task: 16
+[ALICE] 🟡 `status` still emits only `run.status`, so the concrete failure retained in `RunObservation.detail` is unavailable when status reports `inconsistent`; F28 remains observable even though doctor exposes the reason | File: src/ovcaq/runtime_cli.py:312 | Task: 17
+[ALICE] 🟡 Emergency decoding still reimplements the shared bounded duplicate-key-safe JSON decoder with `json.loads` and `_emergency_fields`; use `decode_json` directly and remove the duplicate parser | File: src/ovcaq/runtime/session.py:431 | Task: 20
+[ALICE] 🟡 `_state_attention` still catches `EmergencyStateFailure`, which `acknowledge_emergency_failure` cannot raise, leaving the dead exception branch and import identified by F38 | File: src/ovcaq/runtime_cli.py:142 | Task: 18
+[ALICE] 🟡 The rework expanded `test_runtime_cli.py` from 666 to 1234 lines, violating the 800-line limit; split status/doctor, log, purge, and emergency command tests into focused modules | File: tests/runtime/test_runtime_cli.py:1 | Task: 21
+R1: fail
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: pass
+R13: fail
+
+Prior findings resolved with concrete implementation or regression coverage: F01, F02/F33, F03, F04, F05, F06, F08, F09, F11/F26, F12, F13, F14, F15, F16, F17, F19, F20, F21, F22, F23/F47, F24, F32, F34, F35, F36, F37, F39, F41, F42, F44, and F50.
+
+Prior findings unresolved or only partially resolved: F07/F10/F30, F25, F28, F29, F31, and F38, as detailed above.
+
+Settled decisions remain unchanged: F18/F48, F40, and F49 are discarded; F27, F43, F45, and F46 remain deferred. Exact-HEAD evidence reports 2015 passing tests, zero skipped tests, and successful Ruff, formatting, mypy, and build checks.
+

@@ -1,0 +1,59 @@
+diff --git a/docs/dev/project-management/designs/00051-triage-a-single-valid-codex-record-can-crash-th-v1-design.md b/docs/dev/project-management/designs/00051-triage-a-single-valid-codex-record-can-crash-th-v1-design.md
+index 7094660..f17af01 100644
+--- a/docs/dev/project-management/designs/00051-triage-a-single-valid-codex-record-can-crash-th-v1-design.md
++++ b/docs/dev/project-management/designs/00051-triage-a-single-valid-codex-record-can-crash-th-v1-design.md
+@@ -318,6 +318,11 @@ helper dependency is introduced.
+ 
+ ## Test strategy outline
+ 
++The approved raw-first test split is `tests/events/test_unicode_frames.py`.
++The Phase 1 acceptance command is `mise exec -- uv run pytest
++tests/events/test_unicode_safety.py tests/events/test_unicode_frames.py
++tests/events/test_tail.py`; it covers shared models and raw-first admission.
++
+ Characterize all three premises against the unchanged implementation first:
+ direct invalid Observation construction, actual escaped-surrogate raw-first
+ publication/state mutation, and the exact synthetic cap reproducer. Capture
+diff --git a/tests/events/test_unicode_safety.py b/tests/events/test_unicode_safety.py
+index dc89d3a..374e22e 100644
+--- a/tests/events/test_unicode_safety.py
++++ b/tests/events/test_unicode_safety.py
+@@ -306,16 +306,20 @@ def test_record_decoder_rejects_invalid_scalar_before_secret_redaction(
+         observation_from_record(decoded_record)
+ 
+ 
++def completion_additions(scalar: str) -> dict[str, Any]:
++    return {
++        "value": {"extra": {"nested": scalar}},
++        "nested_key": {"extra": {scalar: "valid"}},
++        "secret": {"password": scalar},
++    }
++
++
+ @pytest.mark.parametrize("scalar", INVALID_SCALARS, ids=SCALAR_IDS)
+ @pytest.mark.parametrize("location", ["value", "nested_key", "secret"])
+ def test_completion_observation_rejects_invalid_scalars_before_redaction(
+     location: str, scalar: str
+ ) -> None:
+-    additions = {
+-        "value": {"extra": {"nested": scalar}},
+-        "nested_key": {"extra": {scalar: "valid"}},
+-        "secret": {"password": scalar},
+-    }
++    additions = completion_additions(scalar)
+     payload = {"usage": USAGE_DATA, "message": "done", **additions[location]}
+ 
+     with pytest.raises(ValueError, match=SCALAR_ERROR):
+@@ -331,11 +335,7 @@ def test_completion_record_decoder_rejects_invalid_scalars_before_redaction(
+         type=ObservationType.SESSION_COMPLETED,
+         payload={"usage": USAGE_DATA, "message": "done"},
+     )
+-    additions = {
+-        "value": {"extra": {"nested": scalar}},
+-        "nested_key": {"extra": {scalar: "valid"}},
+-        "secret": {"password": scalar},
+-    }
++    additions = completion_additions(scalar)
+     record = observation_record(valid)
+     record["payload"] = {"usage": USAGE_DATA, "message": "done", **additions[location]}
+     decoded_record = invalid_native_record(record, scalar)

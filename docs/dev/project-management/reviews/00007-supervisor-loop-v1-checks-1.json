@@ -1,0 +1,10 @@
+[
+  {
+    "cycle": 1,
+    "finding": "Cannot statically verify: the full suite passes at HEAD bbe7d52 (recorded 3501 passed at 18f90e2, before the handoff commit)",
+    "file": null,
+    "command": "UV_CACHE_DIR=/private/tmp/ovcaq-final-cache uv run pytest",
+    "source": "bob",
+    "result": {"exit": 0}
+  }
+]

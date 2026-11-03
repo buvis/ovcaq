@@ -1,0 +1,41 @@
+[BOB] 🟠 The numeric-code check only accepts "HTTP", "HTTP status", "status code" or "error code" before the number, so a bare "status 503" or "last status: 429" now comes out as UNKNOWN. The doc says any "status" context counts, so code and doc disagree (confirmed). Separately, Codex probably writes HTTP errors as "unexpected status 503 Service Unavailable" and "exceeded retry limit, last status: 429 Too Many Requests" (suspected, no fixture holds these). If so, real 403/429/502/503 errors no longer get the bounded WAIT/retry they got before this change | File: src/ovcaq/drivers/codex_events.py | Task: 6
+[BOB] 🟡 The doc and CHANGELOG say an empty host PATH searches the current directory. That holds for Codex (subprocess lookup) but not for Claude: its probe calls `shutil.which(path="")`, which always returns None, so the result is unhealthy. The test that should pin this can't tell the two apart, because the executable sits in tmp_path/bin while the test runs from tmp_path, so it is never in the current directory | File: tests/runtime/test_adapter_health.py | Task: 3
+[BOB] 🟡 The normal sequence spawn → wait(completed) → close_agent(shutdown) now emits raw.unknown for every completed lane, which sets the TUI raw-evidence flag (tui/model.py:548). Late running/errored/completed updates for a finished lane are dropped with no trace (codex.py:383). No test asserts either outcome, so the design's "raw-unknown evidence" rule is unpinned | File: tests/drivers/test_adapter_outcomes.py | Task: 5
+[BOB] 🟡 `_ResolvedModelCodexDriver.build_launch` copies `_ResolvedModelClaudeDriver.build_launch` line for line. A module helper `_tier_request(settings, request)` would leave each override as one line: `return super().build_launch(_tier_request(self._settings, request))` | File: src/ovcaq/drivers/edge.py | Task: 2
+[BOB] 🟡 40 of the 49 new outcome test cases pass on the pre-change code and repeat existing tests: test_codex_rework_decode.py:201 already covers an unfinished lane failing on close, and test_codex_decode_lanes.py:257 covers an unstarted receiver staying raw. The 3-way receiver-name parametrization exercises no extra code path, and `test_non_json_output_retains_raw_unknown` has nothing to do with lanes | File: tests/drivers/test_adapter_outcomes.py | Task: 5
+[BOB] ⚪ `test_configured_factory_rejects_unknown_or_invalid_options` re-tests `CodexDriver.__init__`, which the new subclass does not override, and passes on the pre-change code. Its `pytest.raises(ValueError)` also accepts `ConfigurationError` (a ValueError subclass) raised by config parsing, so it can pass for the wrong reason | File: tests/drivers/test_codex_launch.py | Task: 2
+[BOB] ⚪ Cannot statically verify: phase-2 exit gate (pytest, ruff check, ruff format --check, mypy, uv build). The test gate reports exit 0 but gives no counts | File: N/A | Task: 4
+[BOB] ⚪ The Codex probe runs in the caller's working directory, while the launch runs in request.root. A relative command or an empty-PATH lookup can therefore succeed in the probe and fail at launch, or the reverse (existing behavior) | File: src/ovcaq/drivers/codex.py | Task: 3
+
+R1: fail
+R2: fail
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+FIX:
+- A bare "status" before a numeric code is not accepted, unlike what the doc says (status-prefix pattern in src/ovcaq/drivers/codex_events.py, doc at docs/driver-protocol.md:270) — src/ovcaq/drivers/codex_events.py:301 — change it to `r"(?:http(?: status)?|status(?: code)?|error code)\s*:?\s*"`. Add positives "unexpected status 503 Service Unavailable" and "exceeded retry limit, last status: 429 Too Many Requests" to the template list in tests/drivers/test_adapter_failure_classes.py. Keep the existing ordinary-count negatives.
+- The empty-host-PATH contract has three conflicting statements: the doc and CHANGELOG say current-directory search, the Claude code returns unhealthy, and the test can't tell which — tests/runtime/test_adapter_health.py:263 — change `monkeypatch.chdir(tmp_path)` to `monkeypatch.chdir(executable.parent)` so the test pins the conservative unhealthy result. Reword docs/driver-protocol.md:37 and the CHANGELOG.md PATH entry: "Claude's probe treats an empty host PATH as unhealthy; Codex inherits subprocess lookup".
+- What happens after a lane finishes is unpinned — tests/drivers/test_adapter_outcomes.py:74 — in `test_completed_lane_remains_completed_after_close_status`, assert that `closed` holds exactly one RAW_UNKNOWN (the design's evidence rule) and that the late "running" decode emits no LANE_* observation.
+- Duplicated inverse-tier override — src/ovcaq/drivers/edge.py:16 — extract `_tier_request(settings, request) -> LaunchRequest` and call it from both subclasses.
+- Padded outcome tests — tests/drivers/test_adapter_outcomes.py:99 — drop the `receiver` parametrization, and delete `test_non_json_output_retains_raw_unknown` (tests/drivers/test_adapter_outcomes.py:265).
+- An off-target factory-options test with a broad exception match — tests/drivers/test_codex_launch.py:177 — delete `test_configured_factory_rejects_unknown_or_invalid_options`. Constructor validation is already covered by `test_constructor_rejects_unknown_or_invalid_options`.
+VERIFY:
+- Phase-2 exit gate — run `uv sync --all-groups && uv run pytest -q && uv run ruff check . && uv run ruff format --check . && uv run mypy src/ovcaq && uv build` and record the pass/fail/skip counts.
+KNOWN:
+- The Codex probe and launch run in different working directories, which matters for relative commands and empty PATH — this predates the PRD, and the design says to keep Codex probe spawning as is ("reproduce and regress that behavior rather than changing it gratuitously").
+
+```
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```

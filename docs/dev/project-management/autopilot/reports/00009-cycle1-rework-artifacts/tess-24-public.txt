@@ -1,0 +1,1 @@
+AgentSettings(name, command tuple[str,...], tiers mapping, environment mapping, options mapping). CodexDriver(settings, run_id=str).probe() returns frozen DriverHealth: healthy bool, detail str. Reviewed Codex CLI version codex-cli 0.160.0. No other interface change. Exact label wording unspecified except actionable codex login hint and observed return code.

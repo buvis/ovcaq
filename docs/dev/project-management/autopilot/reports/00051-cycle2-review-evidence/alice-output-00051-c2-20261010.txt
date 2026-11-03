@@ -1,0 +1,15 @@
+[ALICE] 🟠 The review-1 two-pass `bounded_detail` leaks the tail of a split token. When the control sits after 20 or more body characters, pass 1 redacts the head. Control removal then glues the tail onto `[REDACTED]`, and pass 2 finds no `sk-` or `Bearer` prefix to match. I ran it to confirm: `bounded_detail('Diagnostic sk-abcdefghijklmnopqrstuvwxyz\x1b[0m0123456789ABCDEF')` returns `'Diagnostic [REDACTED]0123456789ABCDEF'`, the real `turn.failed` payload detail is the same, and `'Bearer '+'a'*23+'\x00bbbbbbbb'` returns `'Bearer [REDACTED]bbbbbbbb'`. Task 3's strip-first order redacted these fully, and pre-PRD code leaked the same way. This breaks two PRD rules ("ANSI/NUL splits of ordinary synthetic tokens are redacted", "synthetic credential fragments never enter normalized details") and makes docs/driver-protocol.md:224 claim too much. Every split test cuts at `token[:6]`, so no test catches it. Fix: before control removal, absorb token characters stuck to a marker across recognized controls with `re.sub(rf"\[REDACTED\](?:{controls})+[A-Za-z0-9_.-]+", "[REDACTED]", sanitize_text(protected))`. I probed this on both leaks plus `x\x00sk-…`, the OSC case and the cap reproducer, and all came out fully redacted (I did not run the suite with it). Also add SPLIT_DETAILS cases that split after 20 or more body characters, for both bare and Bearer tokens | File: src/ovcaq/drivers/codex_events.py:66 | Task: 6
+[ALICE] 🟡 Unreleased Fixed now has two `**drivers**` entries for one unreleased fix, and they give conflicting orders. Line 43 says redact both before and after control removal. Line 45 says remove controls before redacting, and its claim "so split credentials cannot survive normalization" is false given the finding above. Line 44 ("speed up surrogate detection") describes a tweak to unreleased code, so users see no change from the last release. Simpler: merge lines 43 and 45 into one drivers entry that states what actually shipped, and drop line 44 | File: CHANGELOG.md:43 | Task: 6
+
+R1: fail
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: pass
+R13: pass

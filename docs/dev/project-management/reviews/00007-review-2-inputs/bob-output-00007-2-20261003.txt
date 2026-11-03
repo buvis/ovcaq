@@ -1,0 +1,67 @@
+[BOB] 🟠 New regression: `_run_capability` swallows every exception once the capability's status is `failed`, and that includes `SupervisorSignal` (an `Exception` subclass, process.py:33). If SIGTERM, SIGINT or `ovcaq stop` lands during a capability run, `_execute` (capability.py:351) records "runner raised SupervisorSignal" and re-raises; `_run_capability` then drops it, the loop halts on attention, and `run()` returns exit 1 instead of 128+N with no `operator_stop` pause. The base code re-raised. The same catch also hides finalize/evidence errors that occur after a failed attempt is committed. No test sends a signal during a capability run. | File: src/ovcaq/runtime/supervisor.py:309 | Task: 12
+[BOB] 🟠 `_loop` now wraps `_attempt` and `apply` in `except _STATE_ERRORS`, and that tuple includes bare `OSError` (supervisor.py:80). So these all become the durable attention "Supervisor state operation failed; inspect state before restarting.": a missing or non-executable agent binary (`Popen` FileNotFoundError/PermissionError, process.py:118), session-evidence I/O, config reads, and PRD file moves in `park`. The real message is dropped, and every later run halts until someone edits state by hand. At base the error propagated with its message. This also breaks the premise of the settled F23 deferral ("spawn failure remains explicit"). Only `run_once` is tested with a launch OSError (test_supervisor.py:443); `run()` is not. | File: src/ovcaq/runtime/supervisor.py:240 | Task: 11
+[BOB] 🟡 The shared repeat limit parks a PRD for a provider-wide failure. When the limit is hit while the connectivity or rate-limit budget still allows WAIT, `decide` falls through to PARK whenever a PRD is active. Two traced cases with limit 5: conn, conn, conn, rate_limit, rate_limit gives PARK; `connectivity_retries=10` parks on the 5th outage. Running out of the same class budget gives HALT instead (test_decision_terminal_failures.py:65), and plan §12.3 step 11 reserves halt for systemic failures. Two such parks trigger the systemic-park pause. The at-limit kind is not pinned by any test (hedged at test_decision_retry_bound.py:60). | File: src/ovcaq/runtime/decision.py:283 | Task: 10
+[BOB] 🟡 The supplied `SupervisorSettings.capability_timeouts` is never read. The supervisor builds `CapabilityService` without a timeout (supervisor.py:287), and the service re-reads disk through `supervisor_settings(self._root)`. This repeats F16's flaw for the new field. It also re-parses runtime, policy and phase config on every attempt, so an unrelated config error blocks capability runs. Tests pass only because the disk config matches the supplied settings (test_capability_execution_contract.py:82). | File: src/ovcaq/runtime/capability.py:335 | Task: 12
+[BOB] 🟡 Same bug as F07, in a sibling path: `request_pause` always overwrites `pause_reason` (with None when there is no `--reason`). So `ovcaq pause` during a review-cap or systemic-park pause erases the routing key that workflow/resume.py:17 reads. `pause --reason X` replaces that key, and `resume` now keeps the replacement for good. `_record_stop` already guards this case (supervisor.py:190). | File: src/ovcaq/state/commands.py:454 | Task: 10
+[BOB] 🟡 New tests hedge exactly the policy they were added to pin: `kind in {PARK, HALT}` (test_decision_retry_bound.py:60), `kind in {RETRY, WAIT}` (test_decision_retry_bound.py:87), and `kind in {HALT, PAUSE}` (test_supervisor_boundary_policy.py:38). Every parameter makes the exact kind knowable. These are not in the mech-check table. | File: tests/runtime/test_decision_retry_bound.py:60 | Task: 10
+[BOB] ⚪ Harmless revision conflicts now become sticky state failures. `RevisionConflictError` is a `StateError`, so an operator `pause` or `state set` that lands between the supervisor's read and its compare-and-set write (`record_progress`, `skip_empty_drain_capabilities`, `complete_batch`, capability `finish`) writes state-failure attention that blocks restart. The window is small. | File: src/ovcaq/runtime/supervisor.py:609 | Task: 11
+[BOB] ⚪ When a retry succeeds while another required capability is still pending, `finish_capability` clears this capability's attention but leaves `batch.status="attention"`. The batch then shows attention with no `control.attention` until the other capability finishes. | File: src/ovcaq/state/commands.py:604 | Task: 9
+[BOB] ⚪ A capability failure still overwrites any unrelated `control.attention`, even though the new success path deliberately keeps it. If a stale-owner reconcile or a manual retry fails over, say, a `supervisor.loop` notice, that notice is replaced; a later success then clears it without anyone acknowledging it. | File: src/ovcaq/state/commands.py:599 | Task: 9
+[BOB] ⚪ `_capability_timeouts` accepts unknown keys in `[capabilities.NAME]`, while every other config table rejects them (config.py:428, config.py:456). A typo such as `timeout = 600` silently falls back to 10800 seconds. | File: src/ovcaq/config.py:413 | Task: 12
+[BOB] ⚪ `skip_empty_drain_capabilities` keeps a wall-clock fallback when `completed_at=None`. The only production caller passes the injected time (supervisor.py:261), so the fallback is reachable only from tests. | File: src/ovcaq/state/commands.py:635 | Task: 9
+[BOB] ⚪ `CapabilityService` checks `timeout_seconds` (typed `object`) in `__init__` and again in every `_execute`. Simpler: validate once in `__init__`, store the result as `int | None`, and have `_execute` read the stored value. Behavior does not change. | File: src/ovcaq/runtime/capability.py:337 | Task: 12
+[BOB] ⚪ Cannot statically verify: pytest, ruff and mypy pass at HEAD 3f5a0bd (rework evidence records 3863 passed in 00007-rework-1-evidence/final-pytest.txt) | File: N/A | Task: general
+
+**Prior findings:**
+- **Closed:** F01, F03, F05, F08, F09, F10, F11, F12, F13, F17, F20, F25, F29, F30, F31, F32.
+- **Closed:** F04. The cap is now bounded, but parking at the limit is a new finding (decision.py:283).
+- **Closed:** F07, for `resume` only. The same bug in `request_pause` is a new finding.
+- **Closed:** F16, for phases only. The new `capability_timeouts` field is a new finding.
+- **Closed:** F18. It fails at the PRD base (task-15-red-replay.txt: 2 failed).
+- **Closed:** F22 in production. A leftover fallback is a new ⚪ finding.
+- **Settled, unchanged:** F02, F06.
+- **Settled, but its premise is now broken:** F23 (see the second 🟠).
+- **Discarded, not re-raised:** F14, F15, F19, F21, F24, F27, F28.
+- **Replay:** the remaining pass-at-base lines pin behavior that already existed at bbe7d52; their failing parameters pin the change.
+
+R1: fail
+R2: fail
+R3: pass
+R4: fail
+R6: pass
+R7: fail
+R8: pass
+R9: fail
+R10: fail
+R11: pass
+R12: pass
+R13: pass
+
+FIX:
+- SupervisorSignal and post-commit errors swallowed — src/ovcaq/runtime/supervisor.py:309 — re-raise `SupervisorSignal` before the broad handler; have `CapabilityService.run` return the failed state for the runner's own exception so the supervisor needs no catch-all; add a test that signals during a fake capability run and asserts exit 128+N and `operator_stop`
+- Non-state OSError turned into state-failure attention — src/ovcaq/runtime/supervisor.py:240 — convert only store read/write errors via `_state_failure` and let spawn/evidence/config/park OSErrors propagate as at base; add a `run()` test with a missing agent binary
+- PARK on provider-wide failure at the shared limit — src/ovcaq/runtime/decision.py:283 — when the limit is hit and `failure_decision.kind == WAIT`, return HALT, not PARK
+- Supplied capability timeouts ignored — src/ovcaq/runtime/capability.py:335 — pass `self._settings.capability_timeouts` from Supervisor into CapabilityService; keep the disk read only for the standalone CLI retry
+- `request_pause` erases the phase pause key — src/ovcaq/state/commands.py:454 — keep the existing `pause_reason` while work is phase-paused (same guard as `resume`)
+- Hedged kind asserts — tests/runtime/test_decision_retry_bound.py:60 — assert the exact kind per parameter, also at test_decision_retry_bound.py:87 and test_supervisor_boundary_policy.py:38
+- Revision conflict made sticky — src/ovcaq/runtime/supervisor.py:609 — handle `RevisionConflictError` by re-reading state and retrying, not through `_state_failure`
+- Stale `batch.status="attention"` — src/ovcaq/state/commands.py:604 — when a success clears this capability's attention without completing the batch, set status back to `running`
+- Failure overwrites unrelated attention — src/ovcaq/state/commands.py:599 — write capability attention only when none exists or it already belongs to a capability
+- Unknown capability config keys — src/ovcaq/config.py:413 — reject keys other than `timeout_seconds`, as `_phase_tables` does
+- Wall-clock fallback — src/ovcaq/state/commands.py:635 — make `completed_at` required and update test callers
+- Timeout validated twice — src/ovcaq/runtime/capability.py:337 — validate once in `__init__` and store `int | None`
+VERIFY:
+- Full suite at HEAD — run `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy src/ovcaq` at 3f5a0bd
+KNOWN:
+- (none)
+
+```
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```
+
+**Status:** Done. Review only, no files changed.
+**Next:** Task complete. Suggested next: send the two 🟠 findings (signal swallowed during a capability run, OSError reported as a state failure) into rework cycle 2.

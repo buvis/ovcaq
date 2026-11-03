@@ -1,0 +1,36 @@
+{
+  "attempt": 1,
+  "model": "sonnet",
+  "actual_model": "gpt-6.1-sol",
+  "actual_provider": "openai",
+  "actual_effort": "medium",
+  "implementor": "codex",
+  "host_role_mapping": "source Claude-tier native worker to Codex native worker",
+  "preflight_outcome": null,
+  "qwen_excluded_reason": "files",
+  "pipeline": "lean",
+  "outcome": "completed",
+  "cause": null,
+  "review_cycle": 1,
+  "self_deslop": "committed:2102c3f",
+  "style_gate": "clean",
+  "split_hygiene": "clean",
+  "verification": "39 passed; named decoder regression file; exit0",
+  "review": "Pat initial8resolved1unresolved; boundedcorrectionfaf619a; deltaNOFINDINGS",
+  "review_evidence": "docs/dev/project-management/reviews/00009-cycle1-task23-pat.md",
+  "dispatch_ids": [
+    "6c60dece",
+    "c49a8309",
+    "d002c3a9",
+    "678536ce",
+    "9287c412",
+    "7eba3d8c",
+    "01ee12ae"
+  ],
+  "implementation_commits": [
+    "b79cdb6",
+    "2102c3f",
+    "faf619a"
+  ],
+  "test_commit": "d6f0690"
+}

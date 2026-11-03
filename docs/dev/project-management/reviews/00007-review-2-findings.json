@@ -1,0 +1,417 @@
+[
+  {
+    "reviewer": "BLAKE",
+    "emoji": "🟠",
+    "issue": "A stop signal raised during a capability run is recorded as an ordinary capability failure and then swallowed, producing exit 1 without durable stop intent instead of the required signal exit and immediate-stop behavior.",
+    "file": "src/ovcaq/runtime/supervisor.py:309",
+    "task": "P05-T05",
+    "id": "F01",
+    "severity": "high",
+    "finders": [
+      "BLAKE",
+      "BOB"
+    ],
+    "consensus": "2/3",
+    "disposition": "cap-overflow",
+    "reason": "Confirmed with a real SIGTERM inside a fake capability runner: exit 1, failed capability, pause_requested=false and pause_reason=null. The broad failed-capability catch swallows SupervisorSignal and may also hide post-commit evidence errors. Expected signal exit 143 and durable operator-stop intent are absent."
+  },
+  {
+    "reviewer": "BOB",
+    "emoji": "🟠",
+    "issue": "`_loop` now wraps `_attempt` and `apply` in `except _STATE_ERRORS`, and that tuple includes bare `OSError` (supervisor.py:80). So these all become the durable attention \"Supervisor state operation failed; inspect state before restarting.\": a missing or non-executable agent binary (`Popen` FileNotFoundError/PermissionError, process.py:118), session-evidence I/O, config reads, and PRD file moves in `park`. The real message is dropped, and every later run halts until someone edits state by hand. At base the error propagated with its message. This also breaks the premise of the settled F23 deferral (\"spawn failure remains explicit\"). Only `run_once` is tested with a launch OSError (test_supervisor.py:443); `run()` is not.",
+    "file": "src/ovcaq/runtime/supervisor.py:240",
+    "task": "11",
+    "id": "F02",
+    "severity": "high",
+    "finders": [
+      "BOB"
+    ],
+    "consensus": "1/3",
+    "disposition": "cap-overflow",
+    "reason": "Confirmed: a synthetic launch OSError returns the generic supervisor state-failure outcome and persists supervisor.loop attention, with phase_repeats=0. The store is healthy. This is new evidence invalidating the explicit-spawn-error premise of settled F23; launcher readiness itself remains assigned to PRD 00010. Recovery should use the existing state CLI, never direct state editing."
+  },
+  {
+    "reviewer": "BLAKE",
+    "emoji": "🟠",
+    "issue": "Retry ceilings are held only in `Supervisor._retries`; restarting the supervisor resets rate-limit/connectivity/death budgets, so decisions are not reproducible from committed state plus summary and configured per-class caps can be exceeded.",
+    "file": "src/ovcaq/runtime/supervisor.py:123",
+    "task": "P05-T01",
+    "id": "F03",
+    "severity": "high",
+    "finders": [
+      "BLAKE"
+    ],
+    "consensus": "1/3",
+    "disposition": "cap-overflow",
+    "reason": "Confirmed with two fresh supervisor instances: configured connectivity_retries=1 produces WAIT twice while the durable phase counter reaches 2. The global phase cap bounds total attempts but does not preserve the configured per-class budget across restart. Resolving the persistent policy requires care; no schema or policy is changed at the cap."
+  },
+  {
+    "reviewer": "BLAKE",
+    "emoji": "🟠",
+    "issue": "Driver launch/bootstrap exceptions are finalized as HALT evidence and then re-raised before the bounded decision policy can classify, retry, park, or return a normal supervisor outcome.",
+    "file": "src/ovcaq/runtime/supervisor.py:358",
+    "task": "P05-T04",
+    "id": "F04",
+    "severity": "high",
+    "finders": [
+      "BLAKE"
+    ],
+    "consensus": "1/3",
+    "disposition": "cap-overflow",
+    "reason": "The launch-error path finalizes HALT and re-raises without consulting the failure decision table. Nuance: OSError is then caught by the outer state-error handler, rather than escaping run(); other launch exceptions still propagate. This broader bootstrap-routing gap is retained separately from F02, whose new regression is misclassifying non-state I/O and obscuring diagnostics."
+  },
+  {
+    "reviewer": "BOB",
+    "emoji": "🟡",
+    "issue": "The supplied `SupervisorSettings.capability_timeouts` is never read. The supervisor builds `CapabilityService` without a timeout (supervisor.py:287), and the service re-reads disk through `supervisor_settings(self._root)`. This repeats F16's flaw for the new field. It also re-parses runtime, policy and phase config on every attempt, so an unrelated config error blocks capability runs. Tests pass only because the disk config matches the supplied settings (test_capability_execution_contract.py:82).",
+    "file": "src/ovcaq/runtime/capability.py:335",
+    "task": "12",
+    "id": "F05",
+    "severity": "medium",
+    "finders": [
+      "ALICE",
+      "BOB"
+    ],
+    "consensus": "2/3",
+    "disposition": "cap-overflow",
+    "reason": "Confirmed statically: Supervisor._capability_service omits the resolved timeout and CapabilityService._execute reloads supervisor_settings from disk. A follow-up should pass the resolved per-capability value from the supervisor while preserving standalone retry configuration and validation semantics."
+  },
+  {
+    "reviewer": "BOB",
+    "emoji": "🟡",
+    "issue": "New tests hedge exactly the policy they were added to pin: `kind in {PARK, HALT}` (test_decision_retry_bound.py:60), `kind in {RETRY, WAIT}` (test_decision_retry_bound.py:87), and `kind in {HALT, PAUSE}` (test_supervisor_boundary_policy.py:38). Every parameter makes the exact kind knowable. These are not in the mech-check table.",
+    "file": "tests/runtime/test_decision_retry_bound.py:60",
+    "task": "10",
+    "id": "F06",
+    "severity": "medium",
+    "finders": [
+      "ALICE",
+      "BOB"
+    ],
+    "consensus": "2/3",
+    "disposition": "cap-overflow",
+    "reason": "Confirmed in the named test bodies. Alice separately raised the shared-limit and bootstrap alternatives; Bob also identified RETRY/WAIT. Assert exact outcomes after the provider-wide shared-limit policy in F12 is resolved; do not blindly hard-code PARK for provider-wide failures."
+  },
+  {
+    "reviewer": "BOB",
+    "emoji": "⚪",
+    "issue": "`skip_empty_drain_capabilities` keeps a wall-clock fallback when `completed_at=None`. The only production caller passes the injected time (supervisor.py:261), so the fallback is reachable only from tests.",
+    "file": "src/ovcaq/state/commands.py:635",
+    "task": "9",
+    "id": "F07",
+    "severity": "low",
+    "finders": [
+      "ALICE",
+      "BOB"
+    ],
+    "consensus": "2/3",
+    "disposition": "cap-overflow",
+    "reason": "The optional wall-clock fallback remains in the state service, though the sole production caller now passes injected time and the original production F22 is closed. Retain this LOW cleanup separately; a follow-up must assess the public method signature before making the timestamp mandatory."
+  },
+  {
+    "reviewer": "BOB",
+    "emoji": "⚪",
+    "issue": "`CapabilityService` checks `timeout_seconds` (typed `object`) in `__init__` and again in every `_execute`. Simpler: validate once in `__init__`, store the result as `int | None`, and have `_execute` read the stored value. Behavior does not change.",
+    "file": "src/ovcaq/runtime/capability.py:337",
+    "task": "12",
+    "id": "F08",
+    "severity": "low",
+    "finders": [
+      "ALICE",
+      "BOB"
+    ],
+    "consensus": "2/3",
+    "disposition": "cap-overflow",
+    "reason": "Duplicate validation is present. Simplification must preserve the current distinction between an omitted timeout and explicitly invalid None, which the tests require; an internal int-or-None representation can be used only after boundary validation."
+  },
+  {
+    "reviewer": "BLAKE",
+    "emoji": "🟡",
+    "issue": "Empty-drain handling changes every required capability to optional before marking it skipped, erasing the pinned `required` contract instead of preserving the specified required-and-skipped state.",
+    "file": "src/ovcaq/state/commands.py:646",
+    "task": "P05-T06",
+    "id": "F09",
+    "severity": "medium",
+    "finders": [
+      "BLAKE"
+    ],
+    "consensus": "1/3",
+    "disposition": "discarded",
+    "reason": "The accepted design explicitly removes applicability (required=false) before skipping empty-drain capabilities to preserve the existing schema invariant that completed batches have no unsatisfied required entries. Design lines 22-29 and 195-197 document this deliberate choice. No new contract erosion was introduced by rework."
+  },
+  {
+    "reviewer": "BLAKE",
+    "emoji": "🟡",
+    "issue": "Any running optional capability blocks terminal completion even though the contract requires only required capabilities to be satisfied.",
+    "file": "src/ovcaq/runtime/decision.py:183",
+    "task": "P05-T06",
+    "id": "F10",
+    "severity": "medium",
+    "finders": [
+      "BLAKE"
+    ],
+    "consensus": "1/3",
+    "disposition": "cap-overflow",
+    "reason": "The predicate checks every running capability although the design names required capabilities. Current compound start methods refuse optional capabilities, limiting the ordinary reachability; valid externally configured state can still expose the discrepancy. Retain the finding with that limitation."
+  },
+  {
+    "reviewer": "BLAKE",
+    "emoji": "🟡",
+    "issue": "`ovcaq stop` validates PID identity and lock ownership before a separate `kill`, leaving a PID-reuse check-then-act window in which an unrelated process can receive SIGTERM.",
+    "file": "src/ovcaq/supervisor_cli.py:105",
+    "task": "P05-T05",
+    "id": "F11",
+    "severity": "medium",
+    "finders": [
+      "BLAKE"
+    ],
+    "consensus": "1/3",
+    "disposition": "cap-overflow",
+    "reason": "The read-identity/lock checks and os.kill are separate operations, so the static PID-reuse window exists. It is unchanged in this incremental diff and needs a supported platform ownership design rather than an extra check falsely promising atomicity. No signal was sent to an unrelated process during review."
+  },
+  {
+    "reviewer": "BOB",
+    "emoji": "🟡",
+    "issue": "The shared repeat limit parks a PRD for a provider-wide failure. When the limit is hit while the connectivity or rate-limit budget still allows WAIT, `decide` falls through to PARK whenever a PRD is active. Two traced cases with limit 5: conn, conn, conn, rate_limit, rate_limit gives PARK; `connectivity_retries=10` parks on the 5th outage. Running out of the same class budget gives HALT instead (test_decision_terminal_failures.py:65), and plan §12.3 step 11 reserves halt for systemic failures. Two such parks trigger the systemic-park pause. The at-limit kind is not pinned by any test (hedged at test_decision_retry_bound.py:60).",
+    "file": "src/ovcaq/runtime/decision.py:283",
+    "task": "10",
+    "id": "F12",
+    "severity": "medium",
+    "finders": [
+      "BOB"
+    ],
+    "consensus": "1/3",
+    "disposition": "cap-overflow",
+    "reason": "Confirmed statically: WAIT at the shared repeat limit falls through to PARK with an active PRD, while exhausted class budgets HALT. This needs explicit provider-wide versus PRD-specific policy and exact regression assertions; it is not resolved by merely replacing the existing test hedge with PARK."
+  },
+  {
+    "reviewer": "BOB",
+    "emoji": "🟡",
+    "issue": "Same bug as F07, in a sibling path: `request_pause` always overwrites `pause_reason` (with None when there is no `--reason`). So `ovcaq pause` during a review-cap or systemic-park pause erases the routing key that workflow/resume.py:17 reads. `pause --reason X` replaces that key, and `resume` now keeps the replacement for good. `_record_stop` already guards this case (supervisor.py:190).",
+    "file": "src/ovcaq/state/commands.py:454",
+    "task": "10",
+    "id": "F13",
+    "severity": "medium",
+    "finders": [
+      "BOB"
+    ],
+    "consensus": "1/3",
+    "disposition": "cap-overflow",
+    "reason": "request_pause still overwrites pause_reason unconditionally. The rework preserved a phase-pause reason in resume and operator-stop paths, but the sibling pause command can erase that routing key first. Retain as a bounded recurrence of the notice-preservation problem."
+  },
+  {
+    "reviewer": "BOB",
+    "emoji": "⚪",
+    "issue": "Harmless revision conflicts now become sticky state failures. `RevisionConflictError` is a `StateError`, so an operator `pause` or `state set` that lands between the supervisor's read and its compare-and-set write (`record_progress`, `skip_empty_drain_capabilities`, `complete_batch`, capability `finish`) writes state-failure attention that blocks restart. The window is small.",
+    "file": "src/ovcaq/runtime/supervisor.py:609",
+    "task": "11",
+    "id": "F14",
+    "severity": "low",
+    "finders": [
+      "BOB"
+    ],
+    "consensus": "1/3",
+    "disposition": "cap-overflow",
+    "reason": "RevisionConflictError derives from StateError and the shown compare-and-set sites route it to sticky state failure. Re-reading committed state should be evaluated as bounded conflict handling, without weakening genuine store-failure barriers."
+  },
+  {
+    "reviewer": "BOB",
+    "emoji": "⚪",
+    "issue": "When a retry succeeds while another required capability is still pending, `finish_capability` clears this capability's attention but leaves `batch.status=\"attention\"`. The batch then shows attention with no `control.attention` until the other capability finishes.",
+    "file": "src/ovcaq/state/commands.py:604",
+    "task": "9",
+    "id": "F15",
+    "severity": "low",
+    "finders": [
+      "BOB"
+    ],
+    "consensus": "1/3",
+    "disposition": "cap-overflow",
+    "reason": "After success clears this capability notice, the nonterminal branch does not restore batch.status from attention to running. The remaining required capability prevents premature completion, but the observable batch status is stale."
+  },
+  {
+    "reviewer": "BOB",
+    "emoji": "⚪",
+    "issue": "A capability failure still overwrites any unrelated `control.attention`, even though the new success path deliberately keeps it. If a stale-owner reconcile or a manual retry fails over, say, a `supervisor.loop` notice, that notice is replaced; a later success then clears it without anyone acknowledging it.",
+    "file": "src/ovcaq/state/commands.py:599",
+    "task": "9",
+    "id": "F16",
+    "severity": "low",
+    "finders": [
+      "BOB"
+    ],
+    "consensus": "1/3",
+    "disposition": "cap-overflow",
+    "reason": "The failure branch assigns control.attention regardless of an existing unrelated notice; subsequent success clears by capability site. Preserve earlier unacknowledged attention while retaining the capability failure detail in its durable attempt."
+  },
+  {
+    "reviewer": "BOB",
+    "emoji": "⚪",
+    "issue": "`_capability_timeouts` accepts unknown keys in `[capabilities.NAME]`, while every other config table rejects them (config.py:428, config.py:456). A typo such as `timeout = 600` silently falls back to 10800 seconds.",
+    "file": "src/ovcaq/config.py:413",
+    "task": "12",
+    "id": "F17",
+    "severity": "low",
+    "finders": [
+      "BOB"
+    ],
+    "consensus": "1/3",
+    "disposition": "cap-overflow",
+    "reason": "_capability_timeouts uses get(timeout_seconds, 10800) without rejecting unknown table keys. A misspelled timeout silently uses the default; a bounded validation follow-up should allow only documented capability fields."
+  },
+  {
+    "reviewer": "BOB",
+    "emoji": "⚪",
+    "issue": "Cannot statically verify: pytest, ruff and mypy pass at HEAD 3f5a0bd (rework evidence records 3863 passed in 00007-rework-1-evidence/final-pytest.txt)",
+    "file": "N/A",
+    "task": "general",
+    "id": "F18",
+    "severity": "low",
+    "finders": [
+      "BOB"
+    ],
+    "consensus": "1/3",
+    "disposition": "routed to verification",
+    "reason": "The four exact project commands are queued under Bob provenance. No work pass runs on cap-out, so their queue results remain absent. Independent review verification already ran the equivalent suite, root lint/format and mypy checks with retained argv/output: 3863 tests and typing pass; root lint/format retain the pre-existing 41-error/46-file artifact debt. This is not represented as a fresh work-phase queue execution."
+  },
+  {
+    "id": "F19",
+    "emoji": "🟡",
+    "severity": "medium",
+    "issue": "[MECH] test_init_rejects_project_config_path_collisions_before_state_publication hedges with `or`: either outcome satisfies it",
+    "file": "tests/state/test_cli.py:358",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "consensus": "1/3",
+    "disposition": "discarded",
+    "reason": "Settled discard F19: the assertion is unchanged from the original PRD base. This rework moves a different inventory test out of the file. No new hedge was introduced."
+  },
+  {
+    "id": "F20",
+    "emoji": "🟡",
+    "severity": "medium",
+    "issue": "[MECH] 15 touched test(s) pass against the pre-change code: test_capability_request_uses_bounded_configuration_without_agent_route, test_explicit_timeout_overrides_project_and_user_values +9 more",
+    "file": "tests/runtime/test_capability_execution_contract.py",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "consensus": "1/3",
+    "disposition": "discarded",
+    "reason": "Preserved default/explicit timeout and pre-existing validation paths are deliberately in the matrix. Configured timeout selection and new invalid inputs supply the failing regression cases. The task-12 report independently records 72 failed/26 passed red and a subsequent 2 failed/100 passed strengthening run. Passing baseline branches do not invalidate the new negative cases."
+  },
+  {
+    "id": "F21",
+    "emoji": "🟡",
+    "severity": "medium",
+    "issue": "[MECH] 150 touched test(s) pass against the pre-change code: test_empty_drain_skips_but_nonempty_drain_runs_sorted_required_capabilities, test_committed_progress_continues_before_session_failure_without_drain +144 more",
+    "file": "tests/runtime/test_decision.py",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "consensus": "1/3",
+    "disposition": "discarded",
+    "reason": "Most added parameter cases extend the existing productive-state-wins behavior to task/review/PRD/completed-PRD progress. Other edits align fixtures with persisted fingerprints or remove unrelated attention. Those behaviors must remain unchanged; new failure-budget and attention cases are in separate tests that fail at base."
+  },
+  {
+    "id": "F22",
+    "emoji": "🟡",
+    "severity": "medium",
+    "issue": "[MECH] 13 touched test(s) pass against the pre-change code: test_unchanged_attempts_share_the_persisted_phase_limit +7 more",
+    "file": "tests/runtime/test_decision_retry_bound.py",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "consensus": "1/3",
+    "disposition": "discarded",
+    "reason": "Eleven successful-session cases already used the phase-repeat limit; two no-pending attention cases already halted. The changed unsuccessful-session/retry and stale-fingerprint cases fail at base. Keeping the successful/control branches is intentional regression coverage."
+  },
+  {
+    "id": "F23",
+    "emoji": "🟡",
+    "severity": "medium",
+    "issue": "[MECH] 2 touched test(s) pass against the pre-change code: test_reconciliation_projects_interrupted_pending_without_rewriting_evidence",
+    "file": "tests/runtime/test_session_metrics.py",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "consensus": "1/3",
+    "disposition": "discarded",
+    "reason": "Startup reconciliation's interrupted projection is intentionally unchanged for both phase and capability rows. Task 12 explicitly preserved this behavior while removing the redundant live-attempt rebuild."
+  },
+  {
+    "id": "F24",
+    "emoji": "🟡",
+    "severity": "medium",
+    "issue": "[MECH] 2 touched test(s) pass against the pre-change code: test_retry_budget_resets_after_progress_or_a_changed_failure_class",
+    "file": "tests/runtime/test_supervisor.py",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "consensus": "1/3",
+    "disposition": "discarded",
+    "reason": "Both existing per-class reset tests intentionally retain their behavior; the repeat cap is raised locally to six so the new global backstop does not mask that assertion. Separate alternating-failure tests exercise the new cap."
+  },
+  {
+    "id": "F25",
+    "emoji": "🟡",
+    "severity": "medium",
+    "issue": "[MECH] 1 touched test(s) pass against the pre-change code: test_run_commits_batch_identity_before_first_metric_and_preserves_work",
+    "file": "tests/runtime/test_supervisor_batch_lifecycle.py",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "consensus": "1/3",
+    "disposition": "discarded",
+    "reason": "`started=True` asserts an already initialized batch is preserved. The `started=False` case fails at base and pins the missing production initialization."
+  },
+  {
+    "id": "F26",
+    "emoji": "🟡",
+    "severity": "medium",
+    "issue": "[MECH] 24 touched test(s) pass against the pre-change code: test_committed_controls_block_every_startup_boundary +18 more",
+    "file": "tests/runtime/test_supervisor_boundary_policy.py",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "consensus": "1/3",
+    "disposition": "discarded",
+    "reason": "Three existing pause control types across four boundaries and two sites remain valid. Eight attention cases exercise the missing boundary halt. The enlarged matrix intentionally proves pause behavior is preserved."
+  },
+  {
+    "id": "F27",
+    "emoji": "🟡",
+    "severity": "medium",
+    "issue": "[MECH] 3 touched test(s) pass against the pre-change code: test_parser_exposes_init_state_and_workflow_command_inventory, test_incomplete_lifecycle_commands_fail_with_json_usage_errors",
+    "file": "tests/runtime/test_supervisor_cli.py",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "consensus": "1/3",
+    "disposition": "discarded",
+    "reason": "The inventory case was moved unchanged from state tests; the two missing-argument cases strengthen assertions for already implemented command behavior. They fail at the original PRD work base `4e350272`, as retained in `00007-rework-1-evidence/task-15-red-replay.json` and `.txt`; they correctly pass the post-implementation cycle-1 review base."
+  },
+  {
+    "id": "F28",
+    "emoji": "🟡",
+    "severity": "medium",
+    "issue": "[MECH] 6 touched test(s) pass against the pre-change code: test_successful_retry_completes_batch_and_clears_only_its_attention, test_retry_rejects_stale_revision_without_state_or_backup_writes, test_success_cannot_complete_batch_with_another_unfinished_required_capability",
+    "file": "tests/state/test_supervisor_commands.py",
+    "task": "general",
+    "finders": [
+      "mech-check"
+    ],
+    "consensus": "1/3",
+    "disposition": "discarded",
+    "reason": "Two unrelated-attention cases, one stale-revision case and three unfinished-other-capability cases preserve existing safeguards. The same test matrix fails at base for clearing capability-specific attention and publishing failed batch status."
+  }
+]

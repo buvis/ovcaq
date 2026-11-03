@@ -1,0 +1,17 @@
+diff --git a/tests/runtime/test_supervisor.py b/tests/runtime/test_supervisor.py
+index deede08..41c6ebf 100644
+--- a/tests/runtime/test_supervisor.py
++++ b/tests/runtime/test_supervisor.py
+@@ -26,11 +26,7 @@ from ovcaq.events.model import (
+     ObservationType,
+     SessionSummary,
+ )
+-from ovcaq.paths import (
+-    RuntimePaths,
+-    ensure_runtime_layout,
+-    resolve_runtime_paths,
+-)
++from ovcaq.paths import RuntimePaths, ensure_runtime_layout, resolve_runtime_paths
+ from ovcaq.runtime.capability import (
+     CapabilityExecution,
+     CapabilityRequest,

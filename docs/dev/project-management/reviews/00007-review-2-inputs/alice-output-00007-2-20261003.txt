@@ -1,0 +1,17 @@
+[ALICE] 🟡 Shared-limit regression accepts either PARK or HALT, although every case has an active PRD and remaining class budget; assert PARK exactly. | File: tests/runtime/test_decision_retry_bound.py:60 | Task: 10
+[ALICE] 🟡 Alternating bootstrap-failure regression accepts either HALT or PAUSE, although both sequences must halt; assert HALT exactly. | File: tests/runtime/test_supervisor_boundary_policy.py:39 | Task: 10
+[ALICE] 🟡 Capability execution reparses all supervisor configuration despite an already-resolved `capability_timeouts` map and validates explicit timeouts twice; pass the resolved timeout into the service and replace the object sentinel with `int | None`. | File: src/ovcaq/runtime/capability.py:334 | Task: 12
+[ALICE] ⚪ F22 remains partially reproducible: omitting `completed_at` still uses wall-clock time, and the state-service test exercises that uninjected path. Make the timestamp required. | File: src/ovcaq/state/commands.py:632 | Task: 9
+Closure assessment: F01, F03-F05, F07-F13, F16-F18, F20, F25-F26, and F29-F32 are resolved. F22 is partial as reported above. F02, F06, and F23 remain settled deferrals. F14, F15, F19, F21, F24, F27, and F28 remain correctly discarded. Coordinator verification reports 3863 passed, 0 failed, 0 skipped at reviewed HEAD.
+R1: fail
+R2: fail
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: pass
+R13: pass

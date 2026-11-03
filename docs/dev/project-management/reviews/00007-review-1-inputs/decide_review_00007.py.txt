@@ -1,0 +1,109 @@
+"""Prepare review decisions and bounded task payloads; state writes use statectl."""
+
+import json
+import subprocess
+from pathlib import Path
+
+ROOT = Path('/Users/bob/git/src/github.com/buvis/ovcaq')
+PLUGIN = Path('/Users/bob/.claude/plugins/cache/buvis-plugins/autopilot/0.6.0')
+REV = ROOT / 'docs/dev/project-management/reviews'
+TMP = ROOT / 'docs/dev/tmp'
+STEM = '00007-supervisor-loop-v1'
+findings = json.loads((REV / '00007-review-1-findings.json').read_text())
+by_id = {row['id']: row for row in findings}
+special = {
+    'F02': ('defer', 'Confirmed limitation, owned by PRD 00010. PRD 00007 P05-T06 explicitly requires the lifecycle against a fake; the coverage manifest assigns required real agoge execution and independent retry to 00010, whose provisioned execution proof integrates the real launcher runner. Keep the failure visible; do not introduce launcher-specific execution before that phase.'),
+    'F06': ('defer', 'Requirements conflict: accepted design and task 1 explicitly specify bootstrap repeat PAUSE, while plan section 12.3 says bootstrap halt. The implementation matches the reviewed design. Preserve the existing behavior until the plan/design policy is reconciled; record the zero exit and missing durable intent limitation.'),
+    'F14': ('discard', 'The shim is a current protocol adaptation: supervisor LaunchRequest.model is the concrete resolved model, while the existing adapter accepts configured tier keys. Passing route.tier as suggested contradicts the supervised request contract. The provider-edge conversion has a present architectural purpose; no incorrect mapping or changed behavior was demonstrated.'),
+    'F15': ('discard', 'sonnet/opus here are configured logical tier keys, not provider model identifiers. The accepted design explicitly specifies these defaults, and custom agents can set phase tiers mapped to arbitrary provider model IDs. Unknown-tier rejection is required validation. Moving them into one provider would introduce coupling rather than fix a defect.'),
+    'F19': ('discard', 'The reported test body is unchanged from the work base; only a separate command-inventory test changed in this file. This is pre-existing test debt outside this PRD diff. The shape fact is retained, not disputed.'),
+    'F21': ('discard', 'The existing stable runtime_format envelope is the accepted CLI contract. The PRD requires stable symbolic codes but does not require distinct codes per cause; messages identify each cause. Adding a new public error taxonomy is unrequested API scope.'),
+    'F23': ('defer', 'Driver readiness/provisioning preflight belongs to PRD 00010 P08-T05/P08-T06 and must compose binary/auth/plugin readiness together. Current spawn failure remains explicit and preserves evidence. Retain this requirement for that owning PRD rather than inventing a partial live connectivity preflight in the fake-focused Phase 5.'),
+    'F24': ('discard', 'Explicit same-name re-exports preserve the established public import boundary after the evidence writer split. PLC0414 suppressions are narrowly documented, and product lint passes. An __all__ rewrite or importing a private module from callers offers no verified simplification and weakens the public seam.'),
+    'F26': ('verify', 'Resolved for this reviewed HEAD by the approved fresh suite: 3501 passed, zero failed/skipped. Also retain Bob\'s exact project suite command in the verification queue for the mandatory rework verification pass; no separate implementation task.'),
+    'F27': ('discard', 'Six unchanged invalid-version parameters (-1/0/99 across two sources) intentionally preserve rejection behavior. The changed API-v1 parameters fail against base and pin API-v2 rejection. Passing baseline cases are not a missing behavior test.'),
+    'F28': ('discard', 'Empty-input metrics behavior is intentionally unchanged. The canonical/mixed-row tests fail against base and pin the new projection. Retaining a baseline empty-input regression is valid coverage.'),
+}
+groups = [
+    {
+        'title': 'Commit complete batch and capability lifecycle state',
+        'ids': ['F01','F05','F08','F22'],
+        'files': ['src/ovcaq/state/commands.py','src/ovcaq/runtime/supervisor.py','tests/state/test_supervisor_commands.py','tests/runtime/test_supervisor.py','tests/runtime/test_capability_lifecycle.py','tests/packaging/test_installed_supervisor_cli.py'],
+        'details': 'Repair shared mutable batch state only through guarded StateService/StateStore transactions. Under the existing run lock, initialize an unstarted batch with a unique nonblank id, running status and injected started_at before publishing its first metric; preserve an already-started batch and all workflow-owned subtrees. Prove installed init -> run launches without a test-only batch SEED. Capability failure must set batch.status=attention. Success clears only attention belonging to the successful capability, never unrelated attention. Before terminal archive commit completed status and injected completed_at even when no required capabilities exist. Empty-drain completion must use injected time. Preserve required pending/running/failed guards, pins, attempt evidence, and drained PRD results. No state schema migration or new public CLI verb is needed.',
+        'contract': 'Failure sets attempt/capability `failed`,\n`batch.status="attention"`, and `control.attention` in one transaction without\nchanging `work`, `tasks`, `review`, or `batch.completed_prds`.\nSuccess sets attempt/capability `succeeded`; when every required capability succeeded it\nsets `batch.status="completed"`, `batch.completed_at`, and clears capability\nattention.',
+        'risk': True,
+    },
+    {
+        'title': 'Bound all unproductive retries and unify boundary policy',
+        'ids': ['F04','F07','F17','F25'],
+        'files': ['src/ovcaq/runtime/decision.py','src/ovcaq/runtime/supervisor.py','src/ovcaq/state/commands.py','tests/runtime/test_decision.py','tests/runtime/test_supervisor.py','tests/state/test_supervisor_commands.py'],
+        'details': 'Repair the pure decision algorithm and its persisted shared progress counter. Count every unchanged workflow attempt toward the existing phase_repeat_limit, including alternating failure classes, while preserving separate class budgets and their configured reset semantics. Do not add an arbitrary new retry cap. Reset stale persisted repeats when the stored fingerprint does not match the current snapshot. Put startup/boundary decisions in the pure decision module and enforce attention/pause checks before any launch or completion. Preserve drained required-capability ordering and committed progress over provider exit noise. Boundary resume may clear operator boundary intent; a phase-level paused state must retain its reason/routing key and require its proper recovery decision. Do not silently resume a review-cap or systemic pause. F06 bootstrap PAUSE-versus-HALT policy is deferred; do not change it as a side effect.',
+        'contract': 'Agent final prose is never authoritative.\nAll waits/retries/caps come from configuration and injectable time.\nA state failure is fail-closed: do not launch another agent when the\nauthoritative handoff cannot be read or written.',
+        'risk': True,
+    },
+    {
+        'title': 'Persist stop and state-failure outcomes before relaunch',
+        'ids': ['F30','F31','F32'],
+        'files': ['src/ovcaq/runtime/supervisor.py','src/ovcaq/runtime/session.py','src/ovcaq/state/commands.py','tests/runtime/test_supervisor.py','tests/runtime/test_supervisor_process.py','tests/packaging/test_installed_supervisor_cli.py'],
+        'details': 'Integrate the existing record_state_failure path for supervisor state read/write failures: attempt a sanitized durable notice through the state writer and fall back to its emergency record only when that write fails. Check existing emergency evidence before capability reconciliation or other supervisor mutations. Ensure a subsequent run cannot relaunch until the existing acknowledgement/recovery path resolves the recorded failure. On SIGTERM/SIGINT and ovcaq stop, retain an explicit stopped outcome in existing control fields when the store works, in addition to summary/metric evidence: set control.pause_requested=true and control.pause_reason to a Notice with site=operator_stop, detail naming the signal number, and created_at from the injected clock. Preserve a pre-existing phase-level pause reason, control.attention, recovery intent, and drained results; never replace a review-cap recovery key. Use the same state-failure path if publication fails. This conservative stop intent requires the existing boundary resume command before another launch. Preserve immediate owned-process cleanup and shell exit statuses. Exercise real subprocess stop and post-failure restart gates, not just manually preseeded emergency files.',
+        'contract': '- stop is an immediate process signal plus a supervisor-authored state outcome;\n- state-write failure is a supervisor error when possible; the only last-resort\n  side channel is an emergency file written when the store cannot function.',
+        'risk': True,
+    },
+    {
+        'title': 'Unify capability execution and honor capability timeouts',
+        'ids': ['F09','F12','F13'],
+        'files': ['src/ovcaq/config.py','src/ovcaq/runtime/capability.py','src/ovcaq/runtime/supervisor.py','src/ovcaq/runtime/session.py','src/ovcaq/supervisor_cli.py','tests/runtime/test_capability_lifecycle.py','tests/runtime/test_supervisor.py','tests/workflow/test_supervisor_configuration.py'],
+        'details': 'Use one CapabilityService run/finish/error-evidence path for pending attempts and explicit retry. Keep existing public start() return compatibility unless a clearly necessary internal helper avoids duplication; do not copy SessionPaths construction into the supervisor. Standardize actionable exception details and preserve exactly one canonical row. Remove duplicate aggregate rebuilds and avoid projecting a live pending capability as interrupted; retain startup interrupted reconciliation and final aggregate publication. Resolve the accepted [capabilities.NAME] timeout_seconds setting with normal explicit/project/user/default precedence and positive bounded validation; do not derive capability timeouts from a workflow phase route. Stale-owner reconciliation must work without an agent phase route, including a paused workflow. Do not implement the real launcher runner owned by PRD 00010.',
+        'contract': '[capabilities.agoge]\ntimeout_seconds = 3600\n\n`retry()` refuses a live owner, reconciles a stale owner, then starts one new attempt.\nA pending row found at startup is normalized in the aggregate view as `decision="interrupted"` without rewriting the retained canonical evidence.',
+        'risk': False, 'contract_edit': True,
+    },
+    {
+        'title': 'Separate capability metrics from workflow-session reports',
+        'ids': ['F10','F11'],
+        'files': ['src/ovcaq/workflow/reports.py','tests/workflow/test_canonical_metrics.py'],
+        'details': 'Replace the hidden usage-filter comprehension with an explicit canonical projection that retains legacy compatibility and makes invalid usage observable instead of silently dropping a row. Treat canonical kind=capability rows distinctly from phase sessions so capability attempts do not inflate workflow session counts or turn otherwise known phase usage totals unknown. Preserve capability raw/canonical metrics and deterministic batch filtering. Cover mixed legacy, phase, capability and malformed usage rows with behavior assertions.',
+        'contract': 'For `kind="phase"`, `phase_launched` and `model` are required and\n`capability` is null. For `kind="capability"`, `capability` is required while\nphase/model are null.\nThe tolerant legacy report loader continues to accept characterized legacy rows.',
+        'risk': False,
+    },
+    {
+        'title': 'Use the supplied supervisor phase settings during routing',
+        'ids': ['F16'],
+        'files': ['src/ovcaq/config.py','src/ovcaq/runtime/supervisor.py','tests/workflow/test_supervisor_configuration.py','tests/runtime/test_supervisor.py'],
+        'details': 'Ensure a validated SupervisorSettings.phases override supplied to Supervisor actually controls tier, effort and timeout used in LaunchRequest. Reuse resolved settings rather than re-reading configuration twice for each phase. Preserve agent-specific tier/effort precedence, prompt literals, supported public configuration inputs and provider-neutral resolved concrete model values. Prefer a small internal resolver/helper over an unnecessary public signature redesign. F14/F15 were discarded: do not pass a tier in the concrete-model field or change the accepted logical tier defaults.',
+        'contract': '`supervisor_settings(..., **explicit)` accepts exactly `runtime` as a\n`RuntimeSettings`, `policy` as a `SupervisorPolicy`, and `phases` as a complete\nbuild/review/done mapping of `PhaseSettings`; each replaces the corresponding\nresolved section.',
+        'risk': False,
+    },
+    {
+        'title': 'Tighten lifecycle assertions and restore source size limits',
+        'ids': ['F03','F18','F20','F29'],
+        'files': ['src/ovcaq/runtime/supervisor.py','tests/runtime/test_supervisor_cli.py','tests/state/test_cli.py'],
+        'details': 'Extract focused timeout-observation and metric-finalization helpers without changing lifecycle behavior; bring _collect and _conclude below the 50-line AST limit. Move the touched parser-inventory test to the lifecycle CLI test module so tests/state/test_cli.py returns below 800 lines without changing unrelated tests. Strengthen incomplete command tests to distinguish a recognized run command missing --no-tui and capability retry missing NAME from an unknown command; the revised cases must fail against the work base. Do not rewrite the unrelated pre-existing config-collision test (F19 discarded).',
+        'contract': '`run` requires `--no-tui` in this PRD and owns the foreground process.\novcaq capability retry NAME\nR12: Function sizes respect the 50-line limit.\nR13: File sizes respect the 800-line limit.',
+        'risk': False,
+    },
+]
+assigned = {fid for group in groups for fid in group['ids']}
+assert assigned | set(special) == set(by_id)
+assert not assigned & set(special)
+decisions = []
+for row in findings:
+    action, reason = special.get(row['id'], ('fix', 'Verified in current source and within PRD 00007; bounded regression task carries this finding verbatim.'))
+    decisions.append({**row, 'action':action, 'reason':reason})
+(REV / '00007-review-1-decisions.json').write_text(json.dumps(decisions, indent=2, ensure_ascii=False) + '\n')
+for number, group in enumerate(groups, 1):
+    quoted = '\n'.join(f"- {by_id[fid]['severity']} {by_id[fid]['issue']} | File: {by_id[fid]['file']} | Consensus: {by_id[fid]['consensus']}" for fid in group['ids'])
+    description = f"{group['title']}\n\nLocation: {'; '.join(group['files'])}\n\nReuse: existing StateStore/StateService, pure decisions, shared runtime ownership and test fixtures.\n\nContract (source requirement/design excerpts):\n{group['contract']}\n\nDetails:\n{group['details']}\n\n### Findings (verbatim)\n{quoted}\n\nAcceptance criteria:\n- Every quoted finding no longer reproduces.\n- Every decision is explainable from committed state plus summary.\n- Metrics, pause, stop, retry, park, and halt contracts pass.\n- Required post-drain capability lifecycle and independent retry pass.\n\nVerify: tests fail for the quoted regression before implementation and pass after; run applicable focused tests, source quality gates, and the work skill's mandatory final verification. Do not read live launcher homes in tests.\n"
+    files_path = TMP / f'plan-review-00007-{number}-files.txt'
+    text_path = TMP / f'plan-review-00007-{number}-text.txt'
+    files_path.write_text('\n'.join(group['files']) + '\n')
+    text_path.write_text(description)
+    argv = ['python3',str(PLUGIN / 'skills/plan-tasks/scripts/classify_tier.py'),'--files-file',str(files_path),'--text-file',str(text_path),'--lines','150']
+    if group.get('risk'):
+        argv.append('--algorithmic-risk')
+    if group.get('contract_edit'):
+        argv.append('--contract-edit')
+    tier = json.loads(subprocess.check_output(argv,text=True))
+    estimate = int(sum((ROOT / p).stat().st_size for p in group['files']) / 4 + len(description) / 4 + 63000)
+    payload = {'name':f"[D1] {group['title']} (M)",'description':description,'files':group['files'],'blocked_by':[],**tier,'estimated_tokens':estimate,'est_context_peak':estimate+20000,'qwen_eligible':False,'qwen_excluded_reason':'tier' if tier['model']=='opus' else 'files'}
+    (REV / f'00007-review-1-task-{number}.json').write_text(json.dumps(payload,indent=2,ensure_ascii=False) + '\n')
+    print(number, tier, group['ids'])

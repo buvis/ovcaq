@@ -1,0 +1,238 @@
+{
+  "fingerprint": "d567726653d07f181a8590c1a75443699c480c32c4cf7a3de9773a2b186da671",
+  "snapshot": {
+    "prd": "00051-triage-a-single-valid-codex-record-can-crash-th-v1.md",
+    "cycle": 1,
+    "work_start_sha": "e4d765c42d1be7b42c27312e8a5f474d61178b52",
+    "tasks": [
+      {
+        "id": "1",
+        "attempts": [
+          {
+            "attempt": 1,
+            "actual_model": "gpt-6.1-sol",
+            "actual_provider": "openai",
+            "implementor": "codex",
+            "outcome": "completed"
+          }
+        ]
+      },
+      {
+        "id": "2",
+        "attempts": [
+          {
+            "attempt": 1,
+            "actual_model": "gpt-6-astra",
+            "actual_provider": "openai",
+            "implementor": "codex",
+            "outcome": "completed"
+          },
+          {
+            "attempt": 2,
+            "actual_model": "gpt-6.1-sol",
+            "actual_provider": "openai",
+            "implementor": "codex",
+            "outcome": "completed"
+          }
+        ]
+      },
+      {
+        "id": "3",
+        "attempts": [
+          {
+            "attempt": 1,
+            "actual_model": "gpt-6.1-sol",
+            "actual_provider": "openai",
+            "implementor": "codex",
+            "outcome": "completed"
+          },
+          {
+            "attempt": 2,
+            "actual_model": "gpt-6.1-sol",
+            "actual_provider": "openai",
+            "implementor": "codex",
+            "outcome": "completed"
+          }
+        ]
+      },
+      {
+        "id": "4",
+        "attempts": [
+          {
+            "attempt": 1,
+            "actual_model": "gpt-6.1-sol",
+            "actual_provider": "openai",
+            "implementor": "codex",
+            "outcome": "completed"
+          }
+        ]
+      },
+      {
+        "id": "5",
+        "attempts": [
+          {
+            "attempt": 1,
+            "actual_model": "gpt-6.1-sol",
+            "actual_provider": "openai",
+            "implementor": "codex",
+            "outcome": "completed"
+          }
+        ]
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "task": "1",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-09T21-35-45-01a1222a-1393-77f0-8b7b-5f587b9df501.jsonl",
+      "line": 8,
+      "sha256": "d7c64dee24115f27df3aed726cf068cf03b7c8e3bdf19386e7afaa1ab368710c"
+    },
+    {
+      "task": "1",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-09T21-38-31-01a1222c-9e54-7623-843a-8dcd44e769b3.jsonl",
+      "line": 8,
+      "sha256": "cf1366d1000907587cf9ddfccf88552bc299fbcded80adf4bb87e67ccaa34c7c"
+    },
+    {
+      "task": "1",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-09T21-41-18-01a1222f-28ab-7a83-8aa7-b5bcac53ab61.jsonl",
+      "line": 8,
+      "sha256": "117a9d743efac85d40f66540ce56a32bdfc1eb07d49faefecc430db4ea6f7487"
+    },
+    {
+      "task": "1",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-09T21-49-36-01a12236-c301-7352-918d-41585ad32d94.jsonl",
+      "line": 8,
+      "sha256": "120a18077192c13cd17c1ccee8a1ec1e646293d3eb514952471cc425ace1c5ea"
+    },
+    {
+      "task": "1",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-09T21-53-42-01a1223a-835e-7452-99d7-f2de7a4239ff.jsonl",
+      "line": 8,
+      "sha256": "7e692455cf58e8fc9e19fc485502cb2648355796d767faa1917a0e6843e9ee92"
+    },
+    {
+      "task": "2",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-10T09-32-12-01a124ba-014b-7f22-85be-580a1695d453.jsonl",
+      "line": 8,
+      "sha256": "8fa6f88776400eac79b962f2ac5efb953ba48545d062a5dcd8276da7c72fe127"
+    },
+    {
+      "task": "2",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-10T09-44-22-01a124c5-258a-77e0-a3ed-c37cff37bc64.jsonl",
+      "line": 8,
+      "sha256": "189c6ce998e7e01eb86d920407e0612dfe7102465ed4f88de0ea11b7f6f96a4b"
+    },
+    {
+      "task": "2",
+      "role": "implementation",
+      "model": "gpt-6-astra",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-10T10-24-06-01a124e9-85bd-70b3-b2b3-4dd1b9c0a904.jsonl",
+      "line": 8,
+      "sha256": "e746572eb509df237a6ce764c099b777690404caee631aeb2c6b19c43b36e8f4"
+    },
+    {
+      "task": "2",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-10T10-25-34-01a124ea-dfae-7592-bac8-066ce30c3bd0.jsonl",
+      "line": 8,
+      "sha256": "b836ceb0bb42823af9bfa0882d5661acd6298b9d7f0ab9fd5da6d66609b4ad62"
+    },
+    {
+      "task": "2",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-10T10-27-07-01a124ec-47c6-7de1-ab84-7f8b3821e2b5.jsonl",
+      "line": 8,
+      "sha256": "46fee437d38d47fa26cf8d3db8c812f1514219d0082290b0071eeaa70be79d71"
+    },
+    {
+      "task": "3",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-10T10-31-18-01a124f0-1d2f-7e71-b398-bf83f0d21ade.jsonl",
+      "line": 8,
+      "sha256": "07731fb3687629c8e1617f0900e9dbeaa61474a63ac6e54123914ce2f6090616"
+    },
+    {
+      "task": "3",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-10T10-35-27-01a124f3-eb3f-72a1-929a-484b3eb76e38.jsonl",
+      "line": 8,
+      "sha256": "39eb2d0e9b4e1694f04a07247a4f624c05c97c9066a739a0fdbf89275ae108e6"
+    },
+    {
+      "task": "3",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-10T10-40-38-01a124f8-aabb-7dd0-95ee-eda2e0b2c83f.jsonl",
+      "line": 8,
+      "sha256": "0da4d1a95164a13b05ff5caa1a41d039e72d3ef8f1c2de88b7a3ea24d2126f81"
+    },
+    {
+      "task": "3",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-10T10-43-33-01a124fb-534a-7943-9e70-fbe97fc7ff8d.jsonl",
+      "line": 8,
+      "sha256": "aec1ed1b2fe27ca495e95ba4a1f40b8774b88dc0592b0265e9e2bf8057e7a85c"
+    },
+    {
+      "task": "4",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-10T10-46-21-01a124fd-e4cf-77c2-9dcf-4c3a235e4274.jsonl",
+      "line": 8,
+      "sha256": "47655df3474d33ee976b3d5a260f68293476d5f52a3bc9ee31cf4f476d376129"
+    },
+    {
+      "task": "4",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-10T10-51-40-01a12502-c44a-7621-a16b-721c475d3b7b.jsonl",
+      "line": 8,
+      "sha256": "3605d19ac8b373ecfb0f7450f79cff67fe90368224f48cac87c5033a5a77c415"
+    },
+    {
+      "task": "5",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-10T10-55-13-01a12506-016b-7cd3-8623-7c626aa9ed07.jsonl",
+      "line": 8,
+      "sha256": "471a2cfb16147cf9605b0fd9e453ceed1e55af0e2fe38e925cf74216dabefe5a"
+    },
+    {
+      "task": "2",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-10T11-02-15-01a1250c-71c9-7841-9966-b65d29b058a9.jsonl",
+      "line": 8,
+      "sha256": "c08ed042e1e733c0ae3ffd435d6c0b1a984137755a8170b9187e1bc0a565df7e"
+    },
+    {
+      "task": "3",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/implementation-logs/rollout-2026-10-10T11-03-54-01a1250d-f5f8-7a20-b271-ba0589ad2b81.jsonl",
+      "line": 8,
+      "sha256": "4db01adab94fb594c340e8d53e6e3928d5c7dbc29ca4ca438fb3db21f36a9b40"
+    }
+  ]
+}

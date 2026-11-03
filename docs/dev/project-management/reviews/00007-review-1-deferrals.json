@@ -1,0 +1,53 @@
+[
+  {
+    "cycle": 1,
+    "finding_id": "F02",
+    "issue": "`ovcaq run --no-tui` and `ovcaq capability retry agoge` always select an unavailable capability runner, so required capabilities can never succeed through the installed public commands",
+    "file": "src/ovcaq/supervisor_cli.py:49",
+    "severity": "high",
+    "consensus": "2/3",
+    "action": "cycle 1: defer",
+    "reason": "Confirmed limitation, owned by PRD 00010. PRD 00007 P05-T06 explicitly requires the lifecycle against a fake; the coverage manifest assigns required real agoge execution and independent retry to 00010, whose provisioned execution proof integrates the real launcher runner. Keep the failure visible; do not introduce launcher-specific execution before that phase.",
+    "status": "open",
+    "type": "review-deferral",
+    "prd": "00007-supervisor-loop-v1.md"
+  },
+  {
+    "cycle": 1,
+    "finding_id": "F06",
+    "issue": "A bootstrap repeat-stall (no PRD) returns PAUSE with exit 0 and writes no pause intent; the plan (\u00a712.3 step 11) says halt. CI reads it as success, and every rerun burns another session before pausing again (test asserts `(0, PAUSE, 3)`)",
+    "file": "src/ovcaq/runtime/decision.py:276",
+    "severity": "medium",
+    "consensus": "1/3",
+    "action": "cycle 1: defer",
+    "reason": "Requirements conflict: accepted design and task 1 explicitly specify bootstrap repeat PAUSE, while plan section 12.3 says bootstrap halt. The implementation matches the reviewed design. Preserve the existing behavior until the plan/design policy is reconciled; record the zero exit and missing durable intent limitation.",
+    "status": "open",
+    "type": "review-deferral",
+    "prd": "00007-supervisor-loop-v1.md"
+  },
+  {
+    "cycle": 1,
+    "finding_id": "F23",
+    "issue": "`ovcaq run` never calls `driver.probe()` (`build_driver` skips discovery and probe), so a missing agent binary shows up as a spawn exception after session evidence already exists",
+    "file": "src/ovcaq/supervisor_cli.py:57",
+    "severity": "low",
+    "consensus": "1/3",
+    "action": "cycle 1: defer",
+    "reason": "Driver readiness/provisioning preflight belongs to PRD 00010 P08-T05/P08-T06 and must compose binary/auth/plugin readiness together. Current spawn failure remains explicit and preserves evidence. Retain this requirement for that owning PRD rather than inventing a partial live connectivity preflight in the fake-focused Phase 5.",
+    "status": "open",
+    "type": "review-deferral",
+    "prd": "00007-supervisor-loop-v1.md"
+  },
+  {
+    "type": "assumed-ambiguity",
+    "cycle": 1,
+    "finding_id": "F06",
+    "issue": "A bootstrap repeat-stall (no PRD) returns PAUSE with exit 0 and writes no pause intent; the plan (\u00a712.3 step 11) says halt. CI reads it as success, and every rerun burns another session before pausing again (test asserts `(0, PAUSE, 3)`)",
+    "severity": "medium",
+    "action": "cycle 1: retain accepted design pending policy reconciliation",
+    "reason": "Conservative existing behavior; this choice blocks none of the seven repairs.",
+    "question": "Bootstrap repeat PAUSE in accepted design conflicts with HALT in the umbrella plan.",
+    "assumption": "Keep PAUSE in this bounded rework, and defer the PAUSE/HALT policy decision; do not silently redefine bootstrap exit semantics.",
+    "prd": "00007-supervisor-loop-v1.md"
+  }
+]

@@ -1,0 +1,1 @@
+Write only /Users/bob/git/src/github.com/buvis/ovcaq/tests/runtime/test_supervisor.py import lines20–45. Read only imports and named test_boundary_pause_returns_zero_without_launching context as needed; never dump wholefile. Python skills read-only.

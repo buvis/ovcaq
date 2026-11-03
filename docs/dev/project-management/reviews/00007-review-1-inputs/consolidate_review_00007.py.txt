@@ -1,0 +1,62 @@
+"""Assemble durable review evidence without editing workflow state."""
+
+import hashlib
+import json
+import re
+import shutil
+import subprocess
+from pathlib import Path
+
+ROOT = Path('/Users/bob/git/src/github.com/buvis/ovcaq')
+PLUGIN = Path('/Users/bob/.claude/plugins/cache/buvis-plugins/autopilot/0.6.0')
+TMP = ROOT / 'docs/dev/tmp'
+REV = ROOT / 'docs/dev/project-management/reviews'
+ID = '00007-1-20261002'
+STEM = '00007-supervisor-loop-v1'
+raw = {name: (TMP / f'{name}-output-{ID}.txt').read_text() for name in ('alice', 'blake')}
+raw['bob'] = (REV / '00007-review-1-bob.txt').read_text()
+receipt_path = REV / '00007-review-1-bob.txt.receipt.json'
+receipt = json.loads(receipt_path.read_text())
+assert receipt['sha256'] == hashlib.sha256((REV / '00007-review-1-bob.txt').read_bytes()).hexdigest()
+assert receipt['raw_sha256'] == hashlib.sha256(Path(receipt['raw']).read_bytes()).hexdigest()
+for name, ids in {'alice': [f'R{x}' for x in [1,2,3,4,6,7,8,9,10,11,12,13]], 'blake': [f'B{x}' for x in range(1,20)], 'bob': [f'D{x}' for x in range(1,6)]}.items():
+    assert all(re.search(rf'^{rule}: (pass|fail)$', raw[name], re.M) for rule in ids)
+result = subprocess.run(['python3', str(PLUGIN / 'skills/review-work-completion/scripts/consolidate_findings.py'), f'ALICE:{TMP / f"alice-output-{ID}.txt"}', f'BLAKE:{TMP / f"blake-output-{ID}.txt"}', f'BOB:{REV / "00007-review-1-bob.txt"}'], text=True, capture_output=True, check=True)
+(REV / '00007-review-1-consolidation-raw.md').write_text(result.stderr + '\n' + result.stdout)
+findings = []
+for line in result.stdout.splitlines():
+    if not line.startswith('| ['):
+        continue
+    cells = line[2:-2].split(' | ')
+    assert len(cells) == 6, cells
+    findings.append(dict(zip(('consensus','severity','issue','file','task','finders'), cells)))
+# The helper's fuzzy matcher merged these distinct defects by common file.
+for name, prefix in [('alice', 'Extract finalized metric'), ('bob', '`record_state_failure`'), ('bob', '`Supervisor.run` reconciles'), ('bob', '`ovcaq stop` leaves')]:
+    line = next(x for x in raw[name].splitlines() if x.startswith(f'[{name.upper()}] ') and prefix in x)
+    match = re.fullmatch(r'\[\w+\] (\S+) (.*?) \| File: (.*?) \| Task: (.*)', line)
+    assert match
+    severity, issue, file, task = match.groups()
+    findings.append({'consensus':'[1/3]', 'severity':severity, 'issue':issue, 'file':file, 'task':task, 'finders':name.upper()})
+# Mechanical findings are retained even when reviewer wording differs.
+for label in ('tautology','replay'):
+    for line in (TMP / f'{label}-{ID}.md').read_text().splitlines():
+        if not line.startswith('[MECH]'):
+            continue
+        match = re.fullmatch(r'\[MECH\] (\S+) (.*?) \| File: (.*?) \| Task: (.*)', line)
+        severity, issue, file, task = match.groups()
+        candidates = [row for row in findings if row['file'].split(':')[0] == file.split(':')[0] and any(term in row['issue'] and term in issue for term in ('test_init_rejects', 'test_incompatible_versions', 'test_empty_metrics', 'test_incomplete_lifecycle'))]
+        assert len(candidates) == 1, line
+        candidates[0]['finders'] += ', mech-check'
+        if severity == '🟡' and candidates[0]['severity'] == '⚪':
+            candidates[0]['severity'] = severity
+for number, row in enumerate(findings, 1):
+    row['id'] = f'F{number:02d}'
+(REV / '00007-review-1-findings.json').write_text(json.dumps(findings, indent=2, ensure_ascii=False) + '\n')
+inputs = REV / '00007-review-1-inputs'
+inputs.mkdir(exist_ok=True)
+for path in TMP.glob(f'*-{ID}.*'):
+    if path.is_file():
+        shutil.copy2(path, inputs / path.name)
+for name in ('alice', 'blake'):
+    (REV / f'00007-review-1-{name}.txt').write_text(raw[name])
+print('\n'.join(f"{x['id']} {x['severity']} {x['issue'][:100]}" for x in findings))

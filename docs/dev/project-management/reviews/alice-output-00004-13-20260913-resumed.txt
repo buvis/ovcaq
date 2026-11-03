@@ -1,0 +1,38 @@
+[ALICE] 🟡 `_ensure_directory_chain` read-opens every ancestor from `/`, so a configured runtime below a traversable search-only ancestor is rejected as “not a real directory”; preserve retry confirmation of every OVCAQ-created ancestor with durable creation-boundary/ownership evidence, while avoiding read-open/fsync of pre-existing ancestors above that boundary | File: src/ovcaq/workflow/_files.py:252 | Task: P02-T06/P02-T09
+[ALICE] 🟡 `_ensure_directory_chain` includes `/` as a level although `/` is its own parent, causing a redundant open, identity verification, and fsync; skip the root self-step because the first component iteration already opens, verifies, and syncs `/` as its parent | File: src/ovcaq/workflow/_files.py:255 | Task: P02-T06
+
+P02 reconciliation:
+
+- P02-T01: Selection, configured lifecycle paths, WIP priority, backlog fallback, hold exclusion, drain behavior, invalid entries, and symlink handling are implemented and tested in `selection.py`, `workflow/paths.py`, `test_selection.py`, and CLI tests.
+- P02-T02: Bounded frontmatter parsing, defaults, validation, warnings, abstract tier handling, active-PRD binding, and transactional application are implemented and covered by frontmatter, application, CLI, and installed tests.
+- P02-T03: The closed six-row transition table, complete effects, unknown/drained refusal, purity, and single-CAS `phase_complete` are covered by transition, application, and CLI tests.
+- P02-T04: Resume precedence and all phase branches are covered by resume and characterized-fixture tests. Plan ceiling, override semantics, tolerant counting, and graph validation are covered by policy and CLI tests.
+- P02-T05: Exact per-PRD reset ownership, batch preservation, deterministic completion summaries, invalid-state refusal, conflict detection, and idempotence are covered by records and application tests.
+- P02-T06: Ledger validation, serialized atomic publication, operation-ID replay/conflict behavior, directory and lock identity, and prospective depth checks are covered. New installed tests terminate children before parent fsync at both missing-ancestor positions, then require fresh retry/replay to confirm the same inodes, preserve state, and produce one record. Peer-creation and failed-confirmation cases preserve the peer inode and reap all children. Acceptance remains open because traversable search-only ancestry is rejected.
+- P02-T07: Durable intent, verified move, record, reset, commit, all seven saga boundaries, exact replay, conflict refusal, artifact/directory replacement, publication failure, mutation fencing, and systemic second park are covered by saga, identity, publication, artifact, and installed tests.
+- P02-T08: Deterministic audit/report/metrics rendering, sorting, missing-value reduction, section replacement, duplicate collapse, idempotence, path validation, serialized publication, and final-state archival are covered by golden, report, overlap, and installed tests. Contention now reports the precise publication path.
+- P02-T09: Configured runtime routing and legacy-path removal are implemented and guarded, but acceptance remains open because `_ensure_directory_chain` requires read permission on every ancestor through `/`. A fresh `/private/tmp` probe confirmed an `0111` directory remained traversable while `O_RDONLY|O_DIRECTORY` failed with errno 13.
+- P02-T10: Parser-derived workflow documentation and command inventory are directly equality-tested against `docs/operations.md` and `docs/state-protocol.md`, with installed help coverage.
+
+Phase exits:
+
+- Phase A: pass. Pure lifecycle fixtures, exhaustive transition rows, frontmatter/policy matrices, reset/completion tests, and CAS application tests cover the exit.
+- Phase B: fail. Interruption and replay coverage is strong, including the new actual-exit ancestry cases, but the valid configured-path failure leaves P02-T06/P02-T09 incomplete.
+- Phase C: pass. Installed commands and renderers are covered; parser/docs equality is direct; AST and string guards prohibit higher-layer imports, provider identifiers, external skill commands, and the legacy runtime path.
+
+I inspected the PRD, Phase 2 plan and exits, coverage manifest, all eight PRD-00004 migration routes, and the corresponding 55 `current_system.toml` entries: frontmatter 2, policy 3, records 28, reports 13, resume 2, selection 3, transitions 3, parser/docs 1. I also inspected the scoped diff, workflow implementations, relevant unit/integration/installed tests, and boundary guards.
+
+I used `rg`, `sed`, `nl`, `wc`, `awk`, `git log`, `git diff --stat`, `git diff --check`, and `git status --short`. Diff-check succeeded and status was empty. I ran the bounded permission probe under `/private/tmp` and removed it. I reused the recorded exact-HEAD verification: sync, 1,352 tests with zero failed/skipped, Ruff check, Ruff format check, mypy, and build all passed. I did not rerun the suite, independently execute every historical failpoint, or establish universal full-base fail-first replay.
+
+R1: fail
+R2: fail
+R3: pass
+R4: fail
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: fail
+R13: fail

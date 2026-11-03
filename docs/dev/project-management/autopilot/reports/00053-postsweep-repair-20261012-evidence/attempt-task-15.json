@@ -1,0 +1,16 @@
+{
+  "attempt": 1,
+  "model": "sonnet",
+  "outcome": "completed",
+  "review_cycle": 2,
+  "cause": null,
+  "implementor": "codex",
+  "preflight_outcome": null,
+  "pipeline": "lean",
+  "self_deslop": "skipped:trivial",
+  "style_gate": "clean",
+  "split_hygiene": "clean",
+  "review": "closures resolved; LOW signature wrapping addressed by formatter",
+  "actual_model": "gpt-6.1-sol",
+  "actual_provider": "openai"
+}

@@ -1,0 +1,1 @@
+Do not write state or commit. Preserve tests and assertions. Run only the named test file with uv --cache-dir /private/tmp/ovcaq-rework-uv run pytest -q --tb=line. Report exact FILES_TOUCHED and command results. Tool exec_command has no timeout argument; use supported yield_time_ms and await sessions.

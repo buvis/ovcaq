@@ -1,0 +1,17 @@
+{
+  "commit": "b95bcaf4fe1aa6edcf80762257aea40acec8ab37",
+  "agent": "/root/sanitize_contract",
+  "session": "01a112a8-c2f2-7d30-9403-ac645607272b",
+  "actual_provider": "openai",
+  "actual_effort": "medium",
+  "evidence": [
+    {
+      "task": "23",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/reports/00009-cycle1-recovery-worker.jsonl",
+      "line": 8,
+      "sha256": "30cde436699fe8fdf78661881a8d2bba3f726e02dc8a67b4bfecb91f64347b3e"
+    }
+  ]
+}

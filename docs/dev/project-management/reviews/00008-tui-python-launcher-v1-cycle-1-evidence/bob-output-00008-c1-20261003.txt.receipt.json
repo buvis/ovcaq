@@ -1,0 +1,14 @@
+{
+  "provider": "claude",
+  "model": "opus",
+  "started": 1791027100.8037992,
+  "completed": 1791027747.496598,
+  "output": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/bob-output-00008-c1-20261003.txt",
+  "sha256": "3d75e1d05999814bf8be8b342711d8a878aa68a2e8a6e1353291b81ee579cc56",
+  "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/bob-output-00008-c1-20261003-7b4796456c67456d942e589519e489a6.jsonl",
+  "raw_sha256": "ef6c0d350a4d79f126c88e3b7cf77081d2e0acc078934bdf01f944581893928b",
+  "thread_id": "e8ad97ab-c9a5-4741-a6dd-cdee8fcdf941",
+  "root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+  "prd": "00008-tui-python-launcher-v1.md",
+  "cycle": 1
+}

@@ -1,0 +1,378 @@
+Adversarial task 11 report
+
+All 8 isolated wrong mutations pass the COMPLETE 19-case supplied selection, including preservation nodes. No source implementation or task/architecture prose was read. Existing implementation was copied opaquely; baseline appended public-interface wrappers derived from supplied tests. Each signal test ran in a bounded pytest subprocess with approved elevated real macOS process checks. Input read stayed below 100K.
+
+Baseline appended to src/ovcaq/runtime/supervisor.py:
+
+# Test-derived durable-stop baseline, implemented only through public interfaces.
+_devon_init = Supervisor.__init__
+_devon_run = Supervisor.run
+_devon_once = Supervisor.run_once
+_devon_apply = Supervisor.apply
+
+def _devon_capture(self, root, **kwargs):
+    _devon_init(self, root, **kwargs)
+    self._devon_store = kwargs['store']
+    self._devon_paths = kwargs['settings'].runtime.paths
+    self._devon_clock = kwargs['clock']
+
+def _devon_failure(self):
+    from ovcaq.runtime.session import record_state_failure
+    def notice(site, detail):
+        def update(state):
+            state['control']['attention'] = {'site': site, 'detail': detail, 'created_at': self._devon_clock.now().isoformat().replace('+00:00', 'Z')}
+        self._devon_store.transaction(update)
+    record_state_failure(self._devon_paths, site='supervisor', detail='State unavailable', write_state_notice=notice)
+
+def _devon_checked_run(self):
+    from ovcaq.runtime.session import require_no_emergency_failure
+    require_no_emergency_failure(self._devon_paths)
+    try:
+        outcome = _devon_run(self)
+    except Exception:
+        _devon_failure(self)
+        return SupervisorOutcome(1, SupervisorDecision(DecisionKind.HALT, 'State unavailable'), 0)
+    if outcome.exit_code in (129,130,143):
+        number = outcome.exit_code - 128
+        def stop(state):
+            state['control']['pause_requested'] = True
+            if state['control']['pause_reason'] is None:
+                state['control']['pause_reason'] = {'site':'operator_stop','detail':f'Signal {number}', 'created_at':self._devon_clock.now().isoformat().replace('+00:00', 'Z')}
+        try:
+            self._devon_store.transaction(stop)
+        except Exception:
+            _devon_failure(self)
+    elif outcome.decision.kind == DecisionKind.HALT:
+        _devon_failure(self)
+    return outcome
+
+def _devon_checked_once(self):
+    outcome = _devon_once(self)
+    if outcome.state_error:
+        _devon_failure(self)
+    return outcome
+
+def _devon_checked_apply(self, decision):
+    try:
+        outcome = _devon_apply(self, decision)
+    except Exception:
+        _devon_failure(self)
+        return False
+    if not outcome and decision.kind == DecisionKind.COMPLETE:
+        _devon_failure(self)
+    return outcome
+
+Supervisor.__init__ = _devon_capture
+Supervisor.run = _devon_checked_run
+Supervisor.run_once = _devon_checked_once
+Supervisor.apply = _devon_checked_apply
+
+Baseline output:
+COMMAND: ['mise', 'exec', '--', 'uv', 'run', 'pytest', 'tests/runtime/test_supervisor_durable_stop.py', 'tests/packaging/test_installed_supervisor_stop_restart.py', 'tests/runtime/test_supervisor.py::test_post_session_state_read_failure_is_observable_and_prevents_relaunch', 'tests/runtime/test_supervisor.py::test_session_setup_failure_finalizes_metric_and_completion_evidence', 'tests/runtime/test_supervisor_process.py::test_signal_returns_shell_exit_and_finalizes_evidence_after_group_cleanup', '--tb=short', '-q']
+...................                                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/devon11-0zdmsd24/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-6d4a34f2-1a04-490f-a105-83c7e3930d59
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-6d4a34f2-1a04-490f-a105-83c7e3930d59'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/devon11-0zdmsd24/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-d05557f9-c5b2-4b82-8a97-ca3ee9948de4
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-d05557f9-c5b2-4b82-8a97-ca3ee9948de4'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+19 passed, 2 warnings in 4.31s
+
+EXIT: 0
+Runner (each child timeout 285 seconds):
+import os, subprocess, sys
+from pathlib import Path
+root=Path(__file__).parent
+env=dict(os.environ,UV_CACHE_DIR='/private/tmp/ovcaq-uv-cache')
+command=['mise','exec','--','uv','run','pytest','tests/runtime/test_supervisor_durable_stop.py','tests/packaging/test_installed_supervisor_stop_restart.py','tests/runtime/test_supervisor.py::test_post_session_state_read_failure_is_observable_and_prevents_relaunch','tests/runtime/test_supervisor.py::test_session_setup_failure_finalizes_metric_and_completion_evidence','tests/runtime/test_supervisor_process.py::test_signal_returns_shell_exit_and_finalizes_evidence_after_group_cleanup','--tb=short','-q']
+r=subprocess.run(command,cwd=root,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=285)
+(root/(sys.argv[1]+'.log')).write_text('COMMAND: '+repr(command)+'\n'+r.stdout+'\nEXIT: '+str(r.returncode))
+print(r.stdout)
+print('EXIT',r.returncode)
+
+Execution commands:
+mise exec -- python /private/tmp/devon11-0zdmsd24/run_selection.py baseline4
+mise exec -- python /private/tmp/devon11-0zdmsd24/mutations.py
+mise exec -- python /private/tmp/devon11-0zdmsd24/retry_mutations.py
+Environment: UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache
+
+Mutation 1: SIGHUP is not durable
+Exact patch relative to green baseline:
+--- baseline/supervisor.py
++++ mutated/supervisor.py
+@@ -617,7 +617,7 @@
+     except Exception:
+         _devon_failure(self)
+         return SupervisorOutcome(1, SupervisorDecision(DecisionKind.HALT, 'State unavailable'), 0)
+-    if outcome.exit_code in (129,130,143):
++    if outcome.exit_code in (130,143):
+         number = outcome.exit_code - 128
+         def stop(state):
+             state['control']['pause_requested'] = True
+
+Passing output:
+COMMAND: ['mise', 'exec', '--', 'uv', 'run', 'pytest', 'tests/runtime/test_supervisor_durable_stop.py', 'tests/packaging/test_installed_supervisor_stop_restart.py', 'tests/runtime/test_supervisor.py::test_post_session_state_read_failure_is_observable_and_prevents_relaunch', 'tests/runtime/test_supervisor.py::test_session_setup_failure_finalizes_metric_and_completion_evidence', 'tests/runtime/test_supervisor_process.py::test_signal_returns_shell_exit_and_finalizes_evidence_after_group_cleanup', '--tb=short', '-q']
+...................                                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/devon11-0zdmsd24/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-4dba8939-77df-467f-b257-7e9b87873c0b
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-4dba8939-77df-467f-b257-7e9b87873c0b'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/devon11-0zdmsd24/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-1759719d-629a-4888-8eda-e272a67b7a73
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-1759719d-629a-4888-8eda-e272a67b7a73'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+19 passed, 2 warnings in 4.33s
+
+EXIT: 0
+Mutation 2: Stop clock is constant
+Exact patch relative to green baseline:
+--- baseline/supervisor.py
++++ mutated/supervisor.py
+@@ -622,7 +622,7 @@
+         def stop(state):
+             state['control']['pause_requested'] = True
+             if state['control']['pause_reason'] is None:
+-                state['control']['pause_reason'] = {'site':'operator_stop','detail':f'Signal {number}', 'created_at':self._devon_clock.now().isoformat().replace('+00:00', 'Z')}
++                state['control']['pause_reason'] = {'site':'operator_stop','detail':f'Signal {number}', 'created_at':'2026-10-02T12:00:02Z'}
+         try:
+             self._devon_store.transaction(stop)
+         except Exception:
+
+Passing output:
+COMMAND: ['mise', 'exec', '--', 'uv', 'run', 'pytest', 'tests/runtime/test_supervisor_durable_stop.py', 'tests/packaging/test_installed_supervisor_stop_restart.py', 'tests/runtime/test_supervisor.py::test_post_session_state_read_failure_is_observable_and_prevents_relaunch', 'tests/runtime/test_supervisor.py::test_session_setup_failure_finalizes_metric_and_completion_evidence', 'tests/runtime/test_supervisor_process.py::test_signal_returns_shell_exit_and_finalizes_evidence_after_group_cleanup', '--tb=short', '-q']
+...................                                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/devon11-0zdmsd24/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-89e641d1-7779-4fed-b7f8-21c2d5bfd114
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-89e641d1-7779-4fed-b7f8-21c2d5bfd114'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/devon11-0zdmsd24/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-544deaa1-df52-419a-9440-84dd9fecf4d8
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-544deaa1-df52-419a-9440-84dd9fecf4d8'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+19 passed, 2 warnings in 4.35s
+
+EXIT: 0
+Mutation 3: SIGINT destroys existing pause reason
+Exact patch relative to green baseline:
+--- baseline/supervisor.py
++++ mutated/supervisor.py
+@@ -621,7 +621,7 @@
+         number = outcome.exit_code - 128
+         def stop(state):
+             state['control']['pause_requested'] = True
+-            if state['control']['pause_reason'] is None:
++            if state['control']['pause_reason'] is None or number == 2:
+                 state['control']['pause_reason'] = {'site':'operator_stop','detail':f'Signal {number}', 'created_at':self._devon_clock.now().isoformat().replace('+00:00', 'Z')}
+         try:
+             self._devon_store.transaction(stop)
+
+Passing output:
+COMMAND: ['mise', 'exec', '--', 'uv', 'run', 'pytest', 'tests/runtime/test_supervisor_durable_stop.py', 'tests/packaging/test_installed_supervisor_stop_restart.py', 'tests/runtime/test_supervisor.py::test_post_session_state_read_failure_is_observable_and_prevents_relaunch', 'tests/runtime/test_supervisor.py::test_session_setup_failure_finalizes_metric_and_completion_evidence', 'tests/runtime/test_supervisor_process.py::test_signal_returns_shell_exit_and_finalizes_evidence_after_group_cleanup', '--tb=short', '-q']
+...................                                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/devon11-0zdmsd24/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-5acb8b0c-1a21-4e3b-bbca-159e314a4e8f
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-5acb8b0c-1a21-4e3b-bbca-159e314a4e8f'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/devon11-0zdmsd24/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-508c302c-b69b-4d49-92c7-041b0497aeb3
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-508c302c-b69b-4d49-92c7-041b0497aeb3'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+19 passed, 2 warnings in 4.62s
+
+EXIT: 0
+Mutation 4: Stop discards tasks
+Exact patch relative to green baseline:
+--- baseline/supervisor.py
++++ mutated/supervisor.py
+@@ -621,6 +621,7 @@
+         number = outcome.exit_code - 128
+         def stop(state):
+             state['control']['pause_requested'] = True
++            state['tasks'] = []
+             if state['control']['pause_reason'] is None:
+                 state['control']['pause_reason'] = {'site':'operator_stop','detail':f'Signal {number}', 'created_at':self._devon_clock.now().isoformat().replace('+00:00', 'Z')}
+         try:
+
+Passing output:
+COMMAND: ['mise', 'exec', '--', 'uv', 'run', 'pytest', 'tests/runtime/test_supervisor_durable_stop.py', 'tests/packaging/test_installed_supervisor_stop_restart.py', 'tests/runtime/test_supervisor.py::test_post_session_state_read_failure_is_observable_and_prevents_relaunch', 'tests/runtime/test_supervisor.py::test_session_setup_failure_finalizes_metric_and_completion_evidence', 'tests/runtime/test_supervisor_process.py::test_signal_returns_shell_exit_and_finalizes_evidence_after_group_cleanup', '--tb=short', '-q']
+...................                                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/devon11-0zdmsd24/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-b54b0bcb-de14-4d54-a69f-2901596c5992
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-b54b0bcb-de14-4d54-a69f-2901596c5992'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/devon11-0zdmsd24/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-f0c89d32-1734-46d7-9bd9-7a677c57735f
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-f0c89d32-1734-46d7-9bd9-7a677c57735f'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+19 passed, 2 warnings in 4.34s
+
+EXIT: 0
+Mutation 5: Stop resets review history
+Exact patch relative to green baseline:
+--- baseline/supervisor.py
++++ mutated/supervisor.py
+@@ -621,6 +621,8 @@
+         number = outcome.exit_code - 128
+         def stop(state):
+             state['control']['pause_requested'] = True
++            from ovcaq.state.schema import new_state
++            state['review'] = new_state(repo_root=Path('.'))['review']
+             if state['control']['pause_reason'] is None:
+                 state['control']['pause_reason'] = {'site':'operator_stop','detail':f'Signal {number}', 'created_at':self._devon_clock.now().isoformat().replace('+00:00', 'Z')}
+         try:
+
+Passing output:
+COMMAND: ['mise', 'exec', '--', 'uv', 'run', 'pytest', 'tests/runtime/test_supervisor_durable_stop.py', 'tests/packaging/test_installed_supervisor_stop_restart.py', 'tests/runtime/test_supervisor.py::test_post_session_state_read_failure_is_observable_and_prevents_relaunch', 'tests/runtime/test_supervisor.py::test_session_setup_failure_finalizes_metric_and_completion_evidence', 'tests/runtime/test_supervisor_process.py::test_signal_returns_shell_exit_and_finalizes_evidence_after_group_cleanup', '--tb=short', '-q']
+...................                                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/devon11-0zdmsd24/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-d8e3a3df-95b2-472e-876d-7c54e4c75f49
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-d8e3a3df-95b2-472e-876d-7c54e4c75f49'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/devon11-0zdmsd24/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-7947c852-3df9-4ac0-adb8-253c790948b9
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-7947c852-3df9-4ac0-adb8-253c790948b9'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+19 passed, 2 warnings in 4.62s
+
+EXIT: 0
+Mutation 6: Acknowledgement ignores invalid state
+Exact patch relative to green baseline:
+--- baseline/session.py
++++ mutated/session.py
+@@ -769,3 +769,7 @@
+     from ovcaq.runtime._retention import apply_purge as apply
+ 
+     return apply(plan)
++
++_devon_ack = acknowledge_emergency_failure
++def acknowledge_emergency_failure(paths, *, state_valid):
++    return _devon_ack(paths, state_valid=True)
+
+Passing output:
+COMMAND: ['mise', 'exec', '--', 'uv', 'run', 'pytest', 'tests/runtime/test_supervisor_durable_stop.py', 'tests/packaging/test_installed_supervisor_stop_restart.py', 'tests/runtime/test_supervisor.py::test_post_session_state_read_failure_is_observable_and_prevents_relaunch', 'tests/runtime/test_supervisor.py::test_session_setup_failure_finalizes_metric_and_completion_evidence', 'tests/runtime/test_supervisor_process.py::test_signal_returns_shell_exit_and_finalizes_evidence_after_group_cleanup', '--tb=short', '-q']
+...................                                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/devon11-0zdmsd24/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-3d8278bb-e043-4002-b646-f4f876bfe7db
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-3d8278bb-e043-4002-b646-f4f876bfe7db'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/devon11-0zdmsd24/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-ee37ff42-49aa-41b9-a9fe-9098152ad149
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-ee37ff42-49aa-41b9-a9fe-9098152ad149'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+19 passed, 2 warnings in 4.32s
+
+EXIT: 0
+Mutation 7: Failure notice has stale timestamp
+Exact patch relative to green baseline:
+--- baseline/supervisor.py
++++ mutated/supervisor.py
+@@ -605,7 +605,7 @@
+     from ovcaq.runtime.session import record_state_failure
+     def notice(site, detail):
+         def update(state):
+-            state['control']['attention'] = {'site': site, 'detail': detail, 'created_at': self._devon_clock.now().isoformat().replace('+00:00', 'Z')}
++            state['control']['attention'] = {'site': site, 'detail': detail, 'created_at': '2000-01-01T00:00:00Z'}
+         self._devon_store.transaction(update)
+     record_state_failure(self._devon_paths, site='supervisor', detail='State unavailable', write_state_notice=notice)
+ 
+
+Passing output:
+COMMAND: ['mise', 'exec', '--', 'uv', 'run', 'pytest', 'tests/runtime/test_supervisor_durable_stop.py', 'tests/packaging/test_installed_supervisor_stop_restart.py', 'tests/runtime/test_supervisor.py::test_post_session_state_read_failure_is_observable_and_prevents_relaunch', 'tests/runtime/test_supervisor.py::test_session_setup_failure_finalizes_metric_and_completion_evidence', 'tests/runtime/test_supervisor_process.py::test_signal_returns_shell_exit_and_finalizes_evidence_after_group_cleanup', '--tb=short', '-q']
+...................                                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/devon11-0zdmsd24/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-c7175a60-7f84-41d6-8659-f45215872511
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-c7175a60-7f84-41d6-8659-f45215872511'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/devon11-0zdmsd24/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-90220ef0-2812-4991-8909-607fc95b8d2a
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-90220ef0-2812-4991-8909-607fc95b8d2a'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+19 passed, 2 warnings in 4.29s
+
+EXIT: 0
+Mutation 8: State failure clobbers current phase
+Exact patch relative to green baseline:
+--- baseline/supervisor.py
++++ mutated/supervisor.py
+@@ -605,6 +605,7 @@
+     from ovcaq.runtime.session import record_state_failure
+     def notice(site, detail):
+         def update(state):
++            state['work']['phase'] = 'review'
+             state['control']['attention'] = {'site': site, 'detail': detail, 'created_at': self._devon_clock.now().isoformat().replace('+00:00', 'Z')}
+         self._devon_store.transaction(update)
+     record_state_failure(self._devon_paths, site='supervisor', detail='State unavailable', write_state_notice=notice)
+
+Passing output:
+COMMAND: ['mise', 'exec', '--', 'uv', 'run', 'pytest', 'tests/runtime/test_supervisor_durable_stop.py', 'tests/packaging/test_installed_supervisor_stop_restart.py', 'tests/runtime/test_supervisor.py::test_post_session_state_read_failure_is_observable_and_prevents_relaunch', 'tests/runtime/test_supervisor.py::test_session_setup_failure_finalizes_metric_and_completion_evidence', 'tests/runtime/test_supervisor_process.py::test_signal_returns_shell_exit_and_finalizes_evidence_after_group_cleanup', '--tb=short', '-q']
+...................                                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/devon11-0zdmsd24/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-efd8fd1c-0957-4961-ac73-c4ce5327f6d5
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-efd8fd1c-0957-4961-ac73-c4ce5327f6d5'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /private/tmp/devon11-0zdmsd24/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-e8418da9-2b1a-4d27-8af2-092941c0929a
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-e8418da9-2b1a-4d27-8af2-092941c0929a'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+19 passed, 2 warnings in 4.38s
+
+EXIT: 0
+Weak points:
+1. test_signal_returns_shell_exit_and_finalizes_evidence_after_group_cleanup - SIGHUP exits correctly without persisting operator-stop intent - assert pause_requested, operator_stop notice, and blocked fresh-process restart for SIGHUP.
+2. test_signal_persists_stop_with_injected_clock_and_preserves_existing_intent - fixed 2026-10-02T12:00:02Z timestamp passes as injected time - parameterize at least two distinct clock dates and assert each actual clock value.
+3. test_signal_persists_stop_with_injected_clock_and_preserves_existing_intent - existing pause reason can be overwritten only on SIGINT - cross preserve=True with SIGINT, SIGTERM and SIGHUP and compare full existing notice.
+4. test_signal_persists_stop_with_injected_clock_and_preserves_existing_intent - stop can erase all task entries because selected fixtures contain none and task state is not compared - seed a nonempty task record and assert tasks are unchanged.
+5. test_signal_persists_stop_with_injected_clock_and_preserves_existing_intent - stop can reset review history to default because selected fixtures contain no distinctive review data - seed a review cycle/lens/extension and compare the entire review section.
+6. test_state_write_failure_halts_and_blocks_restart_until_acknowledged - acknowledgement can discard state_valid=False and clear the barrier anyway - assert invalid-state acknowledgement raises and leaves the emergency barrier intact.
+7. test_transient_state_read_failure_records_sanitized_durable_notice - failure notice may always claim year 2000 - assert created_at matches injected clock, with more than one clock value.
+8. test_transient_state_read_failure_records_sanitized_durable_notice - recording attention can also change work.phase from build to review - snapshot and compare work, batch, tasks, review, recovery and pre-existing control intent around the fault.
+
+Failed attempts: Baseline iterations initially missed StateIOError subclass handling, UTC Z formatting and apply(False) on normal paused boundaries; these were corrected before adversarial mutations. First review-reset mutation referenced an unavailable RuntimePaths.root attribute and failed 5 tests; corrected to new_state(repo_root=Path('.')). First phase mutation set next_phase=paused and was caught by HALT assertion; changing current phase=review passes. These are not reported as surviving weaknesses.
+
+Restoration: exact original bytes restored for every mutated copied module. SHA256:
+{
+  "/private/tmp/devon11-0zdmsd24/src/ovcaq/runtime/supervisor.py": "90ae6d0546b5815c003b9232ccf7de6a023d07a356cded0b025c48d1747da692",
+  "/private/tmp/devon11-0zdmsd24/src/ovcaq/runtime/session.py": "d033f694b6b3db4397185d4874400c5f22e7619e4b0da9fcfff2dcf501ea327e",
+  "/private/tmp/devon11-0zdmsd24/src/ovcaq/runtime/process.py": "85a38a85a4d29ea336cc67a86e7f481a1dbcf20af6e4a12928ccf2264696fff5"
+}
+All 109 copied Python test files byte-identical to shared originals. Shared source/tests never modified. All run sessions were awaited; subprocess.run joined every pytest child.
+
+Final process check: ps -axo pid,ppid,command filtered for isolated root and pytest ranges returned only the checking shell and rg, no surviving test/supervisor/driver processes. Adversarial helper files baseline.patchcode, mutations.py, retry_mutations.py and run_selection.py in /private/tmp/devon11-0zdmsd24 were overwritten with the mandated placeholder after copying exact implementation patches into this report. No commits or state changes.

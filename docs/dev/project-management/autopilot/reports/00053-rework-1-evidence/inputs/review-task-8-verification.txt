@@ -1,0 +1,2 @@
+uv run --cache-dir /private/tmp/ovcaq-uv-cache pytest -q --tb=line tests/drivers/test_adapter_outcomes.py tests/drivers/test_codex_launch.py tests/drivers/test_adapter_failure_classes.py tests/drivers/test_codex_decode_terminals.py
+exit 0; 230 passed; two pre-existing cleanup warnings

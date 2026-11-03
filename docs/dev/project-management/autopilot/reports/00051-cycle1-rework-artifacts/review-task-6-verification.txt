@@ -1,0 +1,6 @@
+Command: mise exec -- uv run --no-sync pytest tests/drivers/test_codex_detail_safety.py::test_bounded_detail_redacts_control_boundaries_and_reconstructed_credentials tests/drivers/test_codex_detail_safety.py::test_native_failure_saves_redaction_at_control_boundaries_and_inside_credentials tests/events/test_unicode_frames.py::test_deep_json_recursion_preserves_native_gap_and_durable_evidence -q --tb=line
+Environment: UV_CACHE_DIR=/private/tmp/ovcaq-rework-uv-cache
+Exit: 0
+97 passed, 2 warnings in 0.11s
+Warnings: pytest could not clean pre-existing temporary garbage directories in sandbox.
+Worker additionally verified both full named files: 431 passed, exit 0.

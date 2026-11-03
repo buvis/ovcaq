@@ -1,0 +1,39 @@
+[
+  {
+    "command": [
+      "python3",
+      "/Users/bob/.claude/plugins/cache/buvis-plugins/autopilot/0.5.1/skills/review-work-completion/scripts/check_review_file.py",
+      "--review-file",
+      "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00004-workflow-core-v1-cycle-13-incomplete.md",
+      "--require-codex-guard"
+    ],
+    "exit": 0,
+    "expected": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "python3",
+      "/Users/bob/.claude/plugins/cache/buvis-plugins/autopilot/0.5.1/skills/run-autopilot/cli/__main__.py",
+      "gate",
+      "--review-file",
+      "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00004-workflow-core-v1-cycle-13-incomplete.md",
+      "--require-codex-guard",
+      "--assert-constraint-met"
+    ],
+    "exit": 2,
+    "expected": 2,
+    "stdout": "",
+    "stderr": "codex_rung_guard: constraint UNMET; doubt-roster constraint not certified\n"
+  },
+  {
+    "check": "autocodex host review boundary",
+    "result": "missing Claude Bob receipt",
+    "expected": "missing Claude Bob receipt"
+  },
+  {
+    "check": "state/schema and task counts",
+    "result": "valid paused state, 13/13, cycle/cap/base/batch preserved"
+  }
+]

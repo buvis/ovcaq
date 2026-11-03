@@ -1,0 +1,54 @@
+{
+  "prd": "00008-tui-python-launcher-v1.md",
+  "resolution": "User authorized preserving artifacts, excluding docs/dev/project-management from Ruff, and resuming.",
+  "changes": [
+    "Added tool.ruff.extend-exclude for docs/dev/project-management.",
+    "Formatted 10 changed source/test files.",
+    "Restored the frozen inventory's historical dev/local sentence; its checksum test now passes."
+  ],
+  "gates": [
+    {
+      "command": "mise exec -- uv run ruff check . --output-format concise",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv run ruff format --check . --output-format concise",
+      "exit": 0,
+      "formatted_files": 188
+    },
+    {
+      "command": "mise exec -- uv run mypy src/ovcaq",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv build",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv run pytest tests/characterization/test_migration_contract.py -q",
+      "exit": 0,
+      "passed": 6
+    },
+    {
+      "command": "mise exec -- uv run pytest -q",
+      "exit": 2,
+      "interrupted": true,
+      "passed_before_interrupt": 940,
+      "failed_before_interrupt": 13,
+      "note": "Interrupted after repeated path-migration failures; counts are partial. One inventory failure was fixed during the run and independently verified."
+    }
+  ],
+  "remaining_problem": "Uncommitted path migration changes config.workflow_settings and tests to docs/dev/project-management/ovcaq, but src/ovcaq/paths.py RUNTIME_PARTS remains ('dev', 'local', 'ovcaq'); initialization and workflow/TUI controls therefore target different state trees.",
+  "next_action": "Reopen final verification task 10 and resume build. Reconcile shared runtime paths and affected expectations, preserve frozen characterization evidence, run required gates, then hand off to a fresh full review.",
+  "relevant_files": [
+    "src/ovcaq/paths.py",
+    "src/ovcaq/config.py",
+    "src/ovcaq/workflow/reports.py",
+    "tests/integration/test_terminal_lifecycle.py",
+    "tests/packaging/test_input_integrity.py",
+    "tests/state/test_cli.py",
+    "tests/state/test_cli_limits.py",
+    "tests/workflow/saga_support.py"
+  ],
+  "full_suite_green": false
+}

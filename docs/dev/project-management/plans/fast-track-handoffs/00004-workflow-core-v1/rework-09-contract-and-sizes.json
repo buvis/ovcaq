@@ -1,0 +1,320 @@
+{
+  "head_before_commit": "78f916c366f74105b76e6f07d80a7a1aeb251e9f",
+  "source_plan_sha256": "43c75d3d94189351a0c0203c06563eced320889ae2d4cb7ae4e0300873e845a5",
+  "inventory_sha256": "d2a839b6c3b43c00c66114e0f20fe0d85b6169449562a72cf41ae30768eefdb9",
+  "owned_count": 55,
+  "owned_rows": [
+    {
+      "id": "CMD-014",
+      "target": "src/ovcaq/workflow/frontmatter.py",
+      "summary": "Parses PRD controls, warns on defaults, and transactionally applies the derived state fields."
+    },
+    {
+      "id": "TEST-006",
+      "target": "src/ovcaq/workflow/frontmatter.py",
+      "summary": "Characterizes PRD frontmatter parsing, defaults, enum and integer validation, malformed blocks, optional flags, and warnings."
+    },
+    {
+      "id": "CMD-012",
+      "target": "src/ovcaq/workflow/policy.py",
+      "summary": "Reads the task snapshot and returns a distinct failure when its count exceeds the loop ceiling."
+    },
+    {
+      "id": "DEC-071",
+      "target": "src/ovcaq/workflow/policy.py",
+      "summary": "A real task list longer than the ceiling is over-limit; missing or non-list tasks count as zero."
+    },
+    {
+      "id": "TEST-012",
+      "target": "src/ovcaq/workflow/policy.py",
+      "summary": "Characterizes the fifteen-task plan ceiling, override semantics, tolerant task counting, no mutation, CLI exposure, and missing-state failure."
+    },
+    {
+      "id": "ART-016",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "deferred/{batch}-deferred.json append ledger used for stalls and decisions carried to batch end."
+    },
+    {
+      "id": "ART-017",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Independent sidecar advisory lock serializing deferred-ledger updates."
+    },
+    {
+      "id": "ART-026",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Verified JSON handoff from supervisor death/stall decision to the next workflow session."
+    },
+    {
+      "id": "CMD-007",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Runs the durable stall saga for a PRD, including hold move, defer record, and reset."
+    },
+    {
+      "id": "CMD-008",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Consumes or reconciles a park request and applies the systemic-park breaker."
+    },
+    {
+      "id": "CMD-010",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Appends one JSON object to a batch deferred ledger with PRD attribution."
+    },
+    {
+      "id": "CMD-036",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Appends a computed completed-PRD batch summary and resets consecutive parks."
+    },
+    {
+      "id": "DEC-076",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Malformed or conflicting stall intent, mismatched PRD, or missing batch identity refuses before filesystem effects."
+    },
+    {
+      "id": "DEC-077",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Hold creation/move, deferred append, or state transaction failure returns its distinct code while durable intent preserves retryability."
+    },
+    {
+      "id": "DEC-078",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Verified move plus deduplicated defer record commits PRD reset, park-breaker rule, and intent deletion atomically."
+    },
+    {
+      "id": "DEC-079",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "No marker returns no-work unless a pending stall intent exists, which is reconciled first."
+    },
+    {
+      "id": "DEC-080",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Malformed marker or PRD no longer in wip is deleted and returns ignored without moving another PRD."
+    },
+    {
+      "id": "DEC-081",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "The first consecutive wrapper-death park moves and resets the PRD, increments the breaker, and continues."
+    },
+    {
+      "id": "DEC-082",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "The second consecutive wrapper-death park also writes paused/systemic_park state and returns the halt code."
+    },
+    {
+      "id": "ENV-025",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Test-only durable-saga interruption selector for named stall/park boundaries."
+    },
+    {
+      "id": "STATE-112",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Per-batch durable deferred object containing batch_id and ordered items."
+    },
+    {
+      "id": "STATE-113",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Caller record copied with prd attribution; op_id deduplicates retrying stall appends."
+    },
+    {
+      "id": "STATE-121",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "JSON handoff carrying prd and reason for the next session's durable park saga."
+    },
+    {
+      "id": "TEST-001",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Characterizes subprocess dispatch, stall and park outcomes, reset and restore behavior, deferred records, diagnostics, and exit codes."
+    },
+    {
+      "id": "TEST-002",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Characterizes walk-up default path resolution and explicit state or PRD-directory override precedence for stall and park."
+    },
+    {
+      "id": "TEST-008",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Characterizes selection, phase transitions, resume targets, convergence, rework, drain, frontmatter application, walk-up paths, and future-state refusal."
+    },
+    {
+      "id": "TEST-013",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Characterizes deferred-log append and deduplication plus the authoritative per-PRD reset field set and preservation rules."
+    },
+    {
+      "id": "TEST-014",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Characterizes record, stall, and park boundary failures, corrupt shapes, invalid identifiers, filesystem errors, idempotent retry, and no-effect guarantees."
+    },
+    {
+      "id": "TEST-015",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Pins that importing records through the CLI does not leak the scripts directory into the interpreter search path."
+    },
+    {
+      "id": "TEST-016",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Characterizes park-marker reconciliation, crash recovery, conflicting stall intents, atomic reset and counter updates, and systemic second-park halt."
+    },
+    {
+      "id": "TEST-017",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Characterizes durable stall intent, verified PRD moves, deferred append, reset composition, crash-point retries, conflicts, and site-specific park-counter handling."
+    },
+    {
+      "id": "TEST-038",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Pins phase-two stall effects: PRD moves to hold, stall clearing, per-PRD reset, batch preservation, hold creation, and sequence retention."
+    },
+    {
+      "id": "TEST-052",
+      "target": "src/ovcaq/workflow/records.py",
+      "summary": "Characterizes atomic completed-PRD record creation, task and cycle defaults, escalated and autonomous decision counts, blank-row filtering, PRD matching, reset, and sibling preservation."
+    },
+    {
+      "id": "ART-012",
+      "target": "src/ovcaq/workflow/reports.py",
+      "summary": "Drained state archived as reports/{batch}-state-final.json before post-drain actions."
+    },
+    {
+      "id": "ART-013",
+      "target": "src/ovcaq/workflow/reports.py",
+      "summary": "Durable batch Markdown report with replaceable per-PRD sections, stalled records, and final summary."
+    },
+    {
+      "id": "ART-014",
+      "target": "src/ovcaq/workflow/reports.py",
+      "summary": "Durable review-directory Markdown projection of autonomous, deferred, and doubt decision arrays."
+    },
+    {
+      "id": "ART-039",
+      "target": "src/ovcaq/workflow/reports.py",
+      "summary": "Current sanitized rendering inputs, including legacy and rich nested state shapes."
+    },
+    {
+      "id": "ART-040",
+      "target": "src/ovcaq/workflow/reports.py",
+      "summary": "Current archived batch-state contract with completed-PRD and decision history."
+    },
+    {
+      "id": "ART-041",
+      "target": "src/ovcaq/workflow/reports.py",
+      "summary": "Expected audit, metrics, report-section, report-summary, and status rendering contracts."
+    },
+    {
+      "id": "CMD-018",
+      "target": "src/ovcaq/workflow/reports.py",
+      "summary": "Renders the per-PRD decision audit from state arrays into the repository review directory."
+    },
+    {
+      "id": "CMD-019",
+      "target": "src/ovcaq/workflow/reports.py",
+      "summary": "Creates or updates batch report PRD, stalled, or summary sections from state and metrics."
+    },
+    {
+      "id": "CMD-020",
+      "target": "src/ovcaq/workflow/reports.py",
+      "summary": "Prints a deterministic Markdown summary of loop metrics rows."
+    },
+    {
+      "id": "TEST-018",
+      "target": "src/ovcaq/workflow/reports.py",
+      "summary": "Characterizes status, audit, metrics, and report rendering against goldens, tolerant missing data, batch scoping, decision tables, flags, and rerender effects."
+    },
+    {
+      "id": "TEST-019",
+      "target": "src/ovcaq/workflow/reports.py",
+      "summary": "Pins omission of wholly blank autonomous-decision rows while retaining zero and any populated renderable cell."
+    },
+    {
+      "id": "TEST-020",
+      "target": "src/ovcaq/workflow/reports.py",
+      "summary": "Characterizes exact Markdown section replacement, duplicate collapse, heading boundaries, unrelated-section preservation, and report idempotence."
+    },
+    {
+      "id": "TEST-062",
+      "target": "src/ovcaq/workflow/reports.py",
+      "summary": "Characterizes batch-summary binding of completed-PRD counts and cycle and decision totals: nonzero retained values, legitimate empty zeros, and unknown sums for legacy or mixed records."
+    },
+    {
+      "id": "CMD-016",
+      "target": "src/ovcaq/workflow/resume.py",
+      "summary": "Returns the authoritative resume target after schema-version preflight."
+    },
+    {
+      "id": "TEST-021",
+      "target": "src/ovcaq/workflow/resume.py",
+      "summary": "Characterizes resume-target priority across stall intent, park marker, pause and stall state, phase routing, legacy phases, and systemic park halt without mutation."
+    },
+    {
+      "id": "ART-036",
+      "target": "src/ovcaq/workflow/selection.py",
+      "summary": "backlog, wip, hold, and done files provide selection and verified-move lifecycle evidence."
+    },
+    {
+      "id": "CMD-013",
+      "target": "src/ovcaq/workflow/selection.py",
+      "summary": "Selects deterministically from wip then backlog while excluding hold, returning JSON even when drained."
+    },
+    {
+      "id": "TEST-027",
+      "target": "src/ovcaq/workflow/selection.py",
+      "summary": "Characterizes five-digit PRD sequence parsing, deterministic ordering, Markdown filtering, work-in-progress priority, backlog fallback, drain, and hold exclusion."
+    },
+    {
+      "id": "CMD-009",
+      "target": "src/ovcaq/workflow/transitions.py",
+      "summary": "Atomically clears per-PRD state and restores build counters and phase markers."
+    },
+    {
+      "id": "CMD-015",
+      "target": "src/ovcaq/workflow/transitions.py",
+      "summary": "Applies one named workflow outcome from the current phase as an atomic transition."
+    },
+    {
+      "id": "TEST-029",
+      "target": "src/ovcaq/workflow/transitions.py",
+      "summary": "Characterizes the pure transition table for phase advancement, rework, convergence, per-PRD reset, drain, marker idempotence, and unknown input refusal."
+    },
+    {
+      "id": "TEST-005",
+      "target": "tests/workflow/",
+      "summary": "Pins documentation coverage for every registered CLI subcommand."
+    }
+  ],
+  "changed_file_sizes": [
+    {
+      "file": "src/ovcaq/config.py",
+      "lines": 110,
+      "maximum_function_lines": 37
+    },
+    {
+      "file": "src/ovcaq/workflow/_files.py",
+      "lines": 403,
+      "maximum_function_lines": 48
+    },
+    {
+      "file": "src/ovcaq/workflow/reports.py",
+      "lines": 711,
+      "maximum_function_lines": 45
+    },
+    {
+      "file": "tests/packaging/packaging_support.py",
+      "lines": 265,
+      "maximum_function_lines": 38
+    },
+    {
+      "file": "tests/packaging/test_input_integrity.py",
+      "lines": 157,
+      "maximum_function_lines": 49
+    },
+    {
+      "file": "tests/workflow/test_ledger_publication.py",
+      "lines": 120,
+      "maximum_function_lines": 43
+    },
+    {
+      "file": "tests/workflow/test_report_identity.py",
+      "lines": 90,
+      "maximum_function_lines": 45
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+Tess task 11 — one adversarial strengthen dispatch
+
+Read complete 34,803-byte retry prompt, all eight exact mutation patches/results, and original requirements. No production files read or changed. No commits or workflow changes. Reading remained below 100K for this dispatch.
+
+Explicit dispositions:
+1. in-contract: The unchanged durable-stop requirements explicitly name SIGTERM, SIGINT, and stop. They do not require durable pause publication for SIGHUP. Preserve existing SIGHUP shell-status/process-cleanup semantics with tests/runtime/test_supervisor_process.py::test_signal_returns_shell_exit_and_finalizes_evidence_after_group_cleanup[1]. No new SIGHUP durability contract imposed.
+2. strengthened: tests/runtime/test_supervisor_durable_stop.py::test_signal_persists_stop_with_injected_clock_and_preserves_existing_intent now parameterizes two injected clock dates (2026-10-02T12:00:00Z and 2028-03-17T04:15:36Z). Every new operator_stop notice must match the actual injected clock. A fixed first-date timestamp cannot pass second-date cases.
+3. strengthened: Same test crosses preservation with SIGINT and SIGTERM, comparing the entire pre-existing review_cap notice. SIGHUP preservation/durability is outside the explicitly named task scope as in disposition 1.
+4. strengthened: Same test seeds a nonempty completed task with distinctive metadata and consistent work counters before launching. The entire tasks section must equal its pre-stop snapshot.
+5. strengthened: Same test seeds distinctive nested review extension data and compares the entire review section. Resetting review to new_state defaults now fails.
+6. strengthened selection: Existing tests/runtime/test_session_emergency.py::test_acknowledgement_requires_valid_state_and_durably_archives_exact_evidence already asserts state_valid=False raises ValueError, marker bytes are unchanged, and require_no_emergency_failure still raises. Included this exact guard instead of duplicating sound tests; it passes on the unchanged source.
+7. in-contract: The explicit injected-clock requirement applies to the operator_stop Notice. State-failure requirements specify a sanitized Notice in control.attention, durable HALT, and restart blocking, but do not specify its clock source or timestamp freshness. Do not derive an extra failure-notice timestamp contract solely from an adversarial implementation patch. Existing state validation still checks Notice timestamp format; unchanged failure test retains actionable site/detail, sanitization, durable attention, and restart HALT assertions.
+8. strengthened: tests/runtime/test_supervisor_durable_stop.py::test_transient_state_read_failure_records_sanitized_durable_notice now seeds populated tasks/review plus a pre-existing review_cap routing reason, snapshots the committed state before injecting the actual os.open failure, and compares work, batch, tasks, review, recovery, pause_requested, and pause_reason after notice publication. Mutating current phase from build to review is rejected.
+
+Changed file this dispatch:
+tests/runtime/test_supervisor_durable_stop.py
+No changes to tests already sound or installed stop/restart coverage.
+
+Exact focused command executed:
+UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache uv run pytest tests/runtime/test_supervisor_durable_stop.py::test_transient_state_read_failure_records_sanitized_durable_notice tests/runtime/test_supervisor_durable_stop.py::test_signal_persists_stop_with_injected_clock_and_preserves_existing_intent tests/runtime/test_session_emergency.py::test_acknowledgement_requires_valid_state_and_durably_archives_exact_evidence --tb=line -q
+Approved require_escalated used for real macOS subprocess identity.
+Result: 9 failed, 1 passed, 2 warnings in 1.18s; exit 1.
+All eight stop cases reach expected original pause_requested=false regression; actual read fault raises original unhandled StateIOError. Existing invalid-state acknowledgement guard passes. No fixture/schema failures.
+
+Exact changed-test red nodes:
+tests/runtime/test_supervisor_durable_stop.py::test_transient_state_read_failure_records_sanitized_durable_notice
+tests/runtime/test_supervisor_durable_stop.py::test_signal_persists_stop_with_injected_clock_and_preserves_existing_intent[2026-10-02T12:00:00Z-2-False]
+tests/runtime/test_supervisor_durable_stop.py::test_signal_persists_stop_with_injected_clock_and_preserves_existing_intent[2026-10-02T12:00:00Z-2-True]
+tests/runtime/test_supervisor_durable_stop.py::test_signal_persists_stop_with_injected_clock_and_preserves_existing_intent[2026-10-02T12:00:00Z-15-False]
+tests/runtime/test_supervisor_durable_stop.py::test_signal_persists_stop_with_injected_clock_and_preserves_existing_intent[2026-10-02T12:00:00Z-15-True]
+tests/runtime/test_supervisor_durable_stop.py::test_signal_persists_stop_with_injected_clock_and_preserves_existing_intent[2028-03-17T04:15:36Z-2-False]
+tests/runtime/test_supervisor_durable_stop.py::test_signal_persists_stop_with_injected_clock_and_preserves_existing_intent[2028-03-17T04:15:36Z-2-True]
+tests/runtime/test_supervisor_durable_stop.py::test_signal_persists_stop_with_injected_clock_and_preserves_existing_intent[2028-03-17T04:15:36Z-15-False]
+tests/runtime/test_supervisor_durable_stop.py::test_signal_persists_stop_with_injected_clock_and_preserves_existing_intent[2028-03-17T04:15:36Z-15-True]
+
+Exact passing added selection node:
+tests/runtime/test_session_emergency.py::test_acknowledgement_requires_valid_state_and_durably_archives_exact_evidence
+
+Complete parent regression/preservation selection (each path/node exact):
+tests/runtime/test_supervisor_durable_stop.py
+tests/packaging/test_installed_supervisor_stop_restart.py
+tests/runtime/test_supervisor.py::test_post_session_state_read_failure_is_observable_and_prevents_relaunch
+tests/runtime/test_supervisor.py::test_session_setup_failure_finalizes_metric_and_completion_evidence
+tests/runtime/test_supervisor_process.py::test_signal_returns_shell_exit_and_finalizes_evidence_after_group_cleanup
+tests/runtime/test_session_emergency.py::test_acknowledgement_requires_valid_state_and_durably_archives_exact_evidence
+
+Quality checks:
+Ruff check: passed.
+Ruff format --check: passed.
+Mandatory detect_tautological_tests.py on both task test files: passed, 8 test functions.
+Changed module: 291 lines; largest function: 35 lines.
+No full suite and no adversarial implementation was installed or exercised in shared source.
+
+ASSUMPTIONS: none
+

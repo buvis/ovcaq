@@ -1,0 +1,1 @@
+Move item_activity to codex_events, preserving outputs. Only read the sample test file; no review/design/implementation reads. Only write tests/drivers/test_codex_rework_placement.py.

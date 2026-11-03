@@ -1,0 +1,35 @@
+[BLAKE] 🟠 A single valid Codex record can crash the supervisor, which breaks the "malformed input degrades to `raw.unknown`" rule. Any JSON string holding a lone surrogate escape (a `thread_id`, agent text, error message) passes `CodexDriver.decode` unsanitized. `NormalizedEventWriter.write` then raises `UnicodeEncodeError` at `.encode("utf-8")`. That write sits outside the decoder's `try`, so the error escapes `RawFirstDecoder.feed`. `_stream` then SIGKILLs the child, and `_attempt` re-raises. Confirmed with a one-line repro: `{"type":"item.completed","item":{"id":"m","type":"agent_message","text":"\ud800"}}` gives `UnicodeEncodeError: surrogates not allowed`. The state layer already rejects lone surrogates; the event path does not. | File: src/ovcaq/events/tail.py:143 | Task: B
+[BLAKE] 🟠 The exact version pin rejects the Codex CLI installed on this machine, which blocks the "PRD 00010 can run the first real Codex smoke" criterion. `probe()` requires `codex-cli 0.160.0` exactly, but the installed binary reports `codex-cli 0.160.1`. Running the real probe returns `DriverHealth(healthy=False, detail='codex: observed 0.160.1; pinned 0.160.0; refresh the Codex fixture contract')`, and `ovcaq run --agent codex` refuses before launch. Installed `codex exec --help` flags still match the captured help, so only the pin fails. Any patch release breaks the adapter. | File: src/ovcaq/drivers/codex.py:200 | Task: A
+[BLAKE] 🟠 (Suspected, strong evidence) The rate-limit reset parser only reads made-up phrasings, so real Codex usage limits will always halt instead of wait. `failure_reset` parses only `reset at <ISO-8601>` and `retry after N seconds`. The installed 0.160.1 binary contains the templates `hit your usage limit… Try again at <time>` and `try again in <N>(s|ms|seconds)`, and no `retry after N seconds` usage text. Real messages therefore never produce a reset deadline, and the shared policy HALTs on any rate limit without one. The "with reset" tests pass only because the fake and fixtures use the made-up phrase. | File: src/ovcaq/drivers/codex_events.py:332 | Task: B
+[BLAKE] 🟡 Every JSONL fixture family is schema-synthetic, including healthy, tool-active and lanes. The PRD allows synthesis only where live capture is impractical, naming rate-limited and permission-failed. Provenance says "No safe controlled existing JSONL transcript was supplied", so decoding of "actual" items is checked only against the implementer's reading of the Rust source. Risk is reduced: the installed binary does contain `cache_write_input_tokens`, `reasoning_output_tokens`, `receiver_thread_ids` and `agents_states`. | File: tests/fixtures/codex/v1/provenance.json:170 | Task: A
+[BLAKE] 🟡 Claude model-family names leak in as the provider-neutral default tiers, so Codex fails unless its tiers are named after Claude models. `DEFAULT_PHASE_TIERS = {"build": "sonnet", "review": "opus", "done": "sonnet"}` feeds `supervisor_settings`. A Codex config with tiers like `{standard, deep}` and no per-phase override fails `resolve_phase_route` with `ConfigurationError: Unknown agent tier: sonnet` (confirmed). Every Codex supervisor test works around this with `tiers = { sonnet = ..., opus = ... }`. The neutrality scan misses it because it leaves out `drivers/__init__.py`, and `config.py` imports the names indirectly. | File: src/ovcaq/drivers/__init__.py:18 | Task: C
+[BLAKE] ⚪ The driver accepts options the PRD never asks for. `sandbox` and `approval` can only equal their fixed defaults, so they do nothing. `allow_explicit_model` lets a launch skip the tier map, which the PRD says the model resolves through. | File: src/ovcaq/drivers/codex.py:118 | Task: A
+[BLAKE] ⚪ On the supervisor path the model is resolved through the tier map twice. `resolve_phase_route` hands over a resolved model value, and `build_launch` maps it through `settings.tiers` again, keys first. A value that also names another tier, such as `{default="o3", o3="o3-pro"}`, launches the wrong model. The Claude edge maps values back to keys first; Codex has no such step. | File: src/ovcaq/drivers/codex.py:138 | Task: A
+[BLAKE] ⚪ Failure classification matches bare status codes anywhere in the message. `\b401\b`, `\b403\b`, `\b502\b` and similar fire on unrelated numbers ("processed 401 files"), and authentication wins by precedence, so the wrong retry budget may be used. Suspected; not reproduced. | File: src/ovcaq/drivers/codex_events.py:299 | Task: B
+[BLAKE] ⚪ The full suite passes but warns twice: `PytestWarning: (rm_rf) error removing …/garbage-… Directory not empty`. Suspected cause: a process from a test still writes into tmp after teardown, possibly a fake descendant. Not traced. | File: N/A | Task: C
+
+Evidence:
+- Full suite: `5591 passed, 2 warnings in 217.99s`. Codex-scoped subset: `1492 passed`.
+- Searching `runtime/`, `tui/`, `events/`, `state/` and `workflow/` finds no Codex or Claude strings, so the supervisor has zero Codex branches.
+- Fake build/review/done drains run through the shared `Supervisor`, for both Claude and Codex (`tests/runtime/test_supervisor_adapters.py:164`).
+- Out of scope respected: `provision/codex.py` is unchanged since the skeleton, and no test calls the real `codex` binary.
+
+B1: fail
+B2: pass
+B3: pass
+B4: pass
+B5: fail
+B6: pass
+B7: fail
+B8: pass
+B9: pass
+B10: fail
+B11: fail
+B12: pass
+B13: pass
+B14: pass
+B15: fail
+B16: fail
+B17: pass
+B18: pass
+B19: pass

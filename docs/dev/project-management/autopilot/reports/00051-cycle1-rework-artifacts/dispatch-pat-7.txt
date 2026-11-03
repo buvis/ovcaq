@@ -1,0 +1,166 @@
+
+You are Pat, the per-task code reviewer. Review the single task's committed
+diff below. This review is READ-ONLY: report findings, change nothing.
+
+## Task
+
+Subject: [D1] tests/events/
+
+Description:
+Source review: docs/dev/project-management/reviews/00051-triage-a-single-valid-codex-record-can-crash-th-v1-review-1.md
+
+Disposition and bounded acceptance:
+Record tests/events/test_unicode_frames.py in the design acceptance command beside tests/events/test_unicode_safety.py and tests/events/test_tail.py; do not move tests into a file exceeding 800 lines or rewrite the source PRD. Share the duplicated completion additions table while preserving independent construct/decode test paths and every assertion/case. Acceptance: every quoted finding no longer reproduces; named scalar/frame/tail tests pass and design command runs all relevant boundaries. Coordinate after task 6's design amendment.
+
+### Findings (verbatim)
+- 🟡 tests/events/test_unicode_frames.py:1: The raw-first regressions (byte-exact raw output, gap digest/preview, unchanged adapter state, later healthy terminal) live in `tests/events/test_unicode_frames.py`. The PRD's Task 2 acceptance command (`pytest tests/events/test_unicode_safety.py tests/events/test_tail.py`) and its repository structure both name `test_unicode_safety.py`, so the PRD's own command does not run them. The full suite covers them, and the split keeps the file under 800 lines. Fix: record the file in the PRD or design acceptance text (found by: ALICE, BLAKE, BOB)
+- 🟡 tests/events/test_unicode_safety.py:314: Duplicated test tables: the completion construct and record-decode tests repeat the same `additions` dict and body. Hoist it to one module constant or merge them into one test parametrized over construct vs decode (found by: BOB)
+
+
+Acceptance criteria:
+Every in-scope quoted finding no longer reproduces; preserve settled deferrals and existing contracts.
+
+## Diff under review
+
+```diff
+diff --git a/docs/dev/project-management/designs/00051-triage-a-single-valid-codex-record-can-crash-th-v1-design.md b/docs/dev/project-management/designs/00051-triage-a-single-valid-codex-record-can-crash-th-v1-design.md
+index 7094660..f17af01 100644
+--- a/docs/dev/project-management/designs/00051-triage-a-single-valid-codex-record-can-crash-th-v1-design.md
++++ b/docs/dev/project-management/designs/00051-triage-a-single-valid-codex-record-can-crash-th-v1-design.md
+@@ -318,6 +318,11 @@ helper dependency is introduced.
+ 
+ ## Test strategy outline
+ 
++The approved raw-first test split is `tests/events/test_unicode_frames.py`.
++The Phase 1 acceptance command is `mise exec -- uv run pytest
++tests/events/test_unicode_safety.py tests/events/test_unicode_frames.py
++tests/events/test_tail.py`; it covers shared models and raw-first admission.
++
+ Characterize all three premises against the unchanged implementation first:
+ direct invalid Observation construction, actual escaped-surrogate raw-first
+ publication/state mutation, and the exact synthetic cap reproducer. Capture
+diff --git a/tests/events/test_unicode_safety.py b/tests/events/test_unicode_safety.py
+index dc89d3a..374e22e 100644
+--- a/tests/events/test_unicode_safety.py
++++ b/tests/events/test_unicode_safety.py
+@@ -306,16 +306,20 @@ def test_record_decoder_rejects_invalid_scalar_before_secret_redaction(
+         observation_from_record(decoded_record)
+ 
+ 
++def completion_additions(scalar: str) -> dict[str, Any]:
++    return {
++        "value": {"extra": {"nested": scalar}},
++        "nested_key": {"extra": {scalar: "valid"}},
++        "secret": {"password": scalar},
++    }
++
++
+ @pytest.mark.parametrize("scalar", INVALID_SCALARS, ids=SCALAR_IDS)
+ @pytest.mark.parametrize("location", ["value", "nested_key", "secret"])
+ def test_completion_observation_rejects_invalid_scalars_before_redaction(
+     location: str, scalar: str
+ ) -> None:
+-    additions = {
+-        "value": {"extra": {"nested": scalar}},
+-        "nested_key": {"extra": {scalar: "valid"}},
+-        "secret": {"password": scalar},
+-    }
++    additions = completion_additions(scalar)
+     payload = {"usage": USAGE_DATA, "message": "done", **additions[location]}
+ 
+     with pytest.raises(ValueError, match=SCALAR_ERROR):
+@@ -331,11 +335,7 @@ def test_completion_record_decoder_rejects_invalid_scalars_before_redaction(
+         type=ObservationType.SESSION_COMPLETED,
+         payload={"usage": USAGE_DATA, "message": "done"},
+     )
+-    additions = {
+-        "value": {"extra": {"nested": scalar}},
+-        "nested_key": {"extra": {scalar: "valid"}},
+-        "secret": {"password": scalar},
+-    }
++    additions = completion_additions(scalar)
+     record = observation_record(valid)
+     record["payload"] = {"usage": USAGE_DATA, "message": "done", **additions[location]}
+     decoded_record = invalid_native_record(record, scalar)
+
+```
+
+## Recorded verification
+
+The task's tests were run before this review. This is what they reported:
+
+Command: mise exec -- uv run --no-sync pytest tests/events/test_unicode_safety.py tests/events/test_unicode_frames.py tests/events/test_tail.py -q --tb=line
+Environment: UV_CACHE_DIR=/private/tmp/ovcaq-rework-uv-cache
+Exit: 0
+1251 passed, 2 warnings in 0.73s
+Micro lane: two noncritical findings, named files clean at claim, two-file diff +15/-10, net 5.
+
+
+Judge only from this prompt: the diff above, the task text, and this recorded
+result. Do not read other files, run commands, or re-run the tests. What is not
+in this prompt is not evidence, and a finding you cannot ground in what is here
+is one you should not report.
+
+# Simplification Mandate (step 5.7 reviewer-prompt appendix)
+
+Append this block **verbatim** to every per-task code-reviewer prompt (see
+`SKILL.md` step 5.7). It ships inside the prompt, so it must stay
+self-contained.
+
+> Beyond bugs, actively hunt for simplification in the diff under review. For
+> every added or changed file, ask "what would make this simpler to read
+> without changing what it does?" and flag concrete behavior-preserving
+> opportunities to: reduce complexity (needless indirection, dead branches,
+> single-caller abstractions, nesting deeper than 4 levels, functions over 50
+> lines); eliminate redundancy (logic duplicated within the diff or against
+> existing code, a helper that reimplements a stdlib or existing utility);
+> improve naming (names that state intent, no opaque abbreviations); and
+> remove dead code. Follow CLAUDE.md / AGENTS.md conventions and the
+> surrounding code's style.
+>
+> Report each concrete behavior-preserving simplification as a LOW finding,
+> with file:line, the current shape, and the simpler replacement. LOW findings
+> are carried to the PRD-level review, never retried here.
+>
+> Do not over-simplify: never propose a change that trades clarity for
+> brevity, drops error handling, collapses a deliberate boundary, or removes a
+> documented invariant. Simpler means easier to read and maintain, not shorter
+> at any cost. If a change would alter behavior, it is out of scope — do not
+> flag it.
+
+
+## Reporting contract
+
+Report one finding per line, in exactly this shape:
+
+SEVERITY | file:line | issue | fix
+
+Severities are CRITICAL, HIGH, MEDIUM, LOW.
+
+Severity has a fixed meaning here, and it decides what happens next. MEDIUM is
+reserved for a correctness or security defect this diff introduces that its own
+tests do not catch: a wrong result, an unhandled error path, data loss,
+injection, secret exposure, or a missing authorization check. Style, naming,
+duplication, structure and maintainability are LOW, and so is every
+behavior-preserving simplification, whatever its size. A LOW is noted and
+carried to the PRD-level review; it is never retried in this loop.
+
+If the diff has no findings, emit the literal line:
+
+NO FINDINGS
+
+## Closure verdicts (only when the description carries a findings block)
+
+When the Description above contains a `### Findings (verbatim)` block, this is
+a rework task and each quoted finding is a claim to check. Before your findings
+lines, emit one verdict per quoted finding, in this shape:
+
+CLOSURE | resolved|unresolved | <the finding, quoted> | <one line of evidence from the diff>
+
+Judge each finding against the diff, not against the commit message and not
+against how clean the code reads. A diff that improves the file while leaving
+the quoted defect reachable is `unresolved`. Quote the line that resolves it,
+or say what still reaches the defect. Emit a verdict for every quoted finding,
+including ones you judge already fixed elsewhere.
+
+

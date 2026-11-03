@@ -1,0 +1,15 @@
+[ALICE] 🟠 If the selected supervisor completes during evidence reads, exit revalidation discards even valid selected-owner final state and sets ended=True; ProjectObserver permanently caches unknown, so both viewers return failed/1 for normal completion. Reobserve the attested final selection before caching a terminal result. | File: src/ovcaq/runtime/_run_observation.py:141 | Task: 2
+[ALICE] 🟡 Active observation no longer checks the exact live registry entry; removing or replacing that entry while metadata, PID and run lock remain valid still exposes state and telemetry as running. Restore shared registry validation before and after evidence reads. | File: src/ovcaq/runtime/_run_observation.py:116 | Task: 2
+[ALICE] 🟡 Three copies of the byte-at-a-time subprocess barrier reader appear in test_control_commit_identity, test_guarded_run_mutation and test_launcher_outcomes; extract one integration helper preserving their deadlines and EOF checks. | File: tests/integration/test_control_commit_identity.py:99 | Task: general
+R1: fail
+R2: pass
+R3: pass
+R4: fail
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: pass
+R13: fail

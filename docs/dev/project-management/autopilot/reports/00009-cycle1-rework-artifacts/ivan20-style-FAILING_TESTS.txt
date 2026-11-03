@@ -1,0 +1,1 @@
+FUNCTION | src/ovcaq/events/tail.py:102 | RawFirstDecoder._complete | 60 lines

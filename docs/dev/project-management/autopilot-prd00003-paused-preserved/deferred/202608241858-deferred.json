@@ -1,0 +1,57 @@
+[
+  {
+    "prd": "00002-package-baseline-v1.md",
+    "cycle": 3,
+    "type": "blind-minor",
+    "issue": "Use separate pytest, Ruff, and mypy dependency groups instead of one combined dev group",
+    "severity": "low",
+    "consensus": "blind",
+    "reason": "Minor structural divergence; current reproducible verification and CI behavior pass"
+  },
+  {
+    "prd": "00002-package-baseline-v1.md",
+    "cycle": 3,
+    "type": "blind-minor",
+    "issue": "Create boundary-specific test directories instead of consolidated package-baseline coverage",
+    "severity": "low",
+    "consensus": "blind",
+    "reason": "Minor layout divergence; acceptance behavior is covered by the consolidated import-only tests"
+  },
+  {
+    "prd": "00002-package-baseline-v1.md",
+    "cycle": 2,
+    "type": "autonomous_research",
+    "issue": "Phase 0 reconciliation totals are stale after adding TEST-062",
+    "severity": "medium",
+    "consensus": "1/1",
+    "action": "auto-fix",
+    "reason": "research-passed: root cause identified, distinct documentation repair available, second occurrence",
+    "research": {
+      "category": "recurring-issue",
+      "verdict": "proceed",
+      "checks": [
+        {
+          "check": "previous-fix",
+          "result": "C1-001 updated inventory, route, executable counts, and digest but omitted the curated reconciliation record",
+          "pass": true
+        },
+        {
+          "check": "root-cause",
+          "result": "The rework task scoped machine contract files only, so ignored local evidence totals were not propagated",
+          "pass": true
+        },
+        {
+          "check": "alternative",
+          "result": "Update the canonical Phase 0 reconciliation totals and PRD 00004 ownership count directly",
+          "pass": true
+        },
+        {
+          "check": "recurrence-count",
+          "result": "Second occurrence, below the unconditional third-recurrence escalation threshold",
+          "pass": true
+        }
+      ],
+      "evidence_summary": "C1-001 fixed machine contracts but not curated evidence; direct record reconciliation is distinct and recurrence count is 2"
+    }
+  }
+]

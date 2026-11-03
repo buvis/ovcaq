@@ -1,0 +1,1 @@
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/drivers/codex.py; /Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/drivers/codex_events.py; /Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/drivers/codex_activity.py; /Users/bob/git/src/github.com/buvis/ovcaq/CHANGELOG.md; tests/drivers/test_codex_rework_placement.py read-only

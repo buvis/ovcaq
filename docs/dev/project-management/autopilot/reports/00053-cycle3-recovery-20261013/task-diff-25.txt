@@ -1,0 +1,88 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 1a5b447..632e431 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -43,7 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+ - **drivers**: avoid quadratic backtracking when Codex failure diagnostics contain long whitespace runs after a status prefix.
+ - **drivers**: check Claude's executable against the effective host-plus-configured PATH, matching subprocess lookup with `os.defpath` when host PATH is absent and treating an empty host PATH as unhealthy. Codex already uses the merged environment and searches the current directory with an empty host PATH; empty configured PATH remains invalid.
+ - **drivers**: preserve once-resolved supervised Codex models when their names also match tier keys, retaining direct tier-key precedence and explicit-model validation.
+-- **drivers**: require HTTP/status/error-code context, including native bare-status and HTTP-version forms, for Codex numeric failures; retain existing authentication word diagnostics and genuine rate/quota limits.
++- **drivers**: require HTTP/status/error context, including equals-delimited status, bare error, HTTP error, native bare-status and HTTP-version forms, for Codex numeric failures; retain existing authentication word diagnostics and genuine rate/quota limits.
+ - **drivers**: classify 'Selected model is at capacity' as connectivity so it gets bounded WAIT retries instead of rate-limit handling.
+ - **drivers**: keep remembered completed and failed Codex receiver lanes terminal under late updates; synthetic close failures apply only to remembered unfinished lanes, while closes of terminal lanes retain raw unknown evidence.
+ - **drivers**: redact diagnostic credentials both before and after terminal control removal, preserving original token boundaries and hiding reconstructed tokens before truncation.
+diff --git a/src/ovcaq/drivers/codex_events.py b/src/ovcaq/drivers/codex_events.py
+index b1a7411..7dcbd90 100644
+--- a/src/ovcaq/drivers/codex_events.py
++++ b/src/ovcaq/drivers/codex_events.py
+@@ -298,8 +298,8 @@ def item_tool(
+ def classify_failure(detail: str) -> FailureClass:
+     """Match native diagnostics in authentication-to-agent precedence order."""
+     status = (
+-        r"(?:http(?:/\d+(?:\.\d+)?| status(?: (?:client|server) error \()?)?"
+-        r"|status(?: code)?|error code)\s*+:?\s*+"
++        r"(?:http(?:/\d+(?:\.\d+)?| status(?: (?:client|server) error \()?| error)?"
++        r"|status(?: code)?|error(?: code)?)\s*+[:=]?\s*+"
+     )
+     for failure, pattern in (
+         (
+diff --git a/tests/drivers/test_adapter_failure_classes.py b/tests/drivers/test_adapter_failure_classes.py
+index b8dfbdd..93fca03 100644
+--- a/tests/drivers/test_adapter_failure_classes.py
++++ b/tests/drivers/test_adapter_failure_classes.py
+@@ -54,7 +54,15 @@ def running_snapshot() -> ProgressSnapshot:
+ )
+ @pytest.mark.parametrize(
+     "template",
+-    ["HTTP {code}", "HTTP status: {code}", "status code: {code}", "error code: {code}"],
++    [
++        "HTTP {code}",
++        "HTTP status: {code}",
++        "status code: {code}",
++        "error code: {code}",
++        "StAtUs={code}",
++        "eRrOr {code}:",
++        "hTtP ErRoR {code}",
++    ],
+ )
+ def test_numeric_diagnostics_require_an_explicit_status_or_error_context(
+     code: str, expected: FailureClass, template: str
+@@ -112,15 +120,13 @@ def test_reqwest_and_http_version_status_diagnostics_are_classified(
+     assert classify_failure(detail) is expected
+ 
+ 
+-@pytest.mark.parametrize("detail", ["status=429", "Error 429:"])
+-def test_unsupported_numeric_status_forms_remain_unknown(detail: str) -> None:
+-    assert classify_failure(detail) is FailureClass.UNKNOWN
+-
+-
+-def test_long_whitespace_status_diagnostic_returns_unknown_without_hanging() -> None:
++@pytest.mark.parametrize("prefix", ["status", "status=", "Error", "HTTP error"])
++def test_long_whitespace_status_diagnostic_returns_unknown_without_hanging(
++    prefix: str,
++) -> None:
+     script = (
+         "from ovcaq.drivers.codex_events import classify_failure\n"
+-        'print(classify_failure("status" + " " * 200_000 + "x").value)\n'
++        f'print(classify_failure({prefix!r} + " " * 200_000 + "x").value)\n'
+     )
+     try:
+         result = subprocess.run(
+@@ -166,8 +172,15 @@ def test_ordinary_resource_capacity_is_unknown(detail: str) -> None:
+ 
+ 
+ @pytest.mark.parametrize("code", ["401", "403", "429", "502", "503"])
+-def test_numeric_diagnostics_require_a_complete_status_number(code: str) -> None:
+-    assert classify_failure(f"HTTP {code}0") is FailureClass.UNKNOWN
++@pytest.mark.parametrize(
++    "template", ["HTTP {code}", "status={code}", "Error {code}:", "HTTP error {code}"]
++)
++@pytest.mark.parametrize("extra_digit", ["{code}0", "0{code}"])
++def test_numeric_diagnostics_require_a_complete_status_number(
++    code: str, template: str, extra_digit: str
++) -> None:
++    detail = template.format(code=extra_digit.format(code=code))
++    assert classify_failure(detail) is FailureClass.UNKNOWN
+ 
+ 
+ @pytest.mark.parametrize(

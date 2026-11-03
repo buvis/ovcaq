@@ -1,0 +1,528 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 73a050c..372acf3 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -50,6 +50,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+ 
+ ### Fixed
+ 
++- **cli**: reject unhealthy adapters before foreground agent execution using sanitized health diagnostics.
++- **tui**: show bounded normalized tool, message and plan activity alongside selected-session lanes with literal markup.
++
+ - **drivers**: require exact reviewed Codex version evidence and retain sanitized authentication diagnostics with exit codes and login guidance; drain probe output with 16 KiB memory limits per stream.
+ 
+ - **drivers**: classify native Codex failures before bounding sanitized details, tolerate unsafe tool JSON, close interrupted receiver lanes, accept punctuated reset deadlines, and preserve simultaneous usage and thread gaps.
+diff --git a/docs/driver-protocol.md b/docs/driver-protocol.md
+index 2ec04ec..553769d 100644
+--- a/docs/driver-protocol.md
++++ b/docs/driver-protocol.md
+@@ -30,6 +30,11 @@ plugin API version to equal `DRIVER_API_VERSION`, currently `2`. A different
+ version is rejected with `IncompatibleDriverError`; version negotiation is not
+ performed.
+ 
++The CLI foreground launch path calls the selected driver's `probe()` before
++running the supervisor. Unhealthy version or authentication evidence rejects
++the launch with a bounded, sanitized runtime error before agent execution.
++Directly constructed supervisors do not probe their injected drivers.
++
+ `DriverFactory` is a zero-argument callable, but a registration may use a
+ closure to capture configuration and the per-run identifier, for
+ example `lambda: ClaudeDriver(settings, run_id=run_id)`, where the caller
+@@ -270,8 +275,11 @@ handoff, with no second-phase work in that session.
+ 
+ `ProjectObserver` and panels consume normalized observations and metrics to
+ show provider identity, attributed lanes and exact/estimated usage. Normalized
+-tool/text activity survives in the evidence; current activity panels render
+-lanes only. Unavailable cost is unknown or omitted. Unsupported fields and
++tool lifecycles and text, thinking, error and plan activity render alongside
++lanes. Tool names persist through terminal events that omit them. Activity is
++restricted to the selected run and session, retains at most 256 identities,
++and displays bounded literal details without interpreting markup.
++Unavailable cost is unknown or omitted. Unsupported fields and
+ normalization gaps retain raw-only visibility; out-of-order lane progress can
+ remain unknown.
+ Native receiver IDs do not establish OVCAQ task correlation. The TUI adds no
+diff --git a/src/ovcaq/supervisor_cli.py b/src/ovcaq/supervisor_cli.py
+index 6399a51..eb57a3b 100644
+--- a/src/ovcaq/supervisor_cli.py
++++ b/src/ovcaq/supervisor_cli.py
+@@ -145,7 +145,13 @@ def _report_runtime_error(report: Path | int | None, error: Exception) -> Except
+     if isinstance(error, DuplicateRunError):
+         error = CommandError(ErrorCode.RUNTIME_FORMAT, f"{error}; use `ovcaq attach`")
+     _write_launch_report(report, f"supervisor runtime: {error}")
+-    return error
++    if isinstance(error, CommandError):
++        raise CommandError(error.code, _bounded(str(error)), path=error.path) from error
++    if isinstance(error, (StateError, SchemaError, OSError, ValueError)):
++        return error
++    raise CommandError(
++        ErrorCode.RUNTIME_FORMAT, _bounded(f"supervisor failed: {error}")
++    ) from error
+ 
+ 
+ def _run(args: argparse.Namespace, root: Path) -> SupervisorResult:
+@@ -162,10 +168,17 @@ def _run(args: argparse.Namespace, root: Path) -> SupervisorResult:
+         claimed = _claim_launch_report(settings.runtime.paths.runtime_root, report_path)
+         report = descriptor if descriptor is not None else claimed
+         ensure_runtime_layout(settings.runtime.paths)
++        driver = build_driver(root, args.agent)
++        health = driver.probe()
++        if not health.healthy:
++            raise CommandError(
++                ErrorCode.RUNTIME_FORMAT,
++                _bounded(f"agent is unhealthy: {health.detail}"),
++            )
+         supervisor = Supervisor(
+             root,
+             store=StateStore(settings.runtime.paths.state_file),
+-            driver=build_driver(root, args.agent),
++            driver=driver,
+             settings=settings,
+             capability_runner=lambda _capability: _UnavailableRunner(),
+             clock=_Clock(),
+@@ -177,16 +190,8 @@ def _run(args: argparse.Namespace, root: Path) -> SupervisorResult:
+         elif supervisor._metadata is not None:
+             _write_launch_report(report, json.dumps(asdict(supervisor._metadata)))
+     except Exception as error:
+-        error = _report_runtime_error(report, error)
+-        if isinstance(error, CommandError):
+-            raise CommandError(
+-                error.code, _bounded(str(error)), path=error.path
+-            ) from error
+-        if isinstance(error, (StateError, SchemaError, OSError, ValueError)):
+-            raise
+-        raise CommandError(
+-            ErrorCode.RUNTIME_FORMAT, _bounded(f"supervisor failed: {error}")
+-        ) from error
++        _report_runtime_error(report, error)
++        raise
+     finally:
+         if descriptor is not None:
+             os.close(descriptor)
+diff --git a/src/ovcaq/tui/model.py b/src/ovcaq/tui/model.py
+index c7ef74a..605491f 100644
+--- a/src/ovcaq/tui/model.py
++++ b/src/ovcaq/tui/model.py
+@@ -50,6 +50,7 @@ RunStatus = Literal[
+ LaneStatus = Literal["running", "completed", "failed", "unknown"]
+ 
+ MAX_LANES = 256
++MAX_ACTIVITY = 256
+ MAX_GAPS = 128
+ MAX_USAGE_SESSIONS = 256
+ GAPS_OMITTED = "additional telemetry gaps omitted"
+@@ -79,6 +80,13 @@ class ActivityLane:
+     detail: str | None
+ 
+ 
++@dataclass(frozen=True, slots=True)
++class ActivityItem:
++    label: str
++    status: str | None
++    detail: str | None
++
++
+ @dataclass(frozen=True, slots=True)
+ class UsageView:
+     input_tokens: int | None
+@@ -122,6 +130,7 @@ class ProjectView:
+     telemetry: TelemetryLevel
+     gaps: tuple[str, ...]
+     ended: bool = False
++    activity: tuple[ActivityItem, ...] = ()
+ 
+ 
+ def display_text(value: str, *, limit: int = 512) -> str:
+@@ -301,6 +310,7 @@ class ProjectObserver:
+ 
+     def _clear(self) -> None:
+         self._lanes: dict[str, ActivityLane] = {}
++        self._activity: dict[tuple[str, str], ActivityItem] = {}
+         self._usage: dict[str | None, Mapping[str, object]] = {}
+         self._provider = "unknown"
+         self._normalized = False
+@@ -416,6 +426,7 @@ class ProjectObserver:
+             telemetry=self._telemetry(bounded, raw_evidence, bool(rows)),
+             gaps=bounded,
+             ended=self._ended,
++            activity=tuple(self._activity.values()),
+         )
+ 
+     def _telemetry(
+@@ -522,10 +533,8 @@ class ProjectObserver:
+             return
+         if batch.reset:
+             self._clear()
+-        persistent = [
+-            *self._gaps,
+-            *(f"events {g.kind}: {g.detail}" for g in batch.gaps),
+-        ]
++        persistent = list(self._gaps)
++        persistent.extend(f"events {g.kind}: {g.detail}" for g in batch.gaps)
+         if not batch.complete_history and not batch.backlog:
+             persistent.append("event history incomplete")
+         self._gaps = _bounded_gaps(persistent)
+@@ -550,6 +559,44 @@ class ProjectObserver:
+                     del self._usage[next(iter(self._usage))]
+             elif event.type in _LANE_STATUS and event.lane_id is not None:
+                 self._observe_lane(event, event.lane_id, gaps)
++            elif event.type in (
++                ObservationType.TOOL_STARTED,
++                ObservationType.TOOL_COMPLETED,
++                ObservationType.TOOL_FAILED,
++                ObservationType.ACTIVITY_MESSAGE,
++            ):
++                self._observe_activity(event)
++
++    def _observe_activity(self, event: Observation) -> None:
++        payload = event.payload
++        if event.type is ObservationType.ACTIVITY_MESSAGE:
++            key = ("message", display_text(str(payload.get("message_id", ""))))
++            label = display_text(str(payload.get("kind", "message")))
++            detail = payload.get("text")
++            if label == "plan":
++                items = payload.get("items", ())
++                if isinstance(items, (tuple, list)):
++                    detail = " / ".join(
++                        ("done: " if item.get("completed") is True else "pending: ")
++                        + display_text(str(item.get("text", "")))
++                        for item in items[:MAX_ACTIVITY]
++                        if isinstance(item, Mapping)
++                    )
++            status = None
++        else:
++            key = ("tool", display_text(str(payload.get("tool_id", ""))))
++            previous = self._activity.get(key)
++            label = display_text(
++                str(payload.get("name", previous.label if previous else "tool"))
++            )
++            detail = payload.get("detail", payload.get("input"))
++            status = event.type.value.removeprefix("tool.")
++        self._activity.pop(key, None)
++        self._activity[key] = ActivityItem(
++            label, status, None if detail is None else display_text(str(detail))
++        )
++        if len(self._activity) > MAX_ACTIVITY:
++            del self._activity[next(iter(self._activity))]
+ 
+     def _observe_lane(self, event: Observation, lane_id: str, gaps: list[str]) -> None:
+         previous = self._lanes.get(lane_id)
+diff --git a/src/ovcaq/tui/panels.py b/src/ovcaq/tui/panels.py
+index 136a61e..d6af13d 100644
+--- a/src/ovcaq/tui/panels.py
++++ b/src/ovcaq/tui/panels.py
+@@ -88,8 +88,14 @@ def activity_panel(view: ProjectView) -> Panel:
+         f"{display_text(lane.label)}: {lane.status}"
+         + ("" if lane.detail is None else f" - {display_text(lane.detail)}")
+         for lane in view.lanes
+-    ]
+-    return _panel("Activity", lines or ["no lanes observed"])
++    ] or ["no lanes observed"]
++    lines.extend(
++        display_text(item.label)
++        + ("" if item.status is None else f": {display_text(item.status)}")
++        + ("" if item.detail is None else f" - {display_text(item.detail)}")
++        for item in view.activity
++    )
++    return _panel("Activity", lines)
+ 
+ 
+ def capability_panel(view: ProjectView) -> Panel:
+diff --git a/tests/runtime/test_rework_health.py b/tests/runtime/test_rework_health.py
+new file mode 100644
+index 0000000..cb9a37f
+--- /dev/null
++++ b/tests/runtime/test_rework_health.py
+@@ -0,0 +1,125 @@
++from __future__ import annotations
++
++import json
++import subprocess
++import sys
++from pathlib import Path
++
++import pytest
++
++from ovcaq.cli import main
++
++
++def _configured_agent(
++    root: Path, monkeypatch: pytest.MonkeyPatch, version: str, authenticated: bool
++) -> Path:
++    for variable, directory in (
++        ("HOME", "home"),
++        ("XDG_STATE_HOME", "xdg-state"),
++        ("XDG_CONFIG_HOME", "xdg-config"),
++    ):
++        monkeypatch.setenv(variable, str(root / directory))
++    marker = root / "agent-executed"
++    script = root / "fake_agent.py"
++    script.write_text(
++        "import json, pathlib, sys\n"
++        "args = sys.argv[1:]\n"
++        f"with pathlib.Path({str(root / 'agent-calls')!r}).open('a') as calls:\n"
++        "    calls.write(json.dumps(args) + '\\n')\n"
++        f"version = {version!r}\n"
++        "if args == ['--version']:\n"
++        "    print('codex-cli ' + version)\n"
++        "    raise SystemExit(0)\n"
++        "if args == ['login', 'status']:\n"
++        f"    print({'Logged in' if authenticated else 'Not logged in'!r})\n"
++        f"    raise SystemExit({0 if authenticated else 1})\n"
++        f"pathlib.Path({str(marker)!r}).write_text('executed')\n"
++        "print(json.dumps({'type': 'error', 'message': 'fixture stopped'}))\n"
++        "raise SystemExit(1)\n"
++    )
++    (root / "ovcaq.toml").write_text(
++        'agent = "codex"\n[agents.codex]\n'
++        f"command = {json.dumps([sys.executable, str(script)])}\n"
++        'tiers = { sonnet = "model-s", opus = "model-o" }\n'
++        "[supervisor]\ndied_retries = 0\n"
++        "[phases.build]\ntimeout_seconds = 3\n"
++    )
++    return marker
++
++
++def _initialize(root: Path, capsys: pytest.CaptureFixture[str]) -> None:
++    assert main(["--root", str(root), "--json", "init"]) == 0
++    capsys.readouterr()
++    backlog = root / "docs/dev/project-management/prds/backlog"
++    backlog.mkdir(parents=True, exist_ok=True)
++    (backlog / "00001-test.md").write_text("# Fixture PRD\n")
++
++
++def _run(root: Path) -> subprocess.CompletedProcess[str]:
++    return subprocess.run(
++        [
++            sys.executable,
++            "-m",
++            "ovcaq",
++            "--root",
++            str(root),
++            "--json",
++            "run",
++            "--no-tui",
++            "--agent",
++            "codex",
++        ],
++        capture_output=True,
++        text=True,
++        timeout=15,
++        check=False,
++    )
++
++
++@pytest.mark.parametrize(
++    ("version", "authenticated", "expected_terms"),
++    [
++        ("0.161.0", True, ("0.160.0", "0.161.0")),
++        ("0.160.0", False, ("login",)),
++    ],
++)
++def test_run_rejects_unhealthy_adapter_before_agent_execution(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    capsys: pytest.CaptureFixture[str],
++    version: str,
++    authenticated: bool,
++    expected_terms: tuple[str, ...],
++) -> None:
++    marker = _configured_agent(tmp_path, monkeypatch, version, authenticated)
++    _initialize(tmp_path, capsys)
++
++    result = _run(tmp_path)
++
++    assert result.returncode != 0
++    assert not marker.exists()
++    assert "Traceback" not in result.stderr
++    assert result.stdout == ""
++    payload = json.loads(result.stderr)
++    assert payload["ok"] is False
++    message = payload["error"]["message"].lower()
++    assert all(term in message for term in expected_terms)
++
++
++def test_run_executes_adapter_after_healthy_version_and_auth_checks(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    capsys: pytest.CaptureFixture[str],
++) -> None:
++    marker = _configured_agent(tmp_path, monkeypatch, "0.160.0", True)
++    _initialize(tmp_path, capsys)
++
++    result = _run(tmp_path)
++
++    assert marker.read_text() == "executed"
++    calls = [
++        json.loads(line) for line in (tmp_path / "agent-calls").read_text().splitlines()
++    ]
++    assert calls[:2] == [["--version"], ["login", "status"]]
++    assert len(calls) >= 3
++    assert "Traceback" not in result.stderr
+diff --git a/tests/tui/test_rework_activity.py b/tests/tui/test_rework_activity.py
+new file mode 100644
+index 0000000..a46d174
+--- /dev/null
++++ b/tests/tui/test_rework_activity.py
+@@ -0,0 +1,161 @@
++from __future__ import annotations
++
++from datetime import UTC, datetime
++from io import StringIO
++
++import pytest
++from rich.console import Console
++
++from ovcaq.events.model import Observation, ObservationType
++from ovcaq.events.tail import TailBatch
++from ovcaq.tui.panels import activity_panel
++
++from . import test_model
++from .model_support import Projection
++
++projection = test_model.projection
++
++
++def _event(
++    provider: str,
++    kind: str,
++    payload: dict[str, object],
++    *,
++    session: str = "session-1",
++    lane: str | None = None,
++) -> Observation:
++    return Observation(
++        protocol_version=1,
++        timestamp=datetime(2026, 10, 3, 10, tzinfo=UTC),
++        provider=provider,
++        run_id="run-1",
++        session_id=session,
++        lane_id=lane,
++        type=ObservationType(kind),
++        payload=payload,
++    )
++
++
++def _render(projection: Projection, *events: Observation) -> str:
++    projection.batches.append(TailBatch(events, (), False, False, True))
++    stream = StringIO()
++    Console(file=stream, width=240, color_system=None, force_terminal=False).print(
++        activity_panel(projection.poll())
++    )
++    return stream.getvalue()
++
++
++@pytest.mark.parametrize("provider", ["codex", "claude"])
++@pytest.mark.parametrize(
++    "name", ["command", "file change", "remote tool", "web search"]
++)
++@pytest.mark.parametrize("status", ["completed", "failed"])
++def test_activity_displays_started_and_terminal_tools_without_lanes(
++    projection: Projection, provider: str, name: str, status: str
++) -> None:
++    start_payload: dict[str, object] = {"tool_id": "tool-1", "name": name}
++    start_payload["detail" if provider == "codex" else "input"] = "start fixture"
++    started = _event(provider, "tool.started", start_payload)
++    rendered = _render(projection, started)
++    assert name in rendered
++    terminal_payload: dict[str, object] = {
++        "tool_id": "tool-1",
++        "detail": "result fixture",
++    }
++    if provider == "codex":
++        terminal_payload["name"] = name
++        terminal_payload["status"] = status
++    terminal = _event(provider, f"tool.{status}", terminal_payload)
++
++    rendered = _render(projection, terminal)
++
++    assert name in rendered
++    assert "result fixture" in rendered
++    assert status in rendered
++
++
++@pytest.mark.parametrize("provider", ["codex", "claude"])
++@pytest.mark.parametrize("kind", ["text", "thinking", "error"])
++def test_activity_displays_literal_messages_without_lanes(
++    projection: Projection, provider: str, kind: str
++) -> None:
++    text = f"{kind} [bold]literal fixture[/bold]"
++    event = _event(
++        provider,
++        "activity.message",
++        {"kind": kind, "text": text, "message_id": "message-1"},
++    )
++
++    rendered = _render(projection, event)
++
++    assert text in rendered
++
++
++@pytest.mark.parametrize("provider", ["codex", "claude"])
++def test_activity_displays_plan_steps_without_lanes(
++    projection: Projection, provider: str
++) -> None:
++    event = _event(
++        provider,
++        "activity.message",
++        {
++            "kind": "plan",
++            "message_id": "plan-1",
++            "items": [
++                {"text": "Inspect [bold]literal[/bold] fixture", "completed": True},
++                {"text": "Verify remaining fixture", "completed": False},
++            ],
++        },
++    )
++
++    rendered = _render(projection, event)
++
++    assert "Inspect [bold]literal[/bold] fixture" in rendered
++    assert "Verify remaining fixture" in rendered
++
++
++@pytest.mark.parametrize("provider", ["codex", "claude"])
++def test_activity_keeps_lanes_and_excludes_other_session_activity(
++    projection: Projection, provider: str
++) -> None:
++    lane = _event(
++        provider,
++        "lane.started",
++        {"label": "Receiver", "detail": "checking"},
++        lane="child-1",
++    )
++    selected = _event(
++        provider,
++        "activity.message",
++        {"kind": "text", "text": "selected fixture", "message_id": "selected"},
++    )
++    other = _event(
++        provider,
++        "activity.message",
++        {"kind": "text", "text": "unselected fixture", "message_id": "other"},
++        session="session-2",
++    )
++
++    rendered = _render(projection, lane, selected, other)
++
++    assert "Receiver: running" in rendered
++    assert "checking" in rendered
++    assert "selected fixture" in rendered
++    assert "unselected fixture" not in rendered
++
++
++@pytest.mark.parametrize("provider", ["codex", "claude"])
++def test_activity_bounds_large_literal_message_details(
++    projection: Projection, provider: str
++) -> None:
++    text = "[bold]literal fixture[/bold] " + "x" * 200_000
++    event = _event(
++        provider,
++        "activity.message",
++        {"kind": "text", "text": text, "message_id": "large"},
++    )
++
++    rendered = _render(projection, event)
++
++    assert "[bold]literal fixture[/bold]" in rendered
++    assert len(rendered) < len(text)

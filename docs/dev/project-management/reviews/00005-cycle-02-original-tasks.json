@@ -1,0 +1,692 @@
+[
+  {
+    "name": "Resolve runtime configuration and filesystem layout",
+    "description": "Extend the existing path and TOML configuration services into the single runtime-layout resolver used by later runtime components.\n\nLocation: src/ovcaq/paths.py, src/ovcaq/config.py\n\nReuse: Reuse `discover_project_root`, `_validated_runtime_path`, `_reject_symlink_components`, `ensure_runtime_directory`, `_read_config`, `_table`, and `_configured_path`; preserve their no-follow and containment behavior.\n\nContract (verbatim — from the reviewed design doc's `## Interfaces & contracts`):\n- `RuntimePaths(project_root, runtime_root, state_file, run_lock, run_metadata, events, metrics, sessions, reports, fleet_root, fleet_lock, retention_lock)`.\n- `discover_project_root(explicit_root: Path | None = None, *, start: Path | None = None) -> Path`.\n- `resolve_runtime_paths(project_root: Path, *, runtime_root: Path | None = None, external_state_root: Path | None = None, xdg_state_home: Path | None = None) -> RuntimePaths`.\n- `ensure_runtime_layout(paths: RuntimePaths) -> RuntimePaths`.\n- `RuntimeSettings(paths, term_grace_seconds, max_session_bytes, max_retained_bytes, min_free_bytes)`.\n- `runtime_settings(root: Path, *, runtime_root: Path | None = None, external_state_root: Path | None = None, xdg_config_home: Path | None = None, xdg_state_home: Path | None = None, term_grace_seconds: float | None = None, max_session_bytes: int | None = None, max_retained_bytes: int | None = None, min_free_bytes: int | None = None) -> RuntimeSettings`.\n- Precedence is explicit arguments, tracked `<root>/ovcaq.toml`, `${XDG_CONFIG_HOME:-~/.config}/ovcaq/config.toml`, then defaults. Defaults: `<root>/dev/local/ovcaq`, 10 seconds grace, 16 GiB/session, 128 GiB/project, 1 GiB free. Internal runtime paths must remain under the resolved root; only distinct `external_state_root` may escape. Runtime directories are `0o700` and durable files `0o600`.\n- Exact derived paths are `<runtime_root>/state.json`, `run.lock`, `run.json`, `events.jsonl`, `metrics.jsonl`, `sessions/`, `reports/`, and `retention.lock`; `fleet_root=<xdg_state_home>/ovcaq/runs` and `fleet_lock=<fleet_root>/fleet.lock`.\n- The supported TOML schema is optional top-level `version = 1`; other versions fail. Internal root is `[workflow].runtime_root`. Runtime-only keys are `[runtime].external_state_root`, `term_grace_seconds`, `max_session_bytes`, `max_retained_bytes`, and `min_free_bytes`. Project values override user values per key; explicit arguments override both. Internal and external roots cannot both be declared.\n\nDetails:\n- Reject simultaneous internal/external roots, booleans and non-finite numerics, negative byte limits, grace outside 0..300, unknown config versions, symlink components, and inode substitution both between resolution and layout creation and during traversal/open validation.\n- Reserve environment variables for XDG/test injection rather than recreating the legacy broad configuration surface.\n\nAcceptance criteria:\n- [ ] [P03-T01] Implement project/root/runtime discovery in `paths.py`.\n- duplicate supervisors cannot start;\n- owned agent trees stop without touching unrelated processes;\n- registry metadata and live session state survive detach;\n- completion removes only ephemeral registry/lock/temp artifacts and retains raw session evidence indefinitely.\n- [ ] Duplicate supervisors cannot start.\n- [ ] Owned agent trees stop without touching unrelated processes.\n- [ ] Registry and session metadata support detach/reattach consumers.\n- [ ] Raw evidence is written first and retained indefinitely by default.\n- [ ] Purge is explicit, preview-first, cutoff-scoped, and active-run-safe.\n- [ ] PRD 00006 can build adapters/events without duplicating runtime ownership.\n\nVerify: Run the task-specific tests authored for these contracts; inspect real-process or installed-wheel evidence where named. The final phase runs `uv sync --all-groups`, full pytest, Ruff check/format, mypy, and `uv build` once.\n",
+    "blocked_by": [],
+    "estimated_tokens": 59779,
+    "est_context_peak": 79779,
+    "model": "opus",
+    "tier_reason": "contract",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "1",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": null,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "self_deslop": "committed:b61354d5ac47e5d86429ee7993b8ad2fafc248b4",
+        "style_gate": "fixed:4ade4ba15f83701b83fd498001c2dd7c916e0f43",
+        "split_hygiene": "clean"
+      },
+      {
+        "attempt": 2,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": null,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "lean"
+      },
+      {
+        "attempt": 3,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": null,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "lean"
+      }
+    ]
+  },
+  {
+    "name": "Implement the authoritative persistent project run lock",
+    "description": "Implement the descriptor-held nonblocking duplicate-run authority independently of fleet metadata.\n\nLocation: src/ovcaq/runtime/registry.py\n\nReuse: Follow `StateStore._locked` for `fcntl`, no-follow open, regular-file checks, descriptor/path identity validation, and typed I/O failures.\n\nContract (verbatim — from the reviewed design doc's `## Interfaces & contracts`):\n- `class DuplicateRunError(RuntimeError)`.\n- `RunLock.acquire(path: Path) -> RunLock`; `RunLock.close() -> None`; context-manager enter/exit.\n- Acquire with `O_NOFOLLOW | O_CLOEXEC`, verify a regular `0o600` file, take `fcntl.LOCK_EX | LOCK_NB`, reverify descriptor/path identity, and hold the descriptor for the run lifetime. Contention raises `DuplicateRunError` without consulting registry metadata. `run.lock` is a persistent inode: completion unlocks/closes it and never unlinks or replaces it.\n\nDetails:\n- Make close idempotent and ensure normal, exception, and signal paths release ownership.\n- Exercise two real processes contending and a waiter/new-contender inode-stability case.\n\nAcceptance criteria:\n- [ ] [P03-T02] Implement per-project `run.lock` duplicate guard.\n- duplicate supervisors cannot start;\n- owned agent trees stop without touching unrelated processes;\n- registry metadata and live session state survive detach;\n- completion removes only ephemeral registry/lock/temp artifacts and retains raw\n  session evidence indefinitely.\n- [ ] Duplicate supervisors cannot start.\n- [ ] Owned agent trees stop without touching unrelated processes.\n- [ ] Registry and session metadata support detach/reattach consumers.\n- [ ] Raw evidence is written first and retained indefinitely by default.\n- [ ] Purge is explicit, preview-first, cutoff-scoped, and active-run-safe.\n- [ ] PRD 00006 can build adapters/events without duplicating runtime ownership.\n\nVerify: Run the task-specific tests authored for these contracts; inspect real-process or installed-wheel evidence where named. The final phase runs `uv sync --all-groups`, full pytest, Ruff check/format, mypy, and `uv build` once.",
+    "blocked_by": [
+      1
+    ],
+    "estimated_tokens": 57498,
+    "est_context_peak": 77498,
+    "model": "opus",
+    "tier_reason": "contract",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "2",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": null,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "red_check": "skipped:missing public symbols in empty module",
+        "self_deslop": "skipped:trivial",
+        "style_gate": "clean",
+        "split_hygiene": "clean"
+      }
+    ]
+  },
+  {
+    "name": "Publish and reconcile the atomic XDG fleet registry",
+    "description": "Add versioned fleet entries, process-start identity, lock-free snapshots, and mutation-lock-serialized publish/prune/remove.\n\nLocation: src/ovcaq/runtime/registry.py\n\nReuse: Reuse bounded duplicate-key-safe JSON decode/validation from `ovcaq.state.schema` and descriptor-relative atomic/fsync patterns from `ovcaq.workflow._files`.\n\nContract (verbatim — from the reviewed design doc's `## Interfaces & contracts`):\n- `ProcessIdentity(pid: int, started: str)`; `FleetEntry(schema_version: Literal[1], root: Path, pid: int, process_start: str, run_id: str, agent: str, started_at: str)`; `RegistrySnapshot(live, malformed, stale)`.\n- `process_identity(pid: int) -> ProcessIdentity | None`; `process_matches(identity: ProcessIdentity) -> bool`.\n- `FleetRegistry(root: Path).publish(entry) -> Path`; `.snapshot() -> RegistrySnapshot`; `.prune() -> RegistrySnapshot`; `.remove(run_id: str, *, expected: FleetEntry | None = None) -> bool`.\n- Entries are `<fleet_root>/<run_id>.json` with exact keys `schema_version`, `root`, `pid`, `process_start`, `run_id`, `agent`, `started_at`; version is `1`, timestamps are UTC RFC 3339, IDs are basenames, PID is positive, and unknown/missing/duplicate/future-version content is malformed. Publish uses same-directory `0o600` temp, file fsync, replace, directory fsync. Publish/prune/remove hold persistent `fleet_lock` across final compare/mutation; snapshot is lock-free. Liveness requires alive PID plus matching start identity. Remove compares the complete expected entry under lock.\n\nDetails:\n- Prune unreadable/malformed/dead/recycled entries only after under-lock reverification; never mutate during snapshot.\n- Force replacement between observation and mutation in tests and prove the replacement survives.\n\nAcceptance criteria:\n- [ ] [P03-T03] Implement one atomic XDG fleet registry and stale-entry pruning.\n- duplicate supervisors cannot start;\n- owned agent trees stop without touching unrelated processes;\n- registry metadata and live session state survive detach;\n- completion removes only ephemeral registry/lock/temp artifacts and retains raw\n  session evidence indefinitely.\n- [ ] Duplicate supervisors cannot start.\n- [ ] Owned agent trees stop without touching unrelated processes.\n- [ ] Registry and session metadata support detach/reattach consumers.\n- [ ] Raw evidence is written first and retained indefinitely by default.\n- [ ] Purge is explicit, preview-first, cutoff-scoped, and active-run-safe.\n- [ ] PRD 00006 can build adapters/events without duplicating runtime ownership.\n\nVerify: Run the task-specific tests authored for these contracts; inspect real-process or installed-wheel evidence where named. The final phase runs `uv sync --all-groups`, full pytest, Ruff check/format, mypy, and `uv build` once.",
+    "blocked_by": [
+      1,
+      2
+    ],
+    "estimated_tokens": 57674,
+    "est_context_peak": 77674,
+    "model": "opus",
+    "tier_reason": "contract",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "3",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": null,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "red_check": "skipped:missing FleetEntry in existing module",
+        "self_deslop": "noop",
+        "style_gate": "fixed:008c51e739114c8982875637df2b681584ef717a",
+        "split_hygiene": "clean",
+        "review": "failed:Claude usage limit; reset 07:10 Europe/Prague"
+      }
+    ]
+  },
+  {
+    "name": "Create secure versioned run and session metadata",
+    "description": "Implement secure session creation and versioned run/meta/summary publication before any child launch.\n\nLocation: src/ovcaq/runtime/session.py\n\nReuse: Reuse runtime paths, schema timestamp/JSON limits, and the state/workflow descriptor-relative publication patterns rather than hand-writing permissive JSON files.\n\nContract (verbatim — from the reviewed design doc's `## Interfaces & contracts`):\n- `SessionPaths(root, raw, normalized, metrics, metadata, summary)`.\n- `SessionMetadata(schema_version: Literal[1], run_id: str, session_id: str, agent: str, pid: int, process_start: str, started_at: str)`.\n- `create_session(paths: RuntimePaths, metadata: SessionMetadata) -> SessionPaths`; `publish_run_metadata(paths, metadata) -> None`; `publish_session_summary(paths, summary) -> None`.\n- Owned JSON formats use `schema_version: 1`, exact required keys, duplicate-key-safe bounded decode, UTC RFC 3339, and future-version refusal. Metadata keys are exactly `schema_version`, `run_id`, `session_id`, `agent`, `pid`, `process_start`, `started_at`. Summary keys are exactly `schema_version`, `session_id`, `finished_at`, `returncode`, `signal`, `timed_out`, `detail`; detail is nullable and bounded. Session IDs are basenames; directories are `0o700`, files `0o600`; no symlink following. `meta.json` is durable before launch. Completion removes only the owner's fleet entry, `run.json`, and named temporaries, releases persistent locks, and retains every session artifact.\n\nDetails:\n- Ensure live run/session metadata remains readable after terminal detach and incomplete sessions remain inspectable after crash.\n- Do not implement provider parsing or workflow decisions.\n\nAcceptance criteria:\n- [ ] [P03-T04] Define run/session metadata and directory lifecycle.\n- duplicate supervisors cannot start;\n- owned agent trees stop without touching unrelated processes;\n- registry metadata and live session state survive detach;\n- completion removes only ephemeral registry/lock/temp artifacts and retains raw\n  session evidence indefinitely.\n- [ ] Duplicate supervisors cannot start.\n- [ ] Owned agent trees stop without touching unrelated processes.\n- [ ] Registry and session metadata support detach/reattach consumers.\n- [ ] Raw evidence is written first and retained indefinitely by default.\n- [ ] Purge is explicit, preview-first, cutoff-scoped, and active-run-safe.\n- [ ] PRD 00006 can build adapters/events without duplicating runtime ownership.\n\nVerify: Run the task-specific tests authored for these contracts; inspect real-process or installed-wheel evidence where named. The final phase runs `uv sync --all-groups`, full pytest, Ruff check/format, mypy, and `uv build` once.",
+    "blocked_by": [
+      1,
+      3
+    ],
+    "estimated_tokens": 57651,
+    "est_context_peak": 77651,
+    "model": "opus",
+    "tier_reason": "contract",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "4",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": null,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "red_check": "skipped:missing SessionMetadata in existing module",
+        "self_deslop": "noop",
+        "style_gate": "fixed:2031759f32dd7dcd7618b43665fc73eb0cf9d2aa",
+        "split_hygiene": "clean"
+      }
+    ]
+  },
+  {
+    "name": "Probe runtime platform capabilities on macOS",
+    "description": "Implement shared immutable platform facts and the fail-closed process-capability preflight for the personal-cutover platform.\n\nLocation: src/ovcaq/runtime/capability.py, src/ovcaq/runtime/__init__.py\n\nReuse: Reuse the state store's proven advisory-lock and directory-fsync feature detection; keep probes provider-neutral.\n\nContract (verbatim — from the reviewed design doc's `## Interfaces & contracts`):\n- `CapabilityStatus = Literal[\"supported\", \"unsupported\", \"degraded\"]`; `CapabilityResult(name: str, status: CapabilityStatus, detail: str)`.\n- `probe_platform(*, platform_name: str = sys.platform) -> tuple[CapabilityResult, ...]`; `require_process_capabilities(results: Sequence[CapabilityResult]) -> None`.\n- Probe names are exactly `platform`, `advisory_lock`, `process_group`, `group_signal`, and `directory_fsync`. Darwin is supported for this milestone; other platforms report unsupported/degraded facts and do not satisfy the personal-cutover gate.\n\nDetails:\n- Add real macOS lock, process-group, group-signal, and directory-fsync integration coverage guarded only where platform behavior truly differs.\n- Keep Linux implementation/support claims for PRD 00013.\n\nAcceptance criteria:\n- [ ] [P03-T11] Add platform capability probes and macOS integration tests.\n- duplicate supervisors cannot start;\n- owned agent trees stop without touching unrelated processes;\n- registry metadata and live session state survive detach;\n- completion removes only ephemeral registry/lock/temp artifacts and retains raw\n  session evidence indefinitely.\n- [ ] Duplicate supervisors cannot start.\n- [ ] Owned agent trees stop without touching unrelated processes.\n- [ ] Registry and session metadata support detach/reattach consumers.\n- [ ] Raw evidence is written first and retained indefinitely by default.\n- [ ] Purge is explicit, preview-first, cutoff-scoped, and active-run-safe.\n- [ ] PRD 00006 can build adapters/events without duplicating runtime ownership.\n\nVerify: Run the task-specific tests authored for these contracts; inspect real-process or installed-wheel evidence where named. The final phase runs `uv sync --all-groups`, full pytest, Ruff check/format, mypy, and `uv build` once.",
+    "blocked_by": [
+      1
+    ],
+    "estimated_tokens": 57529,
+    "est_context_peak": 77529,
+    "model": "opus",
+    "tier_reason": "contract",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "5",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": null,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "red_check": "skipped:missing CapabilityResult in existing module",
+        "self_deslop": "committed:40d5c97bf15edef0dd9743bf491bade684aa5f66",
+        "style_gate": "fixed:51e9da4c348d6068ff60e4409c1919a0159ae5c3",
+        "split_hygiene": "clean"
+      }
+    ]
+  },
+  {
+    "name": "Spawn and own shell-free process groups with an anchor",
+    "description": "Implement a persistent group-leader anchor and place exactly one agent argv in its owned process group without shell evaluation.\n\nLocation: src/ovcaq/runtime/process.py, src/ovcaq/runtime/_group_anchor.py\n\nReuse: Use stdlib `subprocess.Popen`, `os.getpgid`, and `os.killpg`; reuse `ProcessIdentity` for the anchor rather than executable-name or regex scans.\n\nContract (verbatim — from the reviewed design doc's `## Interfaces & contracts`):\n- `ProcessExit(returncode: int, signal: int | None, timed_out: bool, term_sent: bool, kill_sent: bool)`; `class ProcessOwnershipError(RuntimeError)`.\n- `OwnedProcess.spawn(argv: Sequence[str], *, cwd: Path, env: Mapping[str, str] | None = None) -> OwnedProcess`; properties `pid`, `stdout`; methods `poll()`, `wait(timeout=None)`, `signal_group(signal_number) -> bool`, `collect_exit(...) -> ProcessExit`.\n- Start the internal anchor with `[sys.executable, \"-m\", \"ovcaq.runtime._group_anchor\"]`, `shell=False`, `process_group=0`, and a private control pipe. The anchor ignores TERM while its pipe is open and remains PGID leader after the agent exits. Spawn the agent from a nonempty string argv with `shell=False`, `stdin=DEVNULL`, `stdout=PIPE`, `stderr=STDOUT`, `process_group=<anchor pid>`; never log env values. Normal completion closes/reaps the anchor. `signal_group()` returns false only when the whole group is already exited, true only after successful `killpg`, and raises `ProcessOwnershipError` on live identity/PGID mismatch. No name/regex orphan scan.\n\nDetails:\n- Prove shell metacharacters remain literal, stdin is EOF, output is bytes, and a leader-exited grandchild stays killable through the anchor.\n- Keep an unrelated sentinel alive across TERM/KILL integration tests.\n\nAcceptance criteria:\n- [ ] [P03-T05] Implement process-group spawn/TERM/KILL with no shell.\n- duplicate supervisors cannot start;\n- owned agent trees stop without touching unrelated processes;\n- registry metadata and live session state survive detach;\n- completion removes only ephemeral registry/lock/temp artifacts and retains raw\n  session evidence indefinitely.\n- [ ] Duplicate supervisors cannot start.\n- [ ] Owned agent trees stop without touching unrelated processes.\n- [ ] Registry and session metadata support detach/reattach consumers.\n- [ ] Raw evidence is written first and retained indefinitely by default.\n- [ ] Purge is explicit, preview-first, cutoff-scoped, and active-run-safe.\n- [ ] PRD 00006 can build adapters/events without duplicating runtime ownership.\n\nVerify: Run the task-specific tests authored for these contracts; inspect real-process or installed-wheel evidence where named. The final phase runs `uv sync --all-groups`, full pytest, Ruff check/format, mypy, and `uv build` once.",
+    "blocked_by": [
+      3,
+      5
+    ],
+    "estimated_tokens": 57667,
+    "est_context_peak": 77667,
+    "model": "opus",
+    "tier_reason": "contract",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "6",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": null,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "red_check": "skipped:missing OwnedProcess in existing module",
+        "self_deslop": "noop",
+        "style_gate": "fixed:50c805504fecab5c0e9951a95b7376bb541c9ce2",
+        "split_hygiene": "clean"
+      }
+    ]
+  },
+  {
+    "name": "Escalate owned groups through a bounded watchdog",
+    "description": "Port timeout behavior onto `OwnedProcess` with deterministic clock injection and bounded TERM-to-KILL escalation.\n\nLocation: src/ovcaq/runtime/watchdog.py\n\nReuse: Characterize DEC-025, DEC-026, and DEC-027 from the legacy watchdog; use `OwnedProcess.signal_group` as the only signal boundary.\n\nContract (verbatim — from the reviewed design doc's `## Interfaces & contracts`):\n- `Clock` protocol methods `monotonic() -> float` and `wait(event: threading.Event, timeout: float) -> bool`.\n- `WatchdogResult(fired: bool, term_sent: bool, kill_sent: bool)`.\n- `Watchdog(process: OwnedProcess, *, timeout_seconds: float, grace_seconds: float, clock: Clock | None = None)` with `start() -> None`, `cancel() -> WatchdogResult`, and `join(timeout: float | None = None) -> WatchdogResult`.\n- Timeout/grace are finite nonnegative. Send TERM once at deadline, wait at most grace, send KILL once only while exact owned group remains live. Cancellation before deadline sends nothing. Worker is bounded and joinable; no leaked non-daemon thread.\n\nDetails:\n- Cover fast exit, zero timeout/grace, TERM-handled, TERM-ignored, cancel races, ownership errors, and deterministic injected time.\n- The watchdog reports facts only; later supervisor policy decides workflow outcomes.\n\nAcceptance criteria:\n- [ ] [P03-T06] Port watchdog with injectable clock and grace period.\n- duplicate supervisors cannot start;\n- owned agent trees stop without touching unrelated processes;\n- registry metadata and live session state survive detach;\n- completion removes only ephemeral registry/lock/temp artifacts and retains raw\n  session evidence indefinitely.\n- [ ] Duplicate supervisors cannot start.\n- [ ] Owned agent trees stop without touching unrelated processes.\n- [ ] Registry and session metadata support detach/reattach consumers.\n- [ ] Raw evidence is written first and retained indefinitely by default.\n- [ ] Purge is explicit, preview-first, cutoff-scoped, and active-run-safe.\n- [ ] PRD 00006 can build adapters/events without duplicating runtime ownership.\n\nVerify: Run the task-specific tests authored for these contracts; inspect real-process or installed-wheel evidence where named. The final phase runs `uv sync --all-groups`, full pytest, Ruff check/format, mypy, and `uv build` once.",
+    "blocked_by": [
+      6
+    ],
+    "estimated_tokens": 57549,
+    "est_context_peak": 77549,
+    "model": "opus",
+    "tier_reason": "contract",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "7",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": null,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "self_deslop": "noop",
+        "style_gate": "clean",
+        "split_hygiene": "clean"
+      }
+    ]
+  },
+  {
+    "name": "Centralize supervisor signals and emergency state-write failure",
+    "description": "Provide the reusable signal scope and fail-closed emergency record/preflight/acknowledgement contract without implementing the PRD 00007 supervisor loop.\n\nLocation: src/ovcaq/runtime/process.py, src/ovcaq/runtime/session.py\n\nReuse: Reuse the injected state service as sole writer, runtime atomic publication, owned-group teardown, and registry expected-entry removal.\n\nContract (verbatim — from the reviewed design doc's `## Interfaces & contracts`):\n- `SupervisorSignal(Exception)` carries `signal_number`; `supervisor_signal_scope() -> Iterator[None]` installs/restores SIGINT, SIGTERM, SIGHUP on the main thread. Caller tears down the one tracked group, removes only its expected fleet entry, closes lock, and maps exit to `128 + signal_number`.\n- `EmergencyStateFailure(RuntimeError)`; `FailureDisposition(state_recorded: bool, emergency_path: Path | None, block_launch: bool)`.\n- `record_state_failure(paths, *, site: str, detail: str, write_state_notice: Callable[[str, str], None]) -> FailureDisposition`; `require_no_emergency_failure(paths) -> None`; `acknowledge_emergency_failure(paths, *, state_valid: bool) -> Path`.\n- The state callback is tried first. Success returns `block_launch=True` for the immediate caller-enforced stop only. Failure atomically writes `state-write-failed.json` with exact versioned keys `schema_version`, `site`, `detail`, `created_at`, mode `0o600`; that artifact persistently gates every launch. Status/doctor surface it. Acknowledgement requires validated state, atomically archives it to `reports/emergency-<UTC timestamp>.json`, fsyncs both dirs, and alone clears the persistent gate. Never launch a child while either failure path says block.\n\nDetails:\n- Restore prior signal handlers under exceptions and preserve raw emergency evidence when state is unavailable.\n- Bound detail and prohibit callers from passing environment values.\n\nAcceptance criteria:\n- [ ] [P03-T10] Implement signal cleanup and emergency state-write failure reporting.\n- duplicate supervisors cannot start;\n- owned agent trees stop without touching unrelated processes;\n- registry metadata and live session state survive detach;\n- completion removes only ephemeral registry/lock/temp artifacts and retains raw\n  session evidence indefinitely.\n- [ ] Duplicate supervisors cannot start.\n- [ ] Owned agent trees stop without touching unrelated processes.\n- [ ] Registry and session metadata support detach/reattach consumers.\n- [ ] Raw evidence is written first and retained indefinitely by default.\n- [ ] Purge is explicit, preview-first, cutoff-scoped, and active-run-safe.\n- [ ] PRD 00006 can build adapters/events without duplicating runtime ownership.\n\nVerify: Run the task-specific tests authored for these contracts; inspect real-process or installed-wheel evidence where named. The final phase runs `uv sync --all-groups`, full pytest, Ruff check/format, mypy, and `uv build` once.",
+    "blocked_by": [
+      2,
+      3,
+      4,
+      6,
+      7
+    ],
+    "estimated_tokens": 57708,
+    "est_context_peak": 77708,
+    "model": "opus",
+    "tier_reason": "contract",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "8",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": null,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "self_deslop": "noop",
+        "style_gate": "failed:FUNCTION | /Users/bob/git/src/github.com/buvis/ovcaq/tests/runtime/test_session_emergency.py:81 | test_failed_state_notice_publishes_private_synced_marker_and_persistent_gate | 60 lines",
+        "split_hygiene": "clean",
+        "review": "medium-retry:fixed"
+      }
+    ]
+  },
+  {
+    "name": "Tee raw session bytes before decoding with resource guards",
+    "description": "Implement the bytes-only writer that persists every accepted child-output chunk before downstream decoding and stops safely on evidence limits.\n\nLocation: src/ovcaq/runtime/session.py\n\nReuse: Use the secure session path/publication work and the state store's bounded partial-read/write error discipline.\n\nContract (verbatim — from the reviewed design doc's `## Interfaces & contracts`):\n- `RawSessionWriter(path: Path, *, max_bytes: int, min_free_bytes: int)` with `write(chunk: bytes) -> int`, `flush() -> None`, and `close() -> None`; non-bytes are rejected.\n- `write()` completes partial writes, checks the session ceiling and filesystem free-space floor before every chunk, and makes accepted bytes observable before any decoder receives them. Limit crossing raises `EvidenceLimitError` after preserving prior bytes; caller records attention and terminates the producer without deleting evidence. Session-local normalized/metric envelopes, when PRD 00006 writes them, are `{\"schema_version\":1,\"session_id\":\"...\",\"payload\":<bounded JSON value>}` and use the retention lock.\n\nDetails:\n- Round-trip invalid UTF-8, split lines, partial `os.write`, interruption, flush/close idempotency, ENOSPC, and adversarial umask.\n- Do not decode, redact, or interpret provider data in this PRD.\n\nAcceptance criteria:\n- [ ] [P03-T07] Implement raw session tee before any decoding.\n- duplicate supervisors cannot start;\n- owned agent trees stop without touching unrelated processes;\n- registry metadata and live session state survive detach;\n- completion removes only ephemeral registry/lock/temp artifacts and retains raw\n  session evidence indefinitely.\n- [ ] Duplicate supervisors cannot start.\n- [ ] Owned agent trees stop without touching unrelated processes.\n- [ ] Registry and session metadata support detach/reattach consumers.\n- [ ] Raw evidence is written first and retained indefinitely by default.\n- [ ] Purge is explicit, preview-first, cutoff-scoped, and active-run-safe.\n- [ ] PRD 00006 can build adapters/events without duplicating runtime ownership.\n\nVerify: Run the task-specific tests authored for these contracts; inspect real-process or installed-wheel evidence where named. The final phase runs `uv sync --all-groups`, full pytest, Ruff check/format, mypy, and `uv build` once.",
+    "blocked_by": [
+      4,
+      6,
+      8
+    ],
+    "estimated_tokens": 57553,
+    "est_context_peak": 77553,
+    "model": "opus",
+    "tier_reason": "contract",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "9",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": null,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "self_deslop": "noop",
+        "style_gate": "clean",
+        "split_hygiene": "clean"
+      }
+    ]
+  },
+  {
+    "name": "Inventory retained evidence and apply explicit safe purge",
+    "description": "Implement deterministic evidence inventory, pure purge planning, and project/retention-lock-serialized apply with no implicit expiry path.\n\nLocation: src/ovcaq/runtime/session.py\n\nReuse: Reuse descriptor-relative ancestry/identity checks and atomic JSONL publication from workflow/state helpers; use authoritative `RunLock`, not registry PID, for active refusal.\n\nContract (verbatim — from the reviewed design doc's `## Interfaces & contracts`):\n- `EvidenceItem(session_id: str, path: Path, size_bytes: int, modified_at: str, active: bool, device: int, inode: int)`; `EvidenceInventory(runtime_root: Path, total_bytes: int, sessions: tuple[EvidenceItem, ...])`; `PurgePlan(schema_version: Literal[1], runtime_root: Path, selected: tuple[EvidenceItem, ...], total_bytes: int, command: tuple[str, ...])`; `ActiveSessionError(RuntimeError)`.\n- `inventory_evidence(paths: RuntimePaths) -> EvidenceInventory`; `plan_purge(paths, *, session_id: str | None = None, before: datetime | None = None) -> PurgePlan`; `apply_purge(plan: PurgePlan) -> tuple[Path, ...]`.\n- Activity is derived internally from `run.lock` plus matching versioned `run.json`, never registry alone. Plan requires exactly one selector, records device/inode, renders exact argv ending `--apply`, and mutates nothing. Apply first acquires `run.lock` nonblocking, then holds `retention_lock` through full re-inventory, identity compare, aggregate filtering, descriptor-relative deletion and fsync. Any live run or changed identity fails before deletion. Malformed aggregate rows are preserved/reported. No startup, shutdown, completion, drain, timer, or scheduled path invokes purge.\n\nDetails:\n- Count only regular retained files without following symlinks and tolerate vanished entries deterministically.\n- Test active refusal, cutoff/session selection, replacement races, aggregate-row filtering, no-op previews, and selection-only deletion.\n\nAcceptance criteria:\n- [ ] [P03-T08] Implement retained-log inventory plus preview/apply purge with active-run\n+  refusal and no automatic expiry path.\n- duplicate supervisors cannot start;\n- owned agent trees stop without touching unrelated processes;\n- registry metadata and live session state survive detach;\n- completion removes only ephemeral registry/lock/temp artifacts and retains raw\n  session evidence indefinitely.\n- [ ] Duplicate supervisors cannot start.\n- [ ] Owned agent trees stop without touching unrelated processes.\n- [ ] Registry and session metadata support detach/reattach consumers.\n- [ ] Raw evidence is written first and retained indefinitely by default.\n- [ ] Purge is explicit, preview-first, cutoff-scoped, and active-run-safe.\n- [ ] PRD 00006 can build adapters/events without duplicating runtime ownership.\n\nVerify: Run the task-specific tests authored for these contracts; inspect real-process or installed-wheel evidence where named. The final phase runs `uv sync --all-groups`, full pytest, Ruff check/format, mypy, and `uv build` once.",
+    "blocked_by": [
+      2,
+      3,
+      4,
+      9
+    ],
+    "estimated_tokens": 57725,
+    "est_context_peak": 77725,
+    "model": "opus",
+    "tier_reason": "contract",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "10",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": null,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "self_deslop": "noop",
+        "style_gate": "failed:FILE | /Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/runtime/session.py | 810 lines",
+        "split_hygiene": "clean"
+      }
+    ]
+  },
+  {
+    "name": "Expose status doctor and retained-log commands",
+    "description": "Register and dispatch runtime observation, emergency recovery, log location/follow, and preview/apply purge from the one live CLI parser and generated operations reference.\n\nLocation: src/ovcaq/cli.py, src/ovcaq/cli_io.py, src/ovcaq/errors.py, docs/operations.md\n\nReuse: Extend `build_parser`, `command_inventory`, `_normalize_error`, `_write_json`, `_read_payload`, and the existing human stderr/requested-data stdout conventions.\n\nContract (verbatim — from the reviewed design doc's `## Interfaces & contracts`):\n- Commands: `ovcaq [--root PATH] [--json] status`; `doctor`; `doctor --acknowledge-emergency`; `logs [--session ID] [--kind raw|normalized] [--follow]`; `logs purge (--session ID | --before RFC3339) [--apply]`.\n- Status JSON is `{schema_version,state,run,evidence,attention}` with `state=available|missing|invalid`, `run=idle|active|inconsistent`, and evidence keys `runtime_root`, `sessions`, `total_bytes`, `max_retained_bytes`, `min_free_bytes`. Doctor JSON is `{schema_version,ok,paths,capabilities,checks,purge_preview,attention}` with deterministic name-sorted arrays. Logs JSON is `{schema_version,session_id,kind,path,size_bytes,active}`. Purge JSON is `{schema_version,applied,selected,total_bytes,command}`.\n- Status requires run lock + matching versioned metadata/identity for active; registry-only is inconsistent. Doctor reports paths, permissions, budgets, capabilities, exact purge syntax, and emergency recovery. Acknowledge first validates state and archives the marker. Logs defaults to raw/newest metadata timestamp; `--kind raw|normalized`; human-only `--follow` exits 130 on Ctrl-C; JSON+follow is usage error. Purge previews absent `--apply`. Runtime format errors use stable `runtime_format`; malformed observations do not crash status/doctor. Human mutations/progress use stderr, requested data stdout, JSON failures retain `{ok:false,error:{code,message,path}}`. Documentation derives from the live parser.\n\nDetails:\n- Make installed-wheel commands work outside the checkout with deterministic path ordering and no hidden tail/follow default.\n- Add provider-neutral string/import guards and exact human/JSON/error-code tests.\n\nAcceptance criteria:\n- [ ] [P03-T09] Make `status`/`doctor` report retained evidence size and the exact purge\n+  preview command.\n- duplicate supervisors cannot start;\n- owned agent trees stop without touching unrelated processes;\n- registry metadata and live session state survive detach;\n- completion removes only ephemeral registry/lock/temp artifacts and retains raw\n  session evidence indefinitely.\n- [ ] Duplicate supervisors cannot start.\n- [ ] Owned agent trees stop without touching unrelated processes.\n- [ ] Registry and session metadata support detach/reattach consumers.\n- [ ] Raw evidence is written first and retained indefinitely by default.\n- [ ] Purge is explicit, preview-first, cutoff-scoped, and active-run-safe.\n- [ ] PRD 00006 can build adapters/events without duplicating runtime ownership.\n\nVerify: Run the task-specific tests authored for these contracts; inspect real-process or installed-wheel evidence where named. The final phase runs `uv sync --all-groups`, full pytest, Ruff check/format, mypy, and `uv build` once.",
+    "blocked_by": [
+      3,
+      4,
+      5,
+      8,
+      9,
+      10
+    ],
+    "estimated_tokens": 64114,
+    "est_context_peak": 84114,
+    "model": "opus",
+    "tier_reason": "contract",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "11",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": null,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "self_deslop": "noop",
+        "style_gate": "fixed:c10b1679f791aba3904b2f38f433a19d3d461b2b",
+        "split_hygiene": "clean",
+        "review": "failed:empty_output"
+      },
+      {
+        "attempt": 2,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": null,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "lean"
+      }
+    ]
+  },
+  {
+    "name": "[C1] Secure purge ownership and bound retained-evidence reads (L)",
+    "description": "Fix: Secure purge ownership and bound retained-evidence reads (L)\n\nReview: dev/local/reviews/00005-runtime-substrate-v1-review-01.md\nPhase status: data-loss pause; this task is prepared only. Do not start before the operator authorizes recovery and the decision gate verifies/classifies the findings.\n\nLocation: src/ovcaq/runtime/session.py, tests/runtime/test_retention.py, tests/runtime/test_raw_session.py\n\nDetails: Shared mutable runtime directories and run/retention locks cross processes. Bind lock acquisition, inventory, and deletion to the same validated directory identity. Add the synthetic root-swap regression and preserve active evidence. Bound aggregate row reads before allocation and retain malformed bytes. Preserve raw bytes across partial writes.\n\n### Findings (verbatim)\nF50 🔴 apply_purge opens the original runtime directory but acquires run.lock and retention.lock through its replaceable pathname; swapping that directory lets purge delete active evidence while the original run.lock remains held. | File: src/ovcaq/runtime/session.py:787 | Consensus: [1/3] | Found by: coordinator-proof\nF06 🟠 Aggregate purge reads each newline-delimited row into memory before enforcing `MAX_STATE_BYTES`, so a malformed newline-free aggregate can exhaust memory | File: src/ovcaq/runtime/session.py:720 | Consensus: [1/3] | Found by: ALICE\nF41 ⚪ `RawSessionWriter.write` copies `chunk[offset:]` on every partial write | File: src/ovcaq/runtime/session.py:109 | Consensus: [1/3] | Found by: BOB\n\nAcceptance criteria:\n- Every quoted finding no longer reproduces after the decision gate adjudicates its scope and any required contract choice.\n- Preserve raw review evidence and the PRD architecture invariants.\n- Verify behavioral fixes with meaningful regressions, including real process/lock tests where relevant.\n- Use the existing state CLI for workflow state changes; no direct state.json edits.\n\nNo repair dispatch has been authorized by clearing the data-loss pause.\n",
+    "blocked_by": [],
+    "model": "opus",
+    "tier_reason": "algorithmic_risk",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "12",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": 1,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "self_deslop": "noop",
+        "style_gate": "fixed:543b0266fa4c6ac42e3f853a75ec3427d22300f1",
+        "split_hygiene": "clean",
+        "review": "failed:usage limit; resets Sep 20 11am Europe/Prague"
+      }
+    ]
+  },
+  {
+    "name": "[C1] Secure fleet registry roots, locks, and mutation identities (L)",
+    "description": "Fix: Secure fleet registry roots, locks, and mutation identities (L)\n\nReview: dev/local/reviews/00005-runtime-substrate-v1-review-01.md\nPhase status: data-loss pause; this task is prepared only. Do not start before the operator authorizes recovery and the decision gate verifies/classifies the findings.\n\nLocation: src/ovcaq/runtime/registry.py, tests/runtime/test_fleet_registry.py\n\nDetails: Shared mutable fleet records and the persistent fleet lock cross processes. Pin validated directory and entry identities throughout read/compare/delete; reject symlinks and nonregular files without blocking; enforce restrictive permissions. Reverify replacements under the mutation lock.\n\n### Findings (verbatim)\nF07 🟠 Fleet registry reads follow symlinks, the mutation lock is unverified, and prune unlinks paths without a final identity check, violating the descriptor-relative race contract | File: src/ovcaq/runtime/registry.py:146 | Consensus: [1/3] | Found by: ALICE\nF10 🟠 Fleet operations follow a replaced or symlinked registry root and open the mutation lock without `O_NOFOLLOW`, allowing prune to delete JSON files outside the resolved fleet root | File: src/ovcaq/runtime/registry.py | Consensus: [1/3] | Found by: BLAKE\nF30 🟡 `FleetRegistry._mutation` creates the fleet root with umask-default `mkdir(parents=True)` and opens `fleet.lock`/entries without `O_NOFOLLOW`, unlike every other artifact (0o700/0o600, no-follow) | File: src/ovcaq/runtime/registry.py:165 | Consensus: [1/3] | Found by: BOB\n\nAcceptance criteria:\n- Every quoted finding no longer reproduces after the decision gate adjudicates its scope and any required contract choice.\n- Preserve raw review evidence and the PRD architecture invariants.\n- Verify behavioral fixes with meaningful regressions, including real process/lock tests where relevant.\n- Use the existing state CLI for workflow state changes; no direct state.json edits.\n\nNo repair dispatch has been authorized by clearing the data-loss pause.\n",
+    "blocked_by": [],
+    "model": "opus",
+    "tier_reason": "algorithmic_risk",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "13",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": 1,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "self_deslop": "noop",
+        "style_gate": "fixed:af03e630d4ae782646dceb4ac0befc759d797985",
+        "split_hygiene": "clean",
+        "review": "failed:usage limit; resets Sep 20 11am Europe/Prague"
+      }
+    ]
+  },
+  {
+    "name": "[C1] Retain process-group ownership through descendant cleanup (L)",
+    "description": "Fix: Retain process-group ownership through descendant cleanup (L)\n\nReview: dev/local/reviews/00005-runtime-substrate-v1-review-01.md\nPhase status: data-loss pause; this task is prepared only. Do not start before the operator authorizes recovery and the decision gate verifies/classifies the findings.\n\nLocation: src/ovcaq/runtime/process.py, src/ovcaq/runtime/watchdog.py, tests/runtime/test_process.py, tests/runtime/test_watchdog.py\n\nDetails: Shared mutable process ownership crosses the supervisor, watchdog thread, anchor, and agent descendants. Verify safe cancel/signal/wait ordering using real owned subprocesses plus an unrelated sentinel. Do not merely document a leak. Define observable join completion and the required signal exit mapping without signaling recycled groups.\n\n### Findings (verbatim)\nF01 🟡 `Watchdog.join(timeout)` returns an apparently final result while its worker may still be running and may signal the process later | File: src/ovcaq/runtime/watchdog.py | Consensus: [2/3] | Found by: BLAKE, BOB\nF02 🔴 Normal exit collection closes the group anchor without terminating surviving descendants, after which ownership checks refuse further group signals and the processes leak | File: src/ovcaq/runtime/process.py | Consensus: [1/3] | Found by: BLAKE\nF33 🟡 `OwnedProcess.wait()`/`collect_exit()` reap the anchor and forfeit ownership: a grandchild surviving a normal agent exit is unreachable afterwards (`signal_group` raises), and a watchdog firing after `wait()` surfaces `ProcessOwnershipError` from `join()`; the cancel→signal→wait ordering contract is undocumented | File: src/ovcaq/runtime/process.py:135 | Consensus: [1/3] | Found by: BOB\nF34 🟡 PRD test strategy lists \"Ctrl-C/TERM/HUP exit codes\"; only `KeyboardInterrupt → 130` exists; `SupervisorSignal` carries `signal_number` with no exit-code mapping or test | File: src/ovcaq/runtime/process.py:33 | Consensus: [1/3] | Found by: BOB\n\nAcceptance criteria:\n- Every quoted finding no longer reproduces after the decision gate adjudicates its scope and any required contract choice.\n- Preserve raw review evidence and the PRD architecture invariants.\n- Verify behavioral fixes with meaningful regressions, including real process/lock tests where relevant.\n- Use the existing state CLI for workflow state changes; no direct state.json edits.\n\nNo repair dispatch has been authorized by clearing the data-loss pause.\n",
+    "blocked_by": [],
+    "model": "opus",
+    "tier_reason": "algorithmic_risk",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "14",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": 1,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "red_check": "13 failed, 58 passed",
+        "self_deslop": "noop",
+        "style_gate": "fixed:3f5c846d4c64a85f1b91f41e76b9e8be7809589d",
+        "split_hygiene": "clean",
+        "review": "failed:Claude usage limit; resets Sep 20 11am Europe/Prague"
+      }
+    ]
+  },
+  {
+    "name": "[C1] Reconcile trusted anchors with configured-path containment (M)",
+    "description": "Fix: Reconcile trusted anchors with configured-path containment (M)\n\nReview: dev/local/reviews/00005-runtime-substrate-v1-review-01.md\nPhase status: data-loss pause; this task is prepared only. Do not start before the operator authorizes recovery and the decision gate verifies/classifies the findings.\n\nLocation: src/ovcaq/paths.py, src/ovcaq/config.py, tests/runtime/test_paths.py, tests/workflow/test_configuration.py\n\nDetails: Verify each claim against all production callers and the accepted PRD before altering policy. Preserve containment and no-follow checks below trusted resolved anchors, and distinguish deliberate external-root authorization from an unvalidated override. Do not relax existing safety checks solely because a reviewer suggested it.\n\n### Findings (verbatim)\nF09 🟠 Workflow PRD and state paths bypass containment and symlink validation, so `--prd-root` and `--state` can escape the project without an explicit external state root | File: src/ovcaq/config.py | Consensus: [1/3] | Found by: BLAKE\nF12 🟠 Symlink rejection extends to trust anchors: `_checked_path` walks from `/`, so `--root /tmp/x` or `/var/...` fails on macOS (`/tmp`→`/private/tmp`) and a symlinked `~/.config` (stow/chezmoi) makes `_read_config` raise even when no config file exists; this now breaks every pre-existing workflow command too | File: src/ovcaq/paths.py:63, src/ovcaq/config.py:43 | Consensus: [1/3] | Found by: BOB\n\nAcceptance criteria:\n- Every quoted finding no longer reproduces after the decision gate adjudicates its scope and any required contract choice.\n- Preserve raw review evidence and the PRD architecture invariants.\n- Verify behavioral fixes with meaningful regressions, including real process/lock tests where relevant.\n- Use the existing state CLI for workflow state changes; no direct state.json edits.\n\nNo repair dispatch has been authorized by clearing the data-loss pause.\n",
+    "blocked_by": [],
+    "model": "sonnet",
+    "tier_reason": "default",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "files",
+    "id": "15",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "sonnet",
+        "outcome": "completed",
+        "review_cycle": 1,
+        "cause": null,
+        "implementor": "claude",
+        "preflight_outcome": null,
+        "pipeline": "lean",
+        "qwen_excluded_reason": "files",
+        "self_deslop": "committed:1a9bc0a811c98474fcdd78c30c7e949d0e20a4b9",
+        "style_gate": "fixed:2d1f1f4ec25e000a1c749c0a8e3fa36fa188282e",
+        "split_hygiene": "clean",
+        "review": "failed:usage limit; resets Sep 20 11am Europe/Prague"
+      },
+      {
+        "attempt": 2,
+        "model": "sonnet",
+        "outcome": "completed",
+        "review_cycle": 1,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "lean",
+        "qwen_excluded_reason": "files"
+      }
+    ]
+  },
+  {
+    "name": "[C1] Make session publication safe and record validation consistent (L)",
+    "description": "Fix: Make session publication safe and record validation consistent (L)\n\nReview: dev/local/reviews/00005-runtime-substrate-v1-review-01.md\nPhase status: data-loss pause; this task is prepared only. Do not start before the operator authorizes recovery and the decision gate verifies/classifies the findings.\n\nLocation: src/ovcaq/runtime/session.py, src/ovcaq/cli_io.py, tests/runtime/test_session_metadata.py\n\nDetails: Publication operates on shared mutable directory identities; preserve descriptor-relative containment through create/write/replace/fsync. Unify metadata field/identifier/timestamp validation against the existing versioned contract. Bind summaries to their containing session. Reuse directory primitives without removing their safety invariants.\n\n### Findings (verbatim)\nF08 🟠 Session publication checks paths and then reopens them by pathname, so parent replacement can redirect durable metadata outside the validated runtime tree | File: src/ovcaq/runtime/session.py:178 | Consensus: [1/3] | Found by: ALICE\nF14 🟡 Runtime metadata reads accept non-UTC timestamps and do not validate run/session IDs as basenames; use the shared `validate_timestamp` and identifier validation | File: src/ovcaq/cli_io.py:89 | Consensus: [1/3] | Found by: ALICE\nF15 🟡 Metadata publication accepts empty `agent` and `process_start` values that the CLI’s own reader later rejects | File: src/ovcaq/runtime/session.py:165 | Consensus: [1/3] | Found by: ALICE\nF22 🟡 Session summaries can declare a different session ID from their containing session directory and metadata | File: src/ovcaq/runtime/session.py | Consensus: [1/3] | Found by: BLAKE\nF31 🟡 Directory creation exists three times: `ensure_runtime_directory` (init), `ensure_runtime_layout` (new, no production caller), `_private_directory` (creates every missing ancestor at 0o700, including `dev/`) | File: src/ovcaq/runtime/session.py:178, src/ovcaq/paths.py:224 | Consensus: [1/3] | Found by: BOB\n\nAcceptance criteria:\n- Every quoted finding no longer reproduces after the decision gate adjudicates its scope and any required contract choice.\n- Preserve raw review evidence and the PRD architecture invariants.\n- Verify behavioral fixes with meaningful regressions, including real process/lock tests where relevant.\n- Use the existing state CLI for workflow state changes; no direct state.json edits.\n\nNo repair dispatch has been authorized by clearing the data-loss pause.\n",
+    "blocked_by": [],
+    "model": "opus",
+    "tier_reason": "algorithmic_risk",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "16",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": 1,
+        "cause": null,
+        "implementor": "claude",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "self_deslop": "noop",
+        "style_gate": "fixed:731925f146fa19600eaa2e59d0dee40b6cb11e95",
+        "split_hygiene": "clean",
+        "review": "failed:usage limit; resets Sep 20 11am Europe/Prague"
+      }
+    ]
+  },
+  {
+    "name": "[C1] Reconcile runtime liveness and implement doctor resource checks (L)",
+    "description": "Fix: Reconcile runtime liveness and implement doctor resource checks (L)\n\nReview: dev/local/reviews/00005-runtime-substrate-v1-review-01.md\nPhase status: data-loss pause; this task is prepared only. Do not start before the operator authorizes recovery and the decision gate verifies/classifies the findings.\n\nLocation: src/ovcaq/runtime_cli.py, src/ovcaq/runtime/session.py, src/ovcaq/runtime/registry.py, tests/runtime/test_runtime_cli.py, tests/runtime/test_retention.py\n\nDetails: Read shared mutable run-lock, metadata, process identity, fleet and evidence state consistently across processes. Keep the run lock authoritative. Verify the observation-versus-launch contention claim without adopting the reviewer's untested F_GETLK suggestion. Expose required diagnostics and resource/permission checks from shared models. Reuse inventory where safe, without inventing a second liveness algorithm.\n\n### Findings (verbatim)\nF03 🟠 `status` never consults `FleetRegistry`, so registry-only evidence is reported as `idle` instead of required `inconsistent` | File: src/ovcaq/runtime_cli.py:146 | Consensus: [1/3] | Found by: ALICE\nF04 🟠 Active-session detection validates metadata shape but never calls `process_matches`, so stale or recycled process metadata can mark a session active | File: src/ovcaq/runtime/session.py:471 | Consensus: [1/3] | Found by: ALICE\nF05 🟠 `doctor` omits required permission, writability, retained-budget, and free-space checks, allowing `ok=true` when production should be blocked | File: src/ovcaq/runtime_cli.py:191 | Consensus: [1/3] | Found by: ALICE\nF13 🟠 Read-only observations take the exclusive run lock (`_run_health` via `RunLock.acquire`, `_active_session_id` via `flock LOCK_EX|LOCK_NB`, plus `plan_purge` in doctor); a supervisor starting inside that window is refused as a duplicate; TUI polling widens it | File: src/ovcaq/runtime_cli.py:146, src/ovcaq/runtime/session.py:471 | Consensus: [1/3] | Found by: BOB\nF17 🟡 `status` discards `evidence_health`, silently presenting empty evidence when inventory fails | File: src/ovcaq/runtime_cli.py:169 | Consensus: [1/3] | Found by: ALICE\nF28 🟡 `_run_health` and `_active_session_id` discard the failure reason (`except …: pass`); `status` says `inconsistent` with no detail for the operator | File: src/ovcaq/runtime_cli.py:164, src/ovcaq/runtime/session.py:507 | Consensus: [1/3] | Found by: BOB\nF32 🟡 Doctor walks the evidence tree twice and probes the run lock three times (`_evidence_summary` → `inventory_evidence`; `_doctor_payload` → `plan_purge` → `inventory_evidence`; `_run_health`) | File: src/ovcaq/runtime_cli.py:214 | Consensus: [1/3] | Found by: BOB\n\nAcceptance criteria:\n- Every quoted finding no longer reproduces after the decision gate adjudicates its scope and any required contract choice.\n- Preserve raw review evidence and the PRD architecture invariants.\n- Verify behavioral fixes with meaningful regressions, including real process/lock tests where relevant.\n- Use the existing state CLI for workflow state changes; no direct state.json edits.\n\nNo repair dispatch has been authorized by clearing the data-loss pause.\n",
+    "blocked_by": [],
+    "model": "opus",
+    "tier_reason": "algorithmic_risk",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "17",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": 1,
+        "cause": null,
+        "implementor": "claude",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "self_deslop": "noop",
+        "style_gate": "fixed:52e369398db6dc9496ca03b7a158bcf771e795eb",
+        "split_hygiene": "clean",
+        "review": "failed:usage limit; resets Sep 20 11am Europe/Prague"
+      }
+    ]
+  },
+  {
+    "name": "[C1] Correct diagnostic payloads and logs argument handling (M)",
+    "description": "Fix: Correct diagnostic payloads and logs argument handling (M)\n\nReview: dev/local/reviews/00005-runtime-substrate-v1-review-01.md\nPhase status: data-loss pause; this task is prepared only. Do not start before the operator authorizes recovery and the decision gate verifies/classifies the findings.\n\nLocation: src/ovcaq/runtime_cli.py, src/ovcaq/cli.py, src/ovcaq/paths.py, tests/runtime/test_runtime_cli.py\n\nDetails: Correct the emitted diagnostic wire objects and exact purge argv to the reviewed contract, including private dataclass-field leakage. Verify the status-preview requirement against PRD/design before choosing its shape. Reject ignored incompatible logs options. Preserve parser-generated documentation and stable JSON envelopes.\n\n### Findings (verbatim)\nF23 🟡 `status` reports evidence location but omits the exact purge preview required alongside status/doctor diagnostics | File: src/ovcaq/runtime_cli.py | Consensus: [1/3] | Found by: BLAKE\nF24 🟡 `_purge_payload` prepends a second `--root`: `plan.command` already carries `--root <project>`, so preview/doctor/human output renders `ovcaq --root X --root X logs purge …`; argparse last-wins hides it from the round-trip tests | File: src/ovcaq/runtime_cli.py:46 | Consensus: [1/3] | Found by: BOB\nF25 🟡 `RuntimePaths._identities` is a dataclass field: `asdict(paths)` in `_doctor_payload` emits a stringified device/inode tuple under `paths._identities`, and it participates in `==` | File: src/ovcaq/paths.py:159, src/ovcaq/runtime_cli.py:222 | Consensus: [1/3] | Found by: BOB\nF37 ⚪ `logs` and `logs purge` share `dest=\"session\"`; the subparser default overwrites a parent `--session`, and `--kind`/`--follow` before `purge` are silently ignored | File: src/ovcaq/cli.py:209-216 | Consensus: [1/3] | Found by: BOB\nF38 ⚪ `_state_attention` catches `EmergencyStateFailure` from `acknowledge_emergency_failure`, which never raises it, and reads the state store twice on acknowledgement | File: src/ovcaq/runtime_cli.py:126-132 | Consensus: [1/3] | Found by: BOB\nF47 ⚪ PRD \"make `status`/`doctor` show location and exact purge preview\": `status` shows location only; `purge_preview` is doctor-only | File: N/A | Consensus: [1/3] | Found by: BOB\n\nAcceptance criteria:\n- Every quoted finding no longer reproduces after the decision gate adjudicates its scope and any required contract choice.\n- Preserve raw review evidence and the PRD architecture invariants.\n- Verify behavioral fixes with meaningful regressions, including real process/lock tests where relevant.\n- Use the existing state CLI for workflow state changes; no direct state.json edits.\n\nNo repair dispatch has been authorized by clearing the data-loss pause.\n",
+    "blocked_by": [],
+    "model": "opus",
+    "tier_reason": "contract",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "18",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": 1,
+        "cause": null,
+        "implementor": "claude",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "self_deslop": "noop",
+        "style_gate": "fixed:03fecc6534d0c72b35c0e9c71655b72a6030aafe",
+        "split_hygiene": "clean",
+        "review": "failed:usage limit; resets Sep 20 11am Europe/Prague"
+      },
+      {
+        "attempt": 2,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": 1,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "style_gate": "fixed:47bbec59af2976c17b244b281a087120b2baadea",
+        "split_hygiene": "clean"
+      }
+    ]
+  },
+  {
+    "name": "[C1] Provide ownership-safe ephemeral completion cleanup (M)",
+    "description": "Fix: Provide ownership-safe ephemeral completion cleanup (M)\n\nReview: dev/local/reviews/00005-runtime-substrate-v1-review-01.md\nPhase status: data-loss pause; this task is prepared only. Do not start before the operator authorizes recovery and the decision gate verifies/classifies the findings.\n\nLocation: src/ovcaq/runtime/session.py, src/ovcaq/runtime/registry.py, tests/runtime/test_session_metadata.py\n\nDetails: Completion mutates shared run metadata and fleet records. Determine the substrate-versus-future-supervisor responsibility from the PRD, then ensure an explicit owner-checked cleanup operation removes only its own run.json/fleet entry and named temporary artifacts. Never unlink persistent locks or retained session evidence.\n\n### Findings (verbatim)\nF11 🟠 No completion operation removes ephemeral `run.json` and fleet entries, leaving a normally completed run reported as inconsistent until external cleanup occurs | File: N/A | Consensus: [1/3] | Found by: BLAKE\nF26 🟡 No completion counterpart for `publish_run_metadata`: nothing removes `run.json`, so after a normal run ends `status` reports `run: \"inconsistent\"` indefinitely (PRD: completion removes ephemeral entries) | File: src/ovcaq/runtime/session.py:244 | Consensus: [1/3] | Found by: BOB\n\nAcceptance criteria:\n- Every quoted finding no longer reproduces after the decision gate adjudicates its scope and any required contract choice.\n- Preserve raw review evidence and the PRD architecture invariants.\n- Verify behavioral fixes with meaningful regressions, including real process/lock tests where relevant.\n- Use the existing state CLI for workflow state changes; no direct state.json edits.\n\nNo repair dispatch has been authorized by clearing the data-loss pause.\n",
+    "blocked_by": [],
+    "model": "opus",
+    "tier_reason": "algorithmic_risk",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "19",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": 1,
+        "cause": null,
+        "implementor": "claude",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "micro_lane": "overrun",
+        "self_deslop": "fixed:3407ce2",
+        "style_gate": "fixed:da96706",
+        "split_hygiene": "clean",
+        "review": "failed:usage limit; resets Sep 20 11am Europe/Prague"
+      }
+    ]
+  },
+  {
+    "name": "[C1] Preserve and report emergency evidence through recovery (L)",
+    "description": "Fix: Preserve and report emergency evidence through recovery (L)\n\nReview: dev/local/reviews/00005-runtime-substrate-v1-review-01.md\nPhase status: data-loss pause; this task is prepared only. Do not start before the operator authorizes recovery and the decision gate verifies/classifies the findings.\n\nLocation: src/ovcaq/runtime/session.py, src/ovcaq/runtime_cli.py, tests/runtime/test_session_emergency.py, tests/runtime/test_runtime_cli.py\n\nDetails: Shared mutable emergency markers can be published during acknowledgement. Preserve replacement evidence before unblocking, use bounded duplicate-key-safe decoding, translate malformed data to the documented failure, and report the archive path. The reviewer's same-account/microsecond justification does not by itself prove a lost marker safe.\n\n### Findings (verbatim)\nF16 🟡 Emergency acknowledgement discards the returned archive path, although `doctor --acknowledge-emergency` must report it | File: src/ovcaq/runtime_cli.py:128 | Consensus: [1/3] | Found by: ALICE\nF29 🟡 `_read_emergency` uses bare `json.loads` + custom pairs hook instead of `decode_json`; a deeply nested marker raises `RecursionError`, which `require_no_emergency_failure` does not translate, so the launch gate crashes with a traceback instead of `EmergencyStateFailure` | File: src/ovcaq/runtime/session.py:302 | Consensus: [1/3] | Found by: BOB\nF44 ⚪ `acknowledge_emergency_failure` keeps a TOCTOU between the final `samestat` and `marker.unlink()`; a marker rewritten in that window is deleted unarchived | File: src/ovcaq/runtime/session.py:396 | Consensus: [1/3] | Found by: BOB\n\nAcceptance criteria:\n- Every quoted finding no longer reproduces after the decision gate adjudicates its scope and any required contract choice.\n- Preserve raw review evidence and the PRD architecture invariants.\n- Verify behavioral fixes with meaningful regressions, including real process/lock tests where relevant.\n- Use the existing state CLI for workflow state changes; no direct state.json edits.\n\nNo repair dispatch has been authorized by clearing the data-loss pause.\n",
+    "blocked_by": [],
+    "model": "opus",
+    "tier_reason": "algorithmic_risk",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "tier",
+    "id": "20",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "opus",
+        "outcome": "completed",
+        "review_cycle": 1,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "full",
+        "self_deslop": "noop",
+        "style_gate": "fixed:43140bfed09694c5bd5da4be0a75562cf05a39ac",
+        "split_hygiene": "clean"
+      }
+    ]
+  },
+  {
+    "name": "[C1] Remove review-identified complexity and strengthen test rejection checks (M)",
+    "description": "Fix: Remove review-identified complexity and strengthen test rejection checks (M)\n\nReview: dev/local/reviews/00005-runtime-substrate-v1-review-01.md\nPhase status: data-loss pause; this task is prepared only. Do not start before the operator authorizes recovery and the decision gate verifies/classifies the findings.\n\nLocation: src/ovcaq/config.py, src/ovcaq/paths.py, src/ovcaq/runtime/session.py, src/ovcaq/runtime/capability.py, tests/runtime/test_session_emergency.py, tests/runtime/test_registry.py, tests/runtime/test_fleet_registry.py, tests/runtime/test_retention.py, tests/runtime/test_raw_session.py, tests/runtime/test_process.py, tests/runtime/test_watchdog.py, tests/runtime/test_session_metadata.py, CHANGELOG.md\n\nDetails: Bound cleanup to newly changed code and measured size violations. Preserve public interfaces and architectural boundaries. Tighten exception assertions only where the contract identifies expected failures; do not invent new error contracts. Keep an accurate changelog for the unreleased work.\n\n### Findings (verbatim)\nF19 🟡 `runtime_settings` is 51 lines; extract numeric-limit selection and validation into a helper | File: src/ovcaq/config.py:142 | Consensus: [1/3] | Found by: ALICE\nF20 🟡 `resolve_runtime_paths` is 51 lines; extract existing-directory identity snapshot collection into a helper | File: src/ovcaq/paths.py:171 | Consensus: [1/3] | Found by: ALICE\nF21 🟡 `session.py` is 810 lines, exceeding the 800-line limit; move retention internals into a focused private module while preserving the public API | File: src/ovcaq/runtime/session.py:1 | Consensus: [1/3] | Found by: ALICE\nF35 🟡 Size limits: `session.py` is 810 lines (>800); `runtime_settings` and `resolve_runtime_paths` are 51 lines; new test `test_failed_state_notice_publishes_private_synced_marker_and_persistent_gate` is 60 lines | File: src/ovcaq/runtime/session.py, src/ovcaq/config.py:142, src/ovcaq/paths.py:171 | Consensus: [1/3] | Found by: BOB\nF36 🟡 `_reject` helpers in 8 new test files accept any `Exception`, so a NameError/AttributeError in the code under test counts as a rejection; the intended error type is never pinned | File: tests/runtime/test_raw_session.py:14 (and test_retention, test_session_metadata, test_session_emergency, test_process, test_watchdog, test_fleet_registry, test_registry) | Consensus: [1/3] | Found by: BOB\nF39 ⚪ Minor slop: `paths.runtime_root / \"reports\"` instead of `paths.reports`; `import fcntl` inside `_probe_advisory_lock` while registry imports it at module level; `runtime_settings` runs `_checked_path(root)` and `resolve_runtime_paths` repeats it | File: src/ovcaq/runtime/session.py:378, src/ovcaq/runtime/capability.py:68, src/ovcaq/config.py:155 | Consensus: [1/3] | Found by: BOB\nF42 ⚪ CHANGELOG `Fixed` entries describe fixes to code introduced in the same unreleased block; they read as fixes of released behavior | File: CHANGELOG.md:27-28 | Consensus: [1/3] | Found by: BOB\n\nAcceptance criteria:\n- Every quoted finding no longer reproduces after the decision gate adjudicates its scope and any required contract choice.\n- Preserve raw review evidence and the PRD architecture invariants.\n- Verify behavioral fixes with meaningful regressions, including real process/lock tests where relevant.\n- Use the existing state CLI for workflow state changes; no direct state.json edits.\n\nNo repair dispatch has been authorized by clearing the data-loss pause.\n",
+    "blocked_by": [],
+    "model": "sonnet",
+    "tier_reason": "default",
+    "qwen_eligible": false,
+    "qwen_excluded_reason": "files",
+    "id": "21",
+    "status": "completed",
+    "attempts": [
+      {
+        "attempt": 1,
+        "model": "sonnet",
+        "outcome": "completed",
+        "review_cycle": 1,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "lean",
+        "qwen_excluded_reason": "files",
+        "red_check": "skipped:behavior-preserving cleanup has no honest pre-implementation red signal",
+        "self_deslop": "noop",
+        "style_gate": "clean",
+        "split_hygiene": "clean"
+      },
+      {
+        "attempt": 2,
+        "model": "sonnet",
+        "outcome": "completed",
+        "review_cycle": 1,
+        "cause": null,
+        "implementor": "codex",
+        "preflight_outcome": null,
+        "pipeline": "lean",
+        "qwen_excluded_reason": "files"
+      }
+    ]
+  }
+]

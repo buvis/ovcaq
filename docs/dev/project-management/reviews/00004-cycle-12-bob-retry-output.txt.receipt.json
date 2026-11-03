@@ -1,0 +1,14 @@
+{
+  "provider": "claude",
+  "model": "opus",
+  "started": 1788764486.9475641,
+  "completed": 1788765003.3515399,
+  "output": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00004-cycle-12-bob-retry-output.txt",
+  "sha256": "5cbd9d399a52bf4d5f48e2092f01e900723ab2a496aaf79f28be9968af579f2e",
+  "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00004-cycle-12-bob-retry-output-76419e620329401da5610a4e9ccedaf7.jsonl",
+  "raw_sha256": "5ff6c102ed6a834980345c7de4cc4990398977843b8ccfe2142cda989bf6cd79",
+  "thread_id": "3589259b-aa71-4e22-91d6-3714bf5a2341",
+  "root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+  "prd": "00004-workflow-core-v1.md",
+  "cycle": 12
+}

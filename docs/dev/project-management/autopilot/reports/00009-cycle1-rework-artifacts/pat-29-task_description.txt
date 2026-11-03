@@ -1,0 +1,6 @@
+Failure-driven task21 context-overrun split, no edits in failed attempt. Test-only; preserve all assertions. Parent finding below fully closes this scope. Read only bounded relevant ranges, never concatenate whole allowlist; total worker input cap100K.
+
+Add separate consistent native collab fixture, exact SHA honest synthetic provenance, fake scenario and real Supervisor panel lane assertion. Preserve original mismatched fallback and positional FAMILIES selection semantics.
+
+### Findings (verbatim)
+- 🟡 tests/tui/test_codex_projection.py:256: P07-T07 wants actual native lanes shown from real fake-Supervisor output. In `lanes.jsonl`, the `receiver_thread_ids` and `agents_states` keys never match, so the fake-Supervisor "lanes" scenario asserts no lanes. The only visible lane comes from a test that rewrites the provider payload in place (`matched=True`). (found by: BOB)

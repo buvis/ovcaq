@@ -1,0 +1,9 @@
+{
+  "command": [
+    "uv",
+    "sync",
+    "--all-groups"
+  ],
+  "exit": 0,
+  "sha": "2eb175512b7fd0f79e7cb32b9a6581d2d86e802c"
+}

@@ -1,0 +1,268 @@
+{
+  "fingerprint": "7ef04a0db11a5c301a74bff94075fca835ece01b1d0c0e2f62627e8382b2f2f0",
+  "snapshot": {
+    "prd": "00054-activity-projection-corrections-v1.md",
+    "cycle": 2,
+    "work_start_sha": "65926983d26de98d55692fd1232ad12a1de48caf",
+    "tasks": [
+      {
+        "id": "1",
+        "attempts": [
+          {
+            "attempt": 1,
+            "actual_model": "gpt-6.1-sol",
+            "actual_provider": "openai",
+            "implementor": "codex",
+            "outcome": "escalated"
+          },
+          {
+            "attempt": 2,
+            "actual_model": "gpt-6-astra",
+            "actual_provider": "openai",
+            "implementor": "codex",
+            "outcome": "completed"
+          }
+        ]
+      },
+      {
+        "id": "2",
+        "attempts": [
+          {
+            "attempt": 1,
+            "actual_model": "gpt-6.1-sol",
+            "actual_provider": "openai",
+            "implementor": "codex",
+            "outcome": "escalated"
+          },
+          {
+            "attempt": 2,
+            "actual_model": "gpt-6-astra",
+            "actual_provider": "openai",
+            "implementor": "codex",
+            "outcome": "completed"
+          }
+        ]
+      },
+      {
+        "id": "3",
+        "attempts": [
+          {
+            "attempt": 1,
+            "actual_model": "gpt-6.1-sol",
+            "actual_provider": "openai",
+            "implementor": "codex",
+            "outcome": "completed"
+          }
+        ]
+      },
+      {
+        "id": "4",
+        "attempts": [
+          {
+            "attempt": 1,
+            "actual_model": "gpt-6.1-sol",
+            "actual_provider": "openai",
+            "implementor": "codex",
+            "outcome": "completed"
+          },
+          {
+            "attempt": 2,
+            "actual_model": "gpt-6.1-sol",
+            "actual_provider": "openai",
+            "implementor": "codex",
+            "outcome": "aborted"
+          },
+          {
+            "attempt": 3,
+            "actual_model": "gpt-6.1-sol",
+            "actual_provider": "openai",
+            "implementor": "codex",
+            "outcome": "completed"
+          }
+        ]
+      },
+      {
+        "id": "5",
+        "attempts": [
+          {
+            "attempt": 1,
+            "actual_model": "gpt-6.1-sol",
+            "actual_provider": "openai",
+            "implementor": "orchestrator",
+            "outcome": "completed"
+          }
+        ]
+      },
+      {
+        "id": "6",
+        "attempts": [
+          {
+            "attempt": 1,
+            "actual_model": "gpt-6.1-sol",
+            "actual_provider": "openai",
+            "implementor": "orchestrator",
+            "outcome": "completed"
+          }
+        ]
+      },
+      {
+        "id": "7",
+        "attempts": [
+          {
+            "attempt": 1,
+            "actual_model": "gpt-6.1-sol",
+            "actual_provider": "openai",
+            "implementor": "orchestrator",
+            "outcome": "completed"
+          }
+        ]
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "task": "1",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/autocodex-sessions/00054-tess-1-model-metadata.jsonl",
+      "line": 2,
+      "sha256": "0b37bbd2bf61e077489b1e635faca5112f4b475acc04795a9f416aa540b9ee12"
+    },
+    {
+      "task": "1",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/autocodex-sessions/00054-tess-1-model-metadata.jsonl",
+      "line": 3,
+      "sha256": "d82c4c098038e930bd94a8b3efbfbf8c14b38d93ce7a959d1da3432fa351d883"
+    },
+    {
+      "task": "1",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/autocodex-sessions/00054-tess-1-model-metadata.jsonl",
+      "line": 4,
+      "sha256": "5c14c47873cf382ed5d9d7718ce43b46bb5f5ba806bcdede6352552539879b41"
+    },
+    {
+      "task": "1",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/autocodex-sessions/00054-tess-1-model-metadata.jsonl",
+      "line": 5,
+      "sha256": "8e292886d73c65b2a96806255373017a131602c74ce3df143b64fb994945562a"
+    },
+    {
+      "task": "1",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/autocodex-sessions/00054-ivan-1-model-metadata.jsonl",
+      "line": 2,
+      "sha256": "e7e12c23152a3b80599819be7e08a0c7c3055155cabe53240116f9744fdb481f"
+    },
+    {
+      "task": "1",
+      "role": "implementation",
+      "model": "gpt-6-astra",
+      "path": "docs/dev/project-management/autopilot/autocodex-sessions/00054-ivan-1-repair-model-metadata.jsonl",
+      "line": 2,
+      "sha256": "817b44064553e745396bd2cfc5f3085a96262cca8f2b684aa3306a5ac33ebdca"
+    },
+    {
+      "task": "1",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/autocodex-sessions/00054-task-1-harness-repair-model-metadata.jsonl",
+      "line": 2,
+      "sha256": "e6f3cfd0c6f68641192b9f4b5132dbd1fb5e01343b716681a7563cafe1967e9a"
+    },
+    {
+      "task": "2",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/autocodex-sessions/00054-tess2-model-metadata.jsonl",
+      "line": 2,
+      "sha256": "82c42ee4e97b4a8eb1306e0d82c21c6b76ec048c78b83f61f0bd6811c1de9972"
+    },
+    {
+      "task": "2",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/autocodex-sessions/00054-tess2-model-metadata.jsonl",
+      "line": 3,
+      "sha256": "e7aa6f6f709c7bde767d857958ea8d51a27d3c0a0f9b97bd7eb6400f9bed2624"
+    },
+    {
+      "task": "2",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/autocodex-sessions/00054-ivan2-model-metadata.jsonl",
+      "line": 2,
+      "sha256": "e493d07eb910b2495a512edc00290977bf20a0dcb6c67e6fdd3f38ba9e12c5a1"
+    },
+    {
+      "task": "2",
+      "role": "implementation",
+      "model": "gpt-6-astra",
+      "path": "docs/dev/project-management/autopilot/autocodex-sessions/00054-ivan2_status-model-metadata.jsonl",
+      "line": 2,
+      "sha256": "33647b7ef8a20f6afbda6458ceb01c75601987254f045a24fbb5cf42e9f136d0"
+    },
+    {
+      "task": "3",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/autocodex-sessions/00054-ivan3-model-metadata.jsonl",
+      "line": 2,
+      "sha256": "4b2ded1d7497c44e6431db6c778c762365bcf00bc7c18ab6c2468ff28254926c"
+    },
+    {
+      "task": "4",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/autocodex-sessions/00054-rework-task4-model-metadata.jsonl",
+      "line": 2,
+      "sha256": "5e2f7275915794030167e32c1097d885e297841a22621806ad1f9bb6d6b1db35"
+    },
+    {
+      "task": "4",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/autocodex-sessions/00054-rework-task4-regression-model-metadata.jsonl",
+      "line": 2,
+      "sha256": "bbf563b608839103ca6263e28fae28d33bd602c6ad98e5ab2de09b9e2963a31a"
+    },
+    {
+      "task": "4",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/autocodex-sessions/00054-recovery-viewer-model-metadata.jsonl",
+      "line": 2,
+      "sha256": "0f26f229992a6d294689e4cf488a9043de26fcce2bf57a1d5f37b046c1b88a24"
+    },
+    {
+      "task": "5",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/autocodex-sessions/00054-rework-coordinator-model-metadata.jsonl",
+      "line": 2,
+      "sha256": "9a899e67e087e337099225851ee12d691b80f38c0f0ba5e7d2a5e86f0f5c40ec"
+    },
+    {
+      "task": "6",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/autocodex-sessions/00054-rework-coordinator-model-metadata.jsonl",
+      "line": 2,
+      "sha256": "9a899e67e087e337099225851ee12d691b80f38c0f0ba5e7d2a5e86f0f5c40ec"
+    },
+    {
+      "task": "7",
+      "role": "implementation",
+      "model": "gpt-6.1-sol",
+      "path": "docs/dev/project-management/autopilot/autocodex-sessions/00054-rework-coordinator-model-metadata.jsonl",
+      "line": 2,
+      "sha256": "9a899e67e087e337099225851ee12d691b80f38c0f0ba5e7d2a5e86f0f5c40ec"
+    }
+  ]
+}

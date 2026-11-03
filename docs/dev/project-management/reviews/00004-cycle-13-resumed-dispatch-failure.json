@@ -1,0 +1,69 @@
+{
+  "cycle": 13,
+  "attempt": "20260913-resumed",
+  "head_sha": "be5e385bd9714952b4803ee30f7c72e661c278f2",
+  "bob": {
+    "provider": "claude",
+    "requested_model": "opus",
+    "actual_model": null,
+    "logical_tier": "opus",
+    "provider_inference": false,
+    "helper_exit": 1,
+    "receipt": null,
+    "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/bob-output-00004-13-20260913-resumed-ab1765a9c908456a99e50ce3456ae5f8.jsonl",
+    "raw_sha256": "527a109ba505e642a2d1aee7c1eabf7ec918c88b58a5e7627e8a1b6d39c4e16c",
+    "raw_bytes": 14479,
+    "stderr": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/bob-output-00004-13-20260913-resumed-ab1765a9c908456a99e50ce3456ae5f8.stderr",
+    "stderr_bytes": 0,
+    "error": "API Error: Can't reach the API server — check your internet or DNS (ENOTFOUND)",
+    "api_error_status": null,
+    "is_error": true,
+    "terminal_reason": "api_error",
+    "duration_ms": 180581,
+    "usage": {
+      "output_tokens_details": {
+        "thinking_tokens": 0
+      },
+      "input_tokens": 0,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "output_tokens": 0,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "",
+      "iterations": [],
+      "speed": "standard"
+    },
+    "model_usage": {},
+    "thread_id": "82b69ce8-8722-4ce1-83d7-16c199507ceb",
+    "host_substitution": "external Claude Bob replaces former external Codex doubt role; unavailable before inference",
+    "retry": "not attempted: host requires pause after helper terminal failure"
+  },
+  "carl": {
+    "exit": 3,
+    "reason": "refusing nested dispatch (already inside a CLI agent)",
+    "provider_inference": false
+  },
+  "watcher": {
+    "known_sessions": [
+      59542,
+      81202,
+      22857
+    ],
+    "known_session_exits": [
+      0,
+      0,
+      0
+    ],
+    "subsequent_start": "aborted at coordinator interrupt; no session id returned",
+    "terminal_check": "elevated pgrep -fl await_reviewer_outputs.py exited 1 with no matches",
+    "alive": false
+  }
+}

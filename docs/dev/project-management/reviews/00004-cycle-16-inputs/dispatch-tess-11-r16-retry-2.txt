@@ -1,0 +1,40 @@
+Your tests have quality issues. Fix them.
+
+Issues found:
+Coordinator contract correction: the public ledger filename is <batch_id>-deferred.json, so for BATCH_ID="batch-16" its path is runtime_root/"deferred"/"batch-16-deferred.json". My original public-interface scratch text omitted the "-deferred" suffix. Fix ONLY the three published-path assignments in /Users/bob/git/src/github.com/buvis/ovcaq/tests/workflow/test_deferred_diagnostics.py to name the real public ledger (prefer f"{BATCH_ID}-deferred.json"). Keep every diagnostic, cause, errno, injection and side-effect assertion unchanged. No production reads/edits, no commits, no pytest (coordinator will re-run the narrow six tests after commit). This corrects supplied interface text; it does not change the public API or add scenarios.
+
+
+Original requirements (unchanged):
+
+Description:
+Test task 11's public deferred-directory error behavior, using ovcaq.workflow.records.record_defer only. Write /Users/bob/git/src/github.com/buvis/ovcaq/tests/workflow/test_deferred_diagnostics.py. Do not modify any existing file.
+
+The public operation refuses an existing regular file or symlink at runtime_root/"deferred" and reports the complete configured deferred path while preserving the original OSError as __cause__. This applies both on the initial open and when the deferred directory vanishes before the post-creation open. Directory creation errors also report the full path and preserve their original OSError. Refusal must not publish a deferred record or modify an existing obstruction/target.
+
+Other parts of this single task simplify existing tests and document diagnostics; the implementation agent handles those. Author behavioral tests for the public API only. Do not inspect implementation files. Read-only allowed context: /Users/bob/git/src/github.com/buvis/ovcaq/tests/workflow/test_deferred_ledger.py (sample), /Users/bob/git/src/github.com/buvis/ovcaq/pyproject.toml (pytest config), /Users/bob/git/src/github.com/buvis/ovcaq/tests/workflow/test_deferred_diagnostics.py (if it exists after you create it).
+
+
+Acceptance Criteria:
+Cover regular-file and symlink obstructions at the full deferred path, the vanished-directory second open, and injected directory-creation failures EACCES, ENOSPC and EBADF. Assert exact outer diagnostic "deferred directory is not a real directory: <full path>" for opens or "deferred directory could not be created: <full path>" for mkdir. Assert original __cause__ is OSError with preserved errno (native open may be ELOOP or ENOTDIR for symlink, ENOTDIR for regular file, ENOENT for vanished). Existing obstruction inode/content and symlink target sentinel remain untouched and no record is published. For injected mkdir errors, __cause__ identity can establish original error preservation. Only mock external filesystem operations if needed; do not mock internal workflow functions. Keep each test <=50 lines, minimal cases directly covering these requirements. Use genuine API execution. Do not run the tests yet; coordinator runs red after committing them. Format only the new file if needed.
+
+
+Rewrite the tests addressing each issue above. Keep every test that is already
+sound — this is a targeted fix, not a rewrite from scratch.
+
+The original rules still apply. In particular:
+
+1. Write tests from requirements only. You are a USER of this API, not its builder.
+2. Each test name describes a behavior, not an implementation detail.
+3. Assert on outputs, return values, side effects, and errors. Never assert on mock existence.
+4. For EACH test, ask yourself: "What wrong implementation would still pass this?" If easy to answer, add constraints.
+5. SIMPLICITY FIRST: test only the behavior in the acceptance criteria. Strengthening a weak test does not mean adding tests nobody asked for.
+6. NEVER INVENT A CONTRACT: if the requirements name a data structure but do not pin its exact field names, enum values, or types, STOP and report it as a blocker rather than inventing a plausible schema.
+7. SURGICAL: only create/modify test files. Match the existing test file's style.
+
+Read only the files listed above. If a file or symbol you need is not listed, stop and report it as a blocker — do not run broad `rg` sweeps to discover scope.
+
+Abort and report if you read more than 100K of total input. Return the partial result and an abort_reason: context_overrun field.
+
+Read every file before your first Edit to it. Never call bash `head`, `tail`, `cat`, `grep`, or `find` - a hook blocks them. Use the Read tool (offset/limit), `rg`, or `rg --files` instead. Never combine an inspection (read, list, search, diff) with a test, lint or build invocation in one Bash call - run them as two calls, because a combined command has two ways to hang and one exit code. Pass an explicit `timeout` on every Bash call: 60000 ms for an inspection, 300000 ms for a lint run or a narrow test run, 600000 ms for a full suite or a full build.
+
+End your report with `ASSUMPTIONS:` - one line per assumption you made where the task, tests, or listed files were silent (guessed interface, data shape, resolved ambiguity, unstated behavior). Write `ASSUMPTIONS: none` if you made none.

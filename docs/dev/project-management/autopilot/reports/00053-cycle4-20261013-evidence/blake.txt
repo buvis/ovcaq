@@ -1,0 +1,51 @@
+## Blake: blind audit of PRD 00053 (adapter operational corrections)
+
+The PRD's behavior is in place, and all six exit-criteria checks pass on this tree (run 2026-10-13):
+
+```
+pytest (acceptance files): 322 passed, 1 warning
+pytest (full):             7202 passed, 2 warnings in 240.23s, 0 skipped
+ruff check:                All checks passed!
+ruff format --check:       236 files already formatted
+mypy src/ovcaq:            Success: no issues found in 61 source files
+uv build:                  sdist + wheel built (scratch output deleted)
+```
+
+What I checked against the code:
+- **Lanes** (`src/ovcaq/drivers/codex.py:370`): only lanes that started and haven't finished can be turned into a failure. Finished lanes ignore late updates.
+- **Capacity**: "Selected model is at capacity" now lands in the connectivity bucket (`src/ovcaq/drivers/codex_events.py:328`). It waits and retries, and it halts once retries run out (`tests/drivers/test_adapter_failure_classes.py:258`).
+- **Model chosen once**: the Codex driver from `build_driver` maps the chosen model back to its tier key, the same way the existing Claude edge does (`src/ovcaq/drivers/edge.py:16`). Calling `CodexDriver` directly still gives tier keys precedence (`tests/drivers/test_codex_launch.py:186`).
+- **Health check PATH**: the Claude check now searches the configured PATH (`src/ovcaq/drivers/claude.py:82`). The Codex check already ran the command under the merged environment, which is how the real launch runs it.
+- **Unchanged**: driver API 2, observation protocol 1, state schema 1. The rate-limit reset parser (`failure_reset`) and `DEFAULT_PHASE_TIERS` are untouched.
+
+```
+[BLAKE] 🟡 A plain "error" in front of a number now counts as a status code (added in task 25), so ordinary counts get classified: "Error: 429 tests failed" → rate_limit (which halts, since there is no reset time), "error 403 lines removed" → permission, "Error = 502 retries" → connectivity (confirmed by running classify_failure). This goes against "ordinary counts remain unknown". The negative tests only cover counts with no prefix. It widens a finding the ledger already deferred ("status: 401 tests passed") to a much more common word | File: src/ovcaq/drivers/codex_events.py:302 | Task: Phase 0
+[BLAKE] ⚪ Status codes with no prefix are no longer classified: "503 Service Unavailable", "502 Bad Gateway", "403 Forbidden" and "429 Too Many Requests" now return unknown, so a bare 503 gets a died-retry and then PARK instead of a connectivity WAIT. Common SDK spellings "status_code=429", "statusCode: 429" and the PRD's own "error-code 401" also return unknown. This is spec-consistent but a real drop in coverage, and nothing pins the intent (confirmed by probe) | File: src/ovcaq/drivers/codex_events.py:300 | Task: Phase 0
+[BLAKE] ⚪ A driver from build_driver now reads request.model as a model value, not a tier key: with {default: o3, o3: o3-pro}, build_driver(...).build_launch(model="o3") launches o3, while CodexDriver directly launches o3-pro. It is documented and the supervisor is its only caller, but the same request now means different things depending on how the driver was built | File: src/ovcaq/drivers/edge.py:19 | Task: Phase 1
+[BLAKE] ⚪ Suspected, not reproduced: for a relative command containing a slash (e.g. "./bin/codex"), both health checks resolve it against the supervisor's working directory, but the launch resolves it against cwd=request.root, so health and launch can disagree when the two directories differ. This predates the PRD and is outside the cases it lists | File: src/ovcaq/drivers/claude.py:83 | Task: Phase 1
+[BLAKE] ⚪ The full suite still warns twice with "PytestWarning: (rm_rf) error removing …/garbage-… Directory not empty" (the same as R21 in review 00009-2). It predates this PRD and is still unexplained; some test process probably keeps writing into tmp after teardown | File: N/A | Task: general
+```
+
+B1: pass
+B2: pass
+B3: pass
+B4: pass
+B5: pass
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: pass
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: pass
+B16: pass
+B17: pass
+B18: pass
+B19: pass
+
+**Status**: Done.
+**Changed**: nothing in the repo. I wrote two classifier probe scripts and a build output under /tmp, then deleted them.
+**Next**: Task complete. Suggested next: decide whether a plain "error" prefix should count as a status code (finding 1) before this review is consolidated.

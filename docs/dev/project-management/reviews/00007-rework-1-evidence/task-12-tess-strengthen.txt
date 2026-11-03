@@ -1,0 +1,103 @@
+Tess task 12 — single Devon strengthening pass
+Dispatch: dd2752c8
+
+Changed file:
+tests/runtime/test_capability_execution_contract.py
+
+Reused existing guards without editing:
+tests/runtime/test_capability_lifecycle.py
+
+Artifacts:
+docs/dev/tmp/00007-12-tess-strengthen-report.txt
+docs/dev/tmp/00007-12-tess-strengthen-red.txt
+
+All eight numbered weak points:
+
+1. strengthened: test_capability_request_uses_bounded_configuration_without_agent_route
+   now propagates user interior values 2 and 42 and project interior values 1234
+   and 86399 through both pending and retry paths. The existing default/boundary/
+   precedence cases remain. test_explicit_timeout_overrides_project_and_user_values
+   now also exercises all four of those interior explicit values. A finite
+   whitelist matching the previous fixture values no longer passes.
+
+2. strengthened: test_runner_exception_retains_identity_pins_results_and_actionable_evidence
+   now covers the original LookupError, another LookupError message, RuntimeError,
+   and OSError through both paths. Each requires the actual exception class and
+   message in durable failure evidence; retry preserves exception propagation and
+   pending execution requires nonzero HALT. No evidence checks were dropped.
+
+3. strengthened: test_invalid_timeout_is_rejected_before_runner_launch now rejects
+   string "79" and empty string at user, project, and explicit sources. TOML strings
+   are actually quoted. test_explicit_timeout_rejects_noninteger_objects_before_runner_launch
+   rejects None, list, mapping, and a non-int object offering __int__/__index__.
+   This follows the declared positive bounded integer contract; no coercion API
+   is introduced. Each test verifies that neither capability nor workflow launches.
+
+4. strengthened: test_capability_request_uses_bounded_configuration_without_agent_route
+   runs its complete pending/retry configuration matrix with audit and archive.
+   The fake runner checks the declared request name against committed running
+   state. Configuration is addressed to that name and exact request name/timeout
+   are asserted. Rejecting archive or reading only audit's timeout is detected.
+
+5. strengthened: selection now includes the existing exact guard
+   tests/runtime/test_capability_lifecycle.py::test_start_rejects_conflicting_revision_without_state_or_evidence_writes
+   It requires RevisionConflictError and identical persisted state and session
+   evidence for a nonmatching expected revision. Ignoring expected_revision fails
+   this guard. No duplicate revision test was added.
+
+6. strengthened: selection now includes the existing exact guard
+   tests/runtime/test_capability_lifecycle.py::test_finish_rejects_conflicting_identity_or_revision_without_finalizing_evidence[revision]
+   It passes stale revision zero for the running attempt and requires conflict
+   with identical state and session evidence. The selected family also preserves
+   attempt/session identity conflict coverage. No duplicate test was added.
+
+7. strengthened: test_running_capability_is_never_published_as_interrupted now
+   returns distinctive successful detail and asserts exact preservation in the
+   final attempt and final raw result, in both pending and retry paths. Existing
+   terminal metric/aggregate identity, success, completion and deduplication
+   checks remain. No nonexistent metric detail field was invented.
+
+8. strengthened: selection now includes the existing exact family
+   tests/runtime/test_capability_lifecycle.py::test_explicit_retry_runs_once_and_preserves_prior_attempt_evidence_and_drained_work
+   Its four False cases require a returned runner failure to produce failed
+   attempt/capability/metric status, retain old evidence and preserve drained work;
+   an AlwaysSucceeds wrapper fails. The family also covers successful retries.
+   This existing guard is sufficient against the demonstrated mutation; no
+   duplicate retry-return test was added.
+
+Exact focused command / parent selection:
+UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache uv run pytest \
+  tests/runtime/test_capability_execution_contract.py \
+  tests/runtime/test_capability_lifecycle.py::test_start_rejects_conflicting_revision_without_state_or_evidence_writes \
+  tests/runtime/test_capability_lifecycle.py::test_finish_rejects_conflicting_identity_or_revision_without_finalizing_evidence \
+  tests/runtime/test_capability_lifecycle.py::test_explicit_retry_runs_once_and_preserves_prior_attempt_evidence_and_drained_work \
+  --tb=short -q
+
+Result: 72 failed, 26 passed, 98 cases in 2.78 seconds. The complete output with
+exact parameterized node IDs is in docs/dev/tmp/00007-12-tess-strengthen-red.txt.
+The modified file contributes 86 cases; all 12 selected existing guards pass.
+
+Current red groups:
+- 30 capability configuration/no-route cases: pending still requires an agent
+  phase route; configured retry still receives the default instead of configured
+  values, for both declared names.
+- 30 scalar timeout rejection cases plus four noninteger-object cases still
+  accept invalid input before launch.
+- Four pending exception variations still propagate instead of returning HALT;
+  all four explicit retry exception/evidence cases pass.
+- Both live aggregate cases still publish an interrupted live attempt.
+- Both paused stale-startup cases still attempt unavailable phase routing.
+
+Quality gates:
+- uv run ruff format tests/runtime/test_capability_execution_contract.py: formatted.
+- uv run ruff check tests/runtime/test_capability_execution_contract.py: passed.
+- AST size check: 378 lines; every function shorter than 45 lines.
+- Tests used approved escalation for real macOS process identity checks.
+- Two unrelated pytest temporary garbage-directory cleanup warnings remain.
+
+Only the supplied wrong implementations were read, as explicitly included in the
+retry persona; no production implementations were inspected or edited. No commits,
+live launcher reads, or workflow-state edits. Devon was not rerun. Existing sound
+tests and corrected retry exception semantics are retained.
+
+ASSUMPTIONS: none

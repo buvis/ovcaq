@@ -1,0 +1,42 @@
+{
+  "commands": [
+    {
+      "command": "mise exec -- uv sync --all-groups",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv run ruff check .",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv run ruff format --check .",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv run mypy src/ovcaq",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv build",
+      "exit": 0
+    }
+  ],
+  "task_23": {
+    "command": "mise exec -- uv run pytest -q --tb=line tests/drivers/test_adapter_outcomes.py",
+    "exit": 0,
+    "passed": 32
+  },
+  "task_24": {
+    "command": "mise exec -- uv run pytest -q --tb=line tests/drivers/test_adapter_failure_classes.py",
+    "exit": 0,
+    "passed": 89
+  },
+  "style_gate": {
+    "23": "clean",
+    "24": "clean"
+  },
+  "split_hygiene": {
+    "23": "clean",
+    "24": "clean"
+  }
+}

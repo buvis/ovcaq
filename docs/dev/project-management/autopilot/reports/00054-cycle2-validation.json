@@ -1,0 +1,32 @@
+{
+  "phase": "done",
+  "next_phase": "done",
+  "cycle": 2,
+  "rework_cap": 2,
+  "review_gap": null,
+  "schema": "pass",
+  "task_counts": "7/7",
+  "review_shape": "pass",
+  "constraint": "pass",
+  "providers": [
+    "anthropic"
+  ],
+  "receipts": [
+    "alice",
+    "blake",
+    "bob"
+  ],
+  "implementation_provenance": "unchanged",
+  "tail_tasks": 0,
+  "tests": {
+    "passed": 7257,
+    "failed": 0,
+    "skipped": 0,
+    "source": "Blake independent raw awaited result"
+  },
+  "coordinator_capture": {
+    "passed": 7256,
+    "failed": 1,
+    "isolated_rerun_passed": 1
+  }
+}

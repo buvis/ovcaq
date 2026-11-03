@@ -1,0 +1,6 @@
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/drivers/codex.py
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/drivers/codex_events.py
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/drivers/codex_tools.py
+Read-only /Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/events/model.py
+Read-only /Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_codex_decode_terminals.py
+Read-only /Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_codex_rework_decode.py

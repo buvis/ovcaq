@@ -1,0 +1,13 @@
+# PRD00053 authorized post-sweep repair provenance
+
+The canonical implementation-model audit and its reviewed snapshot are intentionally unchanged. The next fresh session must regenerate them before review-route. No full provider roster ran in this implementation session.
+
+Task 15 test author: native /root/tess15, gpt-6.1-sol / openai / medium. Raw native session is preserved byte-for-byte in 00053-postsweep-repair-20261012-evidence/tess-15.raw.jsonl. Line 1 supplies provider, worker identity and parent; line 8 supplies implementation-turn model and effort. Dispatch ledger ID 032da172; test commit 5cef469.
+
+Task 15 implementor: native /root/ivan15, gpt-6.1-sol / openai / medium. Raw native session is preserved in 00053-postsweep-repair-20261012-evidence/ivan-15.raw.jsonl. Line 1 supplies provider and worker identity; line 8 supplies implementation-turn model/effort. Dispatch ledger ID 12821ccf. Implementation commit 5c1aecb; routine formatter signature wrap 750178c. No fallback, switch or escalation. Task range 9502963..750178c, including tests.
+
+Tasks 16 and 17 use the installed source micro lane: two LOW findings / two initially clean files each, net -1 and -2 lines, below the ceiling. Direct implementation model is gpt-6.1-sol / openai / low, observed in coordinator.raw.jsonl line 2 (original turn_context line 8); provider is in line 1. Original patch/dispatch tool-call excerpts and source-line mapping are preserved alongside it. This coordinator model is counted only for actual direct edits, never used as unknown-worker fallback. Logical tiers stay haiku (16) and sonnet (17), with implementor=orchestrator, as the source micro-lane schema requires. Task16 range 750178c..02333aa; task17 range 02333aa..9b8c55a.
+
+Pat15 and Pat17 were separate tool-free Anthropic claude-sonnet-5-5/high reviews (observed assistant message.model in the preserved pat-15.raw.jsonl and pat-17.raw.jsonl; requested alias sonnet), session IDs 79de221c-e4d4-4ac3-af87-7e1d3c08be4b and 3547a38a-812d-4e3c-8eea-343b0c271b2b, dispatch IDs 162bc63e and f98ee75f. Their complete prompts, recorded verification and outputs are preserved. They made no code changes and do not contribute implementation provenance. Pat15 resolved both closures and flagged a LOW formatting concern, fixed by the scoped formatter. Pat17 resolved both closures and reported NO FINDINGS. Task16 skips Pat under the haiku/docs tier rules.
+
+Tess and Ivan reported ASSUMPTIONS: none. Micro edits introduce no new product-contract assumptions. Unsupported status=429 and Error 429: forms remain UNKNOWN; the new regression pins this unchanged boundary. All prior reviews, receipts, raw logs, settled R4 and deferred R5 remain intact.

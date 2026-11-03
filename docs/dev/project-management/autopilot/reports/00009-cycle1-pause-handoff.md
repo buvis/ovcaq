@@ -1,0 +1,13 @@
+# Cycle1 rework pause handoff
+
+PRD00009-codex-adapter-v1; 29/30 tasks completed, task23 pending after full verification exposed an ANSI contract conflict. All22 original rework findings received resolved Pat closure verdicts; final suite still fails one existing assertion. Do not equate closure reviews with a green suite.
+
+Committed pause reason points to `00009-cycle1-sanitization-blocker.md`. Operator must choose credential-only normalization (preserve controls, correct new test) or uniform control stripping (update old expectation). No decision inferred, no assertion changed. No cycle increment or phase-done rework; cycle1/cap2/work_start_sha and canonical cycle1 reviewed snapshot remain intact.
+
+Continue authorized correction in review-phase rework, using source pipeline and isolated explicitly configured workers. Preserve Codex coordinator/provider routing. After correction, rerun failed full pytest and any newly affected required checks, record exact final SHA/runner counts, then canonical phase-done rework and fresh-session cycle2 handoff. Never run the completion review inside implementation recovery. Do not clear pause or start repairs solely from unattended host wording.
+
+Model evidence: raw native worker sessions33, exact structured metadata line hashes and task correlation in `00009-cycle1-rework-worker-evidence.json` and sibling Markdown. All observed native contributing workers OpenAI gpt-6.1-sol/medium. Worker final diagnosis could not see metadata itself; coordinator inspected preserved structured metadata. Pat raw tool-less sessions9 and read-only provenance index retained separately. Aggregate tasks19/25/21 derive from contributing child raw sessions, never coordinator model. Noncontributing aborted/no-op attempts remain explicit.
+
+Cycle1 model audit deliberately unchanged. Before cycle2 review, regenerate canonical driver fingerprint/snapshot and all-task evidence from original audit plus rework raw logs, then run review-route. All opposite-provider Alice/Blake/Bob full rubrics/isolated rosters remain mandatory. Per-task Pat does not replace them. Carl cycle1-only exemption does not carry forward.
+
+Scratch prompts, checks, full raw Pat replies and attempt JSON are archived in `00009-cycle1-rework-artifacts/`; archive-map.json maps their historical docs/dev/tmp paths. Dispatch history remains unchanged. Native raw logs contain the actual read prompts. Assumptions and fail-loud task28 exported-constant hygiene marker remain in task gate report/state. No stale worktree or orphan branch was created; architecture/retained historical plan evidence remains intact. Standard build artifacts remain ignored.

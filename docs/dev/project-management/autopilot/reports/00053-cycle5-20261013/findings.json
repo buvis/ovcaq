@@ -1,0 +1,210 @@
+[
+  {
+    "ref": "R1",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "The task-28 and task-19 edits left the prose wrapping uneven. docs/driver-protocol.md:274 is 103 characters long, the only long line in the file that is not a link or a table row. Line 272 also runs past the file's ~80-column wrap. Lines 186-191 break after \"tier-key precedence:\", which makes the next sentence look like the start of a list, and line 191 stops at \"`low`,\". Fix: reflow both paragraphs to ~80 columns without changing any words",
+    "file": "docs/driver-protocol.md",
+    "task": "28",
+    "found_by": [
+      "ALICE"
+    ],
+    "classification": "operator-decision-required",
+    "reason": "New actionable low finding; cycle-4 authorization permits clean finalization only and requires operator disposition for new findings. No fix or task creation authorized."
+  },
+  {
+    "ref": "R2",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "Only the private subclasses built by `build_driver` map a resolved model back to its tier key. A Supervisor given a plain `CodexDriver`/`ClaudeDriver` or an entry-point driver still applies tier lookup to the resolved model, so `LaunchRequest.model` stays ambiguous between tier and model. This follows the PRD's chosen edge pattern; only the CLI path is protected",
+    "file": "src/ovcaq/drivers/edge.py:16",
+    "task": "P1-T1",
+    "found_by": [
+      "BLAKE"
+    ],
+    "classification": "discard",
+    "reason": "Compatibility boundary required by PRD: preserve direct build_launch tier-key precedence and use the existing edge adaptation pattern. Plain-driver and third-party-driver route semantics are outside this correction; Blake explicitly acknowledges the chosen edge pattern. No new behavior or interface authorized."
+  },
+  {
+    "ref": "R3",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "`test_authentication_is_classified_beyond_the_display_detail_limit` repeats `test_failure_classifies_full_text_before_sanitizing_and_capping_detail` (tests/drivers/test_codex_rework_decode.py:136). Both decode a failure for the same two event kinds and check that the class comes from text past the 4096-character display limit. Only the trailing word differs (\"Unauthorized\" vs \"Rate limit reached\"). No PRD feature touches this path, and the test passes on the base, so it is padding of the same kind tasks 20, 21 and 23 removed. Delete it. `json` and the `driver` fixture are still used by the capacity test",
+    "file": "tests/drivers/test_adapter_failure_classes.py:231",
+    "task": "6",
+    "found_by": [
+      "BOB"
+    ],
+    "classification": "operator-decision-required",
+    "reason": "New actionable low finding; cycle-4 authorization permits clean finalization only and requires operator disposition for new findings. No fix or task creation authorized."
+  },
+  {
+    "ref": "R4",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "The capacity bound test runs `connectivity_retries` 0, 1, 2 and 3. Cases 0, 1 and 2 all take the same `retries.connectivity < policy.connectivity_retries` branch (src/ovcaq/runtime/decision.py:215). Only 2 (the last WAIT) and 3 (HALT) pin the bound. Drop cases 0 and 1",
+    "file": "tests/drivers/test_adapter_failure_classes.py:258",
+    "task": "6",
+    "found_by": [
+      "BOB"
+    ],
+    "classification": "operator-decision-required",
+    "reason": "New actionable low finding; cycle-4 authorization permits clean finalization only and requires operator disposition for new findings. No fix or task creation authorized."
+  },
+  {
+    "ref": "R5",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "`test_numeric_diagnostics_require_an_explicit_status_or_error_context` checks only the positive cases. The \"require\" half is tested by `test_unrelated_numbers_are_not_failure_diagnostics` (tests/drivers/test_adapter_failure_classes.py:156). Rename it for the rule it enforces, e.g. `test_numeric_codes_classify_with_explicit_status_or_error_context`",
+    "file": "tests/drivers/test_adapter_failure_classes.py:67",
+    "task": "6",
+    "found_by": [
+      "BOB"
+    ],
+    "classification": "operator-decision-required",
+    "reason": "New actionable low finding; cycle-4 authorization permits clean finalization only and requires operator disposition for new findings. No fix or task creation authorized."
+  },
+  {
+    "ref": "R6",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "docs/driver-protocol.md:36 says both native adapters fall back to the standard default search path when the host PATH is missing. Only Claude has a test for this (`test_claude_probe_uses_default_search_path_when_host_path_is_absent`). The design says to \"reproduce and regress\" the existing Codex probe behavior. Parametrize the test over (\"claude\", \"codex\") and drop \"claude\" from its name. As I read `os.get_exec_path`, the patched `os.defpath` also steers the Codex subprocess lookup (not run)",
+    "file": "tests/runtime/test_adapter_health.py:229",
+    "task": "3",
+    "found_by": [
+      "BOB"
+    ],
+    "classification": "operator-decision-required",
+    "reason": "New actionable low finding; cycle-4 authorization permits clean finalization only and requires operator disposition for new findings. No fix or task creation authorized."
+  },
+  {
+    "ref": "R7",
+    "consensus": "[1/3]",
+    "severity": "\u26aa",
+    "issue": "This cycle's incremental diff is 378,503 lines, and only about 1,300 of them are product code, tests and docs. The rest is committed autopilot evidence, including review diffs that git can regenerate: a 169,912-line review-diff.diff and a 16 MB review-diff-00053-postrepair-20261012.diff.gz. Each committed review diff contains the earlier cycles' diffs, so the repo grows faster every cycle",
+    "file": "docs/dev/project-management/autopilot/reports/00053-cycle3-20261013-evidence/review-diff.diff",
+    "task": "general",
+    "found_by": [
+      "BOB"
+    ],
+    "classification": "known",
+    "reason": "KNOWN tooling limitation: historical tracked review diffs recursively include prior evidence. This belongs to external autopilot tooling, outside the adapter PRD. No historical evidence deleted; this cycle keeps its reproducible diff in docs/dev/tmp only."
+  },
+  {
+    "ref": "R8",
+    "consensus": "[1/3]",
+    "severity": "\ud83d\udfe1",
+    "issue": "Labeled status forms classify correctly, but HTTP diagnostics without a label now return `unknown` where the old bare-number match classified them. Reproduced: `429 Too Many Requests`, `503 Service Unavailable`, `HTTPS 503`, `{\"status\":429}`, `\"statusCode\": 401` and `code: 429` all give `unknown`. So a real 429 or 503 reported in one of these forms no longer gets rate-limit or connectivity WAIT handling. The PRD's \"explicit HTTP/status/error-code context\" rule allows this, but it narrows \"genuine HTTP diagnostics\", and there is no negative or positive pin for these forms",
+    "file": "src/ovcaq/drivers/codex_events.py:300",
+    "task": "P0-T1",
+    "found_by": [
+      "BLAKE"
+    ],
+    "classification": "discard",
+    "reason": "The automatic mixed-count ledger match is unrelated and is reversed. Correct disposition: previously settled bare reason phrases, JSON/SDK labels, and additional diagnostic grammar require separately specified forms/fixtures. Cycle-4 ledger explicitly excludes bare phrases and JSON labels. HTTPS and a generic code label gain no new contract. Preserve every reported example as KNOWN; no broader grammar authorized."
+  },
+  {
+    "ref": "R9",
+    "consensus": "[1/3]",
+    "severity": "\ud83d\udfe1",
+    "issue": "111 touched test(s) pass against the pre-change code: test_numeric_diagnostics_require_an_explicit_status_or_error_context +105 more",
+    "file": "tests/drivers/test_adapter_failure_classes.py",
+    "task": "general",
+    "found_by": [
+      "mech-check"
+    ],
+    "classification": "discard",
+    "reason": "Required PRD compatibility controls: fixtures, direct tier/argv precedence, existing Codex probe and normal paths must remain unchanged. Fresh replay: 296 touched tests ran; 54 fail at base, 242 pass. Same-file historical ledger reasons still hold. These eight computed rows are retained, not silently dropped."
+  },
+  {
+    "ref": "R10",
+    "consensus": "[1/3]",
+    "severity": "\ud83d\udfe1",
+    "issue": "17 touched test(s) pass against the pre-change code: test_unfinished_lane_fails_after_close_status +11 more",
+    "file": "tests/drivers/test_adapter_outcomes.py",
+    "task": "general",
+    "found_by": [
+      "mech-check"
+    ],
+    "classification": "discard",
+    "reason": "Required PRD compatibility controls: fixtures, direct tier/argv precedence, existing Codex probe and normal paths must remain unchanged. Fresh replay: 296 touched tests ran; 54 fail at base, 242 pass. Same-file historical ledger reasons still hold. These eight computed rows are retained, not silently dropped."
+  },
+  {
+    "ref": "R11",
+    "consensus": "[1/3]",
+    "severity": "\ud83d\udfe1",
+    "issue": "10 touched test(s) pass against the pre-change code: test_native_failure_emits_classified_terminal_with_receipt_identity +4 more",
+    "file": "tests/drivers/test_codex_decode_terminals.py",
+    "task": "general",
+    "found_by": [
+      "mech-check"
+    ],
+    "classification": "discard",
+    "reason": "Required PRD compatibility controls: fixtures, direct tier/argv precedence, existing Codex probe and normal paths must remain unchanged. Fresh replay: 296 touched tests ran; 54 fail at base, 242 pass. Same-file historical ledger reasons still hold. These eight computed rows are retained, not silently dropped."
+  },
+  {
+    "ref": "R12",
+    "consensus": "[1/3]",
+    "severity": "\ud83d\udfe1",
+    "issue": "7 touched test(s) pass against the pre-change code: test_failure_classification_uses_documented_precedence +1 more",
+    "file": "tests/drivers/test_codex_failures.py",
+    "task": "general",
+    "found_by": [
+      "mech-check"
+    ],
+    "classification": "discard",
+    "reason": "Required PRD compatibility controls: fixtures, direct tier/argv precedence, existing Codex probe and normal paths must remain unchanged. Fresh replay: 296 touched tests ran; 54 fail at base, 242 pass. Same-file historical ledger reasons still hold. These eight computed rows are retained, not silently dropped."
+  },
+  {
+    "ref": "R13",
+    "consensus": "[1/3]",
+    "severity": "\ud83d\udfe1",
+    "issue": "61 touched test(s) pass against the pre-change code: test_launch_has_exact_order_and_omits_unconfigured_flags +55 more",
+    "file": "tests/drivers/test_codex_launch.py",
+    "task": "general",
+    "found_by": [
+      "mech-check"
+    ],
+    "classification": "discard",
+    "reason": "Required PRD compatibility controls: fixtures, direct tier/argv precedence, existing Codex probe and normal paths must remain unchanged. Fresh replay: 296 touched tests ran; 54 fail at base, 242 pass. Same-file historical ledger reasons still hold. These eight computed rows are retained, not silently dropped."
+  },
+  {
+    "ref": "R14",
+    "consensus": "[1/3]",
+    "severity": "\ud83d\udfe1",
+    "issue": "14 touched test(s) pass against the pre-change code: test_native_diagnostics_have_independent_failure_classification +8 more",
+    "file": "tests/drivers/test_codex_rework_decode.py",
+    "task": "general",
+    "found_by": [
+      "mech-check"
+    ],
+    "classification": "discard",
+    "reason": "Required PRD compatibility controls: fixtures, direct tier/argv precedence, existing Codex probe and normal paths must remain unchanged. Fresh replay: 296 touched tests ran; 54 fail at base, 242 pass. Same-file historical ledger reasons still hold. These eight computed rows are retained, not silently dropped."
+  },
+  {
+    "ref": "R15",
+    "consensus": "[1/3]",
+    "severity": "\ud83d\udfe1",
+    "issue": "18 touched test(s) pass against the pre-change code: test_probe_finds_executable_available_only_on_overlay_path, test_probe_rejects_absolute_command_that_is_not_an_executable_file, test_probe_rejects_file_without_execute_permission +12 more",
+    "file": "tests/runtime/test_adapter_health.py",
+    "task": "general",
+    "found_by": [
+      "mech-check"
+    ],
+    "classification": "discard",
+    "reason": "Required PRD compatibility controls: fixtures, direct tier/argv precedence, existing Codex probe and normal paths must remain unchanged. Fresh replay: 296 touched tests ran; 54 fail at base, 242 pass. Same-file historical ledger reasons still hold. These eight computed rows are retained, not silently dropped."
+  },
+  {
+    "ref": "R16",
+    "consensus": "[1/3]",
+    "severity": "\ud83d\udfe1",
+    "issue": "4 touched test(s) pass against the pre-change code: test_configured_supervisor_launches_each_selected_literal_model_and_effort",
+    "file": "tests/runtime/test_adapter_launch_routing.py",
+    "task": "general",
+    "found_by": [
+      "mech-check"
+    ],
+    "classification": "discard",
+    "reason": "Required PRD compatibility controls: fixtures, direct tier/argv precedence, existing Codex probe and normal paths must remain unchanged. Fresh replay: 296 touched tests ran; 54 fail at base, 242 pass. Same-file historical ledger reasons still hold. These eight computed rows are retained, not silently dropped."
+  }
+]

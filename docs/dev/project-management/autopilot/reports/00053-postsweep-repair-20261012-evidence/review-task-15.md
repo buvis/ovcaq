@@ -1,0 +1,6 @@
+CLOSURE | resolved | "The HTTP-version prefix `http/\d+\.\d+` requires a minor version, so "HTTP/2 503 Service Unavailable" and "HTTP/2 429 Too Many Requests" classify as `unknown`" | codex_events.py:301 now reads `http(?:/\d+(?:\.\d+)?|...` so the minor version is optional. The HTTP/2 503 and 429 positives were added, and the recorded red check failed 4 tests before the fix and passed 88 after.
+CLOSURE | resolved | "helper `_tier_request` is a noun phrase; rename to a verb-led name such as `_map_model_to_tier` (call sites edge.py:27, edge.py:34)" | edge.py:16 definition and both `build_launch` call sites now use `_map_model_to_tier`; the diff leaves no `_tier_request` reference.
+
+The "do not widen to `status=N` / `Error N:`" constraint holds. The regex gains no new alternatives, and `test_unsupported_numeric_status_forms_remain_unknown` pins both forms to UNKNOWN (88 passed).
+
+LOW | src/ovcaq/drivers/edge.py:16 | The renamed `def _map_model_to_tier(settings: AgentSettings, request: LaunchRequest) -> LaunchRequest:` line is 89 characters (the old name gave 84). If the project uses ruff's default 88, `ruff format --check .` would fail, and the recorded verification ran only pytest. | Run `ruff format` so the signature wraps one parameter per line, or confirm the configured line-length is at least 89.

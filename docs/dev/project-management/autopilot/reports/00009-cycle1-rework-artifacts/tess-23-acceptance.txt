@@ -1,0 +1,1 @@
+Independent behavioral regressions fail current tree; no production edits or weakening existing assertions. Functions under50lines; bounded input reads.

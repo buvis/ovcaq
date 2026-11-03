@@ -1,0 +1,35 @@
+{
+  "sha": "d9644c8d989506f1c1e4582a97d76093b95905dd",
+  "cycle": 3,
+  "commands": [
+    {
+      "command": "uv sync --all-groups",
+      "exit": 0
+    },
+    {
+      "command": "uv run pytest --junitxml=docs/dev/project-management/autopilot/reports/00053-cycle3-recovery-20261013/full-suite.xml",
+      "exit": 130
+    },
+    {
+      "command": "uv run ruff check .",
+      "exit": 0
+    },
+    {
+      "command": "uv run ruff format --check .",
+      "exit": 0
+    },
+    {
+      "command": "uv run mypy src/ovcaq",
+      "exit": 0
+    },
+    {
+      "command": "uv build",
+      "exit": 0
+    }
+  ],
+  "passed": null,
+  "failed": null,
+  "skipped": null,
+  "status": "interrupted:host-process-inspection-denied",
+  "detail": "ps is denied even with require_escalated. Full suite interrupted after 210.195s: JUnit has 3418 executed, 88 failures, 27 errors, 0 skipped; not a completed suite. Do not treat partial counts as full verification. Fresh review must run the full suite on a host permitting process inspection."
+}

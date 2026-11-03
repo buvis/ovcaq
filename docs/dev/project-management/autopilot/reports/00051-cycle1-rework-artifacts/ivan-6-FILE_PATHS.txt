@@ -1,0 +1,5 @@
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/events/model.py
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/events/tail.py
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/drivers/codex_events.py
+/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/designs/00051-triage-a-single-valid-codex-record-can-crash-th-v1-design.md
+/Users/bob/git/src/github.com/buvis/ovcaq/CHANGELOG.md

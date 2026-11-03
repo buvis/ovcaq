@@ -1,0 +1,53 @@
+"""Reproduce review findings in disposable fixture projects."""
+import json
+import os
+import signal
+import tempfile
+from dataclasses import replace
+from pathlib import Path
+
+import pytest
+from tests.runtime.test_supervisor import Step, add_capability, drain, harness, rows
+
+from ovcaq.events.model import FailureClass
+
+results = {}
+
+class StoppingRunner:
+    def run(self, request):
+        os.kill(os.getpid(), signal.SIGTERM)
+        raise AssertionError('signal handler did not interrupt the capability')
+
+with tempfile.TemporaryDirectory(prefix='ovcaq-review-2-stop-', dir='/private/tmp') as folder:
+    with pytest.MonkeyPatch.context() as patch:
+        h = harness(Path(folder), patch)
+        h.store.transaction(add_capability)
+        h.store.transaction(drain)
+        h.runner = StoppingRunner()
+        outcome = h.supervisor().run()
+        state = h.store.read()
+        results['capability_stop'] = {'exit': outcome.exit_code, 'decision': outcome.decision.kind.value, 'pause_requested': state['control']['pause_requested'], 'pause_reason': state['control']['pause_reason'], 'capability_status': state['batch']['capabilities']['audit']['status'], 'attention': state['control']['attention']}
+
+with tempfile.TemporaryDirectory(prefix='ovcaq-review-2-retry-', dir='/private/tmp') as folder:
+    with pytest.MonkeyPatch.context() as patch:
+        h = harness(Path(folder), patch)
+        h.settings = replace(h.settings, policy=replace(h.settings.policy, connectivity_retries=1, phase_repeat_limit=6))
+        h.driver.steps = [Step(FailureClass.CONNECTIVITY), Step(FailureClass.CONNECTIVITY)]
+        h.supervisor().run_once()
+        h.supervisor().run_once()
+        results['restart_retry_budget'] = {'configured_connectivity_retries': 1, 'phase_repeat_limit': 6, 'decisions': [row['decision'] for row in rows(h.paths.metrics)], 'persisted_phase_repeats': h.store.read()['recovery']['phase_repeats']}
+
+with tempfile.TemporaryDirectory(prefix='ovcaq-review-2-launch-', dir='/private/tmp') as folder:
+    with pytest.MonkeyPatch.context() as patch:
+        h = harness(Path(folder), patch)
+        h.driver.launch_error = OSError('synthetic launcher unavailable')
+        try:
+            outcome = h.supervisor().run()
+        except OSError as error:
+            results['launch_exception'] = {'escaped': type(error).__name__, 'metrics': [row['decision'] for row in rows(h.paths.metrics)], 'pause_requested': h.store.read()['control']['pause_requested'], 'phase_repeats': h.store.read()['recovery']['phase_repeats']}
+        else:
+            results['launch_exception'] = {'exit': outcome.exit_code, 'reason': outcome.decision.reason, 'metrics': [row['decision'] for row in rows(h.paths.metrics)], 'attention': h.store.read()['control']['attention'], 'phase_repeats': h.store.read()['recovery']['phase_repeats']}
+
+destination = Path('/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00007-review-2-probes.json')
+destination.write_text(json.dumps(results, indent=2) + '\n')
+print(json.dumps(results, indent=2))

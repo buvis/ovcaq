@@ -1,0 +1,111 @@
+{
+  "head": "be5e385bd9714952b4803ee30f7c72e661c278f2",
+  "head_matches_review": true,
+  "schema": "pass",
+  "review_gap": null,
+  "task_counts_match": true,
+  "state_preserved": true,
+  "state_sha256": "3da847cd04ad43758167e336954245871b5c87bf81891524dedddf7c1a43e4be",
+  "tracked_worktree_clean": true,
+  "phase": "paused",
+  "cycle": 13,
+  "cap": 2,
+  "probe": {
+    "module": "/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/workflow/_files.py",
+    "status": "success",
+    "error": null,
+    "replacement_happened": true,
+    "project_identity": [
+      16777230,
+      169484856
+    ],
+    "parent_confirmed_after_replacement": false,
+    "returned_path_exists": true,
+    "ledger": {
+      "batch_id": "batch",
+      "items": [
+        {
+          "op_id": "replacement-probe",
+          "prd": "00004-a.md"
+        }
+      ]
+    },
+    "events": [
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          2
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          2
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          107435247
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          107436446
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          169484856
+        ]
+      },
+      {
+        "event": "replace",
+        "new": [
+          16777230,
+          169484858
+        ],
+        "old": [
+          16777230,
+          169484857
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          169484858
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          169484859
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          169484862
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          169484860
+        ]
+      }
+    ],
+    "limit": "Real directory rename/recreation and fsync observation; no simulated physical power-loss claim."
+  }
+}

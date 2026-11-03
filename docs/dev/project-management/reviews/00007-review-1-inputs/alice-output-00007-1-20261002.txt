@@ -1,0 +1,16 @@
+[ALICE] 🟠 Capability failure leaves `batch.status` as running, and a later successful retry does not clear its stale `control.attention`, violating the lifecycle contract and leaving completed state with failure attention | File: src/ovcaq/state/commands.py:554 | Task: 4
+[ALICE] 🟡 Extract timeout-observation construction from `_collect`; the new function is 54 lines and exceeds the 50-line limit | File: src/ovcaq/runtime/supervisor.py:386 | Task: general
+[ALICE] 🟡 Extract finalized metric construction/publication from `_conclude`; the new function is 51 lines and exceeds the 50-line limit | File: src/ovcaq/runtime/supervisor.py:501 | Task: general
+R1: fail
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: fail
+R13: pass
+

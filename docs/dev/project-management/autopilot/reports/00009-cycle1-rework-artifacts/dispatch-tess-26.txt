@@ -1,0 +1,58 @@
+You are writing tests for a feature. You have NOT seen any implementation and must NOT think about how to implement it.
+
+Task: [D1] Task 19 split: shared health and activity
+
+Description:
+### Findings (verbatim)
+- 🟡 src/ovcaq/drivers/edge.py:26: `CodexDriver.probe()` (binary check, exact 0.160.0 version pin, `login status` auth check) never runs in production. `build_driver` and `supervisor_cli` build the driver without probing it. Only `discover_drivers` calls `probe()` (src/ovcaq/drivers/base.py:155), and no code under src calls `discover_drivers`. So the CLI-drift guard and the auth check do nothing in real runs, and a newer CLI would launch unchecked. (found by: BLAKE)
+- 🟡 src/ovcaq/tui/panels.py:86: The TUI Activity panel shows only lanes. Codex command, file-change, MCP, web, plan and message activity is decoded but never displayed, so a Codex session without collaboration lanes shows "no lanes observed". The PRD requires that the "TUI shows Codex identity/activity/usage". docs/driver-protocol.md:273 admits that panels render lanes only. (found by: BLAKE)
+
+Read only test references listed below, never production/review/design files. Write only tests/runtime/test_rework_health.py and tests/tui/test_rework_activity.py. Health: through real CLI run --no-tui, reject unhealthy configured adapter before agent exec; healthy adapter reaches exec. Use external fake executable, no internal module mocks. Activity: feed normalized events to existing Projection test harness and render activity_panel. All emitted command/file/MCP/web/text/thinking/error/plan activity must be visible even without lanes, for either provider; keep existing lane display and selected-session scoping. No new UI public schema is prescribed: tests assert displayed output from ProjectObserver.poll, not invented fields.
+
+Acceptance Criteria:
+Real CLI health check blocks wrong pinned version and failed auth with actionable error before agent execution; healthy checks allow execution. Shared TUI activity shows normalized tool and message/plan details for both providers without provider-native parsing, bounded and literal text.
+
+Existing test patterns (follow these conventions):
+Test sample read scope: /Users/bob/git/src/github.com/buvis/ovcaq/tests/tui/test_codex_projection.py (first 145 lines); /Users/bob/git/src/github.com/buvis/ovcaq/tests/tui/test_model.py (first 125 lines, projection fixture); /Users/bob/git/src/github.com/buvis/ovcaq/tests/tui/model_support.py; /Users/bob/git/src/github.com/buvis/ovcaq/tests/runtime/test_supervisor_cli.py (first 105 lines CLI helpers). Never read more than these bounded ranges. No other file reads required.
+
+Public interfaces/types relevant to this task:
+CLI public main(argv:list[str])->int. init creates docs/dev/project-management/ovcaq/state.json. CLI --root ROOT --json run --no-tui --agent codex executes foreground. root/ovcaq.toml selects agent="codex", [agents.codex] command=[sys.executable, fake_script], tiers={sonnet="model-s",opus="model-o"}; [agents.codex.environment] maps strings; [workflow] runtime_root="runtime". Probe fake recognizes --version (prints codex-cli 0.160.0 or drift), login status (zero success/nonzero failure); actual exec writes marker, emits error JSON and exits1. Put a PRD Markdown under docs/dev/project-management/prds/backlog/00001-test.md for launch. Never use live homes; isolate HOME/XDG via monkeypatch.
+Projection fixture imported from tests.tui.test_model; use .model_support.Projection as sample. projection.batches.append(TailBatch(records,(),False,False,True)); projection.poll() returns ProjectView; activity_panel(view) Rich panel rendered with Console to StringIO. Observation(protocol_version=1,timestamp=aware UTC,provider="codex"|"claude",run_id="run-1",session_id="session-1",lane_id=None,type=ObservationType,eventpayload). Enum TOOL_STARTED="tool.started",TOOL_COMPLETED="tool.completed",TOOL_FAILED="tool.failed",ACTIVITY_MESSAGE="activity.message". TOOL payload tool_id:str, tool_name:str, detail:str plus status "completed"|"failed" on terminal. Command name command, file change file_change, MCP name mcp:<server>/<tool>, web name web_search. ACTIVITY_MESSAGE payload kind text|thinking|error with text:str,message_id:str; plan kind plan, message_id:str,items:list[{text:str,completed:bool}]. SESSION_STARTED payload any JSON provider/session identity. Assertions should show human-visible tool name/detail or text/plan steps; exact wording unspecified. No new view field contract.
+
+Test framework: pytest. Run only new named test files using uv --cache-dir /private/tmp/ovcaq-rework-uv run pytest <file> -q --tb=line. Test functions<50lines, files<800.
+
+Rules:
+1. Write tests from requirements only. You are a USER of this API, not its builder.
+2. Each test name describes a behavior: "rejects empty email", "returns 404 for missing user"
+3. Assert on outputs, return values, side effects, and errors. Never assert on mock existence.
+4. Cover edge cases: empty input, null/undefined, boundary values, error conditions
+5. Use real code paths. Mock only external dependencies (network, filesystem, databases).
+6. For EACH test, ask yourself: "What wrong implementation would still pass this?" If easy to answer, add constraints.
+7. Do not write implementation code. Do not modify non-test files.
+8. Do not add test-only methods to production classes. Use test utilities instead.
+9. SIMPLICITY FIRST: Test only the behavior in the acceptance criteria. Do not add tests for features nobody asked for. If you write 20 tests when 6 cover the spec, cut back.
+10. THINK BEFORE CODING: If the acceptance criteria are ambiguous (unclear input shape, unstated error behavior, multiple valid interpretations), STOP and report the ambiguity instead of picking an interpretation silently.
+10a. NEVER INVENT A CONTRACT: If the task names a data structure (JSON object, API response, enum, config schema, record type) but does not pin its EXACT field names, enum values, or types, STOP and report it as a blocker. Do not invent a plausible schema and test against it — a self-consistent wrong contract is worse than a reported gap, because the implementer will build to your tests and the mistake survives until PRD-level review. Likewise for "which kind of thing" choices the task leaves open (e.g. which hook event, which file location). The task description must hand you the exact strings; if it does not, that is a blocker, not a judgement call.
+11. SURGICAL: Only create/modify test files. Match the existing test file's style (quote style, import order, assertion library, naming). Do not reformat sample files you were given for reference.
+12. SIZE LIMITS: keep every test function under 50 lines and every test file under 800 lines; split by behavior into sibling files named after the test module (for example test_events_completion.py, test_events_usage.py) before you exceed either.
+
+Do NOT:
+- Think about how to implement the feature
+- Read or reference implementation files
+- Write stubs, placeholders, or TODO comments
+- Mock internal modules (only mock external boundaries)
+- Create tests that just check a function exists or returns truthy
+
+Read only the files listed above. If a file or symbol you need is not listed, stop and report it as a blocker — do not run broad `rg` sweeps to discover scope.
+
+Abort and report if you read more than 100K of total input. Return the partial result and an abort_reason: context_overrun field.
+
+Read every file before your first Edit to it. Never call bash `head`, `tail`, `cat`, `grep`, or `find` - a hook blocks them. Use the Read tool (offset/limit), `rg`, or `rg --files` instead. Never combine an inspection (read, list, search, diff) with a test, lint or build invocation in one Bash call - run them as two calls, because a combined command has two ways to hang and one exit code. Pass an explicit `timeout` on every Bash call: 60000 ms for an inspection, 300000 ms for a lint run or a narrow test run, 600000 ms for a full suite or a full build.
+
+Run only the test files this task names (the tests you wrote, or the
+failing tests in your prompt), with `-q --tb=line`. Never run a whole test
+directory or `dev/bin/release-checks`: the orchestrator runs the full suite
+once, after every task. Read the pass count and exit code from that one
+run; never re-run a suite to recover a number.
+
+End your report with `ASSUMPTIONS:` - one line per assumption you made where the task, tests, or listed files were silent (guessed interface, data shape, resolved ambiguity, unstated behavior). Write `ASSUMPTIONS: none` if you made none.

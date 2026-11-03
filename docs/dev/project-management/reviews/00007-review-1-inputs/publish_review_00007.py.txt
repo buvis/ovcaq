@@ -1,0 +1,167 @@
+"""Publish cycle evidence and queue bounded rework using the installed state writer."""
+
+import hashlib
+import json
+import re
+import shutil
+import subprocess
+from pathlib import Path
+
+ROOT = Path('/Users/bob/git/src/github.com/buvis/ovcaq')
+PLUGIN = Path('/Users/bob/.claude/plugins/cache/buvis-plugins/autopilot/0.6.0')
+CLI = PLUGIN / 'skills/run-autopilot/cli/__main__.py'
+STATECTL = PLUGIN / 'skills/run-autopilot/scripts/statectl.py'
+REV = ROOT / 'docs/dev/project-management/reviews'
+STATE = ROOT / 'docs/dev/project-management/autopilot/state.json'
+STEM = '00007-supervisor-loop-v1'
+HEAD = 'bbe7d521321428b670d15c4ede00e31792a61e1c'
+BASE = '4e3502723c474cee41f69e3a090bc952be5185ab'
+decisions = json.loads((REV / '00007-review-1-decisions.json').read_text())
+severity = {'🔴': 'critical', '🟠': 'high', '🟡': 'medium', '⚪': 'low'}
+groups = [['F01', 'F05', 'F08', 'F22'], ['F04', 'F07', 'F17', 'F25'],
+          ['F30', 'F31', 'F32'], ['F09', 'F12', 'F13'], ['F10', 'F11'],
+          ['F16'], ['F03', 'F18', 'F20', 'F29']]
+
+
+def run(argv):
+    result = subprocess.run([str(v) for v in argv], cwd=ROOT, capture_output=True, text=True)
+    if result.returncode:
+        raise RuntimeError(f'{argv}: {result.returncode}\n{result.stdout}\n{result.stderr}')
+    return result.stdout.strip()
+
+
+def statectl(*args):
+    return run(['python3', STATECTL, STATE, *args])
+
+
+def save(path, value):
+    path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + '\n')
+
+
+state = json.loads(STATE.read_text())
+assert state['phase'] == state['next_phase'] == 'review' and state['cycle'] == 1
+assert state['prd'] == STEM + '.md' and state['rework_cap'] > 1
+assert len(decisions) == 32 and len({d['id'] for d in decisions}) == 32
+receipt = json.loads((REV / '00007-review-1-bob.txt.receipt.json').read_text())
+for key, digest in [('output', 'sha256'), ('raw', 'raw_sha256')]:
+    assert hashlib.sha256(Path(receipt[key]).read_bytes()).hexdigest() == receipt[digest]
+ledger_path = REV / f'{STEM}-ledger.json'
+ledger = json.loads(ledger_path.read_text()) if ledger_path.exists() else []
+for d in decisions:
+    record = {
+        'cycle': 1, 'finding_id': d['id'], 'issue': d['issue'],
+        'file': d['file'], 'severity': severity[d['severity']],
+        'consensus': d['consensus'].strip('[]'),
+        'action': f"cycle 1: {'routed to verification' if d['action'] == 'verify' else d['action']}",
+        'reason': d['reason'],
+    }
+    if d['id'] in {'F01', 'F04', 'F05'}:
+        excerpt = {
+            'F01': 'Success completes the batch; failure remains actionable and independently retryable.',
+            'F04': 'All waits/retries/caps come from configuration and injectable time.',
+            'F05': 'A fake Claude driver drains build/review/done through `ovcaq run --no-tui`.',
+        }[d['id']]
+        record['research'] = {
+            'category': 'D', 'verdict': 'proceed',
+            'checks': [
+                {'check': 'PRD requires behavior', 'result': excerpt, 'pass': True},
+                {'check': 'scope', 'result': 'Internal state/supervisor implementation; existing public CLI and schema shapes remain unchanged.', 'pass': True},
+                {'check': 'match', 'result': 'Existing fields and configured limits implement the required behavior; isolated regression probe reproduced the gap.', 'pass': True},
+            ],
+            'evidence_summary': 'PRD 00007 and its mandatory implementation-plan contract; review verification and bounded probe. No dependency, schema migration, or changed public signature is required.',
+        }
+    if d['action'] == 'verify':
+        record['command'] = 'UV_CACHE_DIR=/private/tmp/ovcaq-final-cache uv run pytest'
+    if d['action'] == 'defer':
+        record.update(status='open', type='review-deferral')
+    field = 'deferred_decisions' if d['action'] == 'defer' else 'autonomous_decisions'
+    current = json.loads(STATE.read_text()).get(field) or []
+    if not any(item.get('finding_id') == d['id'] and item.get('cycle') == 1 for item in current):
+        statectl('append', field, json.dumps(record))
+        if d['action'] == 'defer':
+            run(['python3', CLI, 'defer', '--state', STATE, '--prd', STEM + '.md',
+                 '--batch', state['batch']['id'], '--json', json.dumps(record)])
+    if d['action'] in {'defer', 'discard'} and not any(item.get('issue') == d['issue'] for item in ledger):
+        ledger.append({
+            'cycle': 1, 'disposition': 'settled-deferral' if d['action'] == 'defer' else 'discarded',
+            'severity': severity[d['severity']], 'issue': d['issue'],
+            'file': d['file'], 'reason': d['reason'],
+        })
+save(ledger_path, ledger)
+
+# F06 is a nonblocking requirements conflict: retain the accepted PAUSE behavior.
+assumption = {
+    'type': 'assumed-ambiguity', 'cycle': 1, 'finding_id': 'F06',
+    'issue': next(d['issue'] for d in decisions if d['id'] == 'F06'),
+    'severity': 'medium', 'action': 'cycle 1: retain accepted design pending policy reconciliation',
+    'reason': 'Conservative existing behavior; this choice blocks none of the seven repairs.',
+    'question': 'Bootstrap repeat PAUSE in accepted design conflicts with HALT in the umbrella plan.',
+    'assumption': 'Keep PAUSE in this bounded rework, and defer the PAUSE/HALT policy decision; do not silently redefine bootstrap exit semantics.',
+}
+current = json.loads(STATE.read_text()).get('autonomous_decisions') or []
+if not any(d.get('finding_id') == 'F06' for d in current):
+    statectl('append', 'autonomous_decisions', json.dumps(assumption))
+    run(['python3', CLI, 'defer', '--state', STATE, '--prd', STEM + '.md',
+         '--batch', state['batch']['id'], '--json', json.dumps(assumption)])
+
+task_ids = []
+task_map = {}
+for number, ids in enumerate(groups, 1):
+    path = REV / f'00007-review-1-task-{number}.json'
+    payload = json.loads(path.read_text())
+    payload['blocked_by'] = [int(task_id) for task_id in task_ids[-1:]]
+    save(path, payload)
+    existing = next((t for t in json.loads(STATE.read_text())['tasks'] if t['name'] == payload['name']), None)
+    task_id = existing['id'] if existing else statectl('task-add', path)
+    task_ids.append(task_id)
+    task_map.update(dict.fromkeys(ids, task_id))
+statectl('set', 'rework_task_ids', json.dumps(task_ids))
+save(REV / '00007-review-1-task-map.json', task_map)
+verify = next(d for d in decisions if d['id'] == 'F26')
+save(REV / f'{STEM}-checks-1.json', [{
+    'cycle': 1, 'finding': verify['issue'], 'file': None,
+    'command': 'UV_CACHE_DIR=/private/tmp/ovcaq-final-cache uv run pytest',
+    'source': 'bob',
+}])
+
+lines = [
+    '---', f'prd: docs/dev/project-management/prds/wip/{STEM}.md',
+    'review: 1', 'date: 2026-10-02', f'head_sha: {HEAD}',
+    'reviewers: alice,blake,bob', f'autocodex_bob_receipt: {REV / "00007-review-1-bob.txt.receipt.json"}',
+    'agents:', '  alice: available', '  blake: available', '  bob: available',
+    '  carl: unavailable', '  eve: disabled', '---', '', f'# Review: {STEM}', '',
+    f'Diff range: `{BASE}..{HEAD}`', '',
+    'codex_rung_guard: fired (3 codex-implemented task(s)); eve unavailable, doubt lens fell back to claude', '',
+    'Host substitution: Alice and Blake ran in isolated native Codex sessions on gpt-5.6-sol (logical sonnet). Bob ran fresh through the authorized external Claude helper on claude-opus-5-5 (logical opus), carrying the full Bob persona, doubt D1-D5 and de-slop appendix. R1-R5 doubt intent is retained under source D1-D5 IDs. No Eve/Fable dispatch occurred or is claimed. The guard suffix above records the user-authorized non-Codex doubt substitution; it does not imply a failed Eve launch. Both native lenses share one actual model; provider independence comes from Claude Bob.', '',
+    'Carl was attempted with approved network access; the installed Gemini wrapper refused nested dispatch (exit 3). Its guard was preserved. No partial output enters consensus. All dispatched reviewers/processes were awaited. Engram retrieval was unavailable because this project is absent from gita; prompts retain the optional-pack sentinel.', '',
+    '## Decision', '',
+    'Not converged: F01, F04 and F05 are unresolved HIGHs. No CRITICAL findings. Cycle 1 is below cap 2. Seven bounded rework tasks cover 21 findings; three findings are deferred, seven discarded with evidence, and one routed to mandatory verification. No production implementation was changed in this review session.', '',
+    'These are decision-gate follow-ups, not retries of entire original tasks. The prior capability task omitted batch failure status and clearing stale capability attention from its executable contract; the bounded follow-up now quotes that missing source obligation. No CRITICAL rework design is required. No unavailable Fable escalation is invented.', '',
+    '## Consolidated findings', '',
+    '| ID | Consensus | Severity | Issue | File | Task | Found by |',
+    '|---|---|---|---|---|---|---|',
+]
+for d in decisions:
+    cells = [d['id'], d['consensus'], d['severity'], d['issue'], d['file'], d['task'], d['finders']]
+    lines.append('| ' + ' | '.join(str(c).replace('|', '\\|').replace('\n', ' ') for c in cells) + ' |')
+lines.extend(['', 'The installed consolidation script overmerged distinct same-file findings. F29–F32 restore the second oversized function and three independent state-failure/stop findings from raw output. The raw consolidation and mechanical/replay evidence are retained. No reviewer finding was silently dropped.', '', '## Dispositions', ''])
+for d in decisions:
+    assignment = f" → task {task_map[d['id']]}" if d['id'] in task_map else ''
+    lines.append(f"- **{d['id']} {d['action']}{assignment}:** {d['reason']}")
+lines.extend(['', 'F01/F04/F05: Protocol D local research permits internal implementation repairs required by the PRD without changing public CLI signatures or schema. Full checks and excerpts are recorded in autonomous_decisions. F06 retains the accepted design as a nonblocking assumption and is mirrored to the batch deferral sink.', '', 'F05 and F32 VERIFY bucket text is **not queued: command shape** (research/edit instructions, not an exact project verification command). Both remain ordinary findings assigned to repairs. F26 carries the exact suite command in the check queue; result remains absent until work runs it. Bob emitted the VERIFY bucket under this host’s assembled doubt persona, so source is bob, never a fictional Eve.', '', '## Rework handoff', ''])
+for number, task_id in enumerate(task_ids, 1):
+    task = json.loads((REV / f'00007-review-1-task-{number}.json').read_text())
+    lines.append(f"- Task {task_id}: {task['name']} — {task['model']} ({task['tier_reason']}); findings {', '.join(groups[number-1])}.")
+lines.extend(['', 'Tasks are ordered for their overlapping supervisor/state/config files. Phase and next_phase remain review; cycle stays 1. The next fresh session takes the review-file + unfinished rework_task_ids skip to Phase 6 Dispatch rework. Only after that work completes does phase-done --outcome rework advance to cycle 2 and hand off to another fresh review.', '', '## Verification', '', (REV / '00007-review-1-verification.md').read_text().replace('# PRD 00007 review cycle 1 verification', 'Verification evidence'), '', '## Alice', '', (REV / '00007-review-1-alice.txt').read_text(), '', '## Blake', '', (REV / '00007-review-1-blake.txt').read_text(), '', '## Bob', '', (REV / '00007-review-1-bob.txt').read_text(), '', 'Verdict: 32 findings', 'Tests: 3501 passed, 0 failed, 0 skipped (suite run this cycle)', ''])
+(REV / f'{STEM}-review-1.md').write_text('\n'.join(lines))
+card = ROOT / 'docs/dev/project-management/autopilot/contract-card.md'
+card.write_text(
+    f'step: PRD 00007 cycle 1 review/decision complete; queued rework ids {", ".join(map(str, task_ids))}; phase/next_phase review, cycle 1 unchanged\n'
+    'invariants: statectl is the only state writer; this session performs no implementation; all Alice/Blake/Claude-Bob rubrics and raw evidence are retained\n'
+    f'next: fresh session skips Phases 4–5 because {STEM}-review-1.md exists and queued tasks are pending; run Phase 6 Dispatch rework via the installed work skill, then phase-done --outcome rework and hand off to fresh cycle 2 review\n'
+    f'read: docs/dev/project-management/reviews/{STEM}-review-1.md; 00007-review-1-task-map.json and task payloads; {STEM}-checks-1.json; original 00007 design. Rework design: none (no CRITICAL rows).\n'
+    'constraints: F02/F23 real launcher and readiness owned by PRD 00010; F06 bootstrap PAUSE/HALT conflict deferred. Seven bounded first-pass D-tasks use classifier tiers; no unavailable Fable dispatch. Host role swap persists for future work/review.\n'
+)
+statectl('set-contract-card', card)
+statectl('write-brief', ROOT / 'docs/dev/project-management/autopilot/session-brief.md')
+print(json.dumps({'queued': task_ids, 'findings': len(decisions), 'review': str(REV / f'{STEM}-review-1.md')}))

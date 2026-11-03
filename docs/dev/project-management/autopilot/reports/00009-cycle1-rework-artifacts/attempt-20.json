@@ -1,0 +1,37 @@
+{
+  "attempt": 1,
+  "model": "sonnet",
+  "actual_model": "gpt-6.1-sol",
+  "actual_provider": "openai",
+  "actual_effort": "medium",
+  "implementor": "codex",
+  "pipeline": "lean",
+  "outcome": "completed",
+  "cause": null,
+  "review_cycle": 1,
+  "self_deslop": "skipped:trivial",
+  "style_gate": "fixed:0afee52",
+  "split_hygiene": "clean",
+  "verification": "3 passed, 2 warnings; named real Supervisor conflict regressions; exit0",
+  "review": "Both closures resolved; LOW notes carried",
+  "review_evidence": "docs/dev/project-management/reviews/00009-cycle1-task20-pat.md",
+  "dispatch_ids": [
+    "f8f2b8f1",
+    "cd7c73ed",
+    "b349f769",
+    "666fed2b",
+    "cec92c4e"
+  ],
+  "implementation_commits": [
+    "25ee66a",
+    "0afee52"
+  ],
+  "test_commits": [
+    "e391e57",
+    "2c5bddc"
+  ],
+  "assumptions": [
+    "source_session_id is an optional startup payload field within observation protocol1."
+  ],
+  "quality_retry": "Tests were initially committed before style correction; full Tess retry preserved assertions and red verification, then committed correction."
+}

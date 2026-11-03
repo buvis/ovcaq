@@ -1,0 +1,69 @@
+Task 9 — single adversarial strengthening dispatch
+
+Only tests/state/test_supervisor_commands.py changed in this dispatch.
+Original regression assertions remain. No production files were read/edited;
+no commits or workflow state changes were made. Read budget below 100K.
+
+1. strengthened: test_retry_rejects_stale_revision_without_state_or_backup_writes
+   closes the retry-specific revision gap. Existing
+   test_every_transition_rejects_conflicts_and_active_recovery_without_writes
+   already checks stale revisions and byte-for-byte preservation for start,
+   finish, reconcile and skip. Include those existing nodes in the selection.
+2. in-contract: test_invalid_capability_completion_preserves_state_and_backup
+   [stale-finish_capability] already supplies a nonexistent attempt id with a
+   running attempt, expects ValueError and checks unchanged state/backup bytes.
+   Ignoring attempt identity is not allowed; it was only omitted from Devon's
+   narrow selection. No duplicate test added.
+3. in-contract: the same existing test [stale-reconcile_capability] rejects a
+   nonexistent reconciliation attempt id without changing state or backup.
+   Include this preservation guard; no duplicate test added.
+4. strengthened: test_successful_retry_completes_batch_and_clears_only_its_attention
+   now supplies both None and retry-session-alternate and checks the entire
+   persisted successful attempt against the caller-supplied identity.
+5. strengthened: that retry test supplies both null detail and the nonempty
+   'Archived all records', checking exact persisted detail.
+6. strengthened: test_capability_failure_preserves_work_and_records_actionable_attention
+   varies archive/notify and their distinct failure details across both finish
+   and reconcile, checks exact attempt detail and matching actionable attention,
+   and preserves whichever capability was not targeted.
+7. strengthened: the retry test uses 2026-08-26 and 2026-08-27 completion dates,
+   checking exact attempt.finished_at and batch.completed_at in each case.
+8. in-contract: existing runtime
+   test_required_capability_runs_once_and_does_not_count_as_a_workflow_session[True]
+   exercises a nonempty drained batch with a required pending capability and
+   checks one runner invocation, succeeded persisted attempt, COMPLETE decision,
+   exit zero, and final capability metric. Existing state
+   test_capabilities_complete_batch_only_after_every_required_success also calls
+   start_capability and checks completion. Either rejects unconditional missing
+   start; include both instead of duplicating them. The original task-9 terminal
+   drain tests retain final archive/state equality and idempotence assertions.
+
+Focused changed-node run: 6 failed, 3 passed. Failures remain the original missing
+batch attention status and own-attention clearing, now across varied inputs.
+The new stale-retry guard passes. No unrelated runtime/package test changed.
+Final lint, full gates and mutant rerun: skipped here; parent owns final gates.
+
+Exact changed/new node IDs:
+tests/state/test_supervisor_commands.py::test_capability_failure_preserves_work_and_records_actionable_attention[archive-False]
+tests/state/test_supervisor_commands.py::test_capability_failure_preserves_work_and_records_actionable_attention[archive-True]
+tests/state/test_supervisor_commands.py::test_capability_failure_preserves_work_and_records_actionable_attention[notify-False]
+tests/state/test_supervisor_commands.py::test_capability_failure_preserves_work_and_records_actionable_attention[notify-True]
+tests/state/test_supervisor_commands.py::test_successful_retry_completes_batch_and_clears_only_its_attention[no-session-False]
+tests/state/test_supervisor_commands.py::test_successful_retry_completes_batch_and_clears_only_its_attention[no-session-True]
+tests/state/test_supervisor_commands.py::test_successful_retry_completes_batch_and_clears_only_its_attention[alternate-session-next-day-False]
+tests/state/test_supervisor_commands.py::test_successful_retry_completes_batch_and_clears_only_its_attention[alternate-session-next-day-True]
+tests/state/test_supervisor_commands.py::test_retry_rejects_stale_revision_without_state_or_backup_writes
+
+Exact existing preservation nodes to ADD to task-9 selection (alongside unchanged
+runtime/packaging and unfinished-required-capability task-9 nodes):
+tests/state/test_supervisor_commands.py::test_every_transition_rejects_conflicts_and_active_recovery_without_writes[revision-start_capability]
+tests/state/test_supervisor_commands.py::test_every_transition_rejects_conflicts_and_active_recovery_without_writes[revision-finish_capability]
+tests/state/test_supervisor_commands.py::test_every_transition_rejects_conflicts_and_active_recovery_without_writes[revision-reconcile_capability]
+tests/state/test_supervisor_commands.py::test_every_transition_rejects_conflicts_and_active_recovery_without_writes[revision-skip_empty_drain_capabilities]
+tests/state/test_supervisor_commands.py::test_invalid_capability_completion_preserves_state_and_backup[stale-finish_capability]
+tests/state/test_supervisor_commands.py::test_invalid_capability_completion_preserves_state_and_backup[stale-reconcile_capability]
+tests/state/test_supervisor_commands.py::test_capabilities_complete_batch_only_after_every_required_success
+tests/runtime/test_supervisor.py::test_required_capability_runs_once_and_does_not_count_as_a_workflow_session[True]
+
+Every numbered finding is addressed above; no unresolved finding or contract gap.
+ASSUMPTIONS: none

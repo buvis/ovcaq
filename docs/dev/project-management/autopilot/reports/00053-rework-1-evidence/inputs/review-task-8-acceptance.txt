@@ -1,0 +1,1 @@
+Close every quoted finding; preserve existing behavior.

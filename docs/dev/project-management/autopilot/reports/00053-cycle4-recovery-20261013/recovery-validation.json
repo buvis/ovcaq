@@ -1,0 +1,13 @@
+{
+  "schema": "valid",
+  "phase": "review",
+  "next_phase": "review",
+  "cycle": 5,
+  "cap": 5,
+  "tasks_completed": 28,
+  "prior_tasks_preserved": true,
+  "batch_and_deferrals_preserved": true,
+  "evidence_hashes_verified": 57,
+  "old_receipt_snapshot_preserved": true,
+  "full_verification": "blocked:ps-permission"
+}

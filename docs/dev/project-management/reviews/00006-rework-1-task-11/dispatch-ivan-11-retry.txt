@@ -1,0 +1,894 @@
+
+You are Ivan, the implementor. Make all failing tests pass. Tests ARE the
+spec. Do NOT modify test files unless your allowlist below names them (a
+test-only task lists them on purpose). Do NOT read the task's acceptance criteria —
+none are provided to you on purpose.
+
+## Failing tests
+
+FILE: /Users/bob/git/src/github.com/buvis/ovcaq/tests/workflow/test_configuration.py
+from __future__ import annotations
+
+from dataclasses import FrozenInstanceError
+from pathlib import Path
+from uuid import uuid4
+
+import pytest
+
+from ovcaq.config import (
+    AgentSettings,
+    ConfigurationError,
+    agent_settings,
+    workflow_settings,
+)
+from ovcaq.paths import ProjectPathError
+
+
+@pytest.fixture
+def config_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "user-config"))
+    root = tmp_path / "project"
+    root.mkdir()
+    return root
+
+
+@pytest.mark.parametrize(
+    "declaration",
+    (
+        'workflow = "invalid"',
+        "[workflow]\nprd_root = 12",
+        '[workflow]\nruntime_root = ""',
+        "agent = 12",
+        'agent = "local"\n[agents.local]\ntiers = []',
+    ),
+)
+def test_invalid_workflow_config_is_a_domain_error_without_effects(
+    config_root: Path, declaration: str
+) -> None:
+    config = config_root / "ovcaq.toml"
+    config.write_text(declaration)
+    with pytest.raises(ConfigurationError):
+        workflow_settings(config_root)
+    assert list(config_root.iterdir()) == [config]
+
+
+@pytest.mark.parametrize("escape", ("../outside", "amber", "quartz-17"))
+def test_configured_runtime_preserves_containment_and_symlink_refusal(
+    config_root: Path, escape: str
+) -> None:
+    external = config_root.parent / "outside"
+    external.mkdir()
+    if escape != "../outside":
+        (config_root / escape).symlink_to(external, target_is_directory=True)
+    with pytest.raises(ProjectPathError):
+        workflow_settings(config_root, runtime_root=Path(escape))
+    assert list(external.iterdir()) == []
+
+
+@pytest.mark.parametrize("source", ("explicit", "configured"))
+def test_workflow_paths_accept_contained_explicit_and_configured_values(
+    config_root: Path, source: str
+) -> None:
+    prd_root = config_root / "requirements"
+    runtime_root = config_root / "private"
+    state_file = runtime_root / "workflow.json"
+    arguments: dict[str, Path] = {}
+    if source == "explicit":
+        arguments = {
+            "prd_root": prd_root,
+            "runtime_root": runtime_root,
+            "state_file": state_file,
+        }
+    else:
+        (config_root / "ovcaq.toml").write_text(
+            "[workflow]\n"
+            f'prd_root = "{prd_root}"\n'
+            f'runtime_root = "{runtime_root}"\n'
+            f'state_file = "{state_file}"\n'
+        )
+
+    settings = workflow_settings(config_root, **arguments)
+
+    assert settings.prd_root == prd_root
+    assert settings.runtime_root == runtime_root
+    assert settings.state_file == state_file
+
+
+@pytest.mark.parametrize("source", ("explicit", "configured"))
+@pytest.mark.parametrize(
+    "unsafe_kind, component_name",
+    (("escape", None), ("symlink", "amber"), ("symlink", "quartz-17")),
+)
+def test_workflow_prd_roots_reject_escapes_and_symlink_descendants(
+    config_root: Path, source: str, unsafe_kind: str, component_name: str | None
+) -> None:
+    outside = config_root.parent / "outside-prds"
+    outside.mkdir()
+    unsafe = outside
+    if unsafe_kind == "symlink":
+        assert component_name is not None
+        unsafe = config_root / component_name
+        unsafe.symlink_to(outside, target_is_directory=True)
+
+    arguments: dict[str, Path] = {}
+    if source == "explicit":
+        arguments["prd_root"] = unsafe
+    else:
+        (config_root / "ovcaq.toml").write_text(f'[workflow]\nprd_root = "{unsafe}"\n')
+
+    with pytest.raises(ProjectPathError):
+        workflow_settings(config_root, **arguments)
+    assert list(outside.iterdir()) == []
+
+
+@pytest.mark.parametrize("source", ("explicit", "configured"))
+@pytest.mark.parametrize(
+    "unsafe_kind, file_name",
+    (("escape", None), ("symlink", "amber.dat"), ("symlink", "quartz-17.record")),
+)
+def test_workflow_state_files_reject_escapes_and_symlink_descendants(
+    config_root: Path, source: str, unsafe_kind: str, file_name: str | None
+) -> None:
+    runtime_root = config_root / "private"
+    runtime_root.mkdir()
+    outside = config_root.parent / "outside-state.json"
+    outside.write_text("preserve me")
+    unsafe = outside
+    if unsafe_kind == "symlink":
+        assert file_name is not None
+        unsafe = runtime_root / file_name
+        unsafe.symlink_to(outside)
+
+    arguments: dict[str, Path] = {}
+    if source == "explicit":
+        arguments = {"runtime_root": runtime_root, "state_file": unsafe}
+    else:
+        (config_root / "ovcaq.toml").write_text(
+            f'[workflow]\nruntime_root = "{runtime_root}"\nstate_file = "{unsafe}"\n'
+        )
+
+    with pytest.raises(ProjectPathError):
+        workflow_settings(config_root, **arguments)
+    assert outside.read_text() == "preserve me"
+
+
+def test_project_agent_selection_uses_only_its_merged_abstract_tier_keys(
+    config_root: Path,
+) -> None:
+    user = config_root.parent / "user-config/ovcaq/config.toml"
+    user.parent.mkdir(parents=True)
+    user.write_text(
+        'agent = "other"\n[agents.other]\ncommand = ["other-runner"]\n'
+        'environment = {}\n[agents.other.tiers]\nunused = "opaque"\n'
+        '[agents.active]\ncommand = ["runner"]\nenvironment = {}\n'
+        '[agents.active.tiers]\nfast = "opaque"\n'
+    )
+    (config_root / "ovcaq.toml").write_text(
+        'agent = "active"\n[agents.active.tiers]\ndeep = "opaque"\n'
+    )
+    assert workflow_settings(config_root).available_tiers == {"fast", "deep"}
+    assert workflow_settings(config_root, available_tiers=[]).available_tiers == set()
+    assert workflow_settings(
+        config_root, available_tiers=["custom"]
+    ).available_tiers == {"custom"}
+    assert workflow_settings(config_root).available_tiers == set(
+        agent_settings(config_root).tiers
+    )
+
+
+@pytest.mark.parametrize("selection", ("explicit", "project", "user"))
+def test_agent_name_uses_explicit_then_project_then_user_selection(
+    config_root: Path, selection: str
+) -> None:
+    user = config_root.parent / "user-config/ovcaq/config.toml"
+    user.parent.mkdir(parents=True)
+    user.write_text(
+        'version = 1\nagent = "user"\n'
+        + "\n".join(
+            f'[agents.{name}]\ncommand = ["{name}-runner"]\n'
+            "tiers = {}\nenvironment = {}\noptions = {}\n"
+            for name in ("explicit", "project", "user")
+        )
+    )
+    if selection != "user":
+        (config_root / "ovcaq.toml").write_text('agent = "project"\n')
+
+    settings = agent_settings(
+        config_root, name="explicit" if selection == "explicit" else None
+    )
+
+    assert settings.name == selection
+    assert settings.command == (f"{selection}-runner",)
+    assert settings.tiers == {}
+    assert settings.environment == {}
+    assert settings.options == {}
+
+
+def test_agent_settings_accept_any_declared_valid_agent_name(
+    config_root: Path,
+) -> None:
+    name = f"agent_{uuid4().hex}"
+    (config_root / "ovcaq.toml").write_text(
+        f'version = 1\nagent = "{name}"\n[agents.{name}]\n'
+        f'command = ["{name}-runner", "--flag"]\n'
+        "tiers = {}\nenvironment = {}\noptions = {}\n"
+    )
+
+    settings = agent_settings(config_root)
+
+    assert settings.name == name
+    assert settings.command == (f"{name}-runner", "--flag")
+
+
+def test_agent_settings_merge_user_then_project_for_only_the_selected_agent(
+    config_root: Path,
+) -> None:
+    user = config_root.parent / "user-config/ovcaq/config.toml"
+    user.parent.mkdir(parents=True)
+    user.write_text(
+        'agent = "other"\n[agents.active]\ncommand = ["user-runner", "old"]\n'
+        'tiers = { fast = "small", deep = "old-large" }\n'
+        'environment = { MODE = "user", USER_ONLY = "yes" }\n'
+        "options = { count = 2, quiet = false }\n"
+        '[agents.other]\ncommand = ["other-runner"]\n'
+        'tiers = { unused = "other" }\nenvironment = { OTHER_ONLY = "yes" }\n'
+    )
+    config = config_root / "ovcaq.toml"
+    config.write_text(
+        'version = 1\nagent = "active"\n[agents.active]\n'
+        'command = ["project runner", "--literal", "$(touch forbidden)"]\n'
+        'tiers = { deep = "large", balanced = "medium" }\n'
+        'environment = { MODE = "project", PROJECT_ONLY = "yes" }\n'
+        'options = { count = 0, labels = ["first", "second"] }\n'
+    )
+
+    settings = agent_settings(config_root)
+
+    assert settings.name == "active"
+    assert settings.command == (
+        "project runner",
+        "--literal",
+        "$(touch forbidden)",
+    )
+    assert settings.tiers == {"fast": "small", "deep": "large", "balanced": "medium"}
+    assert settings.environment == {
+        "MODE": "project",
+        "USER_ONLY": "yes",
+        "PROJECT_ONLY": "yes",
+    }
+    assert set(settings.options) == {"count", "quiet", "labels"}
+    assert settings.options["count"] == 0
+    assert settings.options["quiet"] is False
+    assert list(settings.options["labels"]) == ["first", "second"]
+    assert list(config_root.iterdir()) == [config]
+
+
+@pytest.mark.parametrize(
+    "declaration",
+    (
+        "",
+        'agent = ""',
+        "agent = 12",
+        "agent = false",
+    ),
+)
+def test_agent_settings_reject_missing_empty_or_non_string_selection(
+    config_root: Path, declaration: str
+) -> None:
+    (config_root / "ovcaq.toml").write_text(declaration)
+    with pytest.raises(ConfigurationError):
+        agent_settings(config_root)
+
+
+def test_selected_agent_without_a_declaration_defaults_command_to_its_name(
+    config_root: Path,
+) -> None:
+    (config_root / "ovcaq.toml").write_text('agent = "missing"\n')
+
+    settings = agent_settings(config_root)
+
+    assert settings.name == "missing"
+    assert settings.command == ("missing",)
+    assert settings.tiers == {}
+    assert settings.environment == {}
+    assert settings.options == {}
+
+
+def test_empty_explicit_agent_name_does_not_fall_back_to_configured_selection(
+    config_root: Path,
+) -> None:
+    (config_root / "ovcaq.toml").write_text(
+        'agent = "local"\n[agents.local]\ncommand = ["runner"]\n'
+        "tiers = {}\nenvironment = {}\noptions = {}\n"
+    )
+    with pytest.raises(ConfigurationError):
+        agent_settings(config_root, name="")
+
+
+@pytest.mark.parametrize(
+    "field, value",
+    (
+        ("command", '"runner --flag"'),
+        ("command", "[]"),
+        ("command", '[""]'),
+        ("command", '["runner", 3]'),
+        ("command", '["runner", ""]'),
+        ("tiers", "[]"),
+        ("tiers", '{ "" = "model" }'),
+        ("tiers", '{ fast = "" }'),
+        ("tiers", "{ fast = 3 }"),
+        ("environment", '"MODE=local"'),
+        ("environment", '{ "" = "value" }'),
+        ("environment", '{ MODE = "" }'),
+        ("environment", "{ MODE = false }"),
+        ("options", "[]"),
+        ("options", "{ date = 2026-09-26 }"),
+        ("options", "{ value = nan }"),
+        ("options", "{ value = inf }"),
+    ),
+)
+def test_agent_settings_reject_invalid_argv_tables_and_non_json_options(
+    config_root: Path, field: str, value: str
+) -> None:
+    fields = {
+        "command": '["runner"]',
+        "tiers": "{}",
+        "environment": "{}",
+        "options": "{}",
+    }
+    fields[field] = value
+    config = config_root / "ovcaq.toml"
+    config.write_text(
+        'agent = "local"\n[agents.local]\n'
+        + "\n".join(f"{key} = {item}" for key, item in fields.items())
+    )
+    before = config.read_bytes()
+
+    with pytest.raises(ConfigurationError):
+        agent_settings(config_root)
+
+    assert config.read_bytes() == before
+    assert list(config_root.iterdir()) == [config]
+
+
+def test_agent_settings_default_omitted_command_to_selected_name(
+    config_root: Path,
+) -> None:
+    (config_root / "ovcaq.toml").write_text(
+        'agent = "local"\n[agents.local]\ntiers = {}\nenvironment = {}\noptions = {}\n'
+    )
+    settings = agent_settings(config_root)
+    assert settings.name == "local"
+    assert settings.command == ("local",)
+
+
+@pytest.mark.parametrize("table", ("environment", "options"))
+@pytest.mark.parametrize(
+    "entry",
+    (
+        'API_KEY = "example"',
+        'apiKey = "example"',
+        'ACCESS_TOKEN = "example"',
+        'CLIENT_SECRET = "example"',
+        'PASSWORD = "example"',
+        'VALUE = "Bearer example-token"',
+        'VALUE = "api_key=example"',
+        'VALUE = "token=example"',
+        'VALUE = "password=example"',
+        'VALUE = "secret=example"',
+    ),
+)
+def test_agent_settings_reject_credential_shaped_keys_and_values(
+    config_root: Path, table: str, entry: str
+) -> None:
+    other = "options" if table == "environment" else "environment"
+    config = config_root / "ovcaq.toml"
+    config.write_text(
+        'agent = "local"\n[agents.local]\ncommand = ["runner"]\ntiers = {}\n'
+        f"{other} = {{}}\n{table} = {{ {entry} }}\n"
+    )
+    before = config.read_bytes()
+
+    with pytest.raises(ConfigurationError):
+        agent_settings(config_root)
+
+    assert config.read_bytes() == before
+    assert list(config_root.iterdir()) == [config]
+
+
+@pytest.mark.parametrize(
+    "value",
+    ('[{ api_key = "example" }]', '[{ value = "password=example" }]'),
+)
+def test_agent_settings_reject_credentials_nested_in_option_arrays(
+    config_root: Path, value: str
+) -> None:
+    (config_root / "ovcaq.toml").write_text(
+        'agent = "local"\n[agents.local]\ncommand = ["runner"]\n'
+        "tiers = {}\nenvironment = {}\n"
+        f"options = {{ nested = {value} }}\n"
+    )
+    with pytest.raises(ConfigurationError):
+        agent_settings(config_root)
+
+
+@pytest.mark.parametrize(
+    "key",
+    ("TOKENIZER", "PASSWORDLESS", "SECRETARY"),
+)
+def test_agent_settings_reject_credential_substrings_in_keys(
+    config_root: Path,
+    key: str,
+) -> None:
+    (config_root / "ovcaq.toml").write_text(
+        'agent = "local"\n[agents.local]\ncommand = ["runner"]\ntiers = {}\n'
+        f'environment = {{ {key} = "synthetic" }}\noptions = {{}}\n'
+    )
+
+    with pytest.raises(ConfigurationError):
+        agent_settings(config_root)
+
+
+def test_agent_settings_copy_and_recursively_freeze_constructor_inputs() -> None:
+    tiers = {"fast": "small"}
+    environment = {"MODE": "local"}
+    nested = {"enabled": True}
+    values = ["first", nested, None]
+    options = {"values": values, "count": 2, "ratio": 0.5}
+    settings = AgentSettings(
+        name="local",
+        command=("runner", "--flag"),
+        tiers=tiers,
+        environment=environment,
+        options=options,
+    )
+    tiers["fast"] = "changed"
+    environment["MODE"] = "changed"
+    nested["enabled"] = False
+    values.append("changed")
+    options["count"] = 99
+
+    assert settings.tiers == {"fast": "small"}
+    assert settings.environment == {"MODE": "local"}
+    assert settings.options["count"] == 2
+    assert settings.options["ratio"] == 0.5
+    assert list(settings.options["values"]) == ["first", {"enabled": True}, None]
+    with pytest.raises(FrozenInstanceError):
+        settings.name = "changed"
+    with pytest.raises(TypeError):
+        settings.command[0] = "changed"
+    with pytest.raises(TypeError):
+        settings.tiers["fast"] = "changed"
+    with pytest.raises(TypeError):
+        settings.environment["MODE"] = "changed"
+    with pytest.raises(TypeError):
+        settings.options["count"] = 99
+    with pytest.raises(TypeError):
+        settings.options["values"][0] = "changed"
+    with pytest.raises(TypeError):
+        settings.options["values"][1]["enabled"] = False
+
+
+def test_loaded_agent_settings_remain_immutable_and_independent_of_later_loads(
+    config_root: Path,
+) -> None:
+    config = config_root / "ovcaq.toml"
+    config.write_text(
+        'agent = "local"\n[agents.local]\ncommand = ["runner"]\n'
+        'tiers = { fast = "small" }\nenvironment = { MODE = "local" }\n'
+        "options = { nested = [{ enabled = true }] }\n"
+    )
+    first = agent_settings(config_root)
+    config.write_text(
+        'agent = "local"\n[agents.local]\ncommand = ["changed-runner"]\n'
+        'tiers = { fast = "large" }\nenvironment = { MODE = "changed" }\n'
+        "options = { nested = [{ enabled = false }] }\n"
+    )
+    second = agent_settings(config_root)
+
+    assert first.command == ("runner",)
+    assert first.tiers == {"fast": "small"}
+    assert first.environment == {"MODE": "local"}
+    assert first.options["nested"][0]["enabled"] is True
+    assert second.command == ("changed-runner",)
+    assert second.tiers == {"fast": "large"}
+    assert second.environment == {"MODE": "changed"}
+    assert second.options["nested"][0]["enabled"] is False
+    with pytest.raises(TypeError):
+        first.tiers["fast"] = "changed"
+    with pytest.raises(TypeError):
+        first.environment["MODE"] = "changed"
+    with pytest.raises(TypeError):
+        first.options["nested"][0]["enabled"] = False
+
+FILE: /Users/bob/git/src/github.com/buvis/ovcaq/tests/workflow/test_configuration_rework.py
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+
+from ovcaq.config import (
+    AgentSettings,
+    ConfigurationError,
+    agent_settings,
+    workflow_settings,
+)
+
+
+@pytest.fixture
+def config_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "user-config"))
+    root = tmp_path / "project"
+    root.mkdir()
+    return root
+
+
+def test_workflow_settings_load_without_an_agent_selection(config_root: Path) -> None:
+    config = config_root / "ovcaq.toml"
+    config.write_text('[workflow]\nprd_root = "requirements"\n')
+
+    settings = workflow_settings(config_root)
+
+    assert settings.prd_root == config_root / "requirements"
+    assert settings.available_tiers == set()
+    assert config.read_text() == '[workflow]\nprd_root = "requirements"\n'
+
+
+def test_workflow_settings_validate_the_selected_agent(config_root: Path) -> None:
+    (config_root / "ovcaq.toml").write_text(
+        'agent = "local"\n[agents.local]\ncommand = []\n'
+    )
+
+    with pytest.raises(ConfigurationError):
+        workflow_settings(config_root)
+
+
+@pytest.mark.parametrize("table", ("environment", "options"))
+@pytest.mark.parametrize(
+    "entry",
+    (
+        'AUTHORIZATION = "synthetic"',
+        'Cookie = "synthetic"',
+        'clientCredential = "synthetic"',
+        'clientcredential = "synthetic"',
+        '"service-api-key-file" = "synthetic"',
+        'VALUE = "authorization=synthetic-value"',
+        'VALUE = "cookie: synthetic-value"',
+        'VALUE = "credential=synthetic-value"',
+        'VALUE = "sk-synthetic_Q7v-k9_42mN8p23R4j62y"',
+        'VALUE = "sk-test-synthetic-Q7v_k9-42mN8p23R4j62y"',
+    ),
+)
+def test_agent_settings_reject_additional_credential_keys_and_pinned_values(
+    config_root: Path, table: str, entry: str
+) -> None:
+    other = "options" if table == "environment" else "environment"
+    (config_root / "ovcaq.toml").write_text(
+        'agent = "local"\n[agents.local]\ncommand = ["runner"]\ntiers = {}\n'
+        f"{other} = {{}}\n{table} = {{ {entry} }}\n"
+    )
+
+    with pytest.raises(ConfigurationError):
+        agent_settings(config_root)
+
+
+@pytest.mark.parametrize(
+    "key",
+    (
+        "SERVICE_TOKEN_HEADER",
+        "CLIENT_SECRET_VALUE",
+        "DATABASE_PASSWORD_FILE",
+        "HEADER_AUTHORIZATION_MODE",
+        "PRIMARY_API_KEY_PATH",
+        "SESSION_COOKIE_VALUE",
+        "CLIENT_CREDENTIAL_FILE",
+        "clientcredential",
+        "service-api-key-file",
+    ),
+)
+@pytest.mark.parametrize("table", ("environment", "options"))
+def test_direct_agent_settings_reject_credential_key_substrings(
+    table: str, key: str
+) -> None:
+    environment = {key: "synthetic"} if table == "environment" else {}
+    options = {key: "synthetic"} if table == "options" else {}
+    with pytest.raises(ConfigurationError):
+        AgentSettings(
+            name="local",
+            command=("local",),
+            tiers={},
+            environment=environment,
+            options=options,
+        )
+
+
+@pytest.mark.parametrize(
+    "environment,options",
+    (
+        ({"MODE": "authorization=synthetic-value"}, {}),
+        ({"MODE": "sk-synthetic_Q7v-k9_42mN8p23R4j62y"}, {}),
+        ({}, {"value": "cookie: synthetic-value"}),
+        ({}, {"value": "sk-test-synthetic-Q7v_k9-42mN8p23R4j62y"}),
+        ({}, {"nested": [{"value": "credential=synthetic-value"}]}),
+    ),
+)
+def test_direct_agent_settings_reject_pinned_credential_values(
+    environment: dict[str, str], options: dict[str, object]
+) -> None:
+    with pytest.raises(ConfigurationError):
+        AgentSettings(
+            name="local",
+            command=("local",),
+            tiers={},
+            environment=environment,
+            options=options,
+        )
+
+
+def test_agent_settings_allow_ordinary_environment_controls(config_root: Path) -> None:
+    (config_root / "ovcaq.toml").write_text(
+        'agent = "local"\n[agents.local]\ncommand = ["runner"]\n'
+        "tiers = {}\noptions = {}\n"
+        'environment = { TERM = "dumb", NO_COLOR = "1", CI = "true" }\n'
+    )
+
+    settings = agent_settings(config_root)
+
+    assert settings.command == ("runner",)
+    assert settings.environment == {"TERM": "dumb", "NO_COLOR": "1", "CI": "true"}
+
+FILE: /Users/bob/git/src/github.com/buvis/ovcaq/tests/events/test_model_rework.py
+from __future__ import annotations
+
+from dataclasses import asdict
+from datetime import UTC, datetime
+
+import pytest
+
+from ovcaq.events import (
+    Observation,
+    ObservationType,
+    Usage,
+    observation_record,
+    sanitize_text,
+)
+
+
+@pytest.mark.parametrize(
+    "text,expected",
+    (
+        ("Bearer Q7v-k9_42.mN8p23.R4j62y", "Bearer [REDACTED]"),
+        ("bEaReR Q7v-k9_42mN8p23R4j62y", "bEaReR [REDACTED]"),
+        (
+            "request used sk-synthetic_Q7v-k9_42mN8p23R4j62y",
+            "request used [REDACTED]",
+        ),
+        (
+            "token sk-test-synthetic-Q7v_k9-42mN8p23R4j62y",
+            "token [REDACTED]",
+        ),
+    ),
+)
+def test_text_sanitization_redacts_bare_likely_secret_tokens(
+    text: str, expected: str
+) -> None:
+    assert sanitize_text(text) == expected
+
+
+@pytest.mark.parametrize(
+    "text",
+    (
+        "Bearer harmless",
+        "token budget exhausted after 42 requests",
+        "authorization denied because the credential is unavailable",
+        "cookie jar contains 3 entries",
+    ),
+)
+def test_text_sanitization_preserves_harmless_prose(text: str) -> None:
+    assert sanitize_text(text) == text
+
+
+def test_usage_preserves_typed_numeric_counters_during_sanitization() -> None:
+    usage = Usage(
+        input_tokens=101,
+        output_tokens=23,
+        cache_creation_input_tokens=7,
+        cache_read_input_tokens=11,
+        tool_uses=3,
+        cost_usd=0.125,
+        estimated=False,
+    )
+    observation = Observation(
+        protocol_version=1,
+        timestamp=datetime(2026, 9, 26, tzinfo=UTC),
+        provider="test-driver",
+        run_id="run-1",
+        session_id="session-1",
+        lane_id=None,
+        type=ObservationType("usage.updated"),
+        payload={"usage": asdict(usage), "identity": "request-1"},
+    )
+    serialized = observation_record(observation)["payload"]["usage"]
+
+    assert serialized == asdict(usage)
+    assert type(serialized["input_tokens"]) is int
+    assert type(serialized["cost_usd"]) is float
+    assert type(serialized["estimated"]) is bool
+
+Confirmed gaps: standalone synthetic sk-/sk-* credential values enter config through ordinary keys (six failures); a dotted Bearer credential is not fully redacted (one failure). Apply these bounded fixes; keep existing correct changes. Tests now implement the accepted command-default and substring-key rules exactly.
+
+## Architecture context
+
+# AGENTS.md — OVCAQ
+
+OVCAQ means **Orchestration, Visibility, and Control for Agent Queues**. It is
+an installable Python CLI/TUI that supervises a PRD-driven workflow through
+Claude Code, Codex, or another headless coding agent.
+
+The global `AGENTS.md` remains in force. This file adds project-specific rules.
+
+## Current state
+
+The repository is in planning/bootstrap. Until an implementation PRD replaces
+it, `dev/local/plans/implementation-plan.md` is the architecture and sequencing
+authority. Do not create production modules opportunistically outside that
+sequence.
+
+## Product boundary
+
+OVCAQ core owns state, lifecycle commands, process supervision, agent adapters,
+normalized events, observability, the TUI, and launcher provisioning checks.
+
+OVCAQ core does **not** contain launcher-specific skills, agents, hooks, or
+plugins. Those live in external marketplaces. Core may carry declarative
+identifiers and version requirements needed to reconcile them.
+
+## Architecture invariants
+
+1. **One state writer.** Every durable `state.json` mutation goes through the
+   state store. Agents mutate state only through `ovcaq state` or a higher-level
+   OVCAQ command. Never instruct an agent to edit `state.json` directly.
+2. **State decides; prose does not.** Session completion, phase handoff, pause,
+   drain, retry, and failure decisions derive from committed state plus a
+   normalized session result. A final agent message is never authoritative.
+3. **Provider code stays at the edge.** Claude/Codex argv, environment variables,
+   event formats, model names, rate-limit parsing, and connectivity checks live
+   under their adapter. Shared runtime and UI code must not parse provider-native
+   events.
+4. **Raw evidence survives normalization.** Preserve each session's raw output.
+   Normalizers are tolerant and must degrade to an unknown/raw observation
+   instead of crashing the supervisor.
+5. **The TUI observes shared models.** It reads state, registry, metrics, and
+   normalized observations. It does not implement lifecycle policy or maintain a
+   second liveness algorithm.
+6. **External capabilities stay external.** Provisioning invokes a launcher's
+   supported marketplace/plugin CLI and verifies the result. It does not copy
+   plugin contents into this package or hand-edit launcher caches.
+7. **No shell evaluation of configured commands.** Store agent commands as argv
+   arrays and spawn them without `shell=True`.
+
+## Target layout
+
+```text
+src/ovcaq/
+  state/        # schema, transactions, compound mutations
+  workflow/     # PRD selection, transitions, records, policy
+  runtime/      # supervisor, decisions, registry, process ownership
+  drivers/      # Claude, Codex, and generic command adapters
+  events/       # normalized event model and session reduction
+  tui/          # discovery and Textual/Rich presentation
+  provision/    # marketplace/plugin reconciliation
+tests/          # mirrors package boundaries; provider JSONL fixtures
+docs/           # tracked architecture and operator documentation
+```
+
+## Toolchain
+
+- Python 3.12+ managed through `mise`.
+- `uv` for environments, locking, build, and command execution.
+- `pytest` for tests; `ruff` for formatting/linting; `mypy` for package types.
+- Keep the runtime dependency set small. Textual/Rich are justified by the TUI;
+  prefer the standard library for state, locking, configuration, and subprocesses.
+
+Planned verification commands once the scaffold lands:
+
+```bash
+uv sync --all-groups
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy src/ovcaq
+uv build
+```
+
+## Development rules
+
+- Characterize current behavior before moving it from `~/.claude`.
+- Extract state first, then pure workflow logic, runtime, adapters, TUI, and
+  provisioning in that order.
+- Sanitized Claude and Codex JSONL fixtures belong in `tests/fixtures/`; tests
+  never read live files from `~/.claude` or `~/.codex`.
+- Test process-group, lock, and signal behavior with real subprocesses in
+  addition to unit tests.
+- Documentation for commands comes from the same command registry/parser as the
+  implementation; do not maintain a second hand-written verb inventory.
+- Keep provider-neutral modules free of the strings `claude`, `anthropic`,
+  `codex`, and provider model identifiers except in tests that enforce this rule.
+- Use conventional commits. No compatibility shim, dual writer, or rollback
+  framework is required for the initial cutover.
+
+## Migration stance
+
+This is a one-way early-stage extraction. Start a fresh OVCAQ batch/state tree;
+do not build an importer for the current `dev/local/autopilot/state.json` unless
+a later requirement explicitly needs it. Temporary delegation during a local
+canary is acceptable, but do not ship `autoclaude`, `autopilot`, `tracon`, or
+`statectl` aliases as permanent public APIs.
+
+Task 11 implementation only, no commit/state edits. Provider-neutral shared modules cannot include provider names. Use the accepted substring credential-key vocabulary token|secret|password|authorization|api_key|cookie|credential (plus pre-existing api-key spelling). Bare likely-secret patterns must stay narrow, generic and preserve ordinary prose. Use existing interfaces; no production tests addition. Read config.py lines 1-237 first, events/model.py lines 1-100 second; rest only for adjacent interfaces. Keep both files <=800 lines and functions <=50. Existing tests/events/test_model.py is read-only context for redaction preservation. Keep workflow commands usable without launcher selection. READING BUDGET: only these two production files, supplied tests, pyproject.toml if needed; no broad discovery. Verify supplied three tests as one narrow invocation; full suite belongs to parent. Output ASSUMPTIONS and FILES_TOUCHED. Host maps logical sonnet to native gpt-5.6-sol.
+
+## Files you may read and modify
+
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/config.py
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/events/model.py
+Read-only tests: /Users/bob/git/src/github.com/buvis/ovcaq/tests/workflow/test_configuration.py, /Users/bob/git/src/github.com/buvis/ovcaq/tests/workflow/test_configuration_rework.py, /Users/bob/git/src/github.com/buvis/ovcaq/tests/events/test_model_rework.py, /Users/bob/git/src/github.com/buvis/ovcaq/tests/events/test_model.py
+
+
+Read only the files listed above. If a file or symbol you need is not
+listed, stop and report it as a blocker — do not run broad `rg` sweeps to
+discover scope.
+
+Apply ONLY the specific fixes listed below. Do not refactor surrounding code or address unrelated issues you notice.
+
+### Code quality rules (mandatory)
+
+Follow these four rules. They override any instinct to "improve" the code
+beyond what the failing tests require.
+
+**1. Think before coding.** Re-read the task and the failing tests. If scope,
+data shape, target file, or success criteria are ambiguous - more than one
+reasonable implementation would pass the tests differently - STOP and report
+the ambiguity as a blocker. Do not guess and proceed.
+
+**2. Simplicity.** Write the simplest code that makes the failing tests pass.
+
+- No abstractions, helpers, or interfaces built for a single caller.
+- No error handling, fallbacks, or validation for inputs the tests never
+  exercise. Validate at real system boundaries only.
+- No features, options, or configuration the task did not ask for.
+- If your draft runs long and the same behavior fits in far fewer lines,
+  rewrite it before returning.
+
+**3. Surgical changes.** Touch only what the task requires.
+
+- Do not refactor, reformat, or "improve" code outside the change.
+- Match the surrounding style even if you would write it differently.
+- Remove imports, variables, and functions that YOUR change orphaned. Do not
+  delete pre-existing dead code - mention it instead.
+- Every changed line must trace to the task or a failing test.
+
+**4. Goal-driven.** The failing tests are the spec. Make them pass - do not
+modify them, do not weaken them, do not add tests. If a test looks wrong,
+report it as a blocker rather than changing it.
+
+Abort and report if you read more than 100K of total input. Return the
+partial result and an abort_reason: context_overrun field.
+
+Read every file before your first Edit to it. Never call bash `head`,
+`tail`, `cat`, `grep`, or `find` - a hook blocks them. Use the Read tool
+(offset/limit), `rg`, or `rg --files` instead. Never combine an inspection
+(read, list, search, diff) with a test, lint or build invocation in one Bash
+call - run them as two calls, because a combined command has two ways to hang
+and one exit code. Pass an explicit `timeout` on every Bash call: 60000 ms for
+an inspection, 300000 ms for a lint run or a narrow test run, 600000 ms for a
+full suite or a full build.
+
+End your report with `ASSUMPTIONS:` - one line per assumption you made
+where the task, tests, or listed files were silent (guessed interface, data
+shape, resolved ambiguity, unstated behavior). Write `ASSUMPTIONS: none` if
+you made none.
+
+Also end your report with `FILES_TOUCHED:` - one line per file you created
+or modified, path relative to the repo root. Write `FILES_TOUCHED: none` if
+you changed no files.

@@ -1,0 +1,298 @@
+diff --git a/tests/runtime/test_rework_health.py b/tests/runtime/test_rework_health.py
+new file mode 100644
+index 0000000..cb9a37f
+--- /dev/null
++++ b/tests/runtime/test_rework_health.py
+@@ -0,0 +1,125 @@
++from __future__ import annotations
++
++import json
++import subprocess
++import sys
++from pathlib import Path
++
++import pytest
++
++from ovcaq.cli import main
++
++
++def _configured_agent(
++    root: Path, monkeypatch: pytest.MonkeyPatch, version: str, authenticated: bool
++) -> Path:
++    for variable, directory in (
++        ("HOME", "home"),
++        ("XDG_STATE_HOME", "xdg-state"),
++        ("XDG_CONFIG_HOME", "xdg-config"),
++    ):
++        monkeypatch.setenv(variable, str(root / directory))
++    marker = root / "agent-executed"
++    script = root / "fake_agent.py"
++    script.write_text(
++        "import json, pathlib, sys\n"
++        "args = sys.argv[1:]\n"
++        f"with pathlib.Path({str(root / 'agent-calls')!r}).open('a') as calls:\n"
++        "    calls.write(json.dumps(args) + '\\n')\n"
++        f"version = {version!r}\n"
++        "if args == ['--version']:\n"
++        "    print('codex-cli ' + version)\n"
++        "    raise SystemExit(0)\n"
++        "if args == ['login', 'status']:\n"
++        f"    print({'Logged in' if authenticated else 'Not logged in'!r})\n"
++        f"    raise SystemExit({0 if authenticated else 1})\n"
++        f"pathlib.Path({str(marker)!r}).write_text('executed')\n"
++        "print(json.dumps({'type': 'error', 'message': 'fixture stopped'}))\n"
++        "raise SystemExit(1)\n"
++    )
++    (root / "ovcaq.toml").write_text(
++        'agent = "codex"\n[agents.codex]\n'
++        f"command = {json.dumps([sys.executable, str(script)])}\n"
++        'tiers = { sonnet = "model-s", opus = "model-o" }\n'
++        "[supervisor]\ndied_retries = 0\n"
++        "[phases.build]\ntimeout_seconds = 3\n"
++    )
++    return marker
++
++
++def _initialize(root: Path, capsys: pytest.CaptureFixture[str]) -> None:
++    assert main(["--root", str(root), "--json", "init"]) == 0
++    capsys.readouterr()
++    backlog = root / "docs/dev/project-management/prds/backlog"
++    backlog.mkdir(parents=True, exist_ok=True)
++    (backlog / "00001-test.md").write_text("# Fixture PRD\n")
++
++
++def _run(root: Path) -> subprocess.CompletedProcess[str]:
++    return subprocess.run(
++        [
++            sys.executable,
++            "-m",
++            "ovcaq",
++            "--root",
++            str(root),
++            "--json",
++            "run",
++            "--no-tui",
++            "--agent",
++            "codex",
++        ],
++        capture_output=True,
++        text=True,
++        timeout=15,
++        check=False,
++    )
++
++
++@pytest.mark.parametrize(
++    ("version", "authenticated", "expected_terms"),
++    [
++        ("0.161.0", True, ("0.160.0", "0.161.0")),
++        ("0.160.0", False, ("login",)),
++    ],
++)
++def test_run_rejects_unhealthy_adapter_before_agent_execution(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    capsys: pytest.CaptureFixture[str],
++    version: str,
++    authenticated: bool,
++    expected_terms: tuple[str, ...],
++) -> None:
++    marker = _configured_agent(tmp_path, monkeypatch, version, authenticated)
++    _initialize(tmp_path, capsys)
++
++    result = _run(tmp_path)
++
++    assert result.returncode != 0
++    assert not marker.exists()
++    assert "Traceback" not in result.stderr
++    assert result.stdout == ""
++    payload = json.loads(result.stderr)
++    assert payload["ok"] is False
++    message = payload["error"]["message"].lower()
++    assert all(term in message for term in expected_terms)
++
++
++def test_run_executes_adapter_after_healthy_version_and_auth_checks(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    capsys: pytest.CaptureFixture[str],
++) -> None:
++    marker = _configured_agent(tmp_path, monkeypatch, "0.160.0", True)
++    _initialize(tmp_path, capsys)
++
++    result = _run(tmp_path)
++
++    assert marker.read_text() == "executed"
++    calls = [
++        json.loads(line) for line in (tmp_path / "agent-calls").read_text().splitlines()
++    ]
++    assert calls[:2] == [["--version"], ["login", "status"]]
++    assert len(calls) >= 3
++    assert "Traceback" not in result.stderr
+diff --git a/tests/tui/test_rework_activity.py b/tests/tui/test_rework_activity.py
+new file mode 100644
+index 0000000..a46d174
+--- /dev/null
++++ b/tests/tui/test_rework_activity.py
+@@ -0,0 +1,161 @@
++from __future__ import annotations
++
++from datetime import UTC, datetime
++from io import StringIO
++
++import pytest
++from rich.console import Console
++
++from ovcaq.events.model import Observation, ObservationType
++from ovcaq.events.tail import TailBatch
++from ovcaq.tui.panels import activity_panel
++
++from . import test_model
++from .model_support import Projection
++
++projection = test_model.projection
++
++
++def _event(
++    provider: str,
++    kind: str,
++    payload: dict[str, object],
++    *,
++    session: str = "session-1",
++    lane: str | None = None,
++) -> Observation:
++    return Observation(
++        protocol_version=1,
++        timestamp=datetime(2026, 10, 3, 10, tzinfo=UTC),
++        provider=provider,
++        run_id="run-1",
++        session_id=session,
++        lane_id=lane,
++        type=ObservationType(kind),
++        payload=payload,
++    )
++
++
++def _render(projection: Projection, *events: Observation) -> str:
++    projection.batches.append(TailBatch(events, (), False, False, True))
++    stream = StringIO()
++    Console(file=stream, width=240, color_system=None, force_terminal=False).print(
++        activity_panel(projection.poll())
++    )
++    return stream.getvalue()
++
++
++@pytest.mark.parametrize("provider", ["codex", "claude"])
++@pytest.mark.parametrize(
++    "name", ["command", "file change", "remote tool", "web search"]
++)
++@pytest.mark.parametrize("status", ["completed", "failed"])
++def test_activity_displays_started_and_terminal_tools_without_lanes(
++    projection: Projection, provider: str, name: str, status: str
++) -> None:
++    start_payload: dict[str, object] = {"tool_id": "tool-1", "name": name}
++    start_payload["detail" if provider == "codex" else "input"] = "start fixture"
++    started = _event(provider, "tool.started", start_payload)
++    rendered = _render(projection, started)
++    assert name in rendered
++    terminal_payload: dict[str, object] = {
++        "tool_id": "tool-1",
++        "detail": "result fixture",
++    }
++    if provider == "codex":
++        terminal_payload["name"] = name
++        terminal_payload["status"] = status
++    terminal = _event(provider, f"tool.{status}", terminal_payload)
++
++    rendered = _render(projection, terminal)
++
++    assert name in rendered
++    assert "result fixture" in rendered
++    assert status in rendered
++
++
++@pytest.mark.parametrize("provider", ["codex", "claude"])
++@pytest.mark.parametrize("kind", ["text", "thinking", "error"])
++def test_activity_displays_literal_messages_without_lanes(
++    projection: Projection, provider: str, kind: str
++) -> None:
++    text = f"{kind} [bold]literal fixture[/bold]"
++    event = _event(
++        provider,
++        "activity.message",
++        {"kind": kind, "text": text, "message_id": "message-1"},
++    )
++
++    rendered = _render(projection, event)
++
++    assert text in rendered
++
++
++@pytest.mark.parametrize("provider", ["codex", "claude"])
++def test_activity_displays_plan_steps_without_lanes(
++    projection: Projection, provider: str
++) -> None:
++    event = _event(
++        provider,
++        "activity.message",
++        {
++            "kind": "plan",
++            "message_id": "plan-1",
++            "items": [
++                {"text": "Inspect [bold]literal[/bold] fixture", "completed": True},
++                {"text": "Verify remaining fixture", "completed": False},
++            ],
++        },
++    )
++
++    rendered = _render(projection, event)
++
++    assert "Inspect [bold]literal[/bold] fixture" in rendered
++    assert "Verify remaining fixture" in rendered
++
++
++@pytest.mark.parametrize("provider", ["codex", "claude"])
++def test_activity_keeps_lanes_and_excludes_other_session_activity(
++    projection: Projection, provider: str
++) -> None:
++    lane = _event(
++        provider,
++        "lane.started",
++        {"label": "Receiver", "detail": "checking"},
++        lane="child-1",
++    )
++    selected = _event(
++        provider,
++        "activity.message",
++        {"kind": "text", "text": "selected fixture", "message_id": "selected"},
++    )
++    other = _event(
++        provider,
++        "activity.message",
++        {"kind": "text", "text": "unselected fixture", "message_id": "other"},
++        session="session-2",
++    )
++
++    rendered = _render(projection, lane, selected, other)
++
++    assert "Receiver: running" in rendered
++    assert "checking" in rendered
++    assert "selected fixture" in rendered
++    assert "unselected fixture" not in rendered
++
++
++@pytest.mark.parametrize("provider", ["codex", "claude"])
++def test_activity_bounds_large_literal_message_details(
++    projection: Projection, provider: str
++) -> None:
++    text = "[bold]literal fixture[/bold] " + "x" * 200_000
++    event = _event(
++        provider,
++        "activity.message",
++        {"kind": "text", "text": text, "message_id": "large"},
++    )
++
++    rendered = _render(projection, event)
++
++    assert "[bold]literal fixture[/bold]" in rendered
++    assert len(rendered) < len(text)

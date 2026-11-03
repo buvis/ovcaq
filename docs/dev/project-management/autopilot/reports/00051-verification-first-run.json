@@ -1,0 +1,41 @@
+{
+  "sha": "9e39537",
+  "commands": [
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache mise exec -- uv sync --all-groups",
+      "exit": 0,
+      "timeout_seconds": 300
+    },
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache mise exec -- uv run pytest -q --tb=line",
+      "exit": 1,
+      "timeout_seconds": 600
+    },
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache mise exec -- uv run ruff check .",
+      "exit": 1,
+      "timeout_seconds": 300
+    },
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache mise exec -- uv run ruff format --check .",
+      "exit": 1,
+      "timeout_seconds": 300
+    },
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache mise exec -- uv run mypy src/ovcaq",
+      "exit": 0,
+      "timeout_seconds": 300
+    },
+    {
+      "command": "env UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache mise exec -- uv build",
+      "exit": 0,
+      "timeout_seconds": 300
+    }
+  ],
+  "passed": 6883,
+  "failed": 1,
+  "skipped": 0,
+  "runner_seconds": 225.84,
+  "warnings": 2,
+  "execution": "each command executed by subprocess.run argv with explicit timeout; pytest approved outside restrictive ps sandbox"
+}

@@ -1,0 +1,37 @@
+{
+  "sha": "ca878006eba9e0fff0f1eb175a30557d82f8278b",
+  "cycle": 6,
+  "commands": [
+    {
+      "command": "uv sync --all-groups",
+      "exit": 0
+    },
+    {
+      "command": "uv run pytest -q --tb=line",
+      "exit": 0
+    },
+    {
+      "command": "uv run ruff check .",
+      "exit": 0
+    },
+    {
+      "command": "uv run ruff format --check .",
+      "exit": 0
+    },
+    {
+      "command": "uv run mypy src/ovcaq",
+      "exit": 0
+    },
+    {
+      "command": "uv build",
+      "exit": 0
+    }
+  ],
+  "passed": 7199,
+  "failed": 0,
+  "skipped": 0,
+  "warnings": 2,
+  "summary": "7199 passed, 2 warnings in 265.32s (0:04:25)",
+  "evidence": "docs/dev/tmp/full-suite-00053-c6-20261014-final-output.txt",
+  "execution": "Required approved retries succeeded with uv cache access and process inspection available; earlier sandbox attempts remain recorded in review artifacts."
+}

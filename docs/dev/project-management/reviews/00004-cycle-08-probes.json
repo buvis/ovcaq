@@ -1,0 +1,125 @@
+[
+  {
+    "case": "stall/source-before-rename",
+    "error": null,
+    "held_text": "different concurrent PRD\n",
+    "original_retained": "original PRD work\n",
+    "tasks": 0,
+    "recovery": null,
+    "ledger_exists": true
+  },
+  {
+    "case": "stall/held-after-rename",
+    "error": null,
+    "held_text": "different concurrent PRD\n",
+    "original_retained": "original PRD work\n",
+    "tasks": 0,
+    "recovery": null,
+    "ledger_exists": true
+  },
+  {
+    "case": "stall/held-across-restart",
+    "error": null,
+    "held_text": "different concurrent PRD\n",
+    "original_retained": "original PRD work\n",
+    "tasks": 0,
+    "recovery": null,
+    "ledger_exists": true
+  },
+  {
+    "case": "park/source-before-rename",
+    "error": null,
+    "held_text": "different concurrent PRD\n",
+    "original_retained": "original PRD work\n",
+    "tasks": 0,
+    "recovery": null,
+    "ledger_exists": true
+  },
+  {
+    "case": "park/held-after-rename",
+    "error": null,
+    "held_text": "different concurrent PRD\n",
+    "original_retained": "original PRD work\n",
+    "tasks": 0,
+    "recovery": null,
+    "ledger_exists": true
+  },
+  {
+    "case": "park/held-across-restart",
+    "error": null,
+    "held_text": "different concurrent PRD\n",
+    "original_retained": "original PRD work\n",
+    "tasks": 0,
+    "recovery": null,
+    "ledger_exists": true
+  },
+  {
+    "case": "ledger-lock-replaced-before-publish",
+    "second_append_returned_success": true,
+    "final_operation_ids": [
+      "first"
+    ]
+  },
+  {
+    "case": "report-non-active-deferred-prd",
+    "deferred_count_present": true,
+    "earlier_prd_present": false,
+    "detail_present": false,
+    "operation_id_present": false
+  },
+  {
+    "case": "deferred-duplicate-key",
+    "error": null,
+    "accepted": true,
+    "ledger_bytes_preserved": false,
+    "retained_record_present": false
+  },
+  {
+    "case": "deferred-deep-json",
+    "error": "RecursionError: maximum recursion depth exceeded while decoding a JSON array from a unicode string",
+    "accepted": false,
+    "ledger_bytes_preserved": true,
+    "retained_record_present": false
+  },
+  {
+    "case": "deep-ledger-json-cli",
+    "exit": 1,
+    "stdout": "",
+    "traceback": true,
+    "last_stderr_line": "RecursionError: maximum recursion depth exceeded while decoding a JSON array from a unicode string",
+    "state_preserved": true,
+    "ledger_preserved": true
+  },
+  {
+    "case": "schema-valid-blank-decision",
+    "validated": true,
+    "autonomous_decisions": 1,
+    "blank_audit_row": true
+  },
+  {
+    "case": "fifo-frontmatter",
+    "exceeded_two_seconds": true,
+    "state_preserved": true
+  },
+  {
+    "case": "fifo-defer",
+    "exceeded_two_seconds": true,
+    "state_preserved": true
+  },
+  {
+    "case": "fifo-config",
+    "exceeded_two_seconds": true,
+    "state_preserved": true
+  },
+  {
+    "case": "report-created-parent-durability",
+    "runtime_parent_synced": false,
+    "reports_directory_synced": true
+  },
+  {
+    "case": "report-retry-after-directory-fsync-failure",
+    "first_error": "injected directory fsync failure",
+    "retry_returned_success": true,
+    "retry_directory_sync_count": 0
+  }
+]

@@ -1,0 +1,1 @@
+Write only tests/tui/test_codex_projection.py, tests/fixtures/codex/v1/lanes-matched.jsonl (new), tests/fixtures/codex/v1/provenance.json, tests/fixtures/codex/v1/fake_codex.py, tests/drivers/test_codex_fixtures.py. Read existing lanes.jsonl in bounded chunks, Python skills read-only. Repo /Users/bob/git/src/github.com/buvis/ovcaq. No supervisor.py or production writes.

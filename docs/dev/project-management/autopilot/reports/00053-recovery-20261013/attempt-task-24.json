@@ -1,0 +1,18 @@
+{
+  "attempt": 1,
+  "model": "sonnet",
+  "outcome": "completed",
+  "review_cycle": 2,
+  "cause": null,
+  "implementor": "codex",
+  "actual_model": "gpt-6.1-sol",
+  "actual_provider": "openai",
+  "preflight_outcome": null,
+  "pipeline": "lean",
+  "self_deslop": "skipped:trivial",
+  "style_gate": "clean",
+  "split_hygiene": "clean",
+  "commit": "c1192298cc503392891adc84588afdb7af4bdab7",
+  "verification": "89 passed; exit 0; fail-first regression timed out before repair",
+  "review": "Pat: resolved backtracking and regression closures; no findings"
+}

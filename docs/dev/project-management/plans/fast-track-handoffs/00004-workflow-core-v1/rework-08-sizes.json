@@ -1,0 +1,24 @@
+{
+  "remaining_overlength_functions": [
+    {
+      "file": "tests/packaging/conftest.py",
+      "function": "installed_wheel",
+      "lines": 51,
+      "unchanged_from_implementation_base": true
+    },
+    {
+      "file": "tests/packaging/test_installed_cli.py",
+      "function": "test_installed_version_and_every_declared_module_come_from_wheel",
+      "lines": 66,
+      "unchanged_from_implementation_base": true
+    },
+    {
+      "file": "tests/packaging/test_distribution.py",
+      "function": "test_wheel_contains_exact_declared_package_and_metadata",
+      "lines": 79,
+      "unchanged_from_implementation_base": true
+    }
+  ],
+  "service_commands_lines": 774,
+  "records_lines": 783
+}

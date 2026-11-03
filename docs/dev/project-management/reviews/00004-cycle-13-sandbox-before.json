@@ -1,0 +1,16 @@
+{
+  "head": "be5e385bd9714952b4803ee30f7c72e661c278f2",
+  "command": "mise exec -- codex sandbox -P :workspace --include-managed-config -C /Users/bob/git/src/github.com/buvis/ovcaq -- /Users/bob/git/src/github.com/buvis/ovcaq/.venv/bin/python /Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00004-cycle-13-sandbox-check.py",
+  "codex_executable": "/opt/homebrew/Caskroom/codex/0.154.0/bin/codex",
+  "exit": 0,
+  "outside_write_control": {"denied": true, "errno": 1},
+  "defer": {"exit": 0, "ledger_items": 1},
+  "stall": {"exit": 0, "ledger_items": 1},
+  "park": {"exit": 0, "ledger_items": 1},
+  "conclusion": "The suspected universal sandbox failure is refuted on the current installed Codex workspace profile, including managed configuration. No model was launched. This does not assert the historical launch used an identical Codex binary.",
+  "failed_setup_attempts": [
+    "codex sandbox macos --help: nested sandbox_apply denied; approved retry revealed this version accepts commands directly, not a macos subcommand",
+    "codex sandbox -c sandbox_mode=workspace-write: this version requires a named permission profile",
+    "Installed protocol schema identifies :workspace as the built-in default; successful supported check used -P :workspace --include-managed-config"
+  ]
+}

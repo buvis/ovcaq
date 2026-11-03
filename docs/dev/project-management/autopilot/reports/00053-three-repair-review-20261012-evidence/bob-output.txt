@@ -1,0 +1,30 @@
+[BOB] ⚪ Cannot statically verify: the PRD phase-2 exit gate (`uv run pytest`) at HEAD 7fbcfd0. The settled reason ("current-HEAD verification: 7165 passed") no longer holds. The last green full run was at 9b8c55a (task 17, 7159 passed). Tasks 18-22 then changed the shared Claude workflow wrapper (`write_workflow_fixture` now emits a `fake_invocation` row) and renamed helpers. Every run recorded since then fails: the full suite shows 555 failed and 172 errors, and the narrow task-22 run fails all 6 cases of the phase-1 acceptance test plus both `test_supervisor_adapters.py` cases. Each failure is `PermissionError: 'ps'`. Collection succeeded, so the renamed imports resolve, but no passing run exists for the acceptance assertions at HEAD | File: tests/runtime/test_adapter_launch_routing.py | Task: general
+[BOB] ⚪ Test padding in a new file: `test_unrelated_item_type_does_not_transition_lane` and `test_unrelated_event_type_does_not_transition_lane` each run once per close status (interrupted, shutdown, not_found). The command_execution record and the `thread.started` record both turn into raw unknown before `item_lanes` is ever called (`item_tool` returns None because the record has no `command` field, and the decode branch has no `thread_id`). The follow-up close assertion repeats `test_unfinished_lane_fails_after_close_status`. So 6 cases run where 2 would do. Task 20 removed the same kind of padding. Fix: drop the `child_status` parametrize from both tests and use "shutdown" | File: tests/drivers/test_adapter_outcomes.py | Task: 5
+
+FIX:
+- Close-status parametrization on two tests whose records never reach `item_lanes` (6 cases where 2 would do) — tests/drivers/test_adapter_outcomes.py:203 and tests/drivers/test_adapter_outcomes.py:230 — remove `@pytest.mark.parametrize("child_status", ...)` from both tests and pass the literal "shutdown" to both `collab_record` calls in each test
+VERIFY:
+- No passing run at HEAD 7fbcfd0 for the phase-1 routing acceptance test or the full suite; every run recorded since task 18 fails with `PermissionError: 'ps'` — on a host where `ps` is allowed, run `mise exec -- uv run pytest -q tests/runtime/test_adapter_launch_routing.py tests/runtime/test_supervisor_adapters.py` (expect 8 passed), then `mise exec -- uv run pytest -q` (expect 0 failed, 0 errors), and record the counts in `docs/dev/project-management/autopilot/last-verification.json`
+KNOWN:
+- (none)
+
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+```
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```

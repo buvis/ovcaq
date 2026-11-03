@@ -1,0 +1,317 @@
+{
+  "phase": "done",
+  "next_phase": "",
+  "schema_version": 1,
+  "batch": {
+    "id": "202610251552",
+    "completed_prds": [],
+    "parks_consecutive": 0,
+    "skips": [
+      {
+        "prd": "00058-autopilot-workflow-extraction-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00058",
+        "exit_code": 2,
+        "note": "",
+        "at": "2026-10-25T17:28:00Z"
+      },
+      {
+        "prd": "00059-autopilot-mixed-driver-jobs-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00059",
+        "exit_code": 2,
+        "note": "",
+        "at": "2026-10-25T17:28:00Z"
+      },
+      {
+        "prd": "00060-autopilot-supervisor-sync-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00060",
+        "exit_code": 2,
+        "note": "",
+        "at": "2026-10-25T17:28:00Z"
+      },
+      {
+        "prd": "00061-autopilot-wave-parity-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00061",
+        "exit_code": 2,
+        "note": "",
+        "at": "2026-10-25T17:28:00Z"
+      },
+      {
+        "prd": "00058-autopilot-workflow-extraction-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00058",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-25T23:35:24Z"
+      },
+      {
+        "prd": "00059-autopilot-mixed-driver-jobs-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00059",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-25T23:35:24Z"
+      },
+      {
+        "prd": "00060-autopilot-supervisor-sync-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00060",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-25T23:35:24Z"
+      },
+      {
+        "prd": "00061-autopilot-wave-parity-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00061",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-25T23:35:24Z"
+      },
+      {
+        "prd": "00058-autopilot-workflow-extraction-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00058",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T02:21:31Z"
+      },
+      {
+        "prd": "00059-autopilot-mixed-driver-jobs-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00059",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T02:21:31Z"
+      },
+      {
+        "prd": "00060-autopilot-supervisor-sync-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00060",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T02:21:31Z"
+      },
+      {
+        "prd": "00061-autopilot-wave-parity-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00061",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T02:21:31Z"
+      },
+      {
+        "prd": "00058-autopilot-workflow-extraction-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00058",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T13:41:02Z"
+      },
+      {
+        "prd": "00059-autopilot-mixed-driver-jobs-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00059",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T13:41:02Z"
+      },
+      {
+        "prd": "00060-autopilot-supervisor-sync-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00060",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T13:41:02Z"
+      },
+      {
+        "prd": "00061-autopilot-wave-parity-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00061",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T13:41:02Z"
+      },
+      {
+        "prd": "00058-autopilot-workflow-extraction-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00058",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T19:53:08Z"
+      },
+      {
+        "prd": "00059-autopilot-mixed-driver-jobs-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00059",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T19:53:08Z"
+      },
+      {
+        "prd": "00060-autopilot-supervisor-sync-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00060",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T19:53:08Z"
+      },
+      {
+        "prd": "00061-autopilot-wave-parity-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00061",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T19:53:08Z"
+      },
+      {
+        "prd": "00058-autopilot-workflow-extraction-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00058",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T20:36:25Z"
+      },
+      {
+        "prd": "00059-autopilot-mixed-driver-jobs-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00059",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T20:36:25Z"
+      },
+      {
+        "prd": "00060-autopilot-supervisor-sync-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00060",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T20:36:25Z"
+      },
+      {
+        "prd": "00061-autopilot-wave-parity-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00061",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T20:36:25Z"
+      },
+      {
+        "prd": "00064-operations-api-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00064",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T20:36:25Z"
+      },
+      {
+        "prd": "00065-headless-distribution-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00065",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T20:36:25Z"
+      },
+      {
+        "prd": "00058-autopilot-workflow-extraction-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00058",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T20:36:39Z"
+      },
+      {
+        "prd": "00059-autopilot-mixed-driver-jobs-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00059",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T20:36:39Z"
+      },
+      {
+        "prd": "00060-autopilot-supervisor-sync-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00060",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T20:36:39Z"
+      },
+      {
+        "prd": "00061-autopilot-wave-parity-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00061",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T20:36:39Z"
+      },
+      {
+        "prd": "00064-operations-api-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00064",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T20:36:39Z"
+      },
+      {
+        "prd": "00065-headless-distribution-v1.md",
+        "command": "python3 tools/autopilot-prerequisites --prd 00065",
+        "exit_code": 1,
+        "note": "",
+        "at": "2026-10-26T20:36:39Z"
+      }
+    ],
+    "catchup_completed_at": "2026-10-26T20:12:00Z",
+    "catchup_head_sha": "97c9766",
+    "unavailable_reviewers": [
+      "carl"
+    ],
+    "unavailable_reviewer_details": {
+      "carl": {
+        "cycle": 2,
+        "prd": "00057-autopilot-controller-client-v1.md"
+      }
+    },
+    "minted_stubs": [
+      "00066-triage-cycle-3-of-3-r1-3dc0722-r3-fa26fb7-r6-fa-v1.md",
+      "00067-triage-the-project-gate-fails-ruff-ble001-on-ex-v1.md",
+      "00068-triage-cleanup-is-still-unbounded-through-run-s-v1.md",
+      "00069-triage-workflow-contract-bundle-sha256-has-two-v1.md",
+      "00070-triage-abnormal-post-spawn-exits-still-escape-u-v1.md",
+      "00071-triage-redaction-still-reads-actor-file-credent-v1.md",
+      "00072-triage-tools-autopilot-prerequisites-bundle-val-v1.md",
+      "00073-triage-r1-97c9766-r2-cecd747-v1.md",
+      "00074-triage-r1-cleanup-ownership-records-guards-only-v1.md",
+      "00075-triage-r2-the-sessions-1-guard-does-not-prove-n-v1.md"
+    ]
+  },
+  "prd": "00063-driver-failure-classes-tiers-v1.md",
+  "catchup_mode": "run",
+  "doubt_reviewer": "codex",
+  "consensus_engine": "legacy",
+  "session_model": "sonnet",
+  "rework_cap": 2,
+  "lane": "full",
+  "lane_reason": "override",
+  "lane_effective": "full",
+  "tasks_total": 0,
+  "tasks_completed": 0,
+  "phases_completed": [],
+  "cycle": 1,
+  "replan_count": 0,
+  "catchup_probe": {
+    "batch_id": "202610251552",
+    "gh": "ok",
+    "engram": "unregistered",
+    "checked_at": "2026-10-25T18:21:25Z"
+  },
+  "applied_review_batches": [
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00057-autopilot-controller-client-v1-review-1.md::decision-gate",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00057-autopilot-controller-client-v1-review-2.md::decision-gate",
+    "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/project-management/reviews/00062-supervisor-process-identity-v1-review-1.md::decision-gate"
+  ],
+  "work": {
+    "design_doc": "docs/dev/project-management/designs/00062-supervisor-process-identity-v1-design.md",
+    "work_start_sha": "fa26fb71a8f6917a810eb598ed9601f7c90f3604",
+    "repo_root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+    "next_phase": "build"
+  },
+  "review": {
+    "decisions": [
+      {
+        "label": "autonomous",
+        "type": "design",
+        "summary": "PRD 00062 design: libproc proc_pidinfo via ctypes replaces the ps subprocess, typed as ErrorCode.PROCESS_PROBE (exit 12); rejected a degrade-to-None patch (silent prune) and psutil (dependency policy). Early-failure rollback scoped to _publish_ownership only, cleaning run metadata and fleet entry before reverting state.",
+        "unresolved_non_blockers": [
+          "revert_batch_start cannot tell a batch this run minted from a pre-existing idle one",
+          "_probe_process_identity catching only CommandError lets ctypes/struct errors crash ovcaq doctor",
+          "preflight before reconcile_metrics skips torn-metrics repair on a failed start",
+          "affected-caller list has a wrong line ref and four omissions",
+          "require_process_capabilities has no production caller",
+          "zombie test as described reaps the child it observes",
+          "revert restores 3 of the 4 cited default fields",
+          "pid-reuse claim overclaims"
+        ],
+        "open_questions": [
+          "expected_revision value and REVISION_CONFLICT behaviour for revert_batch_start",
+          "exit 12 vs exit 1 operator contract for a failed start",
+          "unknown-capability message on a batch with no capabilities",
+          "is errno == 0 on a 0 return observed on darwin",
+          "which leg early_failure_on_resumed_batch_records_attention exercises"
+        ]
+      }
+    ]
+  },
+  "contract_card": "step: 00063 catchup + design (3 dispatches, 8 blockers found and fixed, 0 open) + planning (6 tasks) all completed; `autopilot check-plan` then exited 3 on module_drift 4 > 1, so the PRD was stalled plan_expansion into hold/ and its tasks were cleared | invariants: statectl is the sole state.json writer; the stall already applied the per-PRD reset and set phase/next_phase build; do NOT re-plan, re-review or re-stall 00063, and do NOT move it out of hold/ \u2014 a human extends the PRD's Repository Structure or sets plan_expansion: allow; the design doc at docs/dev/project-management/designs/00063-driver-failure-classes-tiers-v1-design.md is complete and reviewed, reuse it via the Phase 1.5 artifact skip on any un-park | next: fresh session enters the build gate at Phase 0 and selects the next PRD from backlog (00058 is lowest); catchup cache is fresh at HEAD 97c9766 so expect a delta refresh"
+}

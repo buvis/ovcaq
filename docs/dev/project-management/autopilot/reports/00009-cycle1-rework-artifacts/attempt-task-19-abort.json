@@ -1,0 +1,1 @@
+{"attempt": 1, "model": "sonnet", "review_cycle": 1, "outcome": "aborted", "cause": "context_overrun", "implementor": "codex", "actual_provider": "openai", "actual_model": "gpt-6.1-sol", "actual_effort": "medium", "role": "test_author", "contributed_changes": false, "pipeline": "lean", "preflight_outcome": null, "evidence": "docs/dev/tmp/task-19-tess-abort.md"}

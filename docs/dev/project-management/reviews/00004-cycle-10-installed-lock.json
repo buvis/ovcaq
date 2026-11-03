@@ -1,0 +1,58 @@
+{
+  "origin": {
+    "argv": [
+      "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/env/bin/python",
+      "-c",
+      "import ovcaq,ovcaq.config; print(ovcaq.__file__); print(ovcaq.config.__file__)"
+    ],
+    "exit": 0,
+    "stdout": "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/env/lib/python3.13/site-packages/ovcaq/__init__.py\n/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/env/lib/python3.13/site-packages/ovcaq/config.py\n",
+    "stderr": ""
+  },
+  "original_error": "deferred lock identity changed: batch-deferred.json.lock",
+  "rival": {
+    "argv": [
+      "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/env/bin/ovcaq",
+      "--root",
+      "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/project",
+      "--json",
+      "workflow",
+      "defer",
+      "--runtime-root",
+      "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/project/runtime",
+      "--prd",
+      "00004.md",
+      "--record",
+      "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/project/record.json"
+    ],
+    "exit": 2,
+    "stdout": "",
+    "stderr": "{\"error\": {\"code\": \"state_io\", \"message\": \"deferred publication busy; retry: /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/project/runtime/deferred/batch-deferred.json\", \"path\": null}, \"ok\": false}\n"
+  },
+  "retry": {
+    "argv": [
+      "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/env/bin/ovcaq",
+      "--root",
+      "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/project",
+      "--json",
+      "workflow",
+      "defer",
+      "--runtime-root",
+      "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/project/runtime",
+      "--prd",
+      "00004.md",
+      "--record",
+      "/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/project/record.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"path\": \"/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/ft04r10-installed-7hokasa0/project/runtime/deferred/batch-deferred.json\"}\n",
+    "stderr": ""
+  },
+  "ids": [
+    "seed",
+    "first",
+    "second"
+  ],
+  "exact_replay": true,
+  "state_preserved": true
+}

@@ -1,0 +1,63 @@
+{
+  "module": "/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/__init__.py",
+  "control": {
+    "denied": true,
+    "errno": 1,
+    "path": "/Users/bob/.ovcaq-r13-sandbox-control-2e99db38d9c84ca1b20f4f40f2afa3e8"
+  },
+  "commands": [
+    {
+      "command": "defer",
+      "exit": 0,
+      "stdout": "{\"path\": \"/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/sandbox-r13-vsd0gsnp/defer/new/runtime/deferred/batch-deferred.json\"}\n",
+      "stderr": "",
+      "ledger": {
+        "batch_id": "batch",
+        "items": [
+          {
+            "op_id": "sandbox-probe",
+            "prd": "00004-a.md"
+          }
+        ]
+      }
+    },
+    {
+      "command": "stall",
+      "exit": 0,
+      "stdout": "{\"ok\": true, \"result\": {\"kind\": \"stall\", \"operation_id\": \"526bb1e8869146d79ebb4376172be0b4\", \"replayed\": false, \"systemic_halt\": false}, \"revision\": 4}\n",
+      "stderr": "",
+      "ledger": {
+        "batch_id": "batch",
+        "items": [
+          {
+            "detail": "sandbox verification",
+            "kind": "stall",
+            "op_id": "526bb1e8869146d79ebb4376172be0b4",
+            "prd": "00004-a.md",
+            "site": "probe",
+            "type": "stall"
+          }
+        ]
+      }
+    },
+    {
+      "command": "park",
+      "exit": 0,
+      "stdout": "{\"ok\": true, \"result\": {\"kind\": \"park\", \"operation_id\": \"3e0e5b557cd24663beb7c0ab5ff4ef63\", \"replayed\": false, \"systemic_halt\": false}, \"revision\": 4}\n",
+      "stderr": "",
+      "ledger": {
+        "batch_id": "batch",
+        "items": [
+          {
+            "detail": "session ended without a committed transition",
+            "kind": "park",
+            "op_id": "3e0e5b557cd24663beb7c0ab5ff4ef63",
+            "prd": "00004-a.md",
+            "site": "wrapper_died",
+            "type": "stall"
+          }
+        ]
+      }
+    }
+  ]
+}

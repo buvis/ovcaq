@@ -1,0 +1,62 @@
+"""Review-only probes; all mutable state is confined to a temporary project."""
+
+import json
+import sys
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+ROOT = Path('/Users/bob/git/src/github.com/buvis/ovcaq')
+sys.path.insert(0, str(ROOT / 'tests/runtime'))
+
+from test_capability_lifecycle import _harness
+from ovcaq.runtime.capability import CapabilityExecution
+from ovcaq.runtime.decision import snapshot
+from ovcaq.runtime.supervisor import _boundary
+from ovcaq.events import FailureClass, SessionSummary
+from ovcaq.runtime.decision import AttemptResult
+from test_supervisor import harness as supervisor_harness
+import pytest
+
+
+class Success:
+    def run(self, request):
+        return CapabilityExecution(True, request.session.root.name, None)
+
+
+with TemporaryDirectory(prefix='ovcaq-review-00007-') as folder:
+    harness = _harness(Path(folder).resolve())
+    before_work = harness.store.read()['work']
+    attempt = harness.service.start('archive')
+    failed = harness.service.finish('archive', attempt['id'], CapabilityExecution(False, attempt['session_id'], 'probe failure'))
+    retried = harness.service.retry('archive', Success())
+    facts = {
+        'failed_batch_status': failed['batch']['status'],
+        'failed_attention': failed['control']['attention'],
+        'successful_retry_batch_status': retried['batch']['status'],
+        'successful_retry_attention': retried['control']['attention'],
+        'drained_boundary_decision_despite_attention': _boundary(snapshot(retried)).kind,
+        'drained_work_unchanged': before_work == retried['work'],
+    }
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        sibling = Path(folder).resolve() / 'supervisor'
+        sibling.mkdir()
+        h = supervisor_harness(sibling, monkeypatch)
+        supervisor = h.supervisor()
+        decisions = []
+        for number in range(12):
+            state = h.store.read()
+            progress = snapshot(state)
+            failure = FailureClass.AGENT if number % 2 == 0 else FailureClass.CONNECTIVITY
+            summary = SessionSummary(False, 'probe', failure, 'probe', None, None)
+            result = AttemptResult(summary, h.clock.now(), h.clock.now(), progress, None)
+            decisions.append(supervisor._decide(progress, result, state).kind)
+        facts['alternating_failures_12_decisions'] = decisions
+        facts['phase_repeat_limit'] = h.settings.policy.phase_repeat_limit
+        facts['phase_repeats_after_alternating_failures'] = h.store.read()['recovery']['phase_repeats']
+        h.store.transaction(lambda value: value['batch'].update(id='', status='idle'))
+        try:
+            h.supervisor().run_once()
+        except Exception as error:
+            facts['unstarted_batch_exception'] = f'{type(error).__name__}: {error}'
+        facts['unstarted_batch_child_launches'] = len(h.driver.requests)
+    print(json.dumps(facts, indent=2))

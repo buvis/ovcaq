@@ -1,0 +1,1 @@
+Close every quoted finding while retaining public contracts.

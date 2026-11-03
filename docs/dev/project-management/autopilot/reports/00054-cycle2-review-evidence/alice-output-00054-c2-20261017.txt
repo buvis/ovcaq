@@ -1,0 +1,33 @@
+[ALICE] 🟡 The recovery fix still leaves one gap in the exit race. After `cleanup_run_records` removes run.json, the supervisor process stays alive until the interpreter exits. A poll in that gap gets `ended=False`, an idle observation with `run_id=None`, and `state=None`. Because that identity no longer matches the selected run, `_observe` closes the follower and clears the session cache. The next poll is terminal but has no `_session_id`, so the final frame loses lanes, activity and provider. I confirmed this with a probe: I ran `Selected.finish()`, forced `_run_observation.process_matches` to return True for one poll, and polled again. `assert_final_telemetry` then failed with `'unknown' == 'selected-provider'`. The new tests miss this because `finish()` waits for the process to exit fully. Fix: clear the cache only when `selected.ended` is true or the observation shows a different active run (`observation.run_id` is not None and differs). Missing metadata alone should not clear it. | File: src/ovcaq/tui/model.py:468 | Task: 4
+[ALICE] ⚪ The supervisor exit-race fix (commit 00b2fdf: `_selected_state` resampling, deferring the terminal transition, keeping the session cache) changes production lifecycle observation code. That is outside PRD 00054, whose Risks section says "No lifecycle decisions in TUI", yet it is credited to task 4, which only covers tests/tui. It is needed for the full-suite exit gate and is documented in reports/00054-recovery-progress.md, but it has no PRD or design record of its own to trace it to. | File: src/ovcaq/runtime/_run_observation.py:102 | Task: 4
+
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+Status of prior findings:
+- **Resolved:** R2, R4, R5, R6, R9, R10, R12.
+  - R2: the 512-char bound and ellipsis now match `display_text` at src/ovcaq/tui/model.py:136.
+  - R4: real Claude multi-block and literal-message frames are now decoded.
+  - R5: the `ACTIVITY_WINDOW` constant is in place.
+  - R6: credentials in decoded warning detail are redacted through to the render.
+  - R9: one equality check is left.
+  - R10: the detail assertions now run unconditionally.
+  - R12: the claude error and plan cases now use real decoder shapes.
+- **Deferred, still reproduces as recorded:** R1, R3, R7 and R13. The R9 rubric fail keeps the settled R1 verdict.
+- **Not re-raised:** the fail-first [MECH] lines. The test-only rework and the fail-closed attestation guards pass at base by design.
+
+Checks run:
+- PRD test files: 80 passed.
+- tests/tui plus the observer-cleanup, viewer-fallback and exit-during-poll integration tests: 427 passed.
+- ruff check, ruff format --check and mypy all clean.
+- I did not run the full suite, because the coordinator's capture run is in progress. I removed the probe files afterwards.

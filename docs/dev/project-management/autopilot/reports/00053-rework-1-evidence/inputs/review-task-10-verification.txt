@@ -1,0 +1,2 @@
+uv run --cache-dir /private/tmp/ovcaq-uv-cache pytest -q --tb=line tests/runtime/test_adapter_health.py -k empty_host_path
+Final exit 0; 2 passed, 26 deselected, 2 pre-existing cleanup warnings. First edit failed FileExistsError because helper creates its directory; corrected cwd to executable.parent.

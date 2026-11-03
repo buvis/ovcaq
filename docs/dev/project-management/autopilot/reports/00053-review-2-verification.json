@@ -1,0 +1,36 @@
+{
+  "sha": "307b7921355885221e8f8e4f66ba2a678b9f43c5",
+  "cycle": 2,
+  "commands": [
+    {
+      "command": "uv sync --cache-dir /private/tmp/ovcaq-uv-cache --all-groups",
+      "exit": 0
+    },
+    {
+      "command": "uv run --cache-dir /private/tmp/ovcaq-uv-cache pytest -q --tb=short",
+      "exit": 0
+    },
+    {
+      "command": "uv run --cache-dir /private/tmp/ovcaq-uv-cache ruff check .",
+      "exit": 0
+    },
+    {
+      "command": "uv run --cache-dir /private/tmp/ovcaq-uv-cache ruff format --check .",
+      "exit": 0
+    },
+    {
+      "command": "uv run --cache-dir /private/tmp/ovcaq-uv-cache mypy src/ovcaq",
+      "exit": 0
+    },
+    {
+      "command": "uv build --cache-dir /private/tmp/ovcaq-uv-cache",
+      "exit": 0
+    }
+  ],
+  "passed": 7141,
+  "failed": 0,
+  "skipped": 0,
+  "warnings": 2,
+  "duration_seconds": 238.06,
+  "sandbox_retry": "First restricted run interrupted after ps-denial failures; approved full fixture/fake retry passed. See 00053-review-2-sandbox-verification.json."
+}

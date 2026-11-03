@@ -1,0 +1,14 @@
+{
+  "provider": "claude",
+  "model": "opus",
+  "started": 1790610211.602664,
+  "completed": 1790610608.542343,
+  "output": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/bob-output-00006-c2.txt",
+  "sha256": "569b68576963605f91d446a3117dd259925a1244818a5c7c822fd75feb4b9768",
+  "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/bob-output-00006-c2-9d220c876d9a4196a85a01851ee0cd25.jsonl",
+  "raw_sha256": "411b043875b217c36c7a453a8820f2a0885c6857a392a813dfa8b56a35636453",
+  "thread_id": "478a5433-fa30-46ca-beb3-6ab6c9f01eb0",
+  "root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+  "prd": "",
+  "cycle": 1
+}

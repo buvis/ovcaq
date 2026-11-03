@@ -1,0 +1,35 @@
+[BOB] 🟡 Two alternatives in the numeric prefix regex never change a result. Inside the `http(...)` group, ` error` (added by task 25) and plain ` status` (with no parenthetical) are redundant. `re.search` already matches the same text through the top-level `error(?: code)?` and `status(?: code)?` alternatives, and the preceding space always supplies the `\b`. Shrink the group to `http(?:/\d+(?:\.\d+)?| status (?:client|server) error \()?`. All current positives still match, including `hTtP ErRoR {code}`, `HTTP status: {code}` and the reqwest forms | File: src/ovcaq/drivers/codex_events.py | Task: 25
+[BOB] ⚪ docs/driver-protocol.md:273 still says numeric codes need "HTTP, status or error-code context". Task 25 now also accepts a bare `error` label (`Error 429:`, `error=401`, `Error 429`), and CHANGELOG.md:45 already says "error context". The doc no longer matches the code | File: docs/driver-protocol.md | Task: 25
+[BOB] ⚪ CHANGELOG.md:45 lists regex branch names ("equals-delimited status, bare error, HTTP error, native bare-status and HTTP-version forms"). It also restates unchanged behavior ("retain existing authentication word diagnostics and genuine rate/quota limits"). That describes the implementation, not what users see | File: CHANGELOG.md | Task: 25
+[BOB] ⚪ Cannot statically verify: the full suite passes at HEAD. The last recorded run, at d9644c8 in last-verification.json, was interrupted: exit 130, with 88 failures and 27 errors in 3418 executed tests, blamed on a denied `ps`. The cycle-4 quality-gates.json says "counts discarded; fresh summary run pending". The settled 7165-passed result predates tasks 15-26, so the settled reason no longer covers HEAD | File: N/A | Task: general
+[BOB] ⚪ Suspected from reading, not run: JSON-style labels such as `"status": 503` and `"error_code": 429` now classify as `unknown`, because the prefix allows only whitespace, `:` or `=` between the label and the code. The pre-PRD bare-number match returned connectivity and rate_limit for these | File: src/ovcaq/drivers/codex_events.py | Task: 6
+
+R1: pass
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+
+FIX:
+- Redundant ` error` and plain ` status` alternatives inside the `http(...)` prefix group — src/ovcaq/drivers/codex_events.py:301 — replace line 301 with `r"(?:http(?:/\d+(?:\.\d+)?| status (?:client|server) error \()?"`. Behavior does not change: any `http error N` or `http status N` text also contains a top-level `error N` or `status N` match.
+- Protocol doc says "error-code context" but bare `error` now counts — docs/driver-protocol.md:273 — change to "require HTTP, status or error context (for example `HTTP/2 503`, `status=429`, `Error 401:`)".
+- Changelog numeric entry describes regex branches and unchanged behavior — CHANGELOG.md:45 — rewrite as: "**drivers**: count Codex failure codes 401/403/429/502/503 only after an HTTP, status or error label (for example `HTTP/2 503`, `status=429`, `Error 401:`), so ordinary counts such as 'processed 401 files' no longer trigger failure handling."
+VERIFY:
+- Full suite at HEAD has no recorded counts, and the last recorded run was interrupted with 88 failures and 27 errors — on a host that allows process inspection (`ps`), run `uv run pytest -q` at HEAD badf378. Record passed/failed/errors/skipped in docs/dev/project-management/autopilot/last-verification.json. Require 0 failed, 0 errors and 0 skipped.
+KNOWN:
+- JSON-style labels (`"status": 503`, `"error_code": 429`) classify as `unknown` (static reading; the pre-PRD code classified them) — out of scope for three reasons. The design says "additional diagnostic spellings can extend adapter fixtures independently". The operator ruled that bare numbers acquire no new contract. No checked-in fixture shows Codex emitting this form.
+
+```
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```

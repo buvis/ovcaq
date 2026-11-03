@@ -1,0 +1,4 @@
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/supervisor_cli.py
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/tui/model.py
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq (new modules may be created here)
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/tui (new modules may be created here)

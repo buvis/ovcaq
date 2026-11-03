@@ -1,0 +1,36 @@
+{
+  "sha": "a5064af9d35f779a0032bce77154909a089c6a00",
+  "cycle": 2,
+  "commands": [
+    {
+      "command": "mise exec -- uv sync --all-groups",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv run pytest -q --tb=line",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv run ruff check .",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv run ruff format --check .",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv run mypy src/ovcaq",
+      "exit": 0
+    },
+    {
+      "command": "mise exec -- uv build",
+      "exit": 0
+    }
+  ],
+  "passed": 5591,
+  "failed": 0,
+  "skipped": 0,
+  "warnings": 2,
+  "elapsed_pytest_s": 223.28,
+  "evidence": "current review coordinator execution; no production edits"
+}

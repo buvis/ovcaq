@@ -1,0 +1,247 @@
+[
+  {
+    "cycle": 12,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "F4: reports.publish_report has no production caller; workflow_cli reaches into the module-private reports._publish_report instead",
+    "file": "src/ovcaq/workflow/reports.py:676",
+    "reason": "The R10 repair explicitly retains the public Path-returning publish_report contract while CLI consumes complete composed text from the shared publication. Both paths have callers; removal/renaming offers no required simplification."
+  },
+  {
+    "cycle": 12,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "K1: A ledger written past the reader's depth limit by a pre-fix build stays unreadable and unappendable; the repair is prospective only",
+    "file": "src/ovcaq/workflow/_files.py:82",
+    "reason": "Fresh-state one-way extraction explicitly excludes an importer or historical corrupt-ledger repair."
+  },
+  {
+    "cycle": 12,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "K2: render report requires runtime_root to already exist while defer now creates its chain",
+    "file": "src/ovcaq/workflow/reports.py:507",
+    "reason": "Render requires an existing configured runtime root and fails loudly; no accepted clause requires render to provision it."
+  },
+  {
+    "cycle": 12,
+    "disposition": "settled-deferral",
+    "severity": "medium",
+    "issue": "R8-K1: inherited config-collision test retains the mechanically flagged either-or assertion",
+    "file": "tests/state/test_cli.py:372",
+    "reason": "Inherited collision assertion is a settled exception; broad state-test restructuring excluded."
+  },
+  {
+    "cycle": 12,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "R8-K2: inherited 53-line add_task and three unchanged packaging functions exceed R12",
+    "file": "src/ovcaq/state/commands.py:148",
+    "reason": "Inherited function-size exceptions are settled; retain existing API and test boundaries."
+  },
+  {
+    "cycle": 12,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "R9-K3: inherited state schema remains 933 lines, over R13",
+    "file": "src/ovcaq/state/schema.py:1",
+    "reason": "Inherited schema-size exception is settled; broad state restructuring excluded."
+  },
+  {
+    "cycle": 12,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "R9-K4: universal implementation-base fail-first binding remains unproven; this cycle's replay was skipped outright (worktree creation denied)",
+    "file": "N/A",
+    "reason": "Universal full-base fail-first binding remains unproven; current replay collection fails on missing packaging_support. Retain narrower chronological regressions."
+  },
+  {
+    "cycle": 13,
+    "disposition": "discarded",
+    "severity": "high",
+    "issue": "`check-plan` exposes an unspecified `--ceiling` override, letting callers bypass the fixed 15-task plan-size policy with a large value and accepting nonsensical negative ceilings instead of rejecting invalid input",
+    "file": "src/ovcaq/workflow_cli.py",
+    "reason": "Withdrawn by Blake: frozen source inventory TEST-012 explicitly requires override semantics, and CMD-012/DEC-071/TEST-012 migrate under PRD 00004. No positive-only domain or fixed non-overridable policy is specified."
+  },
+  {
+    "cycle": 13,
+    "attempt": "20260913-resumed",
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "`workflow check-plan` exposes an extra `--ceiling` option absent from the specified command and accepts zero or negative values, allowing a valid empty plan to be rejected as oversized",
+    "file": "src/ovcaq/workflow_cli.py:88",
+    "reason": "Blake retracted after verifying TEST-012 requires override semantics/CLI exposure and DEC-071 specifies no positive-only domain. Mandatory migration assigns these source rows to PRD 00004/P02-T04."
+  },
+  {
+    "cycle": 13,
+    "attempt": "20260913-approved",
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "B6: paths.ensure_runtime_directory (`ovcaq init`) creates the project root and runtime chain with mkdir(parents=True) and no directory fsync; the durability this diff adds does not cover init-created levels (today the unbounded walk confirms them incidentally on the first ledger write)",
+    "file": "src/ovcaq/paths.py:94",
+    "reason": "Unchanged init ancestry provisioning belongs to P03-T01/PRD 00005. No init durability guarantee is newly asserted here; retain the limitation for its owning phase."
+  },
+  {
+    "cycle": 13,
+    "attempt": "20260913-approved",
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "B7: level.mkdir(exist_ok=True) creates the runtime root with default umask mode while ensure_runtime_directory gives the runtime leaf 0o700 (plan §15 restrictive permissions)",
+    "file": "src/ovcaq/workflow/_files.py:257",
+    "reason": "Inherited runtime-root mode behavior belongs to P03-T01 provisioning policy. Existing record/lock permissions remain checked; no new policy is introduced in this review."
+  },
+  {
+    "cycle": 13,
+    "attempt": "20260913-approved",
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "B8: Cannot statically verify: suite/ruff/format/mypy/build and fail-first replay of the rework_12 crash/racer tests and the two exact-message asserts (replay skipped: worktree denied); recorded gates at HEAD be5e385 (1352 passed) taken from last-verification.json",
+    "file": "N/A",
+    "reason": "Same-HEAD suite/lint/format/types/build are verified by last-verification.json. Residual full fail-first binding is the settled R9-K4 limitation. Not queued: archive/pipe/overlay instructions violate the single verification-command shape."
+  },
+  {
+    "cycle": 13,
+    "attempt": "20260913-approved",
+    "disposition": "discarded",
+    "severity": "high",
+    "issue": "Frontmatter application silently discards the effective catchup, design, design-gate, and pause-on-ambiguity controls: `apply_to_store` parses and returns them but removes their extension keys and persists only rework cap and tier, violating CMD-014’s requirement to transactionally apply derived state fields",
+    "file": "src/ovcaq/workflow/frontmatter.py:191",
+    "reason": "The cycle-9 adjudication already settled returned-control/downstream ownership, repeated in cycle-10 and cycle-11 source evidence. The v1 state crosswalk derives controls rather than duplicating policy; tests/workflow/test_applications.py pins returned controls and durable cap/tier/CAS behavior. No new evidence invalidates that boundary."
+  },
+  {
+    "cycle": 14,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "B9: on platforms without a fsync-capable search descriptor (glibc Linux) defer beneath a 0111 ancestor still fails; the fix only names the requirement",
+    "file": "src/ovcaq/workflow/_files.py:415",
+    "reason": "The mandatory resolved discovery explicitly excludes Linux from the personal-cutover milestone. Keep the explicit fallback failure and durability gate; no new Linux-support task."
+  },
+  {
+    "cycle": 14,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "B10: Cannot statically verify: suite/ruff/format/mypy/build and fail-first replay of the 7 rework_13 cases (replay skipped: worktree denied); host reports 1359 passed / 0 skipped at 7291d9f; static trace shows each new test fails pre-change",
+    "file": "N/A",
+    "reason": "Fresh suite at reviewed HEAD passed 1359/0/0; other required gates have same-HEAD successful records. Full fail-first binding remains the settled R9-K4 limitation; the current replay attempt was skipped on worktree denial."
+  },
+  {
+    "cycle": 14,
+    "disposition": "discarded",
+    "severity": "high",
+    "issue": "`prd_root` is never passed through project containment or symlink-component validation: absolute roots are accepted and `resolve()` follows an in-project symlink outside the repository. Because park/stall consume these paths and rename `wip/<prd>` into `hold/<prd>`, repository or user configuration can make OVCAQ move files in an external tree, contrary to the source contract’s requirement that configured project/runtime paths remain under the resolved project except an explicitly supplied external state root.",
+    "file": "src/ovcaq/config.py:87",
+    "reason": "Blake retracted: containment is specified for runtime roots, not all configured PRD roots. Absolute external PRD roots are deliberately supported; treating that explicit configuration as a containment violation extends the requirement."
+  },
+  {
+    "cycle": 14,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "`workflow check-plan` adds an unspecified `--ceiling` option and accepts every integer without validation. A large value bypasses the fixed 15-task loop policy, while a negative value classifies even an empty plan as oversized; this makes the installed policy caller-controlled and violates the no-extra-options and input-validation rules.",
+    "file": "src/ovcaq/workflow_cli.py:95",
+    "reason": "Auto-dismissed by the settled ledger and retracted by Blake: frozen TEST-012 requires override semantics and CLI exposure, CMD-012/DEC-071/TEST-012 migrate under this PRD, and no positive-only domain is specified."
+  },
+  {
+    "cycle": 15,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "F7: `_O_SEARCH` falls back to `os.O_EXEC`; on musl Linux O_EXEC == O_PATH, whose descriptors reject fsync, so every ancestor open in `_ensure_directory_chain` would fail even when readable (suspected, pre-existing via os.O_SEARCH there)",
+    "file": "src/ovcaq/workflow/_files.py:25",
+    "reason": "Linux is explicitly excluded from the current personal-cutover milestone. Bob's musl-specific concern is unverified here and attributed as a suspected pre-existing limitation, not a confirmed host defect."
+  },
+  {
+    "cycle": 15,
+    "disposition": "settled-deferral",
+    "severity": "low",
+    "issue": "F8: Cannot statically verify: suite/ruff/format/mypy/build and fail-first replay for packaging tests (base collection failed on missing packaging_support helpers); host reports 1364 passed / 0 skipped at 7b41798",
+    "file": "N/A",
+    "reason": "Fresh suite passes 1364/0/0; other required gates reuse same-HEAD successful records. Approved replay produced two red tests but two packaging files failed collection at base, so their behavioral fail-first binding remains limited. No broad rebuild is queued solely to repeat already recorded gates."
+  },
+  {
+    "cycle": 15,
+    "disposition": "discarded",
+    "severity": "high",
+    "issue": "Effective `catchup`, `design`, `design_gate`, and `pause_on_ambiguity` frontmatter values are returned to the caller but discarded from committed state; only the review cap and tier survive, so restart/resume cannot reproduce the declared workflow policy and `catchup: skip` still follows `batch.catchup`",
+    "file": "src/ovcaq/workflow/frontmatter.py",
+    "reason": "Retracted by Blake after source-only adjudication: docs/state-protocol.md:321-323,327 and frozen inventory classify these controls as derived and allocate ownership to existing v1 fields. No new evidence invalidates the prior ledger decision."
+  },
+  {
+    "cycle": 15,
+    "disposition": "discarded",
+    "severity": "high",
+    "issue": "PRD discovery converts missing, unreadable, symlinked, or non-directory lifecycle roots into empty candidate lists, allowing an inaccessible `wip` to fall through to backlog or an invalid tree to report `drained`; this can skip higher-priority work or prematurely terminate a batch instead of surfacing the invalid-directory error required by the selection test strategy",
+    "file": "src/ovcaq/workflow/selection.py",
+    "reason": "Retracted by Blake: mandatory selection source specifies WIP priority/fallback/drain but no required error outcome for absent/invalid/symlink directories. PermissionError from iterdir is not caught. Test strategy naming these cases is not an error contract."
+  },
+  {
+    "cycle": 15,
+    "disposition": "discarded",
+    "severity": "high",
+    "issue": "`defer_record` validates active batch/PRD with an unlocked read and then publishes the external ledger independently, without revision CAS or durable recovery intent; a concurrent completion/reset can therefore leave a successfully written deferred record attributed from stale state",
+    "file": "src/ovcaq/workflow/records.py",
+    "reason": "Retracted by Blake: CMD-010 and STATE-112/113 define an independently locked PRD/batch-attributed append; recovery.operation supports park/stall only. A later state change does not invalidate immutable attribution from the validated invocation."
+  },
+  {
+    "cycle": 16,
+    "disposition": "discarded",
+    "severity": "high",
+    "issue": "The final `verify_ancestry()` pass is still racy: replacing an ancestor immediately after its pathname `stat`, then reparenting the unchanged descendant subtree beneath the replacement, lets all later identity checks pass and publication return without confirming the replacement entries; the regression injects before verification begins and misses this window",
+    "file": "src/ovcaq/workflow/_files.py:277",
+    "reason": "Alice retracted after deterministic installed-wheel probe and linearization analysis: direct/replay publication and a complete old-ancestry observation precede the external reparent. The later external mutation owns its directory durability. No success lacking a valid pre-mutation linearization point was found."
+  },
+  {
+    "cycle": 16,
+    "disposition": "discarded",
+    "severity": "high",
+    "issue": "The frontmatter port is incomplete: characterized `doubt_reviewer` and `consensus_engine` controls are silently ignored, while accepted `catchup`, `design`, `design_gate`, and `pause_on_ambiguity` values are returned but not committed, making later overwrite warnings impossible on fresh v1 state",
+    "file": "src/ovcaq/workflow/frontmatter.py:15",
+    "reason": "Blake retracted against docs/state-protocol.md and frozen STATE-005/006/007/009/010/011: controls are derived from existing v1 owners. No duplicate state fields required; agent/model selection belongs to runtime."
+  },
+  {
+    "cycle": 16,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "Deferred-ledger reads validate only that items are objects; missing, unsafe, or duplicate `op_id` values survive loading, after which report rendering silently drops or collapses them, violating the operation-ID and no-lost-record contracts",
+    "file": "src/ovcaq/workflow/_files.py:227",
+    "reason": "Blake retracted: CMD-010 and STATE-113 require valid deduplicated public writes, already enforced; TEST-018 preserves tolerant report handling. No source contract requires semantic validation of externally malformed ledger rows."
+  },
+  {
+    "cycle": 16,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "F8: Cannot statically verify: suite/ruff/format/mypy/build at 4011d1a; 1372/0/0 are reused same-HEAD records, not a fresh run",
+    "file": "N/A",
+    "reason": "Verified six exit-0 command records with non-null 1372/0/0 counts at reviewed HEAD 4011d1a3ce186ae9dcd023e8a7fb4b87412b935d. Source requires reuse, not a repeated full suite. Bob labels this KNOWN."
+  },
+  {
+    "cycle": 16,
+    "disposition": "discarded",
+    "severity": "low",
+    "issue": "F9: fail-first replay: 12 touched tests pass at base; all are behavior-preserving test edits (origin re-assertions in rework_12's concurrent test, re-parametrized cycle-13/14 regressions in rework_13), the 6 new reparent cases fail at base",
+    "file": "tests/packaging/test_rework_13.py",
+    "reason": "Behavior-preserving origin assertions and parametrized existing regressions intentionally pass at base. Six newly added reparent cases fail old production; instrumented replay includes the otherwise unoverlaid actor helper and fails specifically on missing post-reparent fsync."
+  },
+  {
+    "cycle": 16,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "2 touched test(s) pass against the pre-change code: test_installed_concurrent_creation_confirms_and_preserves_peer_directory",
+    "file": "tests/packaging/test_rework_12.py",
+    "reason": "These two existing cases only gain installed-origin assertions; behavior-preserving test coverage passes old code by design."
+  },
+  {
+    "cycle": 16,
+    "disposition": "discarded",
+    "severity": "medium",
+    "issue": "10 touched test(s) pass against the pre-change code: test_installed_defer_refuses_replaced_distant_ancestry_until_fresh_attempt +4 more",
+    "file": "tests/packaging/test_rework_13.py",
+    "reason": "These ten cases preserve earlier behavior while parametrizing/restoring coverage. Six new reparent cases fail old production at the intended fsync assertion with the current actor overlaid."
+  },
+  {
+    "cycle": 16,
+    "disposition": "discarded",
+    "severity": "high",
+    "issue": "Configured `prd_root` is never containment-checked, and absolute or `..` paths are resolved directly; `stall`/`park` can therefore move files outside the resolved project despite the source security contract allowing only an explicitly external state root",
+    "file": "src/ovcaq/config.py:87",
+    "reason": "Blake retracted: P02-T01 retains characterized absolute PRD roots; containment provisioning belongs to section 7/P03-T01 (PRD 00005). Source section 15 constrains project/runtime roots, not all configured PRD roots."
+  }
+]

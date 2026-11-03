@@ -1,0 +1,42 @@
+[
+  {
+    "ref": "R1",
+    "severity": "\ud83d\udfe1",
+    "file": "src/ovcaq/drivers/codex_events.py",
+    "issue": "The new status prefix in `classify_failure` (src/ovcaq/drivers/codex_events.py:302) ends in `\\s*:?\\s*`. That is two whitespace runs side by side, so a native error with \"status\", \"HTTP\" or \"error code\" followed by a long run of whitespace backtracks in quadratic time. Measured at HEAD: 16k spaces took 0.55 s and 64k spaces took 8.34 s. The old bare-number regex had no such run. Decode runs inline in the supervisor read loop (src/ovcaq/runtime/supervisor.py:516) on frames up to 1 MiB (src/ovcaq/events/tail.py:60). Python's `re` holds the GIL, so the watchdog cannot fire while it runs. A full 1 MiB frame extrapolates to roughly 35 minutes (a guess, not run). The trigger needs tens of thousands of whitespace characters right after the keyword, so it is unlikely to happen. Fix: use `\\s*(?::\\s*)?` instead. It took 1.2 ms at 64k and matched the same way on \"HTTP status: 429\", \"status code: 429\", \"last status: 429\", \"HTTP 429\" and \"status=429\". Also add a regression test that expects \"status\" + 200,000 spaces + \"x\" to classify as unknown",
+    "classification": "fix",
+    "found_by": [
+      "ALICE"
+    ]
+  },
+  {
+    "ref": "R2",
+    "severity": "\ud83d\udfe1",
+    "file": "tests/drivers/test_adapter_outcomes.py",
+    "issue": "`test_unrelated_item_type_does_not_transition_lane` (tests/drivers/test_adapter_outcomes.py:204) and `test_unrelated_event_type_does_not_transition_lane` (tests/drivers/test_adapter_outcomes.py:231) are line-for-line copies. They differ only in one `collab_record` keyword: `item_type=\"command_execution\"` in one, `event_type=\"thread.started\"` in the other. Merge them into one test parametrized over that keyword dict (passed as `**override`). That cuts about 24 lines and keeps the same coverage",
+    "classification": "fix",
+    "found_by": [
+      "ALICE"
+    ]
+  },
+  {
+    "ref": "R4",
+    "severity": "\u26aa",
+    "file": "src/ovcaq/drivers/codex.py:414",
+    "issue": "A completed lane can still turn into a failure after the identity cache fills. At 4096 entries, eviction drops finished entries first, so long sessions lose finished lanes before anything else. Reproduced: start lane `child`, complete it, decode 4096 command items, then send a late `errored` update for `child`. The decoder emits `lane.failed` for `child`, alongside the raw capacity-gap evidence. Native Codex is unlikely to send `errored` after `completed`, so the practical risk is low.",
+    "classification": "defer",
+    "found_by": [
+      "BLAKE"
+    ]
+  },
+  {
+    "ref": "R8",
+    "severity": "\u26aa",
+    "file": "tests/drivers/test_adapter_outcomes.py",
+    "issue": "Test padding in a new file: `test_unrelated_item_type_does_not_transition_lane` and `test_unrelated_event_type_does_not_transition_lane` each run once per close status (interrupted, shutdown, not_found). The command_execution record and the `thread.started` record both turn into raw unknown before `item_lanes` is ever called (`item_tool` returns None because the record has no `command` field, and the decode branch has no `thread_id`). The follow-up close assertion repeats `test_unfinished_lane_fails_after_close_status`. So 6 cases run where 2 would do. Task 20 removed the same kind of padding. Fix: drop the `child_status` parametrize from both tests and use \"shutdown\"",
+    "classification": "fix",
+    "found_by": [
+      "BOB"
+    ]
+  }
+]

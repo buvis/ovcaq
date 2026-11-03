@@ -1,0 +1,2 @@
+### Findings (verbatim)
+- 🟡 docs/driver-protocol.md:37: The docs say an empty host PATH "searches the current directory" for both native adapters, but `ClaudeDriver.probe` passes `path=""` to `shutil.which`, which returns None (checked on Python 3.13). tests/runtime/test_adapter_health.py:263 asserts unhealthy. So the Claude probe treats an empty host PATH as unhealthy, while only the Codex subprocess probe searches the current directory. Fix the sentence to say this (found by: ALICE, BLAKE)

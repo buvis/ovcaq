@@ -1,0 +1,42 @@
+{
+  "sha": "2742c08fe5f8194f65a36fa1e49a5980d69c16ef",
+  "cycle": 16,
+  "commands": [
+    {
+      "command": "mise exec -- uv sync --all-groups",
+      "exit": 0,
+      "output": "Resolved 25 packages in 3ms\nChecked 24 packages in 5ms\n"
+    },
+    {
+      "command": "mise exec -- uv run pytest",
+      "exit": 0,
+      "output": "============================= test session starts ==============================\nplatform darwin -- Python 3.13.13, pytest-9.1.1, pluggy-1.6.0\nrootdir: /Users/bob/git/src/github.com/buvis/ovcaq\nconfigfile: pyproject.toml\ncollected 1378 items\n\ntests/characterization/test_migration_contract.py ......                 [  0%]\ntests/packaging/test_distribution.py ........                            [  1%]\ntests/packaging/test_input_integrity.py ............                     [  1%]\ntests/packaging/test_installed_cli.py ...........                        [  2%]\ntests/packaging/test_installed_reports.py .............                  [  3%]\ntests/packaging/test_installed_sagas.py .................                [  4%]\ntests/packaging/test_report_updates.py .                                 [  4%]\ntests/packaging/test_rework_11.py .........                              [  5%]\ntests/packaging/test_rework_12.py ....                                   [  5%]\ntests/packaging/test_rework_13.py ....................                   [  7%]\ntests/packaging/test_workflow_inputs.py ................                 [  8%]\ntests/state/test_cli.py ................................................ [ 11%]\n......                                                                   [ 12%]\ntests/state/test_cli_limits.py ...............................           [ 14%]\ntests/state/test_commands.py ..........................                  [ 16%]\ntests/state/test_crosswalk.py .......                                    [ 17%]\ntests/state/test_durability.py ..............                            [ 18%]\ntests/state/test_installed_state.py ...                                  [ 18%]\ntests/state/test_paths.py .............................................. [ 21%]\n........................................................................ [ 26%]\n..........................                                               [ 28%]\ntests/state/test_recovery_mutations.py .............                     [ 29%]\ntests/state/test_schema.py ......                                        [ 30%]\ntests/state/test_schema_constraints.py ................................. [ 32%]\n........................................................................ [ 37%]\n........................................................................ [ 42%]\n...........................                                              [ 44%]\ntests/state/test_schema_invariants.py .................................. [ 47%]\n.......................                                                  [ 49%]\ntests/state/test_schema_limits.py ...................................... [ 51%]\n.....................................                                    [ 54%]\ntests/state/test_service_commands.py ................................... [ 57%]\n........................                                                 [ 58%]\ntests/state/test_service_contracts.py ..                                 [ 58%]\ntests/state/test_store.py .............................................  [ 62%]\ntests/state/test_store_concurrency.py .......................            [ 63%]\ntests/state/test_store_transactions.py ................................. [ 66%]\n.............................                                            [ 68%]\ntests/test_package_baseline.py ......................................... [ 71%]\n............                                                             [ 72%]\ntests/test_packaging.py ....                                             [ 72%]\ntests/workflow/test_applications.py ..........                           [ 73%]\ntests/workflow/test_blank_decisions.py ................                  [ 74%]\ntests/workflow/test_boundaries.py ...                                    [ 74%]\ntests/workflow/test_characterized_fixtures.py ...                        [ 74%]\ntests/workflow/test_configuration.py ........                            [ 75%]\ntests/workflow/test_deferred_diagnostics.py ......                       [ 75%]\ntests/workflow/test_deferred_ledger.py ...................               [ 77%]\ntests/workflow/test_frontmatter.py ...........................           [ 79%]\ntests/workflow/test_ledger_integrity.py ............                     [ 80%]\ntests/workflow/test_ledger_publication.py ...                            [ 80%]\ntests/workflow/test_policy.py ............                               [ 81%]\ntests/workflow/test_records.py ............                              [ 82%]\ntests/workflow/test_report_identity.py ................                  [ 83%]\ntests/workflow/test_report_recovery.py ..........                        [ 83%]\ntests/workflow/test_reports.py ..................................        [ 86%]\ntests/workflow/test_resume.py .............                              [ 87%]\ntests/workflow/test_saga_artifacts.py ..........                         [ 88%]\ntests/workflow/test_saga_identity.py ...............                     [ 89%]\ntests/workflow/test_saga_publication.py ................................ [ 91%]\n................                                                         [ 92%]\ntests/workflow/test_sagas.py ................................            [ 94%]\ntests/workflow/test_selection.py .........................               [ 96%]\ntests/workflow/test_transitions.py ..................................    [ 99%]\ntests/workflow/test_workflow_cli.py ...........                          [100%]\n\n=============================== warnings summary ===============================\n.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95\n  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-f2696d0d-5f59-4321-838e-0f56106cdb9d\n  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-f2696d0d-5f59-4321-838e-0f56106cdb9d'\n    warnings.warn(\n\n.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95\n  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-525d581e-115b-443e-ac7f-0b9a89994d54\n  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-525d581e-115b-443e-ac7f-0b9a89994d54'\n    warnings.warn(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n====================== 1378 passed, 2 warnings in 27.84s =======================\n"
+    },
+    {
+      "command": "mise exec -- uv run ruff check .",
+      "exit": 0,
+      "output": "All checks passed!\n"
+    },
+    {
+      "command": "mise exec -- uv run ruff format --check .",
+      "exit": 0,
+      "output": "124 files already formatted\n"
+    },
+    {
+      "command": "mise exec -- uv run mypy src/ovcaq",
+      "exit": 0,
+      "output": "Success: no issues found in 51 source files\n"
+    },
+    {
+      "command": "mise exec -- uv build",
+      "exit": 0,
+      "output": "Building source distribution...\nBuilding wheel from source distribution...\nSuccessfully built dist/ovcaq-0.1.0.dev0.tar.gz\nSuccessfully built dist/ovcaq-0.1.0.dev0-py3-none-any.whl\n"
+    }
+  ],
+  "passed": 1378,
+  "failed": 0,
+  "skipped": 0,
+  "runner_summary": "1378 passed, 2 warnings in 27.84s",
+  "queued_checks": [],
+  "warnings": "Two pytest garbage-directory cleanup warnings, both OSError ENOTEMPTY; no test failures."
+}

@@ -1,0 +1,61 @@
+**Verdict:** 0 cardinal sins and 0 open blockers after the dispatch 2 fix. I did no repo reads, because Bash and file tools were unavailable here. Everything below is checked against the draft and the source excerpts you supplied. Anything that needs repo access is marked "unverified".
+
+## Checked correct
+
+- **Cardinal-sin sweep (Architecture fit, Risks):** none apply.
+  - There is no persistent data or schema change, and rollback is "revert the repair commits".
+  - The operator is named as owner.
+  - Raw JSONL is preserved, so there is observability.
+  - Retries reuse the existing bounded policy.
+  - Driver API 2, observation protocol 1 and state schema 1 are untouched, so there is no versioning gap.
+  - The provider-edge change respects AGENTS.md invariant 3.
+- **Dispatch 2 blocker is closed (Interfaces & contracts, `config.py:resolve_phase_route`).**
+  - The route's only model source is `selected.tiers[resolved.tier]`, after a membership check that raises `Unknown agent tier`.
+  - In the inverse map (`edge.py:_ResolvedModelClaudeDriver.build_launch`), every value v maps to a key k with `tiers[k] == v`. When values repeat, the last key wins, and any matching key resolves to the same literal.
+  - I traced the collision example. With tiers `{default: o3, o3: o3-pro}` the inverse is `{o3: default, o3-pro: o3}`. Resolved `o3` becomes `default` and launches `o3`. Resolved `o3-pro` becomes `o3` and launches `o3-pro`.
+  - A direct `CodexDriver` given `o3` still launches `o3-pro`, so the public contract is unchanged.
+- **Build and verification gates (Test strategy):** the "six PRD verification gates" match the six commands in AGENTS.md (sync, pytest, ruff check, ruff format, mypy, build).
+
+## Findings
+
+1. **question - Same agent name in route and driver (Data flow, `edge.py:build_driver`).**
+   - **Evidence:** the invariant holds only if `resolve_phase_route(agent=X)` and `build_driver(root, name=X)` both resolve through `agent_settings` to the same agent. The design assumes this and does not say it.
+   - **Fix:** state it as an invariant. Add one test that builds both from the same agent name and asserts the launched argv.
+
+2. **question - Health gate location (Interfaces & contracts, last paragraph; Module placement).**
+   - **Evidence:** "Both native adapters must fail health before supervisor spawn" does not say which code refuses to spawn. Module placement limits edits to `codex.py`, `codex_events.py`, `claude.py` and `edge.py`. If the supervisor does not already call `probe()` before spawn, this needs a runtime change. That would break the "no policy change" scope and the module list. I could not check this.
+   - **Fix:** cite the existing pre-spawn probe call site (file:symbol) in the design. If it does not exist, raise this to a blocker, because the scope and module list are then wrong.
+
+3. **non-blocker (already recorded) - Absent vs empty PATH (Interfaces & contracts, `claude.py:probe`).**
+   - **Evidence:** "follows subprocess/default PATH semantics" is ambiguous.
+     - `shutil.which(path=None)` falls back to `os.confstr("CS_PATH")`, while subprocess uses `os.get_exec_path(env)`, which falls back to `os.defpath`.
+     - An empty `PATH` makes `shutil.which` return None. Subprocess would instead search the current directory.
+     - The design's "stays empty" therefore means conservative-unhealthy, not parity with spawn.
+   - **Fix:** compute `effective_path = os.pathsep.join(os.get_exec_path(env))`. Add a test that pins the empty-PATH expectation as deliberately conservative.
+
+4. **non-blocker (already recorded) - Retry bounds not cited (Interfaces & contracts, `classify_failure`; Data flow).**
+   - **Evidence:** "existing bounded WAIT/retry exhaustion" names no constant or file. That matters because mapping `Selected model is at capacity` to CONNECTIVITY now routes a new failure into that loop, which is the unbounded-consumption check.
+   - **Fix:** cite the retry limit symbol. Make the capacity retry-exhaustion test assert the exact attempt count.
+
+5. **non-blocker (already recorded) - Diagnostic patterns not enumerated (Interfaces & contracts, `classify_failure`).**
+   - **Evidence:** "such as HTTP status, status code or error code" leaves the accepted spellings open. The negative-count and fixture-oracle tests depend on that list.
+   - **Fix:** list the accepted spellings in the PRD tasks, taken from the fixtures.
+
+6. **non-blocker (already recorded) - Lane edge cases (Interfaces & contracts, `item_lanes`; Risks).**
+   - **Evidence:** the design does not say what happens when an unfinished lane has been evicted from `_identities`, or when `started_lanes` is None. By construction both produce raw-unknown only.
+   - **Fix:** add one test per case asserting raw-unknown and no `LANE_FAILED`.
+
+7. **non-blocker (already recorded) - Historic test literals (Review log, dispatch 1 question).**
+   - **Evidence:** `test_codex_failures` bare-number precedence and `test_codex_rework_decode` capacity expectations conflict with the corrected contract.
+   - **Fix:** list them as explicit reconcile tasks, and write the new literals by hand, not from the classifier.
+
+8. **non-blocker (new, minor) - Codex `_settings.tiers` unverified (Interfaces & contracts).**
+   - **Evidence:** the Codex subclass reuses the Claude subclass's `self._settings.tiers`. The design asserts `CodexDriver` has the same attribute but does not cite it. I could not check.
+   - **Fix:** cite the attribute in the plan task. A mismatch would show up at import or first launch in tests.
+
+9. **non-blocker (hygiene) - Review log (Review log).**
+   - **Evidence:** the log still shows "dispatch 2 (codex): blocker 1" with no follow-up line, so a reader cannot tell the blocker closed.
+   - **Fix:** add a dispatch 3 line, for example "cardinal-sin 0, blocker 0".
+
+**Status:** Done.
+**Next:** You: confirm the health-gate call site (finding 2) before planning starts.

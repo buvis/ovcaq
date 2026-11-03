@@ -1,0 +1,124 @@
+diff --git a/tests/drivers/test_codex_detail_safety.py b/tests/drivers/test_codex_detail_safety.py
+index 2a98afb..c535c2f 100644
+--- a/tests/drivers/test_codex_detail_safety.py
++++ b/tests/drivers/test_codex_detail_safety.py
+@@ -48,6 +48,35 @@ SPLIT_DETAILS = [
+         ]
+     ],
+ ]
++CONTROL_DETAILS = [
++    pytest.param(detail, expected, id=f"{kind}-{placement}-{ord(control):02x}")
++    for control in [
++        "\x00",
++        "\x08",
++        "\x0b",
++        "\x0c",
++        "\x0e",
++        "\x1b",
++        "\x1f",
++        "\x7f",
++    ]
++    for kind, token, prefix in [
++        ("bare", TOKEN, ""),
++        ("bearer", "Q7" * 20, "Bearer "),
++    ]
++    for placement, detail, expected in [
++        (
++            "boundary",
++            "Before" + control + prefix + token + " After",
++            "Before" + prefix + "[REDACTED] After",
++        ),
++        (
++            "inside",
++            "Before " + prefix + token[:6] + control + token[6:] + " After",
++            "Before " + prefix + "[REDACTED] After",
++        ),
++    ]
++]
+ 
+ 
+ @pytest.fixture
+@@ -104,6 +133,30 @@ def assert_safe_details(
+     assert all(record["payload"]["detail"] == expected for record in records)
+ 
+ 
++@pytest.mark.parametrize(("detail", "expected"), CONTROL_DETAILS)
++def test_bounded_detail_redacts_control_boundaries_and_reconstructed_credentials(
++    detail: str, expected: str
++) -> None:
++    assert bounded_detail(detail) == expected
++
++
++@pytest.mark.parametrize("kind", ["error", "turn.failed"])
++@pytest.mark.parametrize(("detail", "expected"), CONTROL_DETAILS)
++def test_native_failure_saves_redaction_at_control_boundaries_and_inside_credentials(
++    driver: CodexDriver,
++    tmp_path: Path,
++    kind: str,
++    detail: str,
++    expected: str,
++) -> None:
++    observations = decode_failure(driver, kind, detail)
++    assert [value.type for value in observations] == [
++        "activity.message" if kind == "error" else "session.failed"
++    ]
++    assert observations[0].payload["failure_class"] == "unknown"
++    assert_safe_details(tmp_path, observations, expected)
++
++
+ @pytest.mark.parametrize(("detail", "expected"), SPLIT_DETAILS)
+ def test_bounded_detail_redacts_reconstructed_tokens_before_capping(
+     detail: str, expected: str
+diff --git a/tests/events/test_unicode_frames.py b/tests/events/test_unicode_frames.py
+index dd6cc7e..da2cea6 100644
+--- a/tests/events/test_unicode_frames.py
++++ b/tests/events/test_unicode_frames.py
+@@ -5,6 +5,7 @@ import errno
+ import hashlib
+ import json
+ import os
++import sys
+ from collections.abc import Iterator
+ from pathlib import Path
+ from typing import Any
+@@ -288,6 +289,40 @@ def test_malformed_and_non_json_frames_keep_native_delegation(
+     assert unicode_normalized(normalized_path) == observations
+ 
+ 
++def test_deep_json_recursion_preserves_native_gap_and_durable_evidence(
++    unicode_tail: Any,
++) -> None:
++    driver, decoder, raw_path, normalized_path, durable = unicode_tail
++    driver.decode(json.dumps({"type": "thread.started", "thread_id": "healthy-parent"}))
++    driver.decode(json.dumps(native_unicode_record("completion")))
++    depth = sys.getrecursionlimit() * 2
++    frame = (
++        b'{"type":"thread.started","thread_id":"poisoned-parent","ignored":'
++        + b"[" * depth
++        + b"0"
++        + b"]" * depth
++        + b"}"
++    )
++    with pytest.raises(RecursionError):
++        json.loads(frame)
++    expected = native_unicode_driver().decode(frame.decode())
++    assert len(expected) == 1
++    assert expected[0].type is ObservationType.RAW_UNKNOWN
++    before = unicode_adapter_state(driver)
++    observations = decoder.feed(frame + b"\n") + decoder.finish()
++    assert len(observations) == 1
++    gap = observations[0]
++    assert gap.type is ObservationType.RAW_UNKNOWN
++    assert gap.run_id == "unicode-run"
++    assert gap.session_id == "owned-session"
++    assert dict(gap.payload) == dict(expected[0].payload)
++    assert gap.payload["reason"] != "frame contains invalid Unicode scalar value"
++    assert gap.payload["raw_sha256"] == hashlib.sha256(frame).hexdigest()
++    assert unicode_adapter_state(driver) == before
++    assert raw_path.read_bytes() == durable[-1] == frame + b"\n"
++    assert unicode_normalized(normalized_path) == observations
++
++
+ @pytest.mark.parametrize("stage", ["raw", "normalized"])
+ @pytest.mark.parametrize("error_number", [errno.ENOSPC, errno.EIO])
+ def test_real_writer_failures_propagate_from_unsafe_native_frames(

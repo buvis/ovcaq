@@ -1,0 +1,31 @@
+Task 10 single adversarial strengthening dispatch
+
+1. strengthened: tests/runtime/test_decision.py::test_committed_progress_continues_before_session_failure_without_drain — added tasks_completed-only progress. Requires CONTINUE, repeats zero, no wait despite exhausted retry counters and provider failure.
+2. strengthened: same node — added review_cycle-only progress with the same assertions.
+3. strengthened: same node — added PRD-only switch to 00002-other.md with the same assertions.
+4. strengthened: same node — added completed_prds-only progress without drain with the same assertions.
+   The original next_phase progress cases remain. Exact progress IDs: next_phase, tasks_completed, review_cycle, prd, completed_prds; crossed with existing FailureClass and capability-status parameters.
+5. strengthened: tests/runtime/test_decision_retry_bound.py::test_unchanged_attempts_share_the_persisted_phase_limit — configured limit/repeats pairs (3,0), (3,1), (3,2), (1,0), (2,0), (2,1), (4,2), (4,3), (7,5), (7,6), (3,99). Below-limit cases require RETRY or WAIT according to failure class; at-limit and exhausted cases forbid continuations and waits. Exact count remains repeats+1. Original cases remain.
+6. strengthened: tests/runtime/test_decision_retry_bound.py::test_stale_fingerprint_does_not_charge_old_repeats_to_current_work — stale counts 99, 1, 2, 3 all require one. Matching count 99 is covered by the preceding node and must remain exhausted at 100. Cases crossed with None, agent, connectivity, rate_limit; the original stale-99 cases remain.
+7. strengthened: tests/state/test_supervisor_resume_preservation.py::test_resume_preserves_phase_pause_routing_and_drained_results — added site operator-check for both phase and next_phase. Original review_cap and systemic cases remain; notice fields are unconstrained strings under the supplied public Notice type.
+8. strengthened: tests/runtime/test_supervisor_boundary_policy.py::test_committed_controls_block_every_startup_boundary — added site operator-check alongside review_cap, retaining no sessions, no workflow/capability launches, nonzero HALT for attention, unchanged notices/work/capabilities, and no batch completion.
+
+Additional parent-supplied evidence addressed under weak point 8:
+- tests/runtime/test_decision.py::test_empty_drain_skips_but_nonempty_drain_runs_sorted_required_capabilities no longer seeds unrelated attention. This isolates its capability-ordering contract without contradicting attention precedence.
+- New exact node tests/runtime/test_decision_retry_bound.py::test_post_session_attention_blocks_capabilities_and_terminal_drain covers review_cap and operator-check at empty drain with pending capability, nonempty drain with pending capability, and nonempty terminal drain. Requires HALT with no capability or wait. Exact suffixes: [review_cap-0-True], [review_cap-1-True], [review_cap-1-False], [operator-check-0-True], [operator-check-1-True], [operator-check-1-False]. Four pending-capability cases fail before repair; terminal cases pass.
+
+Changed test files this dispatch:
+tests/runtime/test_decision.py
+tests/runtime/test_decision_retry_bound.py
+tests/runtime/test_supervisor_boundary_policy.py
+tests/state/test_supervisor_resume_preservation.py
+
+Focused verification:
+UV_CACHE_DIR=/private/tmp/ovcaq-uv-cache uv run pytest tests/runtime/test_decision_retry_bound.py tests/runtime/test_supervisor_boundary_policy.py tests/state/test_supervisor_resume_preservation.py tests/runtime/test_decision.py::test_committed_progress_continues_before_session_failure_without_drain tests/runtime/test_decision.py::test_empty_drain_skips_but_nonempty_drain_runs_sorted_required_capabilities tests/runtime/test_decision.py::test_success_without_workflow_progress_retries_then_parks_or_pauses tests/runtime/test_supervisor.py::test_retry_budget_resets_after_progress_or_a_changed_failure_class --tb=short -q
+
+Result against current unrepaired production: 69 failed, 189 passed, 2 pre-existing pytest cleanup warnings. Real process tests ran with require_escalated for macOS process identity. Output: /private/tmp/ovcaq-task10-strengthen.txt. Ruff check passed on all four files. No full-suite invocation, production edits, mutations, commits, or workflow-state changes. All existing regression behaviors retained. The supplied mutant diff/output was read as required, but no production sources were opened.
+
+The newly parameterized assertions directly contradict each reported mutant's behavior. This pass did not rerun or recreate production mutations; no production changes were authorized.
+
+abort_reason: none
+ASSUMPTIONS: none

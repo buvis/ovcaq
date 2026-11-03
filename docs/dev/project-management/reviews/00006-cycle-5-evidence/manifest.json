@@ -1,0 +1,38 @@
+[
+  {
+    "file": "alice.txt",
+    "source": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/alice-output-00006-c5-20261002.txt",
+    "sha256": "c3556125f1e182459366957806630dc63bdb4111c689ddd5aec6c3728d34c6cf",
+    "bytes": 417
+  },
+  {
+    "file": "blake.txt",
+    "source": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/blake-output-00006-c5-20261002.txt",
+    "sha256": "294e6bfe847524a6a2f81d69919cd32ba78ea152a026aeb4d65129d7f5de2d60",
+    "bytes": 1975
+  },
+  {
+    "file": "bob.txt",
+    "source": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/bob-output-00006-c5-20261002.txt",
+    "sha256": "c0589d5307edc152ea263c5691d5b4947aa054e48bf2e4f96555b7fb8d2fe72e",
+    "bytes": 6028
+  },
+  {
+    "file": "bob.receipt.json",
+    "source": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/bob-output-00006-c5-20261002.txt.receipt.json",
+    "sha256": "9fd883469024fbb549a502148b1ed88c4232543bc33883257301cfeac69ef70f",
+    "bytes": 683
+  },
+  {
+    "file": "bob.raw.jsonl",
+    "source": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/bob-output-00006-c5-20261002-8a317d5e6b0f44dcad7e79c6e4990400.jsonl",
+    "sha256": "1f197660f470a568ce95e168c79a33b1548c1b77ca46382bc924f267c413ca99",
+    "bytes": 595589
+  },
+  {
+    "file": "bob.stderr",
+    "source": "/Users/bob/git/src/github.com/buvis/ovcaq/docs/dev/tmp/bob-output-00006-c5-20261002-8a317d5e6b0f44dcad7e79c6e4990400.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  }
+]

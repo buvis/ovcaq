@@ -1,0 +1,1 @@
+Rename workflow_fixture to write_workflow_fixture, configured_workflow to configure_workflow, configured_driver to configure_driver; update references. Preserve behavior, signatures, assertions. No unrelated helper renames.

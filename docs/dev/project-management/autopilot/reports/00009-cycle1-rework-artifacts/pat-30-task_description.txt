@@ -1,0 +1,6 @@
+Failure-driven task21 context-overrun split, no edits in failed attempt. Test-only; preserve all assertions. Parent finding below fully closes this scope. Read only bounded relevant ranges, never concatenate whole allowlist; total worker input cap100K.
+
+Revert paths import in tests/runtime/test_supervisor.py to exact original one-line import; change nothing else. Verify import/targeted test.
+
+### Findings (verbatim)
+- ⚪ tests/runtime/test_supervisor.py:29: The only change to test_supervisor.py is a no-op import rewrap. It does not trace to the task, which put the drain in a new file instead. (found by: BOB)

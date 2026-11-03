@@ -1,0 +1,40 @@
+{
+  "head": "e34547e734339e31bcba89e26b3fd3cd58e99690",
+  "phase": "build",
+  "next_phase": "build",
+  "pause_cleared": true,
+  "cycle": 1,
+  "cap": 2,
+  "tasks_completed": 11,
+  "tasks_total": 21,
+  "rework_task_ids": [
+    "12",
+    "13",
+    "14",
+    "15",
+    "16",
+    "17",
+    "18",
+    "19",
+    "20",
+    "21"
+  ],
+  "resume_target": "/work continues at first non-completed task 12",
+  "schema": "valid",
+  "original_tasks_batch_reviews_deferrals": "unchanged",
+  "historical_evidence_hashes": "unchanged",
+  "review_coverage_and_claude_receipt": "verified",
+  "production_changes": false,
+  "repairs_completed_in_recovery": 0,
+  "autocodex_launched": false,
+  "state_changes": [
+    "autonomous_decisions",
+    "contract_card",
+    "next_phase",
+    "pause_reason",
+    "phase",
+    "rework_task_ids"
+  ],
+  "handoff": "dev/local/reviews/00005-cycle-01-repair-handoff.md",
+  "state_sha256": "c7325d5b722fe40e599b1a9064e14e3b02d5171a8dca7e2c3f108b740000e821"
+}

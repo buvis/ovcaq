@@ -1,0 +1,30 @@
+[
+  {
+    "cycle": 2,
+    "finding": "No passing run at HEAD for phase-1 routing acceptance test or full suite",
+    "file": "tests/runtime/test_adapter_launch_routing.py",
+    "command": "mise exec -- uv run pytest -q tests/runtime/test_adapter_launch_routing.py tests/runtime/test_supervisor_adapters.py",
+    "source": "bob",
+    "result": {
+      "exit": 0,
+      "sha": "6761a37d52b1363dc7d8d3a8ce44e17e9246287c",
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  {
+    "cycle": 2,
+    "finding": "No passing run at HEAD for phase-1 routing acceptance test or full suite",
+    "file": "tests/runtime/test_adapter_launch_routing.py",
+    "command": "mise exec -- uv run pytest -q --tb=line",
+    "source": "bob",
+    "result": {
+      "exit": 0,
+      "sha": "6761a37d52b1363dc7d8d3a8ce44e17e9246287c",
+      "passed": 7154,
+      "failed": 0,
+      "skipped": 0
+    }
+  }
+]

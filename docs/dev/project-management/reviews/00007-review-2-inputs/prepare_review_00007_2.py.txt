@@ -1,0 +1,98 @@
+"""Assemble immutable review inputs from the installed skill sources."""
+import json
+import re
+import subprocess
+from pathlib import Path
+
+ROOT = Path('/Users/bob/git/src/github.com/buvis/ovcaq')
+PLUGIN = Path('/Users/bob/.claude/plugins/cache/buvis-plugins/autopilot/0.6.0')
+SKILL = PLUGIN / 'skills/review-work-completion'
+TMP = ROOT / 'docs/dev/tmp'
+REV = ROOT / 'docs/dev/project-management/reviews'
+ID = '00007-2-20261003'
+STATE = json.loads((ROOT / 'docs/dev/project-management/autopilot/state.json').read_text())
+PRD = ROOT / 'docs/dev/project-management/prds/wip' / STATE['prd']
+BASE = 'bbe7d521321428b670d15c4ede00e31792a61e1c'
+HEAD = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+
+def write(name: str, text: str) -> None:
+    (TMP / name).write_text(text)
+
+def persona(name: str) -> str:
+    text = (PLUGIN / f'agents/{name}.md').read_text()
+    _, front, body = text.split('---', 2)
+    for key in ('name:', 'description:', 'tools:'):
+        assert key in front, (name, key)
+    assert f'name: {name}' in front
+    return body.strip()
+
+def section(text: str, heading: str) -> str:
+    part = text.split(heading, 1)[1]
+    return part.split('\n## ', 1)[0].strip()
+
+def prepare() -> None:
+    for name in ('alice', 'blake', 'bob', 'carl', 'eve'):
+        persona(name)
+    rows = ['| ID | Task | Status | Logical tier | Description |', '|---|---|---|---|---|']
+    for task in STATE['tasks']:
+        description = task['description'].replace('|', '\\|').replace('\n', '<br>')
+        rows.append(f"| {task['id']} | {task['name']} | {task['status']} | {task['model']} | {description} |")
+    write(f'review-tasks-{ID}.md', '\n'.join(rows) + '\n')
+    prd_text = PRD.read_text()
+    summary = prd_text + '\n## Design Doc\n\n' + (ROOT / STATE['design_doc']).read_text()
+    write(f'review-prd-{ID}.md', summary)
+    write(f'review-prd-only-{ID}.md', prd_text)
+    write(f'review-head-{ID}.json', json.dumps({'base': BASE, 'head': HEAD, 'id': ID}, indent=2) + '\n')
+    print(f'Prepared {len(STATE["tasks"])} independent task rows; HEAD {HEAD}')
+
+def prompts() -> None:
+    context = TMP / f'review-context-{ID}.md'
+    diff = TMP / f'review-diff-{ID}.diff'
+    # gather-context includes uncommitted operator edits. Pin review to committed scope.
+    diff.write_bytes(subprocess.check_output(['git', 'diff', f'{BASE}..{HEAD}'], cwd=ROOT))
+    facts = (TMP / f'mechanical-{ID}.md').read_text()
+    original = context.read_text()
+    context.write_text(original + '\n' + facts + '\n## Scope evidence\nThe diff is pinned to committed base..HEAD. Pre-existing uncommitted AGENTS.md edits are excluded.\n')
+    bob_context = TMP / f'bob-context-{ID}.md'
+    bob_context.write_text(original.split('## Design Doc', 1)[0] + '\n' + facts)
+    checklist = (SKILL / 'references/review-dimensions.md').read_text()
+    rubric = (SKILL / 'references/rubric.md').read_text()
+    blind_rubric = (PLUGIN / 'skills/review-blindly/references/rubric.md').read_text()
+    output = section((SKILL / 'references/output-formats.md').read_text(), '## Agent Output Format (Single Source of Truth)')
+    eve = persona('eve')
+    appendix = '## Two lenses, applied to every changed file\n\n' + section(eve, '## Two lenses, applied to every changed file')
+    appendix += '\n\n## Categorize every residual finding\n\n' + section(eve, '## Categorize every residual finding')
+    appendix += '\n\n## Rubric verdicts (REQUIRED — emit verbatim, one per line)\n\n' + section(eve, '## Rubric verdicts (REQUIRED — emit verbatim, one per line)')
+    previous = (REV / '00007-supervisor-loop-v1-review-1.md').read_text()
+    prior_findings = section(previous, '## Consolidated findings')
+    incremental = '\n\n## Incremental review\nThis is an incremental review of the rework since the previous cycle. Verify closure of every prior finding below and review the scoped diff for regressions. You need not re-review unchanged code.\n\n' + prior_findings
+    ledger = json.loads((REV / '00007-supervisor-loop-v1-ledger.json').read_text())
+    settled = '\n\n## Settled decisions — do not re-raise\nThese calls were already made in an earlier cycle of this same review, with the reasons given. Do not re-raise them. Raise a NEW finding only if you can show the settled reason no longer holds.\n'
+    settled += '\n'.join(f"- {x['disposition']} | {x['severity']} | {x['issue']} | {x.get('file')} | {x['reason']}" for x in ledger)
+    pack = TMP / f'engram-pack-{ID}.md'
+    pack_path = str(pack) if pack.exists() else '(no pack available this cycle)'
+    pack_findings = section(pack.read_text(), '## Findings precedent') if pack.exists() else pack_path
+    changed = subprocess.check_output(['git', 'diff', '--name-only', f'{BASE}..{HEAD}'], cwd=ROOT, text=True)
+    for name in ('alice', 'blake', 'bob', 'carl'):
+        text = persona(name)
+        values = {'CONTEXT_FILE': str(bob_context if name == 'bob' else context), 'DIFF_FILE': str(diff), 'PACK_FILE': pack_path, 'PACK_FINDINGS': pack_findings, 'REVIEW_CHECKLIST': checklist, 'RUBRIC': blind_rubric if name == 'blake' else rubric, 'OUTPUT_FORMAT': output, 'PRD': PRD.read_text()}
+        if name == 'bob':
+            text += '\n\n' + appendix
+        for key, value in values.items():
+            text = text.replace('{' + key + '}', value)
+        text = text.replace('{AGENT_NAME}', name.upper())
+        if name != 'blake':
+            text += incremental + settled
+        if name == 'bob':
+            text += f'\n\n## Doubt run inputs\nPRD: {PRD}\nDiff range: {BASE}..{HEAD}\nChanged files:\n{changed}\n{facts}'
+            text += '\nHost substitution: you are fresh external Claude Opus, logical opus, carrying the complete Bob consensus, D1-D5 doubt and de-slop lenses. No Codex thread or Eve dispatch is claimed. Read with your Read tool or allowed read-only shell commands. Use numbered [BOB] issue lines and assign each residual to exactly one FIX/VERIFY/KNOWN bucket; emit all R and D verdict lines.\n'
+        text += f'\n\nRepository: {ROOT}\nReview only. Do not edit files, do not commit, and do not spawn other reviewers. Return the complete report to the coordinator.\n'
+        if name == 'blake':
+            text += 'This is a blind review. Do not read workflow state, review files, design docs, git history or diffs. PRD-linked source contract documents may be read because they are specification inputs.\n'
+        text += 'Cite files repo-relative as path:line, never absolute and never with a (lines a-b) suffix.\n'
+        write(f'{name}-prompt-{ID}.md', text)
+    print('Assembled full personas and rubrics for Alice, Blake, Bob and Carl; Bob is design-free, Blake receives only the PRD.')
+
+if __name__ == '__main__':
+    import sys
+    prompts() if len(sys.argv) > 1 and sys.argv[1] == 'prompts' else prepare()

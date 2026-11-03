@@ -1,0 +1,14 @@
+12	I001   	[*] unsorted-imports
+11	FURB167	[*] regex-flag-alias
+ 7	BLE001 	[ ] blind-except
+ 3	C408   	[ ] unnecessary-collection-call
+ 2	F401   	[*] unused-import
+ 2	UP017  	[*] datetime-timezone-utc
+ 1	F841   	[ ] unused-variable
+ 1	PERF102	[ ] incorrect-dict-iterator
+ 1	PLC0206	[ ] dict-index-missing-items
+ 1	RUF100 	[*] unused-noqa
+Found 41 errors.
+[*] 28 fixable with the `--fix` option (5 hidden fixes can be enabled with the `--unsafe-fixes` option).
+
+STDERR:

@@ -1,0 +1,12 @@
+{
+  "purpose": "availability probe only; not review evidence",
+  "started": 1789291193.2791429,
+  "completed": 1789291195.660128,
+  "available": true,
+  "exit_code": 0,
+  "capped": false,
+  "api_status": null,
+  "quota_reset": null,
+  "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00004-cycle-13-quota-probe-f207a50780484eb984a954ab2599fd78.jsonl",
+  "error": ""
+}

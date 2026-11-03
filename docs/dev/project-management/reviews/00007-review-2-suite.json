@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "mise",
+    "exec",
+    "--",
+    "uv",
+    "run",
+    "pytest",
+    "--tb=short"
+  ],
+  "exit": 0
+}

@@ -1,0 +1,21 @@
+IMPLEMENTATION:
+- Retained canonical metric rows when usage is missing, null, or malformed so the session and wall time remain countable while usage totals remain unknown.
+- Restricted canonical workflow sessions to kind=phase, excluding capability evidence from workflow totals while preserving legacy session rows.
+- Added the required Unreleased Fixed changelog entry.
+
+VERIFICATION:
+- mise exec -- uv run pytest tests/workflow/test_canonical_metrics.py
+  Result: 7 passed, 2 pytest temporary-directory cleanup warnings.
+- mise exec -- uv run ruff check src/ovcaq/workflow/reports.py
+  Result: All checks passed.
+- mise exec -- uv run ruff format --check src/ovcaq/workflow/reports.py
+  Result: 1 file already formatted.
+- mise exec -- uv run mypy src/ovcaq/workflow/reports.py
+  Result: Success: no issues found in 1 source file.
+
+abort_reason: none
+
+ASSUMPTIONS: none
+FILES_TOUCHED: src/ovcaq/workflow/reports.py
+FILES_TOUCHED: CHANGELOG.md
+FILES_TOUCHED: docs/dev/tmp/00007-13-ivan-report.txt

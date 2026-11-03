@@ -1,0 +1,30 @@
+[BLAKE] 🟠 `bounded_detail` redacts credentials both before and after it strips controls, but the PRD asks for strip, then redact, then bound. The extra first pass leaks the tail of a control-split token whose head already matches (`sk-` or `Bearer` plus 20 or more characters). Confirmed: `"sk-"+"a"*20+"\x1b[0mSECRETTAIL0123456789"` becomes `[REDACTED]SECRETTAIL0123456789`, and NUL, `\x1f` and Bearer splits do the same. In the PRD order the rebuilt token is redacted in full. The tests only split at offset 6, so they miss this. docs/driver-protocol.md:224 documents the deviation as intended. | File: src/ovcaq/drivers/codex_events.py:66 | Task: 3
+[BLAKE] 🟡 The raw-first R7 regressions (byte-exact raw, gap digest and preview, unchanged adapter state, later healthy terminal) live in a file the PRD doesn't list, tests/events/test_unicode_frames.py. The task-2 acceptance command `pytest tests/events/test_unicode_safety.py tests/events/test_tail.py` runs none of them, because test_unicode_safety.py only tests the shared models. That acceptance therefore passes without proving its claims. | File: tests/events/test_unicode_frames.py:172 | Task: 2
+[BLAKE] ⚪ CHANGELOG lists the same drivers fix twice with conflicting claims: :45 says controls are removed before redaction, :43 says redaction runs before and after. :44 ("speed up surrogate detection") is a non-user-visible note on an unreleased fix. | File: CHANGELOG.md:43 | Task: 4
+[BLAKE] ⚪ `has_invalid_unicode_scalar` walks containers with an unbounded worklist and no cycle guard. A self-referential payload passed to `sanitize_json` or `Observation` now loops forever (confirmed: killed by a 3 s alarm, exit 142). The old recursive sanitizer raised RecursionError. Input from `json.loads` can't contain cycles, so only direct programmatic calls can hit this. | File: src/ovcaq/events/model.py:80 | Task: 1
+
+Evidence (run this session): full suite `6981 passed`; focused PRD files `1480 passed`; `ruff check` "All checks passed!"; `ruff format --check` "232 files already formatted"; `mypy` "no issues found in 61 source files"; `uv build` built the sdist and wheel. Not run: `uv sync --all-groups`. The scope check found nothing extra: source diff since e4d765c touches only model.py, tail.py and codex_events.py, and the PRD's ledger frontmatter is unchanged. Phase mapping for B15–B17 is literal: the PRD's Phase 1 (Core) and Phase 2 (Integration). The PRD has no Phase 3. Its Phase 0 acceptance passes.
+
+B1: fail
+B2: pass
+B3: pass
+B4: pass
+B5: pass
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: fail
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: fail
+B16: pass
+B17: pass
+B18: pass
+B19: pass
+
+**Status:** Partly done. The audit is complete, but the build fails the PRD on 1 HIGH and 1 MEDIUM finding.
+**Not done:** the redaction order in `bounded_detail` at src/ovcaq/drivers/codex_events.py:66 is still open. A fix has to keep the boundary cases tests/drivers/test_codex_detail_safety.py checks (a control between a word and the token) and also redact the tail of the split token.
+**Next:** You: send the HIGH redaction finding to the fix cycle along with the Alice and Bob reports.

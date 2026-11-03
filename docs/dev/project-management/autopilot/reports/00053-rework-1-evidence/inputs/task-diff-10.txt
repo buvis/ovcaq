@@ -1,0 +1,13 @@
+diff --git a/tests/runtime/test_adapter_health.py b/tests/runtime/test_adapter_health.py
+index c38693d..488674d 100644
+--- a/tests/runtime/test_adapter_health.py
++++ b/tests/runtime/test_adapter_health.py
+@@ -265,7 +265,7 @@ def test_claude_probe_keeps_empty_host_path_unhealthy(
+ ) -> None:
+     log, marker = tmp_path / "probe.jsonl", tmp_path / "phase-exec"
+     executable = fake_executable(tmp_path / "bin", log, marker)
+-    monkeypatch.chdir(tmp_path)
++    monkeypatch.chdir(executable.parent)
+     monkeypatch.setenv("PATH", "")
+     command = executable.name if command_kind == "fixture" else "sh"
+     if command_kind == "default-path":

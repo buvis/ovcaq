@@ -1,0 +1,1 @@
+All three flagged names are exported support API: tests/packaging/test_distribution.py imports PROJECT_ROOT, DECLARED_PACKAGE_MEMBERS and DECLARED_RESOURCE_MEMBERS; conftest.py imports PROJECT_ROOT. Preserve behavior. Report a blocker if deletion cannot preserve imports.

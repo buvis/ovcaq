@@ -1,0 +1,540 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 337e86e..6f8592d 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+ 
+ ### Fixed
+ 
++- Deferred publication revalidates the complete confirmed runtime ancestry before returning success.
+ - Deferred ancestry confirmation detects replaced ancestors on reopen, supports search-only access, and avoids redundant ancestor creation and root confirmation.
+ - Shared publication contention reports `publication busy; retry: <path>` for both reports and deferred ledgers.
+ - Deferred retries and replays confirm existing runtime ancestry after abrupt exits and preserve directories created by concurrent callers when confirmation fails.
+diff --git a/src/ovcaq/workflow/_files.py b/src/ovcaq/workflow/_files.py
+index b6f999b..1085135 100644
+--- a/src/ovcaq/workflow/_files.py
++++ b/src/ovcaq/workflow/_files.py
+@@ -265,17 +265,38 @@ def _sync_deferred_directory(path: Path, directory: int) -> None:
+ 
+ 
+ @contextmanager
+-def _ensure_directory_chain(path: Path) -> Iterator[int]:
++def _ensure_directory_chain(
++    path: Path,
++) -> Iterator[tuple[int, Callable[[], None]]]:
+     """Confirm every ancestor, including levels left by interrupted creators."""
+     path = path.resolve()
+     levels = (*reversed(path.parents), path)
+     confirmed: tuple[int, int] | None = None
++    ancestry: dict[Path, tuple[int, int]] = {}
++
++    def verify_ancestry() -> None:
++        for ancestor, identity in ancestry.items():
++            try:
++                linked = os.stat(ancestor, follow_symlinks=False)
++            except OSError as error:
++                raise OSError(
++                    f"runtime directory identity changed; retry: {ancestor}"
++                ) from error
++            if not stat.S_ISDIR(linked.st_mode) or identity != (
++                linked.st_dev,
++                linked.st_ino,
++            ):
++                raise OSError(f"runtime directory identity changed; retry: {ancestor}")
++
+     for level in levels[1:]:
+         with _open_lifecycle_directory(
+             level.parent, label="runtime", search_only=True
+         ) as parent:
+-            opened = os.fstat(parent)
+-            if confirmed is not None and confirmed != (opened.st_dev, opened.st_ino):
++            parent_stat = os.fstat(parent)
++            if confirmed is not None and confirmed != (
++                parent_stat.st_dev,
++                parent_stat.st_ino,
++            ):
+                 raise OSError(
+                     f"runtime directory identity changed; retry: {level.parent}"
+                 )
+@@ -289,10 +310,11 @@ def _ensure_directory_chain(path: Path) -> Iterator[int]:
+                     level.parent, parent, label="runtime"
+                 )
+                 _verify_lifecycle_directory_identity(level, directory, label="runtime")
+-                opened = os.fstat(directory)
+-                confirmed = (opened.st_dev, opened.st_ino)
++                level_stat = os.fstat(directory)
++                confirmed = (level_stat.st_dev, level_stat.st_ino)
++                ancestry[level] = confirmed
+                 if level == path:
+-                    yield directory
++                    yield directory, verify_ancestry
+                     return
+ 
+ 
+@@ -303,18 +325,8 @@ def _open_deferred_ledger(
+     """Hold the configured directory and ledger lock through publication/commit."""
+     batch_id = _require_basename(batch_id, "batch_id")
+     deferred = runtime_root / "deferred"
+-    with _ensure_directory_chain(runtime_root) as runtime:
+-
+-        def verify_runtime() -> None:
+-            try:
+-                _verify_lifecycle_directory_identity(
+-                    runtime_root, runtime, label="runtime"
+-                )
+-            except OSError as error:
+-                raise OSError(
+-                    f"runtime directory identity changed; retry: {runtime_root}"
+-                ) from error
+-
++    directory_error = f"deferred directory is not a real directory: {deferred}"
++    with _ensure_directory_chain(runtime_root) as (runtime, verify_runtime):
+         flags = (
+             os.O_RDONLY
+             | getattr(os, "O_DIRECTORY", 0)
+@@ -329,7 +341,12 @@ def _open_deferred_ledger(
+             except FileExistsError:
+                 pass
+             verify_runtime()
+-            directory = os.open(deferred.name, flags, dir_fd=runtime)
++            try:
++                directory = os.open(deferred.name, flags, dir_fd=runtime)
++            except OSError as error:
++                raise OSError(directory_error) from error
++        except OSError as error:
++            raise OSError(directory_error) from error
+         try:
+             _fsync_directory_descriptor(runtime)
+             verify_runtime()
+diff --git a/tests/packaging/rework_13_scripts.py b/tests/packaging/rework_13_scripts.py
+index 3ed2212..8ebbd2b 100644
+--- a/tests/packaging/rework_13_scripts.py
++++ b/tests/packaging/rework_13_scripts.py
+@@ -65,6 +65,27 @@ def observing_open(path, flags, *args, **kwargs):
+     name = absolute(path, kwargs.get("dir_fd"))
+     if mode in {"search", "no-search"} and name == str(ancestor):
+         events.append({"kind": "open", "path": name, "flags": flags})
++    if (
++        mode == "reparent-during-publication"
++        and name == str(ledger)
++        and ancestor_confirmed
++        and not replaced
++    ):
++        previous = identity(real_stat(ancestor))
++        runtime_before = identity(real_stat(runtime))
++        child = runtime.relative_to(ancestor).parts[0]
++        os.rename(ancestor, displaced)
++        real_mkdir(ancestor)
++        os.rename(displaced / child, ancestor / child)
++        replaced = True
++        events.append({
++            "kind": "reparented", "path": str(ancestor), "previous": previous,
++            "displaced": identity(real_stat(displaced)),
++            "replacement": identity(real_stat(ancestor)),
++            "runtime_before": runtime_before,
++            "runtime_after": identity(real_stat(runtime)),
++            "boundary": "ledger-open",
++        })
+     if (
+         mode == "replace-during-publication"
+         and name == str(ledger)
+@@ -169,9 +190,6 @@ def search_capability():
+         if descriptor is not None:
+             os.close(descriptor)
+     return {
+-        "euid": os.geteuid(),
+-        "read_denied": True,
+-        "search_fsync": True,
+         "native_search_flag": search,
+         "directory_flag": os.O_DIRECTORY,
+     }
+@@ -211,6 +229,8 @@ def invoke():
+                 path = record_defer(
+                     runtime, "00004-a.md", "batch", {"op_id": "replacement-probe"}
+                 )
++                if mode == "reparent-during-publication":
++                    events.append({"kind": "returned", "path": str(path)})
+     except Exception as error:
+         return {
+             "exit": 2, "error": str(error), "os_error": isinstance(error, OSError),
+diff --git a/tests/packaging/test_rework_12.py b/tests/packaging/test_rework_12.py
+index e88dfc9..d358787 100644
+--- a/tests/packaging/test_rework_12.py
++++ b/tests/packaging/test_rework_12.py
+@@ -9,7 +9,12 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
+-from packaging_support import InstalledWheel, identity, initialize_installed_state
++from packaging_support import (
++    InstalledWheel,
++    assert_installed,
++    identity,
++    initialize_installed_state,
++)
+ from rework_11_scripts import INITIALIZE_STATE
+ from rework_12_scripts import ANCESTRY_ACTOR, ORIGIN_CHECK
+ 
+@@ -63,6 +68,7 @@ def _invoke(
+     )
+     assert result.returncode == expected, (result.stdout, result.stderr)
+     value: dict[str, Any] = json.loads(result.stdout)
++    assert_installed(value["origins"], installed, "ovcaq.workflow.records")
+     return value
+ 
+ 
+@@ -105,7 +111,9 @@ def _actor(
+         process.communicate(timeout=10)
+ 
+ 
+-def _await_event(process: subprocess.Popen[str], event: str) -> dict[str, Any]:
++def _await_event(
++    installed: InstalledWheel, process: subprocess.Popen[str], event: str
++) -> dict[str, Any]:
+     assert process.stdout is not None
+     ready, _, _ = select.select([process.stdout], [], [], 10)
+     assert ready, f"actor did not reach {event}; status={process.poll()}"
+@@ -113,14 +121,18 @@ def _await_event(process: subprocess.Popen[str], event: str) -> dict[str, Any]:
+     assert line, f"actor exited before {event}; status={process.poll()}"
+     value: dict[str, Any] = json.loads(line)
+     assert value["event"] == event, value
++    assert_installed(value["origins"], installed, "ovcaq.workflow.records")
+     return value
+ 
+ 
+-def _finish(process: subprocess.Popen[str], expected: int = 0) -> dict[str, Any]:
++def _finish(
++    installed: InstalledWheel, process: subprocess.Popen[str], expected: int = 0
++) -> dict[str, Any]:
+     stdout, stderr = process.communicate(input="continue\n", timeout=20)
+     assert process.returncode == expected, (stdout, stderr)
+     value: dict[str, Any] = json.loads(stdout)
+     assert value["exit"] == expected, value
++    assert_installed(value["origins"], installed, "ovcaq.workflow.records")
+     return value
+ 
+ 
+@@ -161,13 +173,13 @@ def test_installed_concurrent_creation_confirms_and_preserves_peer_directory(
+     authoritative = _state_bytes(project)
+     mode = "racer-fail" if fail_confirmation else "racer"
+     with _actor(installed_wheel, project, "new", mode) as racer:
+-        _await_event(racer, "before-mkdir")
++        _await_event(installed_wheel, racer, "before-mkdir")
+         assert not (project / "new").exists()
+         with _actor(installed_wheel, project, "new", "peer") as peer:
+-            created = _await_event(peer, "peer-created")
++            created = _await_event(installed_wheel, peer, "peer-created")
+             assert (project / "new").is_dir()
+             assert identity(project / "new") == created["identity"]
+-            result = _finish(racer, 2 if fail_confirmation else 0)
++            result = _finish(installed_wheel, racer, 2 if fail_confirmation else 0)
+             assert result["peer_seen"] == created["identity"]
+             assert result["failed_parent"] is fail_confirmation
+             assert {"path": str(project), "identity": identity(project)} in result[
+@@ -178,7 +190,7 @@ def test_installed_concurrent_creation_confirms_and_preserves_peer_directory(
+             assert _state_bytes(project) == authoritative
+             if fail_confirmation:
+                 assert "injected peer parent fsync failure" in result["error"]
+-            completed = _finish(peer)
++            completed = _finish(installed_wheel, peer)
+             assert completed["path"] == str(
+                 project / "new/nested/deferred/batch-deferred.json"
+             )
+diff --git a/tests/packaging/test_rework_13.py b/tests/packaging/test_rework_13.py
+index 0c609d1..58a9f11 100644
+--- a/tests/packaging/test_rework_13.py
++++ b/tests/packaging/test_rework_13.py
+@@ -10,7 +10,12 @@ from typing import Any
+ from uuid import uuid4
+ 
+ import pytest
+-from packaging_support import InstalledWheel, identity, initialize_installed_state
++from packaging_support import (
++    InstalledWheel,
++    assert_installed,
++    identity,
++    initialize_installed_state,
++)
+ from rework_11_scripts import INITIALIZE_STATE
+ from rework_12_scripts import ORIGIN_CHECK
+ from rework_13_scripts import ANCESTRY_BOUNDARY_ACTOR
+@@ -50,7 +55,7 @@ def _invoke(
+         runtime = project / "ancestor/runtime"
+     if ancestor is None:
+         ancestor = runtime.parent
+-    result = subprocess.run(
++    with subprocess.Popen(
+         [
+             installed.python,
+             "-I",
+@@ -63,13 +68,20 @@ def _invoke(
+         ],
+         cwd=project,
+         env=installed.environment,
+-        capture_output=True,
++        stdout=subprocess.PIPE,
++        stderr=subprocess.PIPE,
+         text=True,
+-        check=False,
+-        timeout=20,
+-    )
+-    value: dict[str, Any] = json.loads(result.stdout)
+-    assert result.returncode == value["exit"], (result.stdout, result.stderr)
++    ) as process:
++        try:
++            stdout, stderr = process.communicate(timeout=20)
++        finally:
++            if process.poll() is None:
++                process.kill()
++            process.communicate()
++        assert process.poll() is not None
++    value: dict[str, Any] = json.loads(stdout)
++    assert process.returncode == value["exit"], (stdout, stderr)
++    assert_installed(value["origins"], installed, "ovcaq.workflow.records")
+     return value
+ 
+ 
+@@ -189,7 +201,9 @@ def _assert_runtime_replaced_during_publication(
+ 
+ 
+ @pytest.mark.parametrize("replay", (False, True), ids=("direct", "exact-replay"))
+-@pytest.mark.parametrize("distance", (3, 5), ids=("distance-3", "distance-5"))
++@pytest.mark.parametrize(
++    "distance", (1, 3, 5), ids=("distance-1", "distance-3", "distance-5")
++)
+ def test_installed_defer_refuses_replaced_distant_ancestry_until_fresh_attempt(
+     installed_wheel: InstalledWheel, tmp_path: Path, replay: bool, distance: int
+ ) -> None:
+@@ -239,33 +253,33 @@ def test_installed_defer_refuses_replaced_distant_ancestry_until_fresh_attempt(
+ 
+ 
+ @pytest.mark.parametrize("replay", (False, True), ids=("direct", "exact-replay"))
+-def test_installed_defer_refuses_runtime_replacement_before_deferred_creation(
+-    installed_wheel: InstalledWheel, tmp_path: Path, replay: bool
++@pytest.mark.parametrize(
++    "mode",
++    ("replace-at-deferred-mkdir", "replace-during-publication"),
++    ids=("deferred-mkdir", "ledger-publication"),
++)
++def test_installed_defer_refuses_runtime_replacement_until_fresh_attempt(
++    installed_wheel: InstalledWheel, tmp_path: Path, replay: bool, mode: str
+ ) -> None:
+     project = _prepare(installed_wheel, tmp_path)
+     authoritative = _state_bytes(project)
+     runtime = project / "ancestor/runtime"
+     runtime.mkdir()
+-    previous = identity(runtime)
+     seeded = None
+     if replay:
+-        assert (
+-            _invoke(
+-                installed_wheel, project, "normal", runtime=runtime, ancestor=runtime
+-            )["exit"]
+-            == 0
+-        )
++        assert _invoke(installed_wheel, project, "normal")["exit"] == 0
+         seeded = _assert_one_record(runtime)
+         assert _state_bytes(project) == authoritative
+-
+-    interrupted = _invoke(
+-        installed_wheel,
+-        project,
+-        "replace-at-deferred-mkdir",
+-        runtime=runtime,
+-        ancestor=runtime,
+-    )
+-    _assert_runtime_replaced_at_deferred_mkdir(interrupted, project, runtime, previous)
++    previous = identity(runtime)
++    interrupted = _invoke(installed_wheel, project, mode, ancestor=runtime)
++    if mode == "replace-at-deferred-mkdir":
++        _assert_runtime_replaced_at_deferred_mkdir(
++            interrupted, project, runtime, previous
++        )
++    else:
++        _assert_runtime_replaced_during_publication(
++            interrupted, project, runtime, previous, replay
++        )
+     assert interrupted["exit"] == 2, interrupted
+     assert interrupted["os_error"] is True, interrupted
+     assert "identity changed; retry" in interrupted["error"]
+@@ -277,10 +291,7 @@ def test_installed_defer_refuses_runtime_replacement_before_deferred_creation(
+         assert _ledger(project / "displaced").read_bytes() == seeded
+     else:
+         assert not _ledger(project / "displaced").exists()
+-
+-    retry = _invoke(
+-        installed_wheel, project, "normal", runtime=runtime, ancestor=runtime
+-    )
++    retry = _invoke(installed_wheel, project, "normal")
+     assert retry["exit"] == 0, retry
+     assert retry["path"] == str(_ledger(runtime))
+     _assert_one_record(runtime)
+@@ -291,57 +302,138 @@ def test_installed_defer_refuses_runtime_replacement_before_deferred_creation(
+         assert not _ledger(project / "displaced").exists()
+ 
+ 
++def _assert_runtime_reparented_after_chain_confirmation(
++    result: dict[str, Any],
++    project: Path,
++    runtime: Path,
++    ancestor: Path,
++    previous_ancestor: list[int],
++    previous_runtime: list[int],
++) -> int:
++    events = result["events"]
++    reparentings = [event for event in events if event["kind"] == "reparented"]
++    assert len(reparentings) == 1, result
++    reparenting = reparentings[0]
++    assert reparenting == {
++        "kind": "reparented",
++        "path": str(ancestor),
++        "previous": previous_ancestor,
++        "displaced": identity(project / "displaced"),
++        "replacement": identity(ancestor),
++        "runtime_before": previous_runtime,
++        "runtime_after": identity(runtime),
++        "boundary": "ledger-open",
++    }
++    assert reparenting["displaced"] == previous_ancestor
++    assert reparenting["replacement"] != previous_ancestor
++    assert reparenting["runtime_after"] == previous_runtime
++    index = events.index(reparenting)
++    before = events[:index]
++    observed = before.index(
++        {"kind": "observed", "path": str(ancestor), "identity": previous_ancestor}
++    )
++    confirmed = before.index(
++        {
++            "kind": "fsync",
++            "path": str(ancestor.parent),
++            "identity": identity(ancestor.parent),
++        }
++    )
++    runtime_confirmed = before.index(
++        {"kind": "fsync", "path": str(runtime), "identity": previous_runtime}
++    )
++    assert observed < confirmed < runtime_confirmed < index, result
++    assert any(
++        event["kind"] == "observed" and event["path"] == str(runtime / "deferred")
++        for event in before
++    ), result
++    return index
++
++
+ @pytest.mark.parametrize("replay", (False, True), ids=("direct", "exact-replay"))
+-def test_installed_defer_refuses_runtime_replacement_during_ledger_publication(
+-    installed_wheel: InstalledWheel, tmp_path: Path, replay: bool
++@pytest.mark.parametrize(
++    "distance", (1, 3, 5), ids=("distance-1", "distance-3", "distance-5")
++)
++def test_installed_defer_never_succeeds_through_unconfirmed_reparented_ancestry(
++    installed_wheel: InstalledWheel, tmp_path: Path, replay: bool, distance: int
+ ) -> None:
+     project = _prepare(installed_wheel, tmp_path)
+     authoritative = _state_bytes(project)
+-    runtime = project / "ancestor/runtime"
+-    runtime.mkdir()
++    runtime = project / uuid4().hex / "one/two/three/four/runtime"
++    runtime.mkdir(parents=True)
++    ancestor = runtime.parents[distance - 1]
++    previous_ancestor, previous_runtime = identity(ancestor), identity(runtime)
+     seeded = None
+     if replay:
+-        assert (
+-            _invoke(
+-                installed_wheel, project, "normal", runtime=runtime, ancestor=runtime
+-            )["exit"]
+-            == 0
++        seed = _invoke(
++            installed_wheel, project, "normal", runtime=runtime, ancestor=ancestor
+         )
++        assert seed["exit"] == 0, seed
+         seeded = _assert_one_record(runtime)
+         assert _state_bytes(project) == authoritative
+-    previous = identity(runtime)
+-    interrupted = _invoke(
++
++    result = _invoke(
+         installed_wheel,
+         project,
+-        "replace-during-publication",
++        "reparent-during-publication",
+         runtime=runtime,
+-        ancestor=runtime,
++        ancestor=ancestor,
+     )
+-    _assert_runtime_replaced_during_publication(
+-        interrupted, project, runtime, previous, replay
++    index = _assert_runtime_reparented_after_chain_confirmation(
++        result, project, runtime, ancestor, previous_ancestor, previous_runtime
+     )
+-    assert interrupted["exit"] == 2, interrupted
+-    assert interrupted["os_error"] is True, interrupted
+-    assert "identity changed; retry" in interrupted["error"]
+-    assert str(runtime) in interrupted["error"].split("identity changed; retry", 1)[1]
+-    assert "path" not in interrupted
+-    assert not _ledger(runtime).exists()
+-    assert _state_bytes(project) == authoritative
+-    if replay:
+-        assert _ledger(project / "displaced").read_bytes() == seeded
++    events = result["events"]
++    if result["exit"] == 0:
++        assert result["path"] == str(_ledger(runtime))
++        returned = {"kind": "returned", "path": str(_ledger(runtime))}
++        assert events.count(returned) == 1, result
++        return_index = events.index(returned)
++        assert index < return_index, result
++        for parent in (ancestor.parent, ancestor):
++            assert {
++                "kind": "fsync",
++                "path": str(parent),
++                "identity": identity(parent),
++            } in events[index + 1 : return_index], result
++        _assert_one_record(runtime)
+     else:
+-        assert not _ledger(project / "displaced").exists()
++        assert result["exit"] == 2, result
++        assert result["os_error"] is True, result
++        assert "identity changed; retry" in result["error"], result
++        assert str(ancestor) in result["error"].split("identity changed; retry", 1)[1]
++        assert "path" not in result
++        assert not any(event["kind"] == "returned" for event in events), result
++        if _ledger(runtime).exists():
++            _assert_one_record(runtime)
++    if replay:
++        assert _ledger(runtime).read_bytes() == seeded
++    assert _state_bytes(project) == authoritative
++    displaced_runtime = project / "displaced" / runtime.relative_to(ancestor)
++    assert not displaced_runtime.exists()
++
+     retry = _invoke(
+-        installed_wheel, project, "normal", runtime=runtime, ancestor=runtime
++        installed_wheel, project, "normal", runtime=runtime, ancestor=ancestor
+     )
+     assert retry["exit"] == 0, retry
+     assert retry["path"] == str(_ledger(runtime))
+-    _assert_one_record(runtime)
++    committed = _assert_one_record(runtime)
++    assert identity(runtime) == previous_runtime
+     assert _state_bytes(project) == authoritative
++    for parent in (ancestor.parent, ancestor):
++        assert {
++            "kind": "fsync",
++            "path": str(parent),
++            "identity": identity(parent),
++        } in retry["events"], retry
++    exact_replay = _invoke(
++        installed_wheel, project, "normal", runtime=runtime, ancestor=ancestor
++    )
++    assert exact_replay["exit"] == 0, exact_replay
++    assert _assert_one_record(runtime) == committed
+     if replay:
+-        assert _ledger(project / "displaced").read_bytes() == seeded
+-    else:
+-        assert not _ledger(project / "displaced").exists()
++        assert committed == seeded
++    assert _state_bytes(project) == authoritative
++    assert not displaced_runtime.exists()
+ 
+ 
+ @pytest.mark.skipif(sys.platform != "darwin", reason="Darwin capability contract")

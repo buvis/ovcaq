@@ -1,0 +1,29 @@
+F
+=================================== FAILURES ===================================
+_ test_final_commit_survives_supervisor_cleanup_between_polls[completed-expected0-00012-lantern.md] _
+tests/integration/test_observer_terminal_cleanup.py:497: in test_final_commit_survives_supervisor_cleanup_between_polls
+    with selected_run(
+/Users/bob/.local/share/uv/python/cpython-3.13.16-macos-aarch64-none/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+tests/integration/test_observer_terminal_cleanup.py:400: in selected_run
+    wait_ready(base, child, telemetry)
+tests/integration/test_observer_terminal_cleanup.py:332: in wait_ready
+    pytest.fail(
+E   Failed: supervisor exited before agent receipt: ('', 'Traceback (most recent call last):\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/tests/integration/test_observer_terminal_cleanup.py", line 752, in <module>\n    worker(Path(sys.argv[1]), sys.argv[2], sys.argv[3], bool(int(sys.argv[4])))\n    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/tests/integration/test_observer_terminal_cleanup.py", line 291, in worker\n    result = supervisor.run()\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/runtime/supervisor.py", line 159, in run\n    metadata, entry = self._publish_ownership()\n                      ~~~~~~~~~~~~~~~~~~~~~~~^^\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/runtime/supervisor.py", line 223, in _publish_ownership\n    identity = process_identity(os.getpid())\n  File "/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/runtime/registry.py", line 130, in process_identity\n    result = subprocess.run(\n        ["ps", "-p", str(pid), "-o", "lstart=", "-o", "stat="],\n    ...<4 lines>...\n        check=False,\n    )\n  File "/Users/bob/.local/share/uv/python/cpython-3.13.16-macos-aarch64-none/lib/python3.13/subprocess.py", line 555, in run\n    with Popen(*popenargs, **kwargs) as process:\n         ~~~~~^^^^^^^^^^^^^^^^^^^^^^\n  File "/Users/bob/.local/share/uv/python/cpython-3.13.16-macos-aarch64-none/lib/python3.13/subprocess.py", line 1040, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                        pass_fds, cwd, env,\n                        ^^^^^^^^^^^^^^^^^^^\n    ...<5 lines>...\n                        gid, gids, uid, umask,\n                        ^^^^^^^^^^^^^^^^^^^^^^\n                        start_new_session, process_group)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/Users/bob/.local/share/uv/python/cpython-3.13.16-macos-aarch64-none/lib/python3.13/subprocess.py", line 1992, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nPermissionError: [Errno 1] Operation not permitted: \'ps\'\n')
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-2d82cd17-9401-4db1-810d-014d3f4dc05f
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-2d82cd17-9401-4db1-810d-014d3f4dc05f'
+    warnings.warn(
+
+.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95
+  /Users/bob/git/src/github.com/buvis/ovcaq/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:95: PytestWarning: (rm_rf) error removing /private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-3c49aacb-9da5-4d0c-a085-9ae3a665c30c
+  <class 'OSError'>: [Errno 66] Directory not empty: '/private/var/folders/m6/1mnc9pdn28d5vdxy4hxyr1m40000gn/T/pytest-of-bob/garbage-3c49aacb-9da5-4d0c-a085-9ae3a665c30c'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/integration/test_observer_terminal_cleanup.py::test_final_commit_survives_supervisor_cleanup_between_polls[completed-expected0-00012-lantern.md]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 8 deselected, 2 warnings in 0.46s

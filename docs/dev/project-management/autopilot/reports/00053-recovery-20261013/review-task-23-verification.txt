@@ -1,0 +1,2 @@
+mise exec -- uv run pytest -q --tb=line tests/drivers/test_adapter_outcomes.py
+Exit 0: 32 passed. Worker executed this single narrow run.

@@ -1,0 +1,6 @@
+Public interface (signature only):
+from ovcaq.workflow.records import record_defer
+record_defer(runtime_root: pathlib.Path, prd: str, batch_id: str, record: dict[str, object], *, boundary_hook=None) -> pathlib.Path
+Returns runtime_root/deferred/{batch_id}-deferred.json. Stored JSON: {"batch_id": "batch", "items": [{"op_id": "replacement-probe", "prd": "00004-a.md"}]}. Exact identical operation-ID replay is idempotent. Runtime ancestors may be absent initially. Authoritative state is not an input to this function and must not change.
+For this repair, new ancestry-replacement refusals must be OSError with a message containing "identity changed; retry" followed by the affected path. Existing unrelated directory-error messages need not change.
+The configured runtime in tests can be project/ancestor/runtime; keep authoritative state separately at project/independent/state.json. Initial state support comes from INITIALIZE_STATE, which accepts project, state path, PRD argv.

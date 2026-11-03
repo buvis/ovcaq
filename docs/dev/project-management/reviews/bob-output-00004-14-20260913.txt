@@ -1,0 +1,69 @@
+## Prior findings (R13) reconciliation
+
+- R13-01 resolved inside `_ensure_directory_chain` (`confirmed` dev/ino carried across each reopen); residual at the chain→`deferred` hop (B1 below).
+- R13-02 resolved on Darwin (native `O_EXEC`-based search descriptor; live 0111 test executed: suite reports 0 skipped). Linux still fails, with a clearer message (B9).
+- R13-03 resolved (`levels[1:]`; test pins one root fsync, no root mkdir).
+- R13-04 resolved (exact exit 2 / `state_io` / message).
+- R13-05 resolved (child prefix/site-packages asserts and `prefix` removed; `sys` still used).
+- R13-06 refuted by supplied evidence (`00004-cycle-13-sandbox-after.json`: control write EPERM, defer/stall/park exit 0, one record each). Limit: the JSON records no SHA; the report text places it post-fix. Note the premise was also wrong: 3.12 `Path.mkdir(exist_ok=True)` catches any `OSError` and checks `is_dir()`, not only `FileExistsError`.
+- R13-07/08/09 KNOWN, settled, untouched. R13-10 discarded, not re-raised.
+- Source obligations: diff touches only P02-T05/T06 durability (defer saga) plus test scaffolding; all other P02 obligations unchanged since earlier cycles. Phase B exit ("safely retries every interrupted durable boundary without lost work") has one residual: B1.
+
+## Findings
+
+```
+[BOB] 🟠 B1: runtime root replaced after _ensure_directory_chain returns is adopted by deferred.mkdir/_fsync_directory(deferred.parent) with no identity compare, so defer succeeds while the replacement root's entry in its parent is never fsynced (R13-01 class, one hop further; repro: trigger rename+mkdir of runtime on the deferred mkdir instead of on reopen) | File: src/ovcaq/workflow/_files.py:288 | Task: 4
+[BOB] 🟡 B2: the non-Darwin search_only fallback PermissionError branch has no committed test; only an ad-hoc probe (00004-cycle-13-fallback-probe.json) exercised it | File: src/ovcaq/workflow/_files.py:415 | Task: 4
+[BOB] 🟡 B3: replacement test pins only direct-parent replacement (both `position` values make ancestor == runtime.parent); a mutant comparing identity only on the last hop passes (Devon round 2, acknowledged in repair report; distance 3/5 probes not committed) | File: tests/packaging/test_rework_13.py:143 | Task: 4
+[BOB] 🟡 B5: O_SEARCH resolution inlined with a re-derived `access == os.O_RDONLY` check and a magic literal that is Darwin O_EXEC (SDK fcntl.h:162-163: O_SEARCH = O_EXEC|O_DIRECTORY); hoist to a module constant `_O_SEARCH: int | None` and branch on `is None` (also gives B2 a one-line patch hook); the test actor duplicates the same literal | File: src/ovcaq/workflow/_files.py:400 | Task: 4
+[BOB] ⚪ B4: fallback PermissionError passes a Path as filename so str(error) renders `PosixPath('...')` (probe evidence line 10) while every other message in the module renders the bare path; cli.py:462 emits str(error) | File: src/ovcaq/workflow/_files.py:420 | Task: 4
+[BOB] ⚪ B6: `opened` is reused for the parent fstat and then the level fstat (Pat LOW note carried forward) | File: src/ovcaq/workflow/_files.py:262 | Task: 4
+[BOB] ⚪ B7: search test asserts child-hardcoded constants (`read_denied is True`, `search_fsync is True`, `euid != 0` already guaranteed by the skip) | File: tests/packaging/test_rework_13.py:220 | Task: 4
+[BOB] ⚪ B8: `_assert_installed`, `_identity`, `_prepare` duplicate test_rework_12.py near-verbatim (only the required module name differs) | File: tests/packaging/test_rework_13.py:19 | Task: 4
+[BOB] ⚪ B9: on platforms without a fsync-capable search descriptor (glibc Linux) defer beneath a 0111 ancestor still fails; the fix only names the requirement | File: src/ovcaq/workflow/_files.py:415 | Task: 4
+[BOB] ⚪ B10: Cannot statically verify: suite/ruff/format/mypy/build and fail-first replay of the 7 rework_13 cases (replay skipped: worktree denied); host reports 1359 passed / 0 skipped at 7291d9f; static trace shows each new test fails pre-change | File: N/A | Task: general
+```
+
+```
+FIX:
+- B1 — src/ovcaq/workflow/_files.py:288 — return `confirmed` from `_ensure_directory_chain`; in `_open_deferred_ledger` open `runtime_root` via `_open_lifecycle_directory`, raise `runtime directory identity changed; retry: ...` when fstat dev/ino differs, then `deferred.mkdir(...)` and fsync that descriptor instead of `_fsync_directory(deferred.parent)`; add a `replace-runtime` actor mode triggering on the deferred mkdir. Class-preventing alternative: descend with dir_fd-relative opens.
+- B2 — src/ovcaq/workflow/_files.py:415 — add a `fallback` actor mode that patches the search flag away (after B5: `patch.object(_files, "_O_SEARCH", None)`), chmods the ancestor 0111, asserts exit 2, errno 13, the "requires read access" message and `__cause__` PermissionError.
+- B3 — tests/packaging/test_rework_13.py:143 — replace `position` with a `distance` param (1 and 3): `runtime = ancestor.joinpath(*["mid"] * (distance - 1), "runtime")`; `_invoke` and `displaced_runtime` already handle it.
+- B4 — src/ovcaq/workflow/_files.py:420 — pass `str(directory)` as the filename argument.
+- B5 — src/ovcaq/workflow/_files.py:400 — module constant `_O_SEARCH = getattr(os, "O_SEARCH", 0x40000000 if sys.platform == "darwin" else None)` with a comment naming it O_EXEC; `access = _O_SEARCH if search_only and _O_SEARCH is not None else os.O_RDONLY`; fallback branch tests `_O_SEARCH is None`.
+- B6 — src/ovcaq/workflow/_files.py:262,277 — rename to `parent_stat` / `level_stat`.
+- B7 — tests/packaging/test_rework_13.py:220-222 — delete the three constant asserts; the child already raises if read is not denied and skips otherwise.
+- B8 — tests/packaging/test_rework_13.py:19-45 — move `_assert_installed(origins, installed, required="ovcaq")` and `_identity` to packaging_support.py; import in both rework tests.
+VERIFY:
+- (none)
+KNOWN:
+- B9 — no POSIX-portable descriptor both traverses a search-only directory and accepts fsync (Linux O_PATH cannot fsync); the failure is explicit and the durability gate is kept; restricting the walk to OVCAQ-created levels is impossible because init's `mkdir(parents=True)` leaves no ownership record (settled R13-07).
+- B10 — static-only sandbox; fail-first replay tooling cannot create worktrees (settled R13-09/R9-K4); host owns runtime gates and supplied 1359 passed / 0 skipped.
+```
+
+```
+R1: fail
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: pass
+R10: pass
+R11: pass
+R12: pass
+R13: pass
+```
+
+```
+D1: pass
+D2: pass
+D3: pass
+D4: pass
+D5: pass
+```
+
+**Status**: Done.
+**Changed**: nothing (review only). 10 findings: 8 FIX, 0 VERIFY, 2 KNOWN; R1 fails on B2/B3.
+**Next**: Task complete. Suggested next: route B1 (High) and B2/B3/B5 (Medium) into the cycle-14 rework loop; B1 first since its actor mode also serves B3.

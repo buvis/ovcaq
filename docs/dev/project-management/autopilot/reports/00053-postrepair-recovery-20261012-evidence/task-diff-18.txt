@@ -1,0 +1,67 @@
+diff --git a/tests/runtime/test_adapter_launch_routing.py b/tests/runtime/test_adapter_launch_routing.py
+index 2b3ecf9..5a23e5f 100644
+--- a/tests/runtime/test_adapter_launch_routing.py
++++ b/tests/runtime/test_adapter_launch_routing.py
+@@ -8,7 +8,11 @@ from pathlib import Path
+ 
+ import pytest
+ from tests.runtime.test_supervisor import Harness, rows
+-from tests.runtime.test_supervisor_adapters import adapter_harness, prepare_workflow
++from tests.runtime.test_supervisor_adapters import (
++    adapter_harness,
++    prepare_workflow,
++    workflow_fixture,
++)
+ 
+ from ovcaq.config import supervisor_settings
+ from ovcaq.drivers.edge import build_driver
+@@ -26,18 +30,7 @@ def configured_workflow(
+ ) -> Harness:
+     h = adapter_harness(tmp_path, monkeypatch)
+     monkeypatch.setenv("CODEX_HOME", str(tmp_path / "provider-home"))
+-    fake = Path(__file__).parents[1] / "fixtures/codex/v1/fake_codex.py"
+-    if provider == "claude":
+-        claude_fixture = fake.parents[2] / "claude/v1/fake_claude.py"
+-        wrapper = tmp_path / "fake_claude_workflow.py"
+-        wrapper.write_text(
+-            "import runpy, sys\n"
+-            f"edge = runpy.run_path({str(fake)!r})\n"
+-            f"edge['workflow'].__globals__['__file__'] = {str(claude_fixture)!r}\n"
+-            "edge['emit_invocation'](sys.argv[1:])\n"
+-            "raise SystemExit(edge['workflow']())\n"
+-        )
+-        fake = wrapper
++    fake = workflow_fixture(tmp_path, provider)
+     command = [sys.executable, "-u", str(fake)]
+     cli = str(Path(sys.executable).with_name("ovcaq"))
+     (h.root / "ovcaq.toml").write_text(
+diff --git a/tests/runtime/test_supervisor_adapters.py b/tests/runtime/test_supervisor_adapters.py
+index 5d2111c..1305449 100644
+--- a/tests/runtime/test_supervisor_adapters.py
++++ b/tests/runtime/test_supervisor_adapters.py
+@@ -37,17 +37,23 @@ def adapter_harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Harness:
+     return h
+ 
+ 
+-def workflow_agent(h: Harness, tmp_path: Path, provider: str) -> AgentSettings:
++def workflow_fixture(tmp_path: Path, provider: str) -> Path:
+     fixtures = Path(__file__).parents[1] / "fixtures"
+     fake = fixtures / "codex/v1/fake_codex.py"
+     if provider == "claude":
+         fake = tmp_path / "fake_claude_workflow.py"
+         fake.write_text(
+-            "import runpy\n"
++            "import runpy, sys\n"
+             f"edge = runpy.run_path({str(fixtures / 'codex/v1/fake_codex.py')!r})\n"
+             f"edge['workflow'].__globals__['__file__'] = {str(fixtures / 'claude/v1/fake_claude.py')!r}\n"
++            "edge['emit_invocation'](sys.argv[1:])\n"
+             "raise SystemExit(edge['workflow']())\n"
+         )
++    return fake
++
++
++def workflow_agent(h: Harness, tmp_path: Path, provider: str) -> AgentSettings:
++    fake = workflow_fixture(tmp_path, provider)
+     command = [sys.executable, str(fake)]
+     environment = {
+         "OVCAQ_FAKE_SCENARIO": "workflow",

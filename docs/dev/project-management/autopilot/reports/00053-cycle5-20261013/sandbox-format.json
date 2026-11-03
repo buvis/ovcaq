@@ -1,0 +1,4 @@
+{
+  "command": "mise exec -- uv run ruff format --check .",
+  "exit": 2
+}

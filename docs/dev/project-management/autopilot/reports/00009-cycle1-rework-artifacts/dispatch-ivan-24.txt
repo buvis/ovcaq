@@ -1,0 +1,342 @@
+
+You are Ivan, the implementor. Make all failing tests pass. Tests ARE the
+spec. Do NOT modify test files unless your allowlist below names them (a
+test-only task lists them on purpose). Do NOT read the task's acceptance criteria —
+none are provided to you on purpose.
+
+## Failing tests
+
+"""Probe version evidence and failure diagnostics obey the public contract."""
+
+import json
+import re
+import sys
+from pathlib import Path
+
+import pytest
+
+from ovcaq.drivers.base import DriverHealth
+from ovcaq.drivers.codex import CodexDriver
+from ovcaq.drivers.edge import build_driver
+from ovcaq.paths import CONFIG_NAME
+
+SECRET = "sk-" + "proj-fixturecredential12345678901234567890"
+PREFIX = "literal prefix ; $(touch must-not-exist)"
+LIMIT = 16 * 1024
+PROBE_SCRIPT = r"""
+import json
+import os
+import sys
+
+args = sys.argv[1:]
+with open(os.environ["PROBE_LOG"], "a", encoding="utf-8") as log:
+    log.write(json.dumps({"args": args, "stdin": sys.stdin.read()}) + "\n")
+if args[0:1] != [os.environ["PROBE_PREFIX"]]:
+    sys.exit(80)
+operation = args[1:]
+if operation == ["--version"]:
+    print(os.environ["PROBE_VERSION"], flush=True)
+    sys.exit(0)
+if operation != ["login", "status"]:
+    sys.exit(81)
+stream = sys.stdout if os.environ["PROBE_STREAM"] == "stdout" else sys.stderr
+secret = "sk-" + "proj-fixturecredential12345678901234567890"
+print("Not logged in: expired credential; account needs reauthentication", file=stream)
+print("Authorization: Bearer " + secret, file=stream, flush=True)
+stream.write("é" * int(os.environ["PROBE_PADDING"]))
+stream.flush()
+sys.exit(int(os.environ["PROBE_EXIT"]))
+"""
+
+
+@pytest.fixture
+def probe_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "isolated-config"))
+    project = tmp_path / "project"
+    project.mkdir()
+    (tmp_path / "probe.py").write_text(PROBE_SCRIPT, encoding="utf-8")
+    return project
+
+
+def configured_probe(
+    project: Path,
+    version: str = "codex-cli 0.160.0",
+    stream: str = "stderr",
+    padding: int = 0,
+    exit_code: int = 23,
+) -> CodexDriver:
+    argv = (sys.executable, str(project.parent / "probe.py"), PREFIX)
+    environment = {
+        "PROBE_LOG": str(project.parent / "probe.jsonl"),
+        "PROBE_PREFIX": PREFIX,
+        "PROBE_VERSION": version,
+        "PROBE_STREAM": stream,
+        "PROBE_PADDING": str(padding),
+        "PROBE_EXIT": str(exit_code),
+    }
+    configuration = (
+        'agent = "codex"\n[agents.codex]\n'
+        f"command = {json.dumps(argv)}\n"
+        'tiers = { standard = "fixture-model" }\n'
+        "environment = { "
+        + ", ".join(
+            f"{key} = {json.dumps(value)}" for key, value in environment.items()
+        )
+        + ' }\n[agents.codex.options]\nsandbox = "workspace-write"\n'
+        'approval = "never"\n'
+    )
+    (project / CONFIG_NAME).write_text(configuration, encoding="utf-8")
+    driver = build_driver(project, "codex")
+    assert isinstance(driver, CodexDriver)
+    return driver
+
+
+@pytest.mark.parametrize(
+    "version",
+    (
+        "prefixnoise codex-cli 0.160.0",
+        "codex-cli 0.160.0-rc.1",
+        "codex-cli 0.160.0.1",
+        "codex-cli 0.160.00",
+        "codex-cli 0.160.0+unreviewed",
+        "codex-cli 0.160.0 trailing-noise",
+        "codex-cli 0.160.01",
+        "unreviewed first line\ncodex-cli 0.160.0",
+    ),
+)
+def test_probe_rejects_version_aliases_that_are_not_exact_reviewed_evidence(
+    probe_project: Path, version: str
+) -> None:
+    health = configured_probe(probe_project, version=version, exit_code=0).probe()
+    assert isinstance(health, DriverHealth)
+    assert health.healthy is False
+    assert "0.160.0" in health.detail
+    assert health.detail.strip()
+    records = (probe_project.parent / "probe.jsonl").read_text().splitlines()
+    assert [json.loads(record) for record in records] == [
+        {"args": [PREFIX, "--version"], "stdin": ""}
+    ]
+
+
+@pytest.mark.parametrize("stream", ("stdout", "stderr"))
+@pytest.mark.parametrize("exit_code", (1, 23))
+def test_probe_preserves_actionable_sanitized_authentication_failures(
+    probe_project: Path,
+    capfd: pytest.CaptureFixture[str],
+    stream: str,
+    exit_code: int,
+) -> None:
+    health = configured_probe(
+        probe_project, stream=stream, exit_code=exit_code
+    ).probe()
+    captured = capfd.readouterr()
+    assert health.healthy is False
+    assert "expired credential" in health.detail.lower()
+    assert "codex login" in health.detail.lower()
+    assert re.search(rf"(?<!\d){exit_code}(?!\d)", health.detail)
+    assert len(health.detail.encode("utf-8")) <= LIMIT
+    disclosed = health.detail + captured.out + captured.err
+    assert SECRET not in disclosed
+    assert "fixturecredential12345678901234567890" not in disclosed
+    records = (probe_project.parent / "probe.jsonl").read_text().splitlines()
+    assert [json.loads(record) for record in records] == [
+        {"args": [PREFIX, "--version"], "stdin": ""},
+        {"args": [PREFIX, "login", "status"], "stdin": ""},
+    ]
+    assert not (probe_project / "must-not-exist").exists()
+
+
+@pytest.mark.parametrize("stream", ("stdout", "stderr"))
+def test_probe_bounds_authentication_details_and_retains_useful_diagnostics(
+    probe_project: Path, capfd: pytest.CaptureFixture[str], stream: str
+) -> None:
+    health = configured_probe(probe_project, stream=stream, padding=131072).probe()
+    captured = capfd.readouterr()
+    assert isinstance(health, DriverHealth)
+    assert health.healthy is False
+    assert "expired credential" in health.detail.lower()
+    assert "codex login" in health.detail.lower()
+    assert len(health.detail.encode("utf-8")) <= LIMIT
+    disclosed = health.detail + captured.out + captured.err
+    assert SECRET not in disclosed
+    assert "fixturecredential12345678901234567890" not in disclosed
+
+
+## Architecture context
+
+# AGENTS.md — OVCAQ
+
+OVCAQ means **Orchestration, Visibility, and Control for Agent Queues**. It is
+an installable Python CLI/TUI that supervises a PRD-driven workflow through
+Claude Code, Codex, or another headless coding agent.
+
+The global `AGENTS.md` remains in force. This file adds project-specific rules.
+
+## Current state
+
+The repository is in planning/bootstrap. Until an implementation PRD replaces
+it, `docs/dev/project-management/plans/implementation-plan.md` is the architecture and sequencing
+authority. Do not create production modules opportunistically outside that
+sequence.
+
+## Product boundary
+
+OVCAQ core owns state, lifecycle commands, process supervision, agent adapters,
+normalized events, observability, the TUI, and launcher provisioning checks.
+
+OVCAQ core does **not** contain launcher-specific skills, agents, hooks, or
+plugins. Those live in external marketplaces. Core may carry declarative
+identifiers and version requirements needed to reconcile them.
+
+## Architecture invariants
+
+1. **One state writer.** Every durable `state.json` mutation goes through the
+   state store. Agents mutate state only through `ovcaq state` or a higher-level
+   OVCAQ command. Never instruct an agent to edit `state.json` directly.
+2. **State decides; prose does not.** Session completion, phase handoff, pause,
+   drain, retry, and failure decisions derive from committed state plus a
+   normalized session result. A final agent message is never authoritative.
+3. **Provider code stays at the edge.** Claude/Codex argv, environment variables,
+   event formats, model names, rate-limit parsing, and connectivity checks live
+   under their adapter. Shared runtime and UI code must not parse provider-native
+   events.
+4. **Raw evidence survives normalization.** Preserve each session's raw output.
+   Normalizers are tolerant and must degrade to an unknown/raw observation
+   instead of crashing the supervisor.
+5. **The TUI observes shared models.** It reads state, registry, metrics, and
+   normalized observations. It does not implement lifecycle policy or maintain a
+   second liveness algorithm.
+6. **External capabilities stay external.** Provisioning invokes a launcher's
+   supported marketplace/plugin CLI and verifies the result. It does not copy
+   plugin contents into this package or hand-edit launcher caches.
+7. **No shell evaluation of configured commands.** Store agent commands as argv
+   arrays and spawn them without `shell=True`.
+
+## Target layout
+
+```text
+src/ovcaq/
+  state/        # schema, transactions, compound mutations
+  workflow/     # PRD selection, transitions, records, policy
+  runtime/      # supervisor, decisions, registry, process ownership
+  drivers/      # Claude, Codex, and generic command adapters
+  events/       # normalized event model and session reduction
+  tui/          # discovery and Textual/Rich presentation
+  provision/    # marketplace/plugin reconciliation
+tests/          # mirrors package boundaries; provider JSONL fixtures
+docs/           # tracked architecture and operator documentation
+```
+
+## Toolchain
+
+- Python 3.12+ managed through `mise`.
+- `uv` for environments, locking, build, and command execution.
+- `pytest` for tests; `ruff` for formatting/linting; `mypy` for package types.
+- Keep the runtime dependency set small. Textual/Rich are justified by the TUI;
+  prefer the standard library for state, locking, configuration, and subprocesses.
+
+Planned verification commands once the scaffold lands:
+
+```bash
+uv sync --all-groups
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy src/ovcaq
+uv build
+```
+
+## Development rules
+
+- Characterize current behavior before moving it from `~/.claude`.
+- Extract state first, then pure workflow logic, runtime, adapters, TUI, and
+  provisioning in that order.
+- Sanitized Claude and Codex JSONL fixtures belong in `tests/fixtures/`; tests
+  never read live files from `~/.claude` or `~/.codex`.
+- Test process-group, lock, and signal behavior with real subprocesses in
+  addition to unit tests.
+- Documentation for commands comes from the same command registry/parser as the
+  implementation; do not maintain a second hand-written verb inventory.
+- Keep provider-neutral modules free of the strings `claude`, `anthropic`,
+  `codex`, and provider model identifiers except in tests that enforce this rule.
+- Use conventional commits. No compatibility shim, dual writer, or rollback
+  framework is required for the initial cutover.
+
+## Migration stance
+
+This is a one-way early-stage extraction. Start a fresh OVCAQ batch/state tree;
+do not build an importer for the current `docs/dev/project-management/autopilot/state.json` unless
+a later requirement explicitly needs it. Temporary delegation during a local
+canary is acceptable, but do not ship `autoclaude`, `autopilot`, `tracon`, or
+`statectl` aliases as permanent public APIs.
+
+Public probe contract: read-only version then login status, closed stdin, configured commandprefix/environment overlay,5second deadline percommand. Keep retained stdout/stderr each capped16KiB; drain extraoutput without growing buffers or spool files. Capture useful sanitized bounded actionable failures with exitcode and codex login hint. Exact reviewed firstline codex-cli 0.160.0 only. Preserve missingversion and timeout diagnostic fragments existing public tests expect. Probe processgroup ownership is explicitly deferred, do not redesign it. Source structural contract for this task: iterate labeled version/authentication operations directly; hoist one pinnedversion constant. Use type(options.get(allow_explicit_model,False)) is not bool and remove justification comment/noqa, preserving invalidconfig ValueError. No new production module; provider code stays at edge. Tests read-only /Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_codex_rework_probe.py. Named14case command only.
+
+## Files you may read and modify
+
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/drivers/codex.py
+/Users/bob/git/src/github.com/buvis/ovcaq/CHANGELOG.md
+
+Read only the files listed above. If a file or symbol you need is not
+listed, stop and report it as a blocker — do not run broad `rg` sweeps to
+discover scope.
+
+
+
+### Code quality rules (mandatory)
+
+Follow these four rules. They override any instinct to "improve" the code
+beyond what the failing tests require.
+
+**1. Think before coding.** Re-read the task and the failing tests. If scope,
+data shape, target file, or success criteria are ambiguous - more than one
+reasonable implementation would pass the tests differently - STOP and report
+the ambiguity as a blocker. Do not guess and proceed.
+
+**2. Simplicity.** Write the simplest code that makes the failing tests pass.
+
+- No abstractions, helpers, or interfaces built for a single caller.
+- No error handling, fallbacks, or validation for inputs the tests never
+  exercise. Validate at real system boundaries only.
+- No features, options, or configuration the task did not ask for.
+- If your draft runs long and the same behavior fits in far fewer lines,
+  rewrite it before returning.
+
+**3. Surgical changes.** Touch only what the task requires.
+
+- Do not refactor, reformat, or "improve" code outside the change.
+- Match the surrounding style even if you would write it differently.
+- Remove imports, variables, and functions that YOUR change orphaned. Do not
+  delete pre-existing dead code - mention it instead.
+- Every changed line must trace to the task or a failing test.
+
+**4. Goal-driven.** The failing tests are the spec. Make them pass - do not
+modify them, do not weaken them, do not add tests. If a test looks wrong,
+report it as a blocker rather than changing it.
+
+Abort and report if you read more than 100K of total input. Return the
+partial result and an abort_reason: context_overrun field.
+
+Read every file before your first Edit to it. Never call bash `head`,
+`tail`, `cat`, `grep`, or `find` - a hook blocks them. Use the Read tool
+(offset/limit), `rg`, or `rg --files` instead. Never combine an inspection
+(read, list, search, diff) with a test, lint or build invocation in one Bash
+call - run them as two calls, because a combined command has two ways to hang
+and one exit code. Pass an explicit `timeout` on every Bash call: 60000 ms for
+an inspection, 300000 ms for a lint run or a narrow test run, 600000 ms for a
+full suite or a full build.
+
+Run only the test files this task names (the tests you wrote, or the
+failing tests in your prompt), with `-q --tb=line`. Never run a whole test
+directory or `dev/bin/release-checks`: the orchestrator runs the full suite
+once, after every task. Read the pass count and exit code from that one
+run; never re-run a suite to recover a number.
+
+End your report with `ASSUMPTIONS:` - one line per assumption you made
+where the task, tests, or listed files were silent (guessed interface, data
+shape, resolved ambiguity, unstated behavior). Write `ASSUMPTIONS: none` if
+you made none.
+
+Also end your report with `FILES_TOUCHED:` - one line per file you created
+or modified, path relative to the repo root. Write `FILES_TOUCHED: none` if
+you changed no files.

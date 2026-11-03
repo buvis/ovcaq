@@ -1,0 +1,122 @@
+[
+  {
+    "cycle": 1,
+    "disposition": "settled-deferral",
+    "severity": "\ud83d\udfe1",
+    "issue": "`has_invalid_unicode_scalar` never stops on cyclic input. It keeps no record of containers it has already visited, so a payload like `d = {\"self\": d}` loops forever and its pending list grows without limit. I checked this: `Observation(payload=d)` was still running after 3 s. Before this change the recursive copier raised `RecursionError`, and `RawFirstDecoder` turned that into a `raw.unknown` gap. Now a driver bug that builds a cyclic payload freezes the supervisor's decode path, along with the timeout and cleanup steps that wait on it. Both design reviewers raised this as a non-blocker. Fix: track the `id()` of containers already visited, either skipping them or raising `ValueError`. That is about 3 lines and keeps the scan iterative",
+    "file": "src/ovcaq/events/model.py:77",
+    "reason": "Settled limitation: the reviewed helper contract is explicitly acyclic JSON-like containers; native json.loads cannot create cycles. Preserve the witnessed hang; no cycle-guard scope expansion."
+  },
+  {
+    "cycle": 1,
+    "disposition": "settled-deferral",
+    "severity": "\ud83d\udfe1",
+    "issue": "The R2 class of bug still exists at display time, outside this PRD's scope. `bounded_detail` strips only C0 controls and 7-bit CSI. The TUI's `display_text` drops all Cc/Cf/Cs/Zl/Zp characters (src/ovcaq/tui/model.py:57). Confirmed: `\"lane sk-abc\\u200b<36 chars>\"` (also with \\x85, \\x9b, \\u00ad, \\u2060 instead of \\u200b) passes redaction unchanged and the TUI shows the joined `sk-abcabcdef\u2026` token. Activity text and tool details (src/ovcaq/drivers/codex_events.py:32, src/ovcaq/drivers/codex_events.py:127) strip nothing, so a NUL-split token also renders whole on screen. This needs a durable home (a PRD or issue)",
+    "file": "src/ovcaq/drivers/codex_events.py:59",
+    "reason": "Display-time character stripping/activity UI is excluded by this PRD. Preserve durable follow-up evidence; no implicit expansion of 00054."
+  },
+  {
+    "cycle": 1,
+    "disposition": "settled-deferral",
+    "severity": "\ud83d\udfe1",
+    "issue": "The same strip-after-redact bug exists in the TUI. `display_text` drops Cc/Cf characters from already-sanitized activity and tool text without redacting again, so a stored `sk-abc\\x00defghijklmnopqrstuvwxyz0123` shows on screen as the rebuilt token",
+    "file": "src/ovcaq/tui/model.py:136",
+    "reason": "Same out-of-scope display-time defect as R6; preserve its separate citation and deferral."
+  },
+  {
+    "cycle": 1,
+    "disposition": "settled-deferral",
+    "severity": "\u26aa",
+    "issue": "The supervisor's catch-all handler builds `SessionSummary(..., str(error), ...)`. If the error text carries surrogateescape bytes (a non-UTF-8 path), the new `SessionSummary` check raises `ValueError` inside the handler and `_conclude` is skipped, so the failure record is lost. Not a regression: the strict encode in src/ovcaq/runtime/_session_io.py:19 already failed on such text",
+    "file": "src/ovcaq/runtime/supervisor.py:370",
+    "reason": "Pre-existing arbitrary exception/path surrogate handling; retain for later scoped runtime failure work."
+  },
+  {
+    "cycle": 1,
+    "disposition": "settled-deferral",
+    "severity": "\u26aa",
+    "issue": "The pre-decode check assumes every driver parses frames with plain `json.loads`. A plugin driver that unwraps a prefix or applies its own escapes skips the pre-mutation check. The model still rejects the bad strings, so nothing crashes, but such a driver can change its state before the `Observation` constructor raises. Every frame (up to 1 MiB) is also parsed twice; the PRD sets no performance limit",
+    "file": "src/ovcaq/events/tail.py:118",
+    "reason": "Prefix-unwrapping/custom-escape plugin drivers are outside this native JSON frame contract. Preserve malformed/non-JSON delegation; no generic rollback framework."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "66 touched test(s) pass against the pre-change code: test_bounded_detail_redacts_reconstructed_tokens_before_capping, test_bounded_detail_preserves_printable_text_and_caps_after_control_removal +60 more",
+    "file": "tests/drivers/test_codex_detail_safety.py",
+    "reason": "Verified preservation controls: valid Unicode/pairs, printable text, malformed delegation and genuine writer errors must pass before the change. The files also contain independent repair regressions; replay reports 1196 failures and 97 preservation passes with no uncollectable files."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "5 touched test(s) pass against the pre-change code: test_valid_escaped_pair_remains_a_native_startup_record, test_malformed_and_non_json_frames_keep_native_delegation, test_real_writer_failures_propagate_from_unsafe_native_frames",
+    "file": "tests/events/test_unicode_frames.py",
+    "reason": "Verified preservation controls: valid Unicode/pairs, printable text, malformed delegation and genuine writer errors must pass before the change. The files also contain independent repair regressions; replay reports 1196 failures and 97 preservation passes with no uncollectable files."
+  },
+  {
+    "cycle": 1,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "26 touched test(s) pass against the pre-change code: test_usage_and_completion_preserve_valid_unicode_scalars +20 more",
+    "file": "tests/events/test_unicode_safety.py",
+    "reason": "Verified preservation controls: valid Unicode/pairs, printable text, malformed delegation and genuine writer errors must pass before the change. The files also contain independent repair regressions; replay reports 1196 failures and 97 preservation passes with no uncollectable files."
+  },
+  {
+    "cycle": 2,
+    "disposition": "settled-deferral",
+    "severity": "\ud83d\udfe0",
+    "issue": "The review-1 two-pass `bounded_detail` leaks the tail of a split token. When the control sits after 20 or more body characters, pass 1 redacts the head. Control removal then glues the tail onto `[REDACTED]`, and pass 2 finds no `sk-` or `Bearer` prefix to match. I ran it to confirm: `bounded_detail('Diagnostic sk-abcdefghijklmnopqrstuvwxyz\\x1b[0m0123456789ABCDEF')` returns `'Diagnostic [REDACTED]0123456789ABCDEF'`, the real `turn.failed` payload detail is the same, and `'Bearer '+'a'*23+'\\x00bbbbbbbb'` returns `'Bearer [REDACTED]bbbbbbbb'`. Task 3's strip-first order redacted these fully, and pre-PRD code leaked the same way. This breaks two PRD rules (\"ANSI/NUL splits of ordinary synthetic tokens are redacted\", \"synthetic credential fragments never enter normalized details\") and makes docs/driver-protocol.md:224 claim too much. Every split test cuts at `token[:6]`, so no test catches it. Fix: before control removal, absorb token characters stuck to a marker across recognized controls with `re.sub(rf\"\\[REDACTED\\](?:{controls})+[A-Za-z0-9_.-]+\", \"[REDACTED]\", sanitize_text(protected))`. I probed this on both leaks plus `x\\x00sk-\u2026`, the OSC case and the cap reproducer, and all came out fully redacted (I did not run the suite with it). Also add SPLIT_DETAILS cases that split after 20 or more body characters, for both bare and Bearer tokens",
+    "file": "src/ovcaq/drivers/codex_events.py:66",
+    "reason": "Cap reached (cycle 2/2) with the late-split credential suffix HIGH unresolved. All three independent reviewers agree; coordinator reproduced bare/CSI and Bearer/NUL suffix leaks. No cap increase or repair authorized by this transition."
+  },
+  {
+    "cycle": 2,
+    "disposition": "settled-deferral",
+    "severity": "\ud83d\udfe1",
+    "issue": "Unreleased Fixed now has two `**drivers**` entries for one unreleased fix, and they give conflicting orders. Line 43 says redact both before and after control removal. Line 45 says remove controls before redacting, and its claim \"so split credentials cannot survive normalization\" is false given the finding above. Line 44 (\"speed up surrogate detection\") describes a tweak to unreleased code, so users see no change from the last release. Simpler: merge lines 43 and 45 into one drivers entry that states what actually shipped, and drop line 44",
+    "file": "CHANGELOG.md:43",
+    "reason": "Cap reached with conflicting and overbroad unreleased changelog prose unresolved. Preserve the prior Pat LOW and all three current citations; no tail sweep on cap-out."
+  },
+  {
+    "cycle": 2,
+    "disposition": "settled-deferral",
+    "severity": "\ud83d\udfe1",
+    "issue": "The raw-first R7 regressions (byte-exact raw, gap digest and preview, unchanged adapter state, later healthy terminal) live in a file the PRD doesn't list, tests/events/test_unicode_frames.py. The task-2 acceptance command `pytest tests/events/test_unicode_safety.py tests/events/test_tail.py` runs none of them, because test_unicode_safety.py only tests the shared models. That acceptance therefore passes without proving its claims.",
+    "file": "tests/events/test_unicode_frames.py:172",
+    "reason": "Preserve literal PRD acceptance-command mismatch. Task 7 corrected the design command within its approved scope; source PRD was intentionally unchanged. Full and focused suites include frame tests, but the PRD command still omits them; requirements ambiguity retained rather than claiming literal closure."
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "\u26aa",
+    "issue": "The fail-first replay count for test_codex_detail_safety.py does not match a static count. By my trace, at e4d765c the 48 new `boundary-*` cases pass on purpose (they guard behavior the old code already had). All `inside-*`, `exact-cap`, `ansi-split`, `nul-split`, `alternate-*-ansi/nul` and rate-limit cases should fail. That predicts about 96 passing at base, but the replay reports 143 (and its own line says \"1 + 137 more\" = 138)",
+    "file": "tests/drivers/test_codex_detail_safety.py",
+    "reason": "Contradicts computed facts: executed replay reports 143 passing detail cases, not the static estimate of 96. The summary prints six named tests plus 137 more, totaling 143; it never says one plus 137. This is not evidence of an invalid replay."
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "143 touched test(s) pass against the pre-change code: test_bounded_detail_redacts_control_boundaries_and_reconstructed_credentials +137 more",
+    "file": "tests/drivers/test_codex_detail_safety.py",
+    "reason": "Verified preservation checks for original-token boundaries, printable/short details, classifier/reset/OSC/alternate plain behavior. Replay has 1215 repair failures and 175 preservation passes overall, zero uncollectable files. The newly observed late-split regression is independently retained as R1; this computed passing count is not itself a defect."
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "6 touched test(s) pass against the pre-change code: test_valid_escaped_pair_remains_a_native_startup_record, test_malformed_and_non_json_frames_keep_native_delegation, test_deep_json_recursion_preserves_native_gap_and_durable_evidence, test_real_writer_failures_propagate_from_unsafe_native_frames",
+    "file": "tests/events/test_unicode_frames.py",
+    "reason": "Verified preservation checks: valid escaped pairs, malformed/non-JSON and deep-recursion native delegation, and genuine writer failures are required to retain pre-change behavior. Independent surrogate/raw-first repair cases fail at baseline."
+  },
+  {
+    "cycle": 2,
+    "disposition": "discarded",
+    "severity": "\ud83d\udfe1",
+    "issue": "26 touched test(s) pass against the pre-change code: test_usage_and_completion_preserve_valid_unicode_scalars +20 more",
+    "file": "tests/events/test_unicode_safety.py",
+    "reason": "Verified preservation checks for valid Unicode usage/completion; independent invalid-scalar construct/decode regressions fail against baseline."
+  }
+]

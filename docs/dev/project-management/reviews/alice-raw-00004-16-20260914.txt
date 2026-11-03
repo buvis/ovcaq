@@ -1,0 +1,16 @@
+[ALICE] 🟠 The final `verify_ancestry()` pass is still racy: replacing an ancestor immediately after its pathname `stat`, then reparenting the unchanged descendant subtree beneath the replacement, lets all later identity checks pass and publication return without confirming the replacement entries; the regression injects before verification begins and misses this window | File: src/ovcaq/workflow/_files.py:277 | Task: 9
+[ALICE] 🟡 The restored deferred-directory diagnostic has no committed regression covering initial file/symlink refusal or the vanished-directory second open, including full path and preserved cause/errno | File: tests/packaging/test_rework_13.py | Task: 9
+[ALICE] 🟡 `_ensure_directory_chain` is 51 lines because it embeds the 13-line ancestry verifier; move that verifier to a named helper to satisfy the function-size limit and simplify the chain walk | File: src/ovcaq/workflow/_files.py:268 | Task: 9
+[ALICE] 🟡 `test_installed_defer_never_succeeds_through_unconfirmed_reparented_ancestry` is 80 lines; extract the safe-result and retry/replay assertion flows into helpers while retaining the parameterized chronology | File: tests/packaging/test_rework_13.py:357 | Task: 9
+R1: fail
+R2: pass
+R3: pass
+R4: pass
+R6: pass
+R7: pass
+R8: pass
+R9: fail
+R10: pass
+R11: pass
+R12: fail
+R13: pass

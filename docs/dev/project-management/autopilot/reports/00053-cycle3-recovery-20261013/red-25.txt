@@ -1,0 +1,95 @@
+....................FFFFFFFFFFFFFFF..................................... [ 51%]
+....................................................................     [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.AUTHENTICATION: 'authentication'>
+     +  where <FailureClass.UNKNOWN: 'unknown'> = classify_failure('StAtUs=401')
+     +    where 'StAtUs=401' = <built-in method format of str object at 0x10b90fa70>(code='401')
+     +      where <built-in method format of str object at 0x10b90fa70> = 'StAtUs={code}'.format
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_failure_classes.py:70: AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.AUTHENTICATION: 'authentication'>
+E   AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.PERMISSION: 'permission'>
+     +  where <FailureClass.UNKNOWN: 'unknown'> = classify_failure('StAtUs=403')
+     +    where 'StAtUs=403' = <built-in method format of str object at 0x10b90fa70>(code='403')
+     +      where <built-in method format of str object at 0x10b90fa70> = 'StAtUs={code}'.format
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_failure_classes.py:70: AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.PERMISSION: 'permission'>
+E   AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.RATE_LIMIT: 'rate_limit'>
+     +  where <FailureClass.UNKNOWN: 'unknown'> = classify_failure('StAtUs=429')
+     +    where 'StAtUs=429' = <built-in method format of str object at 0x10b90fa70>(code='429')
+     +      where <built-in method format of str object at 0x10b90fa70> = 'StAtUs={code}'.format
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_failure_classes.py:70: AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.RATE_LIMIT: 'rate_limit'>
+E   AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.CONNECTIVITY: 'connectivity'>
+     +  where <FailureClass.UNKNOWN: 'unknown'> = classify_failure('StAtUs=502')
+     +    where 'StAtUs=502' = <built-in method format of str object at 0x10b90fa70>(code='502')
+     +      where <built-in method format of str object at 0x10b90fa70> = 'StAtUs={code}'.format
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_failure_classes.py:70: AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.CONNECTIVITY: 'connectivity'>
+E   AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.CONNECTIVITY: 'connectivity'>
+     +  where <FailureClass.UNKNOWN: 'unknown'> = classify_failure('StAtUs=503')
+     +    where 'StAtUs=503' = <built-in method format of str object at 0x10b90fa70>(code='503')
+     +      where <built-in method format of str object at 0x10b90fa70> = 'StAtUs={code}'.format
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_failure_classes.py:70: AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.CONNECTIVITY: 'connectivity'>
+E   AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.AUTHENTICATION: 'authentication'>
+     +  where <FailureClass.UNKNOWN: 'unknown'> = classify_failure('eRrOr 401:')
+     +    where 'eRrOr 401:' = <built-in method format of str object at 0x10b90fab0>(code='401')
+     +      where <built-in method format of str object at 0x10b90fab0> = 'eRrOr {code}:'.format
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_failure_classes.py:70: AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.AUTHENTICATION: 'authentication'>
+E   AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.PERMISSION: 'permission'>
+     +  where <FailureClass.UNKNOWN: 'unknown'> = classify_failure('eRrOr 403:')
+     +    where 'eRrOr 403:' = <built-in method format of str object at 0x10b90fab0>(code='403')
+     +      where <built-in method format of str object at 0x10b90fab0> = 'eRrOr {code}:'.format
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_failure_classes.py:70: AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.PERMISSION: 'permission'>
+E   AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.RATE_LIMIT: 'rate_limit'>
+     +  where <FailureClass.UNKNOWN: 'unknown'> = classify_failure('eRrOr 429:')
+     +    where 'eRrOr 429:' = <built-in method format of str object at 0x10b90fab0>(code='429')
+     +      where <built-in method format of str object at 0x10b90fab0> = 'eRrOr {code}:'.format
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_failure_classes.py:70: AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.RATE_LIMIT: 'rate_limit'>
+E   AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.CONNECTIVITY: 'connectivity'>
+     +  where <FailureClass.UNKNOWN: 'unknown'> = classify_failure('eRrOr 502:')
+     +    where 'eRrOr 502:' = <built-in method format of str object at 0x10b90fab0>(code='502')
+     +      where <built-in method format of str object at 0x10b90fab0> = 'eRrOr {code}:'.format
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_failure_classes.py:70: AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.CONNECTIVITY: 'connectivity'>
+E   AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.CONNECTIVITY: 'connectivity'>
+     +  where <FailureClass.UNKNOWN: 'unknown'> = classify_failure('eRrOr 503:')
+     +    where 'eRrOr 503:' = <built-in method format of str object at 0x10b90fab0>(code='503')
+     +      where <built-in method format of str object at 0x10b90fab0> = 'eRrOr {code}:'.format
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_failure_classes.py:70: AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.CONNECTIVITY: 'connectivity'>
+E   AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.AUTHENTICATION: 'authentication'>
+     +  where <FailureClass.UNKNOWN: 'unknown'> = classify_failure('hTtP ErRoR 401')
+     +    where 'hTtP ErRoR 401' = <built-in method format of str object at 0x10b90fb70>(code='401')
+     +      where <built-in method format of str object at 0x10b90fb70> = 'hTtP ErRoR {code}'.format
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_failure_classes.py:70: AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.AUTHENTICATION: 'authentication'>
+E   AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.PERMISSION: 'permission'>
+     +  where <FailureClass.UNKNOWN: 'unknown'> = classify_failure('hTtP ErRoR 403')
+     +    where 'hTtP ErRoR 403' = <built-in method format of str object at 0x10b90fb70>(code='403')
+     +      where <built-in method format of str object at 0x10b90fb70> = 'hTtP ErRoR {code}'.format
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_failure_classes.py:70: AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.PERMISSION: 'permission'>
+E   AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.RATE_LIMIT: 'rate_limit'>
+     +  where <FailureClass.UNKNOWN: 'unknown'> = classify_failure('hTtP ErRoR 429')
+     +    where 'hTtP ErRoR 429' = <built-in method format of str object at 0x10b90fb70>(code='429')
+     +      where <built-in method format of str object at 0x10b90fb70> = 'hTtP ErRoR {code}'.format
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_failure_classes.py:70: AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.RATE_LIMIT: 'rate_limit'>
+E   AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.CONNECTIVITY: 'connectivity'>
+     +  where <FailureClass.UNKNOWN: 'unknown'> = classify_failure('hTtP ErRoR 502')
+     +    where 'hTtP ErRoR 502' = <built-in method format of str object at 0x10b90fb70>(code='502')
+     +      where <built-in method format of str object at 0x10b90fb70> = 'hTtP ErRoR {code}'.format
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_failure_classes.py:70: AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.CONNECTIVITY: 'connectivity'>
+E   AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.CONNECTIVITY: 'connectivity'>
+     +  where <FailureClass.UNKNOWN: 'unknown'> = classify_failure('hTtP ErRoR 503')
+     +    where 'hTtP ErRoR 503' = <built-in method format of str object at 0x10b90fb70>(code='503')
+     +      where <built-in method format of str object at 0x10b90fb70> = 'hTtP ErRoR {code}'.format
+/Users/bob/git/src/github.com/buvis/ovcaq/tests/drivers/test_adapter_failure_classes.py:70: AssertionError: assert <FailureClass.UNKNOWN: 'unknown'> is <FailureClass.CONNECTIVITY: 'connectivity'>
+=========================== short test summary info ============================
+FAILED tests/drivers/test_adapter_failure_classes.py::test_numeric_diagnostics_require_an_explicit_status_or_error_context[StAtUs={code}-401-authentication]
+FAILED tests/drivers/test_adapter_failure_classes.py::test_numeric_diagnostics_require_an_explicit_status_or_error_context[StAtUs={code}-403-permission]
+FAILED tests/drivers/test_adapter_failure_classes.py::test_numeric_diagnostics_require_an_explicit_status_or_error_context[StAtUs={code}-429-rate_limit]
+FAILED tests/drivers/test_adapter_failure_classes.py::test_numeric_diagnostics_require_an_explicit_status_or_error_context[StAtUs={code}-502-connectivity]
+FAILED tests/drivers/test_adapter_failure_classes.py::test_numeric_diagnostics_require_an_explicit_status_or_error_context[StAtUs={code}-503-connectivity]
+FAILED tests/drivers/test_adapter_failure_classes.py::test_numeric_diagnostics_require_an_explicit_status_or_error_context[eRrOr {code}:-401-authentication]
+FAILED tests/drivers/test_adapter_failure_classes.py::test_numeric_diagnostics_require_an_explicit_status_or_error_context[eRrOr {code}:-403-permission]
+FAILED tests/drivers/test_adapter_failure_classes.py::test_numeric_diagnostics_require_an_explicit_status_or_error_context[eRrOr {code}:-429-rate_limit]
+FAILED tests/drivers/test_adapter_failure_classes.py::test_numeric_diagnostics_require_an_explicit_status_or_error_context[eRrOr {code}:-502-connectivity]
+FAILED tests/drivers/test_adapter_failure_classes.py::test_numeric_diagnostics_require_an_explicit_status_or_error_context[eRrOr {code}:-503-connectivity]
+FAILED tests/drivers/test_adapter_failure_classes.py::test_numeric_diagnostics_require_an_explicit_status_or_error_context[hTtP ErRoR {code}-401-authentication]
+FAILED tests/drivers/test_adapter_failure_classes.py::test_numeric_diagnostics_require_an_explicit_status_or_error_context[hTtP ErRoR {code}-403-permission]
+FAILED tests/drivers/test_adapter_failure_classes.py::test_numeric_diagnostics_require_an_explicit_status_or_error_context[hTtP ErRoR {code}-429-rate_limit]
+FAILED tests/drivers/test_adapter_failure_classes.py::test_numeric_diagnostics_require_an_explicit_status_or_error_context[hTtP ErRoR {code}-502-connectivity]
+FAILED tests/drivers/test_adapter_failure_classes.py::test_numeric_diagnostics_require_an_explicit_status_or_error_context[hTtP ErRoR {code}-503-connectivity]
+15 failed, 125 passed in 0.22s

@@ -1,0 +1,12 @@
+diff --git a/tests/packaging/packaging_support.py b/tests/packaging/packaging_support.py
+index 796effa..a201f8e 100644
+--- a/tests/packaging/packaging_support.py
++++ b/tests/packaging/packaging_support.py
+@@ -56,7 +56,6 @@ DECLARED_MODULES = (
+     "ovcaq.drivers.claude",
+     "ovcaq.drivers.claude_events",
+     "ovcaq.drivers.codex",
+-    "ovcaq.drivers.codex_activity",
+     "ovcaq.drivers.codex_events",
+     "ovcaq.drivers.command",
+     "ovcaq.drivers.edge",

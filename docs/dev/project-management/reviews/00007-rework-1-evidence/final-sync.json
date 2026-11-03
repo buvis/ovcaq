@@ -1,0 +1,6 @@
+{
+  "command": "UV_CACHE_DIR=/private/tmp/ovcaq-final-cache mise exec -- uv sync --all-groups",
+  "exit": 0,
+  "budget_seconds": 300,
+  "log": "docs/dev/tmp/00007-rework-final-sync.txt"
+}

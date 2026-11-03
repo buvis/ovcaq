@@ -1,0 +1,27 @@
+[ALICE] 🟠 ProjectObserver follows runtime `events.jsonl`, but supervisors write normalized observations only to each session’s `normalized.jsonl`; real TUI polls therefore never receive provider, activity-lane, or live-usage events | File: src/ovcaq/tui/model.py:274 | Task: 3
+[ALICE] 🟠 Normal supervisor cleanup removes the selected registry entry before the next poll; the observer then returns `unknown`, while both viewers exit only on `completed`, so completion, pause, halt, or stop can leave the viewer polling forever | File: src/ovcaq/tui/app.py:275 | Task: 5
+[ALICE] 🟠 The Textual timer executes registry snapshots, repeated `ps` probes, and filesystem reads synchronously on the UI thread, allowing every poll to freeze navigation and controls | File: src/ovcaq/tui/app.py:275 | Task: 3
+[ALICE] 🟠 Active duration is calculated by summing finalized session and capability wall times instead of elapsed time from `FleetRun.started_at`, contrary to the explicit duration contract | File: src/ovcaq/tui/model.py:299 | Task: 3
+[ALICE] 🟠 JSON `run` without `--no-tui` is silently dispatched as a foreground run, although the CLI contract requires JSON mode to reject it unless `--no-tui` is explicit | File: src/ovcaq/cli.py:526 | Task: 8
+[ALICE] 🟠 Fleet selection renders `run.root` and `run.agent` without `display_text`; configured agents or project paths containing terminal controls can inject output in both Textual and plain modes | File: src/ovcaq/tui/app.py:354 | Task: 3
+[ALICE] 🟠 Theme path checks inspect only the configured root and its `ovcaq` child; a symlink in an earlier ancestor is followed by direct chmod/open/replace operations, violating the all-components no-follow contract | File: src/ovcaq/tui/app.py:123 | Task: 6
+[ALICE] 🟡 Latest-session cumulative usage is merged into batch totals without forcing `partial=True`; a complete aggregate plus a live full usage snapshot is presented as a complete total even though the active snapshot can still grow | File: src/ovcaq/tui/model.py:323 | Task: 3
+[ALICE] 🟡 Valid integer `cost_usd` values accepted by the shared metric validator are ignored because the projection collects only floats, rendering a valid known cost as unknown | File: src/ovcaq/tui/model.py:221 | Task: 3
+[ALICE] 🟡 Telemetry gaps are bounded only within one poll and are not retained; one-shot malformed, oversized, rotation, and truncation evidence disappears on the next 250 ms refresh | File: src/ovcaq/tui/model.py:293 | Task: 3
+[ALICE] 🟡 `supervisor_settings()` runs before the child claims its launch report and before the guarded block, so configuration or layout failures bypass durable diagnostics and are misreported by the parent as an unhandled crash | File: src/ovcaq/supervisor_cli.py:117 | Task: 8
+[ALICE] 🟡 The attach boundary catches only three exception families, so other Textual startup or runtime exceptions bypass the mandated plain-renderer fallback | File: src/ovcaq/tui/app.py:31 | Task: 9
+[ALICE] 🟡 Plain project mode never reads stdin, so terminal EOF/Ctrl-D cannot reach its `EOFError` handler and cannot detach the fallback viewer | File: src/ovcaq/tui/app.py:329 | Task: 9
+[ALICE] 🟡 Changed-test fail-first replay timed out after 600 seconds, leaving no evidence that the changed tests fail against the pre-change implementation | File: N/A | Task: general
+[ALICE] 🟡 `test_init_rejects_project_config_path_collisions_before_state_publication` hedges with `or`, so either asserted setup shape satisfies the final check | File: tests/state/test_cli.py:361 | Task: general
+R1: fail
+R2: fail
+R3: pass
+R4: fail
+R6: pass
+R7: fail
+R8: pass
+R9: fail
+R10: fail
+R11: pass
+R12: pass
+R13: pass

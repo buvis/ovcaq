@@ -1,0 +1,389 @@
+{
+  "batch_id": "202610092123",
+  "items": [
+    {
+      "issue": "`has_invalid_unicode_scalar` never stops on cyclic input. It keeps no record of containers it has already visited, so a payload like `d = {\"self\": d}` loops forever and its pending list grows without limit. I checked this: `Observation(payload=d)` was still running after 3 s. Before this change the recursive copier raised `RecursionError`, and `RawFirstDecoder` turned that into a `raw.unknown` gap. Now a driver bug that builds a cyclic payload freezes the supervisor's decode path, along with the timeout and cleanup steps that wait on it. Both design reviewers raised this as a non-blocker. Fix: track the `id()` of containers already visited, either skipping them or raising `ValueError`. That is about 3 lines and keeps the scan iterative",
+      "severity": "medium",
+      "file": "src/ovcaq/events/model.py:77",
+      "reason": "Settled limitation: the reviewed helper contract is explicitly acyclic JSON-like containers; native json.loads cannot create cycles. Preserve the witnessed hang; no cycle-guard scope expansion.",
+      "cycle": 1,
+      "type": "review-deferred",
+      "prd": "00051-triage-a-single-valid-codex-record-can-crash-th-v1.md"
+    },
+    {
+      "issue": "The R2 class of bug still exists at display time, outside this PRD's scope. `bounded_detail` strips only C0 controls and 7-bit CSI. The TUI's `display_text` drops all Cc/Cf/Cs/Zl/Zp characters (src/ovcaq/tui/model.py:57). Confirmed: `\"lane sk-abc\\u200b<36 chars>\"` (also with \\x85, \\x9b, \\u00ad, \\u2060 instead of \\u200b) passes redaction unchanged and the TUI shows the joined `sk-abcabcdef\u2026` token. Activity text and tool details (src/ovcaq/drivers/codex_events.py:32, src/ovcaq/drivers/codex_events.py:127) strip nothing, so a NUL-split token also renders whole on screen. This needs a durable home (a PRD or issue)",
+      "severity": "medium",
+      "file": "src/ovcaq/drivers/codex_events.py:59",
+      "reason": "Display-time character stripping/activity UI is excluded by this PRD. Preserve durable follow-up evidence; no implicit expansion of 00054.",
+      "cycle": 1,
+      "type": "review-deferred",
+      "prd": "00051-triage-a-single-valid-codex-record-can-crash-th-v1.md"
+    },
+    {
+      "issue": "The same strip-after-redact bug exists in the TUI. `display_text` drops Cc/Cf characters from already-sanitized activity and tool text without redacting again, so a stored `sk-abc\\x00defghijklmnopqrstuvwxyz0123` shows on screen as the rebuilt token",
+      "severity": "medium",
+      "file": "src/ovcaq/tui/model.py:136",
+      "reason": "Same out-of-scope display-time defect as R6; preserve its separate citation and deferral.",
+      "cycle": 1,
+      "type": "review-deferred",
+      "prd": "00051-triage-a-single-valid-codex-record-can-crash-th-v1.md"
+    },
+    {
+      "issue": "The supervisor's catch-all handler builds `SessionSummary(..., str(error), ...)`. If the error text carries surrogateescape bytes (a non-UTF-8 path), the new `SessionSummary` check raises `ValueError` inside the handler and `_conclude` is skipped, so the failure record is lost. Not a regression: the strict encode in src/ovcaq/runtime/_session_io.py:19 already failed on such text",
+      "severity": "low",
+      "file": "src/ovcaq/runtime/supervisor.py:370",
+      "reason": "Pre-existing arbitrary exception/path surrogate handling; retain for later scoped runtime failure work.",
+      "cycle": 1,
+      "type": "review-deferred",
+      "prd": "00051-triage-a-single-valid-codex-record-can-crash-th-v1.md"
+    },
+    {
+      "issue": "The pre-decode check assumes every driver parses frames with plain `json.loads`. A plugin driver that unwraps a prefix or applies its own escapes skips the pre-mutation check. The model still rejects the bad strings, so nothing crashes, but such a driver can change its state before the `Observation` constructor raises. Every frame (up to 1 MiB) is also parsed twice; the PRD sets no performance limit",
+      "severity": "low",
+      "file": "src/ovcaq/events/tail.py:118",
+      "reason": "Prefix-unwrapping/custom-escape plugin drivers are outside this native JSON frame contract. Preserve malformed/non-JSON delegation; no generic rollback framework.",
+      "cycle": 1,
+      "type": "review-deferred",
+      "prd": "00051-triage-a-single-valid-codex-record-can-crash-th-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 2,
+      "ref": "R1",
+      "issue": "The review-1 two-pass `bounded_detail` leaks the tail of a split token. When the control sits after 20 or more body characters, pass 1 redacts the head. Control removal then glues the tail onto `[REDACTED]`, and pass 2 finds no `sk-` or `Bearer` prefix to match. I ran it to confirm: `bounded_detail('Diagnostic sk-abcdefghijklmnopqrstuvwxyz\\x1b[0m0123456789ABCDEF')` returns `'Diagnostic [REDACTED]0123456789ABCDEF'`, the real `turn.failed` payload detail is the same, and `'Bearer '+'a'*23+'\\x00bbbbbbbb'` returns `'Bearer [REDACTED]bbbbbbbb'`. Task 3's strip-first order redacted these fully, and pre-PRD code leaked the same way. This breaks two PRD rules (\"ANSI/NUL splits of ordinary synthetic tokens are redacted\", \"synthetic credential fragments never enter normalized details\") and makes docs/driver-protocol.md:224 claim too much. Every split test cuts at `token[:6]`, so no test catches it. Fix: before control removal, absorb token characters stuck to a marker across recognized controls with `re.sub(rf\"\\[REDACTED\\](?:{controls})+[A-Za-z0-9_.-]+\", \"[REDACTED]\", sanitize_text(protected))`. I probed this on both leaks plus `x\\x00sk-\u2026`, the OSC case and the cap reproducer, and all came out fully redacted (I did not run the suite with it). Also add SPLIT_DETAILS cases that split after 20 or more body characters, for both bare and Bearer tokens",
+      "severity": "high",
+      "consensus": "[3/3]",
+      "file": "src/ovcaq/drivers/codex_events.py:66",
+      "reason": "rework cap reached with this finding unresolved; Cap reached (cycle 2/2) with the late-split credential suffix HIGH unresolved. All three independent reviewers agree; coordinator reproduced bare/CSI and Bearer/NUL suffix leaks. No cap increase or repair authorized by this transition.",
+      "prd": "00051-triage-a-single-valid-codex-record-can-crash-th-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 2,
+      "ref": "R2",
+      "issue": "Unreleased Fixed now has two `**drivers**` entries for one unreleased fix, and they give conflicting orders. Line 43 says redact both before and after control removal. Line 45 says remove controls before redacting, and its claim \"so split credentials cannot survive normalization\" is false given the finding above. Line 44 (\"speed up surrogate detection\") describes a tweak to unreleased code, so users see no change from the last release. Simpler: merge lines 43 and 45 into one drivers entry that states what actually shipped, and drop line 44",
+      "severity": "medium",
+      "consensus": "[3/3]",
+      "file": "CHANGELOG.md:43",
+      "reason": "rework cap reached with this finding unresolved; Cap reached with conflicting and overbroad unreleased changelog prose unresolved. Preserve the prior Pat LOW and all three current citations; no tail sweep on cap-out.",
+      "prd": "00051-triage-a-single-valid-codex-record-can-crash-th-v1.md"
+    },
+    {
+      "type": "cap-overflow",
+      "cycle": 2,
+      "ref": "R3",
+      "issue": "The raw-first R7 regressions (byte-exact raw, gap digest and preview, unchanged adapter state, later healthy terminal) live in a file the PRD doesn't list, tests/events/test_unicode_frames.py. The task-2 acceptance command `pytest tests/events/test_unicode_safety.py tests/events/test_tail.py` runs none of them, because test_unicode_safety.py only tests the shared models. That acceptance therefore passes without proving its claims.",
+      "severity": "medium",
+      "consensus": "[1/3]",
+      "file": "tests/events/test_unicode_frames.py:172",
+      "reason": "rework cap reached with this finding unresolved; Preserve literal PRD acceptance-command mismatch. Task 7 corrected the design command within its approved scope; source PRD was intentionally unchanged. Full and focused suites include frame tests, but the PRD command still omits them; requirements ambiguity retained rather than claiming literal closure.",
+      "prd": "00051-triage-a-single-valid-codex-record-can-crash-th-v1.md"
+    },
+    {
+      "type": "stall",
+      "site": "blocking_escalation",
+      "detail": "Premise failed before implementation: installed codex-cli 0.162.1, required exact 0.160.1; strict guard unchanged; R8/R17 unresolved; reports/00052-build-blocker.md",
+      "op_id": "2de3b75dd648",
+      "prd": "00052-triage-the-exact-version-pin-rejects-the-codex-v1.md"
+    },
+    {
+      "issue": "The Codex probe runs in the caller's working directory, while the launch runs in request.root. A relative command or an empty-PATH lookup can therefore succeed in the probe and fail at launch, or the reverse (existing behavior)",
+      "severity": "low",
+      "file": "src/ovcaq/drivers/codex.py",
+      "reason": "Known pre-existing caller/request-root cwd disagreement; PRD preserves Codex probe behavior and excludes probe ownership redesign. Requires later approved scope; unresolved limitation retained.",
+      "type": "deferred_decision",
+      "cycle": 6,
+      "prd": "00053-adapter-operational-corrections-v1.md"
+    },
+    {
+      "issue": "The `continue` at codex.py:383 drops every native update for a lane that has already finished. codex-cli 0.162.1 ships a `resume_agent` tool (\"Resume a previously closed agent by id so it can receive send_input\"; I confirmed the string in the binary). So a lane can legitimately go completed \u2192 close \u2192 resume \u2192 running \u2192 errored. With the `continue`, the resumed run's running and errored updates disappear with no trace, and a later interrupt or shutdown of the resumed run becomes raw unknown instead of `lane.failed`. The pre-change code reported these. The TUI already handles a restart, because the last write wins (src/ovcaq/tui/model.py:607). The PRD only requires that close statuses do not fail a completed lane, and the unfinished-only filter at src/ovcaq/drivers/codex.py:372 already does that on its own. Fix: delete lines 383-384. Then flip `test_finished_lane_late_update_retains_only_non_lane_observations` (tests/drivers/test_adapter_outcomes.py:266) so it expects running \u2192 `lane.progress` and errored \u2192 `lane.failed`, and reword docs/driver-protocol.md:243. Confidence: the tool is confirmed; the exact `agents_states` sequence after a resume is my guess",
+      "severity": "medium",
+      "file": "src/ovcaq/drivers/codex.py:383",
+      "reason": "Requirements ambiguity: resume/restart generation semantics are not specified by this PRD. The existing contract deliberately freezes completed/failed identities and pins late updates. A binary tool name does not prove a native status sequence; changing this would undo reviewed stability without a fixture. Preserve for separately specified adapter lifecycle work.",
+      "cycle": 2,
+      "consensus": "[1/3]",
+      "type": "deferred_decision",
+      "prd": "00053-adapter-operational-corrections-v1.md"
+    },
+    {
+      "issue": "A status prefix followed by an ordinary count still classifies. `status: 401 tests passed` returns `authentication` and `error code: 503 records` returns `connectivity` (confirmed by probe). The negative tests only cover counts with no status word in front.",
+      "severity": "low",
+      "file": "src/ovcaq/drivers/codex_events.py:301",
+      "reason": "Requirements ambiguity: mixed diagnostic-prefix/ordinary-count messages need an explicit precedence contract. Existing scope requires diagnostic status contexts and ordinary count negatives; do not invent a broader prose grammar or silently change precedence. Keep the confirmed counterexamples for later specified work.",
+      "cycle": 2,
+      "consensus": "[1/3]",
+      "type": "deferred_decision",
+      "prd": "00053-adapter-operational-corrections-v1.md"
+    },
+    {
+      "cycle": 2,
+      "round": "post-sweep-20261012",
+      "ref": "R5",
+      "issue": "Probe and launch can disagree on relative lookups. Both probes resolve relative PATH entries and relative command paths against the supervisor's own working directory, but launch runs with `cwd=request.root`. Absolute paths and normal PATH entries are unaffected.",
+      "file": "src/ovcaq/drivers/claude.py:82",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "action": "defer",
+      "reason": "Existing out-of-scope relative-path/cwd limitation; probe ownership redesign excluded by PRD. New Claude citation retained.",
+      "type": "deferred_decision",
+      "prd": "00053-adapter-operational-corrections-v1.md"
+    },
+    {
+      "cycle": 2,
+      "round": "five-repair-20261012",
+      "ref": "R3",
+      "issue": "The numeric grammar only accepts `HTTP[/x.y]`, `HTTP status [client|server error (]`, `status [code][:]` and `error code[:]`. Other explicit HTTP or error forms used to classify through the bare number and now return `unknown`. Confirmed by running the classifier: \"HTTP Error 503: Service Unavailable\" gives unknown (was connectivity), \"HTTP Error 429: Too Many Requests\" gives unknown (was rate_limit), \"Error 403: Forbidden\" gives unknown (was permission), \"status=429\" gives unknown. The tests pin `status=429` and `Error 429:` as UNKNOWN. Codex's own Rust forms (`unexpected status N ...`, `last status: N`, reqwest `HTTP status ... error (N ...)`) are covered, so the risk is limited to non-native formats.",
+      "file": "src/ovcaq/drivers/codex_events.py:300",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "reason": "Additional non-native diagnostic grammar needs explicit scope; preserve pinned unknown forms and current production behavior. Superseded for explicit HTTP/status/error spellings by operator authorization 2026-10-13 and completed task 25; earlier deferral retained as history. Bare numbers/reason phrases gain no new contract.",
+      "type": "deferred_decision",
+      "prd": "00053-adapter-operational-corrections-v1.md"
+    },
+    {
+      "cycle": 2,
+      "round": "five-repair-20261012",
+      "ref": "R5",
+      "issue": "Flaky test: `test_installed_foreground_signals_return_shell_status_and_stop_the_driver[15]` failed once under full-suite load (returncode 1, expected 143). It passed in isolation (3/3) and in a second full run (7155 passed). Not traced to this diff, but this PRD's exit gate depends on `uv run pytest` passing.",
+      "file": "tests/packaging/test_installed_supervisor_cli.py:591",
+      "severity": "low",
+      "consensus": "[1/3]",
+      "reason": "Existing signal-test flake not traced to this PRD; isolation and second full suite passed; preserve raw evidence for separate work.",
+      "type": "deferred_decision",
+      "prd": "00053-adapter-operational-corrections-v1.md"
+    },
+    {
+      "issue": "A completed lane can still turn into a failure after the identity cache fills. At 4096 entries, eviction drops finished entries first, so long sessions lose finished lanes before anything else. Reproduced: start lane `child`, complete it, decode 4096 command items, then send a late `errored` update for `child`. The decoder emits `lane.failed` for `child`, alongside the raw capacity-gap evidence. Native Codex is unlikely to send `errored` after `completed`, so the practical risk is low.",
+      "severity": "\u26aa",
+      "file": "src/ovcaq/drivers/codex.py:414",
+      "reason": "Operator approved deferral on 2026-10-13: pre-existing bounded identity-cache policy; completed-lane retention after eviction needs separately scoped lifecycle work. R4 from review-2-three-repair-20261012; preserve raw capacity-gap evidence.",
+      "type": "deferred_decision",
+      "cycle": 6,
+      "prd": "00053-adapter-operational-corrections-v1.md"
+    },
+    {
+      "issue": "The Claude probe checks only `command[0]` against the overlay `PATH`. With a wrapper argv (for example `env claude`), it never checks that the wrapped executable exists, while the Codex probe runs the full wrapper argv. This predates the PRD, but the PRD lists wrapper argv as a probe input",
+      "severity": "low",
+      "file": "src/ovcaq/drivers/claude.py:81",
+      "reason": "Existing wrapper-inner-executable limitation: base 7819970 Claude probe already checks only command[0]. The reviewed design explicitly requires shutil.which(command, path=effective_path), not execution or parsing of arbitrary wrapper argv. Effective PATH lookup is implemented and tested. Further wrapper health semantics need a separately specified contract.",
+      "cycle": 6,
+      "type": "deferred_decision",
+      "prd": "00053-adapter-operational-corrections-v1.md"
+    },
+    {
+      "cycle": 1,
+      "ref": "R1",
+      "issue": "Numeric diagnostics now need \"HTTP\", \"HTTP status\", \"status code\" or \"error code\" (src/ovcaq/drivers/codex_events.py:301), so Codex's own status wording falls to UNKNOWN. I ran `classify_failure` on \"unexpected status 503 Service Unavailable\", \"unexpected status 502 Bad Gateway\", \"unexpected status 403 Forbidden\" and \"exceeded retry limit, last status: 429 Too Many Requests\", and all four return `unknown`. The old code returned connectivity, permission and rate_limit for these. Both prefixes are confirmed as strings in the installed codex 0.162.1 binary; the \"503 Service Unavailable\" suffix is my guess at how Codex renders the code. Effect: 502/503 skip the bounded connectivity WAIT and get an immediate died-retry and then PARK, and 403 retries instead of halting for the operator. The PRD allows \"HTTP/status/error-code\" context, and \"status 503\" is a status context. Fix: accept a bare `status` (e.g. `(?:http(?: status)? | status(?: code)? | error code)`) and add both Codex spellings as literal positives in tests/drivers/test_adapter_failure_classes.py:55",
+      "severity": "high",
+      "consensus": "[3/3]",
+      "action": "fix",
+      "reason": "Bounded in-scope correction; complete verbatim finding retained for rework.",
+      "research": {
+        "category": "D",
+        "verdict": "proceed",
+        "checks": [
+          {
+            "check": "prd-requires-status-context",
+            "pass": true,
+            "evidence": "PRD: Numeric 401/403/429/502/503 classify only in explicit HTTP/status/error-code diagnostic contexts"
+          },
+          {
+            "check": "signature-preserved",
+            "pass": true,
+            "evidence": "Existing classify_failure(detail: str) -> FailureClass; no new API, enum or schema"
+          }
+        ],
+        "evidence_summary": "Bounded provider-edge matching repair directly required by PRD; preserve ordinary-count negatives and unchanged precedence."
+      },
+      "type": "autonomous_research",
+      "prd": "00053-adapter-operational-corrections-v1.md"
+    },
+    {
+      "issue": "Claude's decoder gives every text and thinking block in one message the same `message_id` (verified: decoding `tests/fixtures/claude/v1/healthy.jsonl` line 2 yields text and thinking, both `message-1`). The exact-ID key at model.py:576 therefore lets the thinking block replace the text, and \"Working on the sanitized fixture.\" never reaches the panel. The test at tests/tui/test_activity_projection.py:83 (claude param) pins this kind-changing replacement as intended, and no test decodes a real Claude multi-block message. Fix: key on (kind, id), or add a block index at the decoder edge. If neither, record it as a deferred design gap.",
+      "severity": "high",
+      "file": "src/ovcaq/tui/model.py:576",
+      "reason": "Confirmed decoded multi-block collision, but the explicit Projection contract requires a nonblank message_id to update its existing item regardless of kind. Design alternative 3 rejects new decoder identities. Changing to (kind,id) contradicts that contract. Defer this pre-existing design gap for a separate provider-edge design; retain HIGH severity and raw B1 fail. No finding is waived.",
+      "cycle": 1,
+      "action": "defer",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00054-activity-projection-corrections-v1.md"
+    },
+    {
+      "issue": "Codex command detail is `command\\noutput`, and `display_text` strips the `\\n`, so the operator sees the command and its output run together (\"printf exampleexample\"). The new test asserts that string as the expected value (tests/tui/test_rework_activity.py:122), which treats an inaccurate render as intent. That conflicts with the PRD metric that tools \"render accurate detail\". Fix: turn line breaks into a visible separator before sanitizing, or record a deferral and stop asserting the fused text.",
+      "severity": "medium",
+      "file": "tests/tui/test_rework_activity.py:122",
+      "reason": "Confirmed pre-existing newline concatenation. Projection and PRD require preservation of existing text sanitization; changing global display_text affects all panels. Defer a separately scoped separator design; retain the current regression assertion until behavior changes.",
+      "cycle": 1,
+      "action": "defer",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00054-activity-projection-corrections-v1.md"
+    },
+    {
+      "issue": "Tool identity still uses `display_text(str(tool_id))`, which sanitizes and truncates the ID. Message IDs were just fixed for the same problem (same defect class, bug-fix discipline). Real tool IDs are short today, so the impact is low.",
+      "severity": "low",
+      "file": "src/ovcaq/tui/model.py:595",
+      "reason": "Confirmed pre-existing tool identity collision class. Exact identity in this PRD names message_id only; preserving tool behavior avoids an opportunistic identity redesign. Record separately for follow-up.",
+      "cycle": 1,
+      "action": "defer",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00054-activity-projection-corrections-v1.md"
+    },
+    {
+      "issue": "The \"N activity entries omitted\" line is printed after all 20 lanes instead of right after the activity block. In a panel limited by height, it is the first line cut off, and it reads as if it belongs to the lanes. A test locks in this placement.",
+      "severity": "low",
+      "file": "src/ovcaq/tui/panels.py:101",
+      "reason": "Clipping is confirmed as an existing constrained-height presentation limitation, explicitly recorded by design dispatch 2. Presentation contract appends both omission lines after activity and lanes; preserve placement and defer alternate compact presentation.",
+      "cycle": 1,
+      "action": "defer",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00054-activity-projection-corrections-v1.md"
+    },
+    {
+      "issue": "Exit-criteria run: the full `uv run pytest` gave 7249 passed and 2 failed, both in `test_ordinary_project_ui_failure_restores_pty_and_reuses_observer[construction|start]`. That file passed 14/14 when rerun alone. I ran ruff and mypy at the same time as the suite, so the failures look timing-sensitive under load, and this PRD does not touch the file. ruff check, ruff format --check, mypy and `uv build` all passed. The PRD's own test files passed 80/80. I did not run `uv sync --all-groups`.",
+      "severity": "low",
+      "file": "tests/integration/test_viewer_fallback.py:338",
+      "reason": "Preserve the full-suite 7249/2 failure and isolated 14/14 success as a potential timing flake in unchanged viewer fallback. No evidence establishes a PRD regression. Fresh full-suite result is separately recorded below; retain flake follow-up even if it passes.",
+      "cycle": 1,
+      "action": "defer",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00054-activity-projection-corrections-v1.md"
+    },
+    {
+      "issue": "Cannot statically verify: fail-first replay of the changed tests against 65926983 (the replay was skipped because the worktree could not be created)",
+      "severity": "low",
+      "file": "N/A",
+      "reason": "Verification limitation retained: old-code fail-first replay was blocked by worktree permissions. Bob names a multi-step checkout/copy/run procedure, not one exact allowed verification command, so not queued: command shape. Original build red checks and mutation evidence remain available; no claim of completed replay.",
+      "cycle": 1,
+      "action": "defer",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00054-activity-projection-corrections-v1.md"
+    },
+    {
+      "issue": "Claude's decoder gives every text and thinking block in one message the same `message_id` (verified: decoding `tests/fixtures/claude/v1/healthy.jsonl` line 2 yields text and thinking, both `message-1`). The exact-ID key at model.py:576 therefore lets the thinking block replace the text, and \"Working on the sanitized fixture.\" never reaches the panel. The test at tests/tui/test_activity_projection.py:83 (claude param) pins this kind-changing replacement as intended, and no test decodes a real Claude multi-block message. Fix: key on (kind, id), or add a block index at the decoder edge. If neither, record it as a deferred design gap.",
+      "severity": "high",
+      "file": "src/ovcaq/tui/model.py:576",
+      "reason": "Confirmed decoded multi-block collision, but the explicit Projection contract requires a nonblank message_id to update its existing item regardless of kind. Design alternative 3 rejects new decoder identities. Changing to (kind,id) contradicts that contract. Defer this pre-existing design gap for a separate provider-edge design; retain HIGH severity and raw B1 fail. No finding is waived.",
+      "cycle": 1,
+      "action": "defer",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00054-activity-projection-corrections-v1.md"
+    },
+    {
+      "issue": "Codex command detail is `command\\noutput`, and `display_text` strips the `\\n`, so the operator sees the command and its output run together (\"printf exampleexample\"). The new test asserts that string as the expected value (tests/tui/test_rework_activity.py:122), which treats an inaccurate render as intent. That conflicts with the PRD metric that tools \"render accurate detail\". Fix: turn line breaks into a visible separator before sanitizing, or record a deferral and stop asserting the fused text.",
+      "severity": "medium",
+      "file": "tests/tui/test_rework_activity.py:122",
+      "reason": "Confirmed pre-existing newline concatenation. Projection and PRD require preservation of existing text sanitization; changing global display_text affects all panels. Defer a separately scoped separator design; retain the current regression assertion until behavior changes.",
+      "cycle": 1,
+      "action": "defer",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00054-activity-projection-corrections-v1.md"
+    },
+    {
+      "issue": "Tool identity still uses `display_text(str(tool_id))`, which sanitizes and truncates the ID. Message IDs were just fixed for the same problem (same defect class, bug-fix discipline). Real tool IDs are short today, so the impact is low.",
+      "severity": "low",
+      "file": "src/ovcaq/tui/model.py:595",
+      "reason": "Confirmed pre-existing tool identity collision class. Exact identity in this PRD names message_id only; preserving tool behavior avoids an opportunistic identity redesign. Record separately for follow-up.",
+      "cycle": 1,
+      "action": "defer",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00054-activity-projection-corrections-v1.md"
+    },
+    {
+      "issue": "The \"N activity entries omitted\" line is printed after all 20 lanes instead of right after the activity block. In a panel limited by height, it is the first line cut off, and it reads as if it belongs to the lanes. A test locks in this placement.",
+      "severity": "low",
+      "file": "src/ovcaq/tui/panels.py:101",
+      "reason": "Clipping is confirmed as an existing constrained-height presentation limitation, explicitly recorded by design dispatch 2. Presentation contract appends both omission lines after activity and lanes; preserve placement and defer alternate compact presentation.",
+      "cycle": 1,
+      "action": "defer",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00054-activity-projection-corrections-v1.md"
+    },
+    {
+      "issue": "Exit-criteria run: the full `uv run pytest` gave 7249 passed and 2 failed, both in `test_ordinary_project_ui_failure_restores_pty_and_reuses_observer[construction|start]`. That file passed 14/14 when rerun alone. I ran ruff and mypy at the same time as the suite, so the failures look timing-sensitive under load, and this PRD does not touch the file. ruff check, ruff format --check, mypy and `uv build` all passed. The PRD's own test files passed 80/80. I did not run `uv sync --all-groups`.",
+      "severity": "low",
+      "file": "tests/integration/test_viewer_fallback.py:338",
+      "reason": "Preserve the full-suite 7249/2 failure and isolated 14/14 success as a potential timing flake in unchanged viewer fallback. No evidence establishes a PRD regression. Fresh full-suite result is separately recorded below; retain flake follow-up even if it passes.",
+      "cycle": 1,
+      "action": "defer",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00054-activity-projection-corrections-v1.md"
+    },
+    {
+      "issue": "Cannot statically verify: fail-first replay of the changed tests against 65926983 (the replay was skipped because the worktree could not be created)",
+      "severity": "low",
+      "file": "N/A",
+      "reason": "Verification limitation retained: old-code fail-first replay was blocked by worktree permissions. Bob names a multi-step checkout/copy/run procedure, not one exact allowed verification command, so not queued: command shape. Original build red checks and mutation evidence remain available; no claim of completed replay.",
+      "cycle": 1,
+      "action": "defer",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00054-activity-projection-corrections-v1.md"
+    },
+    {
+      "issue": "The recovery fix still leaves one gap in the exit race. After `cleanup_run_records` removes run.json, the supervisor process stays alive until the interpreter exits. A poll in that gap gets `ended=False`, an idle observation with `run_id=None`, and `state=None`. Because that identity no longer matches the selected run, `_observe` closes the follower and clears the session cache. The next poll is terminal but has no `_session_id`, so the final frame loses lanes, activity and provider. I confirmed this with a probe: I ran `Selected.finish()`, forced `_run_observation.process_matches` to return True for one poll, and polled again. `assert_final_telemetry` then failed with `'unknown' == 'selected-provider'`. The new tests miss this because `finish()` waits for the process to exit fully. Fix: clear the cache only when `selected.ended` is true or the observation shows a different active run (`observation.run_id` is not None and differs). Missing metadata alone should not clear it.",
+      "severity": "medium",
+      "file": "src/ovcaq/tui/model.py:468",
+      "reason": "Confirmed cleanup-before-process-exit cache-loss edge. This predates and remains outside the activity projection contract; changing behavior when selected ownership metadata is absent needs a separate fail-closed observer contract covering replacement and malformed identities. Preserve the reported defect and probe; do not apply the suggested relaxed identity guard opportunistically. Correct consensus is Alice 1/3: Blake reported scope, Bob requested identity-guard coverage, not this defect.",
+      "cycle": 2,
+      "action": "defer",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00054-activity-projection-corrections-v1.md"
+    },
+    {
+      "issue": "Claude text and thinking blocks that share one `message.id` collapse into a single entry, and the later block overwrites the earlier one. Only a test comment (\"Known R1 limitation\") records this. docs/driver-protocol.md says only that \"message updates use their full IDs\", so operators aren't told a block can disappear.",
+      "severity": "low",
+      "file": "tests/tui/test_activity_projection.py:98",
+      "reason": "Matches cycle-1 settled HIGH shared-message-ID design gap. Its test now characterizes real decoded blocks and explicitly records the limitation. Existing docs describe full-ID update semantics accurately; block-specific presentation and operator caveats belong with the already-deferred provider-edge design, not an identity change here. Keep original HIGH deferral unchanged.",
+      "cycle": 2,
+      "action": "defer",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00054-activity-projection-corrections-v1.md"
+    },
+    {
+      "issue": "`test_activity_window.py` imports the private helpers `_poll` and `_decoder` from sibling test modules (tests/tui/test_activity_window.py:19), which Pat retained as LOW",
+      "severity": "low",
+      "file": "tests/tui/test_activity_window.py:19",
+      "reason": "Known low-priority test-helper coupling follows existing sibling-helper precedent. Extracting a shared support module is a separate test-organization cleanup with no behavioral or acceptance defect. Preserve as a durable low follow-up rather than expand this bounded correction.",
+      "cycle": 2,
+      "action": "defer",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00054-activity-projection-corrections-v1.md"
+    },
+    {
+      "issue": "The run-identity half of the new cache-keep guard may have no test. The new tests pin the keep path through final telemetry, but none may fail if the condition shrinks to `if selected.ended:`",
+      "severity": "low",
+      "file": "src/ovcaq/tui/model.py:468",
+      "reason": "Known verification limitation for the separately deferred observer guard design. The suggested mutate/run/revert sequence is not one allowed verification command; not queued: command shape. No claim that replacement-identity coverage was verified.",
+      "cycle": 2,
+      "action": "defer",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00054-activity-projection-corrections-v1.md"
+    },
+    {
+      "issue": "Captured full suite had 7256 passed/1 terminal detach startup timeout; unchanged isolated case passed 1/0, independent Blake full suite passed 7257/0.",
+      "severity": "low",
+      "file": "tests/integration/test_terminal_lifecycle.py:368",
+      "reason": "Retain potential real-subprocess startup flake. Unchanged test file, earlier staging full suite exit 0, isolated failure passed immediately and independent full suite passed. No evidence of a PRD regression; do not weaken waits or assertions.",
+      "cycle": 2,
+      "action": "defer",
+      "status": "open",
+      "type": "review-deferral",
+      "prd": "00054-activity-projection-corrections-v1.md"
+    }
+  ]
+}

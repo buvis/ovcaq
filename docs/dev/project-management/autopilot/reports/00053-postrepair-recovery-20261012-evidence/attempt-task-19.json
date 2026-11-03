@@ -1,0 +1,21 @@
+{
+  "attempt": 1,
+  "model": "sonnet",
+  "outcome": "completed",
+  "review_cycle": 2,
+  "cause": null,
+  "implementor": "codex",
+  "preflight_outcome": null,
+  "pipeline": "lean",
+  "red_check": "n/a:docs-only-task",
+  "self_deslop": "skipped:trivial",
+  "style_gate": "clean",
+  "split_hygiene": "skipped:no-tests",
+  "review": "skipped:docs-only",
+  "commit": "c5b3d9a",
+  "requested_model": "gpt-6.1-sol",
+  "requested_provider": "openai",
+  "requested_effort": "medium",
+  "dispatch_id": "79134e5f",
+  "verification": "git diff --check HEAD~1..HEAD: exit 0"
+}

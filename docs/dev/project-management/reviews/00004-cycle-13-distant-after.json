@@ -1,0 +1,97 @@
+{
+  "expected_baseline_success": false,
+  "results": [
+    {
+      "distance_from_runtime": 3,
+      "replay": false,
+      "exit": 2,
+      "error": "runtime directory identity changed; retry: /Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/ovcaq-r13-distant-ka49b26r/case-3-False/project/d853dfbe6e13416abc8469df0a5c6d0c",
+      "chronology_verified": true,
+      "state_and_backup_unchanged": true,
+      "displaced_ledger_preserved": false,
+      "fresh_retry_verified": true,
+      "origins": {
+        "ovcaq": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/__init__.py",
+        "ovcaq.workflow": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/__init__.py",
+        "ovcaq.state.schema": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/schema.py",
+        "ovcaq.state.paths": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/paths.py",
+        "ovcaq.state.store": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/store.py",
+        "ovcaq.state.commands": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/commands.py",
+        "ovcaq.state": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/__init__.py",
+        "ovcaq.workflow.paths": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/paths.py",
+        "ovcaq.workflow._files": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/_files.py",
+        "ovcaq.workflow._rename": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/_rename.py",
+        "ovcaq.workflow.records": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/records.py"
+      }
+    },
+    {
+      "distance_from_runtime": 3,
+      "replay": true,
+      "exit": 2,
+      "error": "runtime directory identity changed; retry: /Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/ovcaq-r13-distant-ka49b26r/case-3-True/project/8fe85d0bfd6647079fdce88e7db84ca2",
+      "chronology_verified": true,
+      "state_and_backup_unchanged": true,
+      "displaced_ledger_preserved": true,
+      "fresh_retry_verified": true,
+      "origins": {
+        "ovcaq": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/__init__.py",
+        "ovcaq.workflow": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/__init__.py",
+        "ovcaq.state.schema": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/schema.py",
+        "ovcaq.state.paths": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/paths.py",
+        "ovcaq.state.store": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/store.py",
+        "ovcaq.state.commands": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/commands.py",
+        "ovcaq.state": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/__init__.py",
+        "ovcaq.workflow.paths": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/paths.py",
+        "ovcaq.workflow._files": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/_files.py",
+        "ovcaq.workflow._rename": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/_rename.py",
+        "ovcaq.workflow.records": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/records.py"
+      }
+    },
+    {
+      "distance_from_runtime": 5,
+      "replay": false,
+      "exit": 2,
+      "error": "runtime directory identity changed; retry: /Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/ovcaq-r13-distant-ka49b26r/case-5-False/project/d74f225ec352405da4e4c5ae2076a7e1",
+      "chronology_verified": true,
+      "state_and_backup_unchanged": true,
+      "displaced_ledger_preserved": false,
+      "fresh_retry_verified": true,
+      "origins": {
+        "ovcaq": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/__init__.py",
+        "ovcaq.workflow": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/__init__.py",
+        "ovcaq.state.schema": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/schema.py",
+        "ovcaq.state.paths": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/paths.py",
+        "ovcaq.state.store": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/store.py",
+        "ovcaq.state.commands": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/commands.py",
+        "ovcaq.state": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/__init__.py",
+        "ovcaq.workflow.paths": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/paths.py",
+        "ovcaq.workflow._files": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/_files.py",
+        "ovcaq.workflow._rename": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/_rename.py",
+        "ovcaq.workflow.records": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/records.py"
+      }
+    },
+    {
+      "distance_from_runtime": 5,
+      "replay": true,
+      "exit": 2,
+      "error": "runtime directory identity changed; retry: /Users/bob/git/src/github.com/buvis/ovcaq/dev/local/tmp/ovcaq-r13-distant-ka49b26r/case-5-True/project/cf0bce04bf0a4c4198d85a453194449e",
+      "chronology_verified": true,
+      "state_and_backup_unchanged": true,
+      "displaced_ledger_preserved": true,
+      "fresh_retry_verified": true,
+      "origins": {
+        "ovcaq": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/__init__.py",
+        "ovcaq.workflow": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/__init__.py",
+        "ovcaq.state.schema": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/schema.py",
+        "ovcaq.state.paths": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/paths.py",
+        "ovcaq.state.store": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/store.py",
+        "ovcaq.state.commands": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/commands.py",
+        "ovcaq.state": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/state/__init__.py",
+        "ovcaq.workflow.paths": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/paths.py",
+        "ovcaq.workflow._files": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/_files.py",
+        "ovcaq.workflow._rename": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/_rename.py",
+        "ovcaq.workflow.records": "/private/tmp/ovcaq-r13-task4-green/ovcaq-installed-wheel0/venv/lib/python3.13/site-packages/ovcaq/workflow/records.py"
+      }
+    }
+  ]
+}

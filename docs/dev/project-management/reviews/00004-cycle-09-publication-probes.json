@@ -1,0 +1,33 @@
+[
+  {
+    "surface": "report",
+    "error": null,
+    "returned_success": true,
+    "returned_path_exists": false,
+    "retained_files": [
+      "review-09-report.md"
+    ],
+    "configured_files": []
+  },
+  {
+    "surface": "audit",
+    "error": null,
+    "returned_success": true,
+    "returned_path_exists": false,
+    "retained_files": [
+      "00004-audit.md"
+    ],
+    "configured_files": []
+  },
+  {
+    "surface": "archive",
+    "error": null,
+    "returned_success": true,
+    "returned_path_exists": false,
+    "retained_files": [
+      "review-09-state-final.json"
+    ],
+    "configured_files": []
+  }
+]
+

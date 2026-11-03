@@ -1,0 +1,602 @@
+[
+  {
+    "task": "23",
+    "agent": "/root/deslop23",
+    "session": "01a11118-32c0-7e83-9b2c-f7e6bf83d84e",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-02-40-01a11118-32c0-7e83-9b2c-f7e6bf83d84e.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "fb37a9ee7d9f92da4c0a2d15fb4ef7cd39b0372c5a867e8cb5b02f4db7311e32"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "9b184195f662d8d74c3992a69185f41992c366bb77a12b6dabf7ae96532e82ab"
+  },
+  {
+    "task": "24",
+    "agent": "/root/deslop24",
+    "session": "01a11122-670a-7283-beee-e6d7337b5d44",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-13-49-01a11122-670a-7283-beee-e6d7337b5d44.jsonl",
+    "role": "noncontributing_attempt",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "c66de55ade8c3a58b8cf4d3a4ef20637d1d48eebcbded1522226a37535854154"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "169f9360cecb742518fd09a3d0109b4ec924254c986fdad4082d00358f53bc17"
+  },
+  {
+    "task": "26",
+    "agent": "/root/deslop26",
+    "session": "01a1113d-716d-7170-8574-fe889c45700c",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-43-21-01a1113d-716d-7170-8574-fe889c45700c.jsonl",
+    "role": "noncontributing_attempt",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "5db5209902ff20f438c2444ec9ff8ecc16ad76050dd02982eca5d1295b587c1f"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "2ee442932d057ae0238abf6f2985b1be594dc70d6a1ec46188bb817c718fb443"
+  },
+  {
+    "task": "20",
+    "agent": "/root/ivan20",
+    "session": "01a11147-2326-7fb1-b1e0-c236628792a9",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-53-57-01a11147-2326-7fb1-b1e0-c236628792a9.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "6ef6faf3247edc25358dc3f0d67bfe97fc207a93e54f3b2fbdafa9b884b33585"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "d4c7c635f4c15fac3eece97d584998493c58361001a8b8ae38d81564dcbaddf5"
+  },
+  {
+    "task": "20",
+    "agent": "/root/ivan20_style",
+    "session": "01a1114a-bd51-72d3-873b-658fad051c47",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-57-53-01a1114a-bd51-72d3-873b-658fad051c47.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "72e944ff7d995b39342c1d44bdd7a7aab603d14b01c337cd2dbd8390dbc659dd"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "4547e1323ff45a4199b2b20c2c2bb416bdaf134e729effe9c15d308202447dde"
+  },
+  {
+    "task": "21",
+    "agent": "/root/ivan21",
+    "session": "01a1114f-5462-79a3-8e3f-7789e1d6be96",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T15-02-54-01a1114f-5462-79a3-8e3f-7789e1d6be96.jsonl",
+    "role": "noncontributing_attempt",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "85da9cde151eafb529234a25798cc61c4ec8ccb6204563a25c2bd7a9ecbead2a"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "722044d440844f2c9c6deaf130604c478e68335144a586c2f918202f8b71e252"
+  },
+  {
+    "task": "22",
+    "agent": "/root/ivan22",
+    "session": "01a11156-d294-7291-ba90-a4115ddfd2ef",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T15-11-05-01a11156-d294-7291-ba90-a4115ddfd2ef.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "07eddc24d8f0104a720644fc773fe433f5cb008b1bcc51be4c18966027c69fd2"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "c34f1c8f6e81dbf614c7be7da5b29e96615e61ce15f9503bf76b2ddca268106f"
+  },
+  {
+    "task": "22",
+    "agent": "/root/ivan22_retry",
+    "session": "01a11159-f3fe-7193-8887-75f6597975f8",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T15-14-30-01a11159-f3fe-7193-8887-75f6597975f8.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "8da8e988f40fc6e7c7fd3a6d872c1097430440c77a85eb895b0258a49fb63682"
+      },
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 78,
+        "sha256": "99b9beee2ae88c86c4bd12d0eae54eeec61940828cf772591864b7c05b776c00"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "f01c3bd1d358c1497bd4646f8e9b5b305c8778152cb10d161ab076a131a50613"
+  },
+  {
+    "task": "23",
+    "agent": "/root/ivan23",
+    "session": "01a11115-9b57-7552-944d-efa3fba522ce",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T13-59-51-01a11115-9b57-7552-944d-efa3fba522ce.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "0d1385b839c6e2990a948080c175c5c7f4f0fd727338876e708b436afbe075b0"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "dc26a9510dca92075f1a6ca135103762e1919a5e5f1f35dcfb389981c7fc7a3d"
+  },
+  {
+    "task": "23",
+    "agent": "/root/ivan23_closure",
+    "session": "01a1111a-2188-78f1-ab82-19c3de2750f9",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-04-47-01a1111a-2188-78f1-ab82-19c3de2750f9.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "3a3608232aea36de93efc667de4b2e05a363eec125faeda244daef2e3a0d7b69"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "b32c46133fdef3080482ae72eb614693da1e4240298b635d67aa0b51019a0c33"
+  },
+  {
+    "task": "23",
+    "agent": "/root/ivan23_final_regression",
+    "session": "01a11163-be88-79a0-a159-af3b8797e24b",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T15-25-11-01a11163-be88-79a0-a159-af3b8797e24b.jsonl",
+    "role": "noncontributing_attempt",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "dc3e4a99b2295187c40b1e55998633938bf7d7a6a71cb4d153116cc0c0f50418"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "ede1c53ffdb8992dcb35b74e6bee34dbe35942ecfef23b032a3b044ad5fb4c4d"
+  },
+  {
+    "task": "24",
+    "agent": "/root/ivan24",
+    "session": "01a1111f-d24d-7163-8ccd-20c82d345d82",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-11-00-01a1111f-d24d-7163-8ccd-20c82d345d82.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "f4ea6d0578a159430355213a40b6454da26f421ee6e02bddd203ea309176d9e2"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "04dc00c7aa31ed7fd670e744d56dcd91ee6320181dfeba2c5ecbbb194bd6a22e"
+  },
+  {
+    "task": "24",
+    "agent": "/root/ivan24_closure",
+    "session": "01a11128-0c24-7493-b175-c2e1c8f0c16c",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-19-59-01a11128-0c24-7493-b175-c2e1c8f0c16c.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "6ccf532d72b220e543fcbf977d2d45b9b98f284446f50232dd74a97e6c357a8a"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "77411d6ea32e4ac3991f742efe6763478f8f0f7a36e0ac0e9e0053b39d13bdc9"
+  },
+  {
+    "task": "24",
+    "agent": "/root/ivan24_final_format",
+    "session": "01a1115f-b445-7b62-8a48-fed85f929255",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T15-20-47-01a1115f-b445-7b62-8a48-fed85f929255.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "9f4b8b784d1ecd86f63a0e368b141b04deda6b4a03ca2839ff821f6b07ffb916"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "f2ef4050fc6bfbe640cc84347d5e82fbc7477b9ba5331ad1b3d2e28811ae4ca5"
+  },
+  {
+    "task": "24",
+    "agent": "/root/ivan24_style",
+    "session": "01a11123-4355-7c03-857f-3d71d115515e",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-14-46-01a11123-4355-7c03-857f-3d71d115515e.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "1c78f4ca3a4b8929ad76f77fb45f6b255def8316e97a2e6162416b36c4aea459"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "f6f1108c3e53e8b78d34f36c78bc3386c865cc72ef6a42f50580f3c7941ae188"
+  },
+  {
+    "task": "26",
+    "agent": "/root/ivan26",
+    "session": "01a1113a-7850-7de3-b0b9-ed2d6bcba0e2",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-40-07-01a1113a-7850-7de3-b0b9-ed2d6bcba0e2.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "d81797dad84122193444cc8efea4f4f8860f91a4eb655bece192e2b46cced65b"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "0e250a5b625037c4ba72dbcd40c460f74c48ba976812d2ff50c183a809f6b8c4"
+  },
+  {
+    "task": "26",
+    "agent": "/root/ivan26_style",
+    "session": "01a1113e-a5be-75d3-81a4-2d1ec4966a6e",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-44-40-01a1113e-a5be-75d3-81a4-2d1ec4966a6e.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "7986627432792d9875629a205a209d02ee2427c529c0adfa91c5a527874fcc9c"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "045edd5d42314129e4bce6c19ed11609f158d809d1c5a321fe24d9d9e93ca7b1"
+  },
+  {
+    "task": "27",
+    "agent": "/root/ivan27",
+    "session": "01a11131-5f74-7151-9e53-a0a5bcd2d25c",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-30-10-01a11131-5f74-7151-9e53-a0a5bcd2d25c.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "e29eaad3e0f0db2fa1b0de96b7c62deb2f65a0e6e4ca1a018a9cb9ba5ac8044e"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "9f33571f02a18c5b363f154cb0af75e25aa147465721de74852ee4a540ab5cd9"
+  },
+  {
+    "task": "28",
+    "agent": "/root/ivan28",
+    "session": "01a11133-73ed-7531-93ea-56ed1926bd15",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-32-27-01a11133-73ed-7531-93ea-56ed1926bd15.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "eda3bc366549c63b5e513cebb31833d0eaa0281bf0647829044b4f7cbb8c36c6"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "6e4d00359b5c22c76d17b715a6c710c4b43f65d753d14d4e602c9bb97261b8db"
+  },
+  {
+    "task": "28",
+    "agent": "/root/ivan28_hygiene",
+    "session": "01a11135-256b-7e21-b039-9dc8dadffa40",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-34-18-01a11135-256b-7e21-b039-9dc8dadffa40.jsonl",
+    "role": "noncontributing_attempt",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "90575d14e52e64465ee4405f1100e293a1f7ba0502005f23a535e05ce051cd2f"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "6e7759725470fddcb5c70c92710b090f6e9b7b36484dd250b017f8dd2cdb1300"
+  },
+  {
+    "task": "29",
+    "agent": "/root/ivan29",
+    "session": "01a11150-ad8d-7d21-b2ef-3304d5373052",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T15-04-22-01a11150-ad8d-7d21-b2ef-3304d5373052.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "313f3002f4b9313eb1ec2bb243a2d1afd88dbbc50c250c894d9800841ec7eaa9"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "3ebcd44b9dfe58904839e364df5090f4406bd5158ba81a75273736e0caaaedf8"
+  },
+  {
+    "task": "29",
+    "agent": "/root/ivan29_style",
+    "session": "01a11152-7265-7fe1-aa25-c8c7498b060f",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T15-06-18-01a11152-7265-7fe1-aa25-c8c7498b060f.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "33f47ee28a567a08977e7d04dd30b3e419a9e0ada590b65e88402d31317ddc5f"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "edffe09e9e6ead9580dbcc45476ea035ee182fb35669d61a957b387626470024"
+  },
+  {
+    "task": "30",
+    "agent": "/root/ivan30",
+    "session": "01a11155-16b9-72e3-83a3-7fe2b1856c43",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T15-09-11-01a11155-16b9-72e3-83a3-7fe2b1856c43.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "2d24a3da8be361c8254e956deb930ffb3ce7c7418a2533e57e99953fe78e3870"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "dcecead5ba55f3c7c3fe95e2b59850226b6bdac20770819ac0987c6e7108cb73"
+  },
+  {
+    "task": "19",
+    "agent": "/root/tess19",
+    "session": "01a1110e-24a7-75d2-affa-7cabbfcc1e03",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T13-51-42-01a1110e-24a7-75d2-affa-7cabbfcc1e03.jsonl",
+    "role": "noncontributing_attempt",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "d4f15c4d1d43636ea50d24a2ce3ec3c292fa579a05c202725b0adba8b1e9a65b"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "36b57c41e0cc76b161612dee2af2ae88671913d70ce12bb90488d4fc02d08fdf"
+  },
+  {
+    "task": "20",
+    "agent": "/root/tess20",
+    "session": "01a11143-3fc0-75b0-9bc0-f420d852f7c7",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-49-42-01a11143-3fc0-75b0-9bc0-f420d852f7c7.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "cfec3ce0b0491219872f7e6a3eb98dfef5c66799fa1d034c144e33ae69518638"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "b3fbb6bec612aa0a658fd812dae352c857c750d63bd07cc8847756e517725f37"
+  },
+  {
+    "task": "20",
+    "agent": "/root/tess20_retry",
+    "session": "01a11145-8d1f-70d0-88ff-1837520822d5",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-52-13-01a11145-8d1f-70d0-88ff-1837520822d5.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "d392105ff6d42f146c580cb0a9a138f7861c4e3f05d99f6cf1f3c02be8a08da7"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "5c98b8665e5de4ab6a566268b07689c7b7e15acb6e9f3ffa24995b5ab7251728"
+  },
+  {
+    "task": "23",
+    "agent": "/root/tess23",
+    "session": "01a11110-a8b0-74d0-82fa-9a6e3998744b",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T13-54-26-01a11110-a8b0-74d0-82fa-9a6e3998744b.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "26d507950bfa6e19ff5d1dfd50fc7f02425623cdfcde6513fe2ea5151486b3ca"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "259908840218e256b2a44e3880f731a88a4ab4682f2fb3de16bb571f56d373c4"
+  },
+  {
+    "task": "23",
+    "agent": "/root/tess23_retry",
+    "session": "01a11114-2ae2-7162-83dd-dce552c5d5a5",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T13-58-16-01a11114-2ae2-7162-83dd-dce552c5d5a5.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "c0978d919512ae6f24fc66427035125c4a32bbba1e115412fd521f84514c2db4"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "6e3b9a5f815f80c529b38017f2bcfe06749a793e9e16420fcd3a236fc27fe8ec"
+  },
+  {
+    "task": "24",
+    "agent": "/root/tess24",
+    "session": "01a1111d-2b97-7a30-a78b-cb3008996e05",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-08-06-01a1111d-2b97-7a30-a78b-cb3008996e05.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "bb386bd750bf3cb6f58c182c54f04f20a7a64e170eba26e2fc341c9465811077"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "f3e5f6d803efc8b343720290a1f77ec6d49013ce0d80b9d3f2a777be7f726404"
+  },
+  {
+    "task": "25",
+    "agent": "/root/tess25",
+    "session": "01a1112d-df1d-7151-bffe-5caf0647450b",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-26-21-01a1112d-df1d-7151-bffe-5caf0647450b.jsonl",
+    "role": "noncontributing_attempt",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "4b2bdff0e5d72291e8a37645387d8261d581ac2acc26dec3bb0b4e9183d61df1"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "8431a0066d41add433b455f382cf70a71292140d0c611e3bc944e851664d9ab0"
+  },
+  {
+    "task": "26",
+    "agent": "/root/tess26",
+    "session": "01a11135-edc2-73f3-859d-c46f86877d4e",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-35-09-01a11135-edc2-73f3-859d-c46f86877d4e.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "41ef619f2571a18c0df36cba736cac141482c425cb743e7299135ed786102fab"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "1193f698dc46b39286be59480b43dda9793d5a6f73156f64d98ce4c538ef034f"
+  },
+  {
+    "task": "27",
+    "agent": "/root/tess27",
+    "session": "01a1112f-47d3-7d03-88b2-24af3a2dff99",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-27-53-01a1112f-47d3-7d03-88b2-24af3a2dff99.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "6aa1ff1720281425e1d96b0783697058cb84e56b8cf52342af2d5432ee4e70b1"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "91fed6585a99ca72f04b5ea639248b568a60d2ffe0401a515601b7ebaabcad4d"
+  },
+  {
+    "task": "27",
+    "agent": "/root/tess27_retry",
+    "session": "01a11130-bc96-72f3-8ae9-146a38d51587",
+    "parent_session": "01a1110c-ab32-7331-ba24-97568ff1aaf9",
+    "path": "docs/dev/project-management/autopilot/worker-sessions/rollout-2026-10-06T14-29-29-01a11130-bc96-72f3-8ae9-146a38d51587.jsonl",
+    "role": "implementation",
+    "observed_turns": [
+      {
+        "model": "gpt-6.1-sol",
+        "effort": "medium",
+        "line": 8,
+        "sha256": "b8bd060f3c0ff1248ee2853a4bce05506c98a9204095dcf24128fef8ea987b46"
+      }
+    ],
+    "session_meta_line": 1,
+    "session_meta_sha256": "464bc241d65da2f5599f721d07b06e96a3665e527700ee45b538a9ca12fd6899"
+  }
+]

@@ -1,0 +1,45 @@
+1. RETRACTED — `prd_root` containment belongs to §7/P03-T01, owned by PRD 00005. P02-T01 only requires configured lifecycle resolution, and the characterized contract explicitly preserves absolute PRD roots.
+
+2. RETRACTED — `STATE-005/006/007/009/010/011` are explicitly derived from `batch.catchup`, `work.design_doc`, `control.pause_reason`, and `review.lenses`; they must not be duplicated. Agent/model selection belongs to runtime configuration. P02-T02 retains the required neutral parsing/defaults, `review.cap`, abstract tier-floor resolution, unavailable-tier warning, and overwrite-warning behavior.
+
+3. RETRACTED — No frozen contract requires semantically malformed on-disk ledger rows to fail loading. `CMD-010` requires appending a caller object with PRD attribution; `STATE-113` requires operation-ID deduplication for writes. Public writes require valid `op_id` values and reject conflicting replay. `TEST-018` explicitly preserves tolerant missing report data.
+
+[BLAKE] ✅ No issues found
+
+P02-T01: pass
+P02-T02: pass
+P02-T03: pass
+P02-T04: pass
+P02-T05: pass
+P02-T06: pass
+P02-T07: pass
+P02-T08: pass
+P02-T09: pass
+P02-T10: pass
+
+Phase A exit: pass
+Phase B exit: pass
+Phase C exit: pass
+Phase 2 lifecycle-equivalence exit: pass
+Phase 2 interruption-recovery exit: pass
+Phase 2 dependency-boundary exit: pass
+
+B1: pass
+B2: pass
+B3: pass
+B4: pass
+B5: pass
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: pass
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: pass
+B16: pass
+B17: pass
+B18: pass
+B19: pass

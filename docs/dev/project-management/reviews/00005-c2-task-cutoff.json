@@ -1,0 +1,9 @@
+{
+  "name": "[C2] Reconcile purge cutoff parsing and its public contract (S)",
+  "description": "Resolve the RFC3339 offset versus strict UTC cutoff behavior and use the correct diagnostic label. Preserve strict metadata timestamp validation.\n\nDisposition: deferred at cycle/cap 2/2. Review evidence only; no automatic repair dispatch is authorized by this task record. Keep it unstarted for operator/batch-end triage.\nSource review: dev/local/reviews/00005-runtime-substrate-v1-review-02.md\n\n### Findings (verbatim)\n[BOB] 🟡 The F14 fix landed on `_runtime_timestamp`, which after the refactor only parses `logs purge --before`. Cutoffs with an offset (valid RFC3339, the metavar) are now rejected as usage errors. No test covers this, and the validator label says `metadata.started_at` (metadata already goes through `parse_session_metadata`). | File: src/ovcaq/cli_io.py:84 | Task: 16\n\nAcceptance criteria:\n- [ ] Resolve every linked finding against PRD 00005 and its accepted source contracts.\n- [ ] Preserve single state writer, provider-neutral boundaries, owned-process signaling, and retained evidence.\n- [ ] Add only meaningful regression coverage and run the applicable quality gates when repair is authorized.\n\nFinding IDs: C2F15",
+  "review_cycle": 2,
+  "finding_ids": [
+    "C2F15"
+  ],
+  "deferred_at_cap": true
+}

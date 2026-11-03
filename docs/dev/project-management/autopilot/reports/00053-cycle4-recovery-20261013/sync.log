@@ -1,0 +1,4 @@
+mise exec -- uv sync --all-groups
+Exit: 0
+Resolved 25 packages in 3ms
+Checked 24 packages in 5ms

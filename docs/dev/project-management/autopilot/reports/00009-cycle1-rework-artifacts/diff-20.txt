@@ -1,0 +1,310 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 372acf3..888dd61 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -8,18 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+ 
+ ### Added
+ 
+-- **drivers**: complete the pinned Codex adapter contract with reusable session reset, state-only native phase handoffs, thread-cumulative cache-aware usage and explicit unknown telemetry, verified through fixture/fake execution and provider-neutral projection.
+-
+-- **drivers**: provide the exact native Codex phase prompt with state-only handoff and phase allowlist.
+-
+-- **drivers**: normalize native terminal failures and provisional errors, with fallback reduction through shared session policy.
+-
+-- **drivers**: normalize thread-cumulative token maxima with explicit cache-read partitions, unknown cache-write partitions, and visible missing-telemetry/conflicting-thread gaps.
+-- **drivers**: project native collaboration tool status and attributed receiver lanes with a shared 4096-identity capacity and validation before identity commits.
+-- **drivers**: normalize native Codex command, file, MCP, and web tool lifecycles with sanitized bounded detail and visible gaps when the 4096-identity capacity evicts an item.
+-- **drivers**: P07-T03 task 1 normalizes Codex thread, turn, text, reasoning, plan, and nonfatal error records with sanitized malformed-record fallback and launch-local identity reset.
+-- **drivers**: P07-T04 adds read-only, timeout-bounded Codex version/authentication health probes, ordered native failure classification, and explicit bounded retry deadlines.
+-- **drivers**: P07-T02 adds literal Codex launch arguments with safe unattended defaults, configured model resolution, and provider selection alongside the existing Claude bridge.
++- **drivers**: run supervised workflows with Codex, configured models and effort, verified version/authentication checks, and state-based phase handoffs.
++- **drivers**: show Codex activity, tools, receiver lanes and cache-aware usage with retained raw evidence; conflicting native threads fail safely even after supervisor ownership binding.
+ - **tui**: add `ovcaq attach`, TTY-default attachment for `ovcaq run`, detachable interactive controls with plain fallback, and interactive `resume` that attaches to a live supervisor or launches once after a boundary pause.
+ - **runtime**: run batch capabilities as durable provider-neutral attempts with private session evidence, final metrics, stale-owner reconciliation, and explicit one-attempt retry of failed capabilities.
+ - **state**: add guarded compound supervisor mutations for pause/resume, progress fingerprints, capability attempts, failure attention, and empty-drain completion.
+@@ -53,14 +43,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+ - **cli**: reject unhealthy adapters before foreground agent execution using sanitized health diagnostics.
+ - **tui**: show bounded normalized tool, message and plan activity alongside selected-session lanes with literal markup.
+ 
+-- **drivers**: require exact reviewed Codex version evidence and retain sanitized authentication diagnostics with exit codes and login guidance; drain probe output with 16 KiB memory limits per stream.
+-
+-- **drivers**: classify native Codex failures before bounding sanitized details, tolerate unsafe tool JSON, close interrupted receiver lanes, accept punctuated reset deadlines, and preserve simultaneous usage and thread gaps.
+-
+-- **drivers**: emit one startup observation per Codex thread header and defer conflicting-thread gaps to the next usage completion; include decoder helpers in the package inventory and sanitize generic launcher-home help references with recorded provenance.
+-
+-- **drivers**: recognize plural failure diagnostics and DNS errors in Codex health classification.
+-
+ - **tui**: surface selected-run observation read errors as gaps while preserving ownership checks and process-control exceptions.
+ - **runtime**: keep standalone `run_once()` usable without full-loop ownership metadata while preserving supervisor identity across full-run sessions.
+ - **runtime**: preserve unknown numeric usage in final metrics while retaining exact fields and strict validation of known values.
+diff --git a/docs/driver-protocol.md b/docs/driver-protocol.md
+index 553769d..4f3c329 100644
+--- a/docs/driver-protocol.md
++++ b/docs/driver-protocol.md
+@@ -63,6 +63,15 @@ payload. Version 1 observation types are:
+ - `rate_limit.started` and `rate_limit.cleared`; and
+ - `raw.unknown`.
+ 
++During supervised decoding, envelope `run_id` and `session_id` identify the
++owning OVCAQ run and session. Before rebinding those IDs, the raw-first decoder
++retains each startup observation's original session ID in its sanitized
++`source_session_id` payload field. Reduction compares that normalized source
++identity independently of envelope ownership: distinct startup identities
++produce an `unknown` failure even with terminal completion or a nonzero exit;
++repeated identical startup identities do not. Raw and normalized evidence are
++retained. This uses observation protocol 1 and driver API 2 unchanged.
++
+ A `rate_limit.started` payload has exactly `reset_at` (an RFC 3339 UTC string
+ or null), `window` (a text limit-window label or null), and `detail` (text).
+ A provider `allowed_warning` arrives as `activity.message` with payload `kind`
+@@ -170,8 +179,10 @@ request timeout without another CLI flag.
+ ### Decoding and terminal evidence
+ 
+ Codex observations use protocol 1, provider `codex`, the supplied run ID and
+-current thread as session ID. Pinned native records have no timestamp, so the
+-adapter uses aware UTC receipt time. Validated observations contain normalized,
++current thread as session ID before supervised ownership rebinding. The native
++thread ID then survives in startup `source_session_id` payloads. Pinned native
++records have no timestamp, so the adapter uses aware UTC receipt time.
++Validated observations contain normalized,
+ sanitized payloads. Malformed JSON (including recursion errors), wrong shapes,
+ unsupported item kinds/statuses and future records fall back to `raw.unknown`
+ with an original-line SHA-256, sanitized preview of at most 512 characters and
+@@ -198,9 +209,11 @@ and bounded to 4096 characters, rather than retained as wholesale results.
+ 
+ Collaboration requires `agents_states` keys matching native receiver thread
+ IDs. Pending/running receivers start or progress a lane, completed receivers
+-complete it, and errored receivers fail it. Lane payloads supply `label` and
+-bounded `detail`. Interrupted, shutdown, not-found or missing attribution remain
+-unknown; a completed collaboration tool does not prove receiver completion.
++complete it, and errored receivers fail it. Interrupted, shutdown and not-found
++receivers emit `lane.failed` only when their lane was previously started;
++unstarted receivers and missing attribution remain raw unknown evidence.
++Lane payloads supply `label` and bounded `detail`; a completed collaboration
++tool does not prove receiver completion.
+ The checked-in `lanes.jsonl` deliberately mismatches these identities and
+ therefore supplies raw missing-attribution evidence, not successful lanes.
+ At most 4096 item/lane identities are remembered; eviction prefers the oldest
+diff --git a/src/ovcaq/events/reducer.py b/src/ovcaq/events/reducer.py
+index 0a28dfc..b5fc857 100644
+--- a/src/ovcaq/events/reducer.py
++++ b/src/ovcaq/events/reducer.py
+@@ -24,6 +24,7 @@ class Reduction:
+ @dataclass(slots=True)
+ class _SessionState:
+     session_id: str | None = None
++    source_session_id: str | None = None
+     conflicting_identity: bool = False
+     completed: bool = False
+     failure_class: FailureClass | None = None
+@@ -39,6 +40,13 @@ def reduce_session(observations: Iterable[Observation], exit_code: int) -> Reduc
+     for observation in retained:
+         kind = observation.type
+         payload = observation.payload
++        if kind == ObservationType.SESSION_STARTED:
++            source_session_id = payload.get("source_session_id")
++            if isinstance(source_session_id, str):
++                if state.source_session_id is None:
++                    state.source_session_id = source_session_id
++                elif source_session_id != state.source_session_id:
++                    state.conflicting_identity = True
+         if state.session_id is None and kind in (
+             ObservationType.SESSION_STARTED,
+             ObservationType.SESSION_COMPLETED,
+diff --git a/src/ovcaq/events/tail.py b/src/ovcaq/events/tail.py
+index 6dbc70f..fd73fc3 100644
+--- a/src/ovcaq/events/tail.py
++++ b/src/ovcaq/events/tail.py
+@@ -136,7 +136,18 @@ class RawFirstDecoder:
+             )
+         if self._bind_identity:
+             observations = tuple(
+-                replace(observation, run_id=self._run_id, session_id=self._session_id)
++                replace(
++                    observation,
++                    run_id=self._run_id,
++                    session_id=self._session_id,
++                    payload=(
++                        dict(observation.payload)
++                        | {"source_session_id": observation.session_id}
++                        if observation.type == ObservationType.SESSION_STARTED
++                        and observation.session_id is not None
++                        else observation.payload
++                    ),
++                )
+                 for observation in observations
+             )
+         self._buffer.clear()
+diff --git a/tests/runtime/test_rework_thread_conflict.py b/tests/runtime/test_rework_thread_conflict.py
+new file mode 100644
+index 0000000..da4f53d
+--- /dev/null
++++ b/tests/runtime/test_rework_thread_conflict.py
+@@ -0,0 +1,166 @@
++"""Preserve native thread identity when supervised observations are rebound."""
++
++from __future__ import annotations
++
++import json
++import sys
++import threading
++import time
++from datetime import UTC, datetime
++from pathlib import Path
++
++import pytest
++
++from ovcaq.config import (
++    AgentSettings,
++    PhaseSettings,
++    RuntimeSettings,
++    SupervisorSettings,
++)
++from ovcaq.drivers.codex import CodexDriver
++from ovcaq.events.model import (
++    FailureClass,
++    ObservationType,
++    SessionSummary,
++    observation_from_record,
++)
++from ovcaq.paths import RuntimePaths, ensure_runtime_layout, resolve_runtime_paths
++from ovcaq.runtime.decision import SupervisorPolicy
++from ovcaq.runtime.supervisor import Supervisor
++from ovcaq.state.schema import new_state
++from ovcaq.state.store import StateStore
++
++
++class Clock:
++    def now(self) -> datetime:
++        return datetime.now(UTC)
++
++    def monotonic(self) -> float:
++        return time.monotonic()
++
++    def wait(self, event: threading.Event, timeout: float) -> bool:
++        return event.wait(timeout)
++
++
++def _emitter(root: Path, thread: str, exit_code: int) -> tuple[tuple[str, str], bytes]:
++    records = [
++        {"type": "thread.started", "thread_id": "native-a"},
++        {"type": "thread.started", "thread_id": thread},
++        {
++            "type": "turn.completed",
++            "usage": {
++                "input_tokens": 100,
++                "cached_input_tokens": 20,
++                "output_tokens": 25,
++                "cache_write_input_tokens": 0,
++            },
++        },
++    ]
++    raw = "".join(json.dumps(record) + "\n" for record in records).encode()
++    emitter = root / "emitter.py"
++    emitter.write_text(
++        f"import json, sys\nfor record in {records!r}:\n"
++        f"    print(json.dumps(record), flush=True)\nsys.exit({exit_code})\n"
++    )
++    command = (sys.executable, str(emitter))
++    (root / "ovcaq.toml").write_text(
++        'agent = "codex"\n[agents.codex]\n'
++        f"command = {json.dumps(command)}\n"
++        'tiers = { sonnet = "model-s", opus = "model-o" }\n'
++    )
++    return command, raw
++
++
++def _state_store(root: Path, paths: RuntimePaths) -> StateStore:
++    store = StateStore(paths.state_file)
++    state = new_state(repo_root=root)
++    state["batch"].update(id="batch-1", status="running")
++    state["work"]["prd"] = "00001-fixture.md"
++    store.initialize(state)
++    backlog = root / "docs/dev/project-management/prds/backlog"
++    backlog.mkdir(parents=True, exist_ok=True)
++    (backlog / "00001-fixture.md").write_text("# Fixture PRD\n")
++    return store
++
++
++def _supervisor(
++    root: Path, monkeypatch: pytest.MonkeyPatch, thread: str, exit_code: int
++) -> tuple[Supervisor, RuntimePaths, bytes]:
++    for name in ("HOME", "XDG_CONFIG_HOME", "XDG_STATE_HOME"):
++        monkeypatch.setenv(name, str(root / name.lower()))
++    command, raw = _emitter(root, thread, exit_code)
++    paths = ensure_runtime_layout(
++        resolve_runtime_paths(root, xdg_state_home=root / "xdg")
++    )
++    store = _state_store(root, paths)
++    settings = SupervisorSettings(
++        RuntimeSettings(paths, 0.05, 1_000_000, 10_000_000, 0),
++        SupervisorPolicy(0, 0, 0, 0.01, 0.01, 3),
++        {
++            phase: PhaseSettings("sonnet", "medium", 10)
++            for phase in ("build", "review", "done")
++        },
++    )
++    return (
++        Supervisor(
++            root,
++            store=store,
++            driver=CodexDriver(
++                AgentSettings(
++                    "codex", command, {"sonnet": "model-s", "opus": "model-o"}, {}, {}
++                ),
++                run_id="run-1",
++            ),
++            settings=settings,
++            capability_runner=lambda _: pytest.fail("unexpected capability"),
++            clock=Clock(),
++            sleeper=lambda _: None,
++        ),
++        paths,
++        raw,
++    )
++
++
++def _assert_retained_evidence(
++    summary: SessionSummary, paths: RuntimePaths, raw: bytes
++) -> None:
++    assert summary.session_id is not None
++    bundle = paths.sessions / summary.session_id
++    assert (bundle / "raw.jsonl").read_bytes() == raw
++    observations = [
++        observation_from_record(json.loads(line))
++        for line in (bundle / "normalized.jsonl").read_text().splitlines()
++    ]
++    assert observations
++    assert all(event.session_id == summary.session_id for event in observations)
++    assert any(event.type == ObservationType.SESSION_STARTED for event in observations)
++    assert any(
++        event.type
++        in (ObservationType.SESSION_COMPLETED, ObservationType.SESSION_FAILED)
++        for event in observations
++    )
++
++
++@pytest.mark.parametrize("exit_code", [0, 9])
++def test_distinct_native_threads_fail_after_supervised_session_rebinding(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, exit_code: int
++) -> None:
++    supervisor, paths, raw = _supervisor(tmp_path, monkeypatch, "native-b", exit_code)
++    result = supervisor.run_once()
++    assert result.state_error is None
++    assert result.summary is not None
++    _assert_retained_evidence(result.summary, paths, raw)
++    assert result.summary.success is False
++    assert result.summary.failure_class == FailureClass.UNKNOWN
++
++
++def test_repeated_native_thread_succeeds_with_terminal_evidence(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    supervisor, paths, raw = _supervisor(tmp_path, monkeypatch, "native-a", 0)
++    result = supervisor.run_once()
++    assert result.state_error is None
++    assert result.summary is not None
++    _assert_retained_evidence(result.summary, paths, raw)
++    assert result.summary.success is True
++    assert result.summary.failure_class is None

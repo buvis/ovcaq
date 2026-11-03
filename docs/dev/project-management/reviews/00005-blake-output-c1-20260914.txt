@@ -1,0 +1,26 @@
+[BLAKE] 🔴 Normal exit collection closes the group anchor without terminating surviving descendants, after which ownership checks refuse further group signals and the processes leak | File: src/ovcaq/runtime/process.py | Task: Phase B
+[BLAKE] 🟠 Workflow PRD and state paths bypass containment and symlink validation, so `--prd-root` and `--state` can escape the project without an explicit external state root | File: src/ovcaq/config.py | Task: Phase A
+[BLAKE] 🟠 Fleet operations follow a replaced or symlinked registry root and open the mutation lock without `O_NOFOLLOW`, allowing prune to delete JSON files outside the resolved fleet root | File: src/ovcaq/runtime/registry.py | Task: Phase A
+[BLAKE] 🟠 No completion operation removes ephemeral `run.json` and fleet entries, leaving a normally completed run reported as inconsistent until external cleanup occurs | File: N/A | Task: Phase C
+[BLAKE] 🟡 `Watchdog.join(timeout)` returns an apparently final result while its worker may still be running and may signal the process later | File: src/ovcaq/runtime/watchdog.py | Task: Phase B
+[BLAKE] 🟡 Session summaries can declare a different session ID from their containing session directory and metadata | File: src/ovcaq/runtime/session.py | Task: Phase C
+[BLAKE] 🟡 `status` reports evidence location but omits the exact purge preview required alongside status/doctor diagnostics | File: src/ovcaq/runtime_cli.py | Task: Phase C
+B1: fail
+B2: fail
+B3: pass
+B4: pass
+B5: fail
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: fail
+B11: pass
+B12: fail
+B13: pass
+B14: fail
+B15: fail
+B16: fail
+B17: fail
+B18: pass
+B19: pass

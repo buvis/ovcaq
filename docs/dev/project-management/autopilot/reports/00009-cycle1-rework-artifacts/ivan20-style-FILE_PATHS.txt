@@ -1,0 +1,2 @@
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/events/tail.py
+/Users/bob/git/src/github.com/buvis/ovcaq/src/ovcaq/events (new modules may be created here)

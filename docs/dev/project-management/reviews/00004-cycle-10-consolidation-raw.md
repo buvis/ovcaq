@@ -1,0 +1,11 @@
+| Consensus | Severity | Issue | File | Task | Found By |
+|-----------|----------|-------|------|------|----------|
+| [2/3] | 🟡 | KNOWN R8-K1: inherited collision test retains the mechanically identified OR assertion; no new repair requested | tests/state/test_cli.py:372 | general | ALICE, BOB |
+| [2/3] | 🟡 | KNOWN R8-K2: inherited 53-line add_task exceeds the function limit; three unchanged packaging functions retain their accepted size exceptions | src/ovcaq/state/commands.py:148 | general | ALICE, BOB |
+| [2/3] | ⚪ | KNOWN R9-K4: comprehensive implementation-base fail-first binding remains unproven; the supplied bounded replay and 23 chronological repair regressions do not establish universal binding | N/A | general | ALICE, BOB |
+| [1/3] | 🟡 | Missing PRD creates unrecoverable stall/park intent: `_begin_operation` commits `artifact=None`, then every retry rejects the restored file because `_require_artifact_identity` always rejects a null identity. Disposable probe confirmed revision 1 remains stuck at `intent` after restoring the PRD, fencing other workflow mutations. Reject missing sources before committing intent or provide safe reconciliation; the existing missing-source test never exercises retry. | src/ovcaq/workflow/records.py:559 | P02-T07 | BLAKE |
+| [1/3] | 🟡 | JSON report text omits previously rendered PRDs although the returned path retains them. After A→B, machine consumers receive B-only text while the artifact contains A+B; exact rerender preserves this mismatch. Coordinator’s installed-wheel probe confirms it. | src/ovcaq/workflow_cli.py:161 | P02-T08 | BOB |
+| [1/3] | 🟡 | R9-K3: inherited schema module exceeds the 800-line rubric. | src/ovcaq/state/schema.py | general | BOB |
+| [1/3] | 🟡 | Three unchanged packaging functions exceed 50 lines: installed_wheel (51), test_wheel_contains_exact_declared_package_and_metadata (79), and test_installed_version_and_every_declared_module_come_from_wheel (66). | N/A | general | BOB |
+| [1/3] | ⚪ | KNOWN R9-K3: inherited schema.py remains 933 lines; broad state restructuring is excluded | src/ovcaq/state/schema.py:1 | general | ALICE |
+| [1/3] | ⚪ | Cannot statically verify: tests, lint, formatting, typing, distribution build, and whitespace gates pass. Coordinator reports fresh passing gates; Bob executed none. | N/A | general | BOB |

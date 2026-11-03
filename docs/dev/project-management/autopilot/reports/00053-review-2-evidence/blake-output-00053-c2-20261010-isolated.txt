@@ -1,0 +1,25 @@
+[BLAKE] 🟡 Some numeric codes that do come with an HTTP context still classify as unknown. `HTTP/1.1 503 Service Unavailable`, `HTTP/1.1 429 Too Many Requests`, `HTTP error 429` and a bare `429 Too Many Requests` all return `unknown` (confirmed with a direct `classify_failure` probe). The status prefix accepts only `HTTP N`, `status N` and `error code N`, so it misses status lines and reason phrases. These failures get the generic died-retry/park handling instead of connectivity WAIT or rate-limit handling. The pinned `unexpected status N` and `last status: N` forms do work. | File: src/ovcaq/drivers/codex_events.py:301 | Task: P0-T1
+[BLAKE] ⚪ A status prefix followed by an ordinary count still classifies. `status: 401 tests passed` returns `authentication` and `error code: 503 records` returns `connectivity` (confirmed by probe). The negative tests only cover counts with no status word in front. | File: src/ovcaq/drivers/codex_events.py:301 | Task: P0-T1
+[BLAKE] ⚪ The health check and the real launch can resolve the executable from different directories. The Codex probe spawns without `cwd`, and the Claude probe runs `shutil.which` in the supervisor's working directory, but the launch spawns with `cwd=request.root`. With relative PATH entries, or an empty host PATH, the probe can disagree with the spawn, which goes against the Phase 1 exit criterion. docs/driver-protocol.md:37 documents the empty-PATH case but not relative overlay entries. | File: src/ovcaq/drivers/codex.py:47 | Task: P1-T2
+[BLAKE] ⚪ The normal Codex sequence (`wait` reports completed, then `close_agent` reports shutdown) emits `raw.unknown` on every close of a completed lane. The tests pin this at tests/drivers/test_adapter_outcomes.py:89. The lane result is right, but routine flows now show recurring normalization gaps. | File: src/ovcaq/drivers/codex_events.py:233 | Task: P0-T1
+[BLAKE] ⚪ No supervisor-level regression covers the Claude model-collision path. The Claude edge wrapper behaves correctly: I checked directly that `{default: o3, o3: o3-pro, x: o3}` launches `o3` and `o3-pro`. But tests/runtime/test_adapter_launch_routing.py runs only the Codex fake through the supervisor, so a regression in `_ResolvedModelClaudeDriver` would go unnoticed. | File: src/ovcaq/drivers/edge.py:23 | Task: P1-T1
+[BLAKE] ⚪ Suspected, not confirmed: a Codex `turn.failed` reading "Authentication failed" classifies as `unknown` (pinned at tests/drivers/test_adapter_failure_classes.py:129). That means a retry or park instead of the operator-access halt. The Claude classifier treats "authentication" as authentication, so the two adapters disagree. I could not check whether this was already the behavior before this change. | File: src/ovcaq/drivers/codex_events.py:306 | Task: P0-T1
+B1: pass
+B2: pass
+B3: pass
+B4: pass
+B5: pass
+B6: pass
+B7: pass
+B8: pass
+B9: pass
+B10: pass
+B11: pass
+B12: pass
+B13: pass
+B14: pass
+B15: pass
+B16: pass
+B17: pass
+B18: pass
+B19: pass

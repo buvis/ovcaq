@@ -1,0 +1,1 @@
+uv --cache-dir /private/tmp/ovcaq-rework-uv run pytest tests/drivers/test_codex_rework_decode.py -q --tb=line -> exit0,39passed in0.03s. After each of two deslop removals same39passed; style gate and split hygiene exit0. No full suite yet (runs after all queued tasks).

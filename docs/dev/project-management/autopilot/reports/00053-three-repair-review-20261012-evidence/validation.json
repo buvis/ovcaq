@@ -1,0 +1,24 @@
+{
+  "review_file": "docs/dev/project-management/reviews/00053-adapter-operational-corrections-v1-review-2-three-repair-20261012.md",
+  "host_review_gap": null,
+  "source_shape_gate": 0,
+  "source_constraint_gate": 0,
+  "strict_rubrics": {
+    "alice": 12,
+    "blake": 19,
+    "bob_D": 5,
+    "bob_R": 12
+  },
+  "implementation_fingerprint": "224988c1bf7002d797c23f74b43dd2b1aefcd8c56c8cac2c43ce101e0d6f1fcc",
+  "tasks_total": 22,
+  "tasks_completed": 22,
+  "all_processes_awaited": true,
+  "review_receipt_hashes_valid": true,
+  "cycle": 2,
+  "cap": 2,
+  "final_state_schema": "valid",
+  "phase": "paused",
+  "next_phase": "paused",
+  "pause_site": "operator_review_authorization",
+  "final_host_review_gap": null
+}

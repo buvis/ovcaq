@@ -1,0 +1,184 @@
+[
+  {
+    "replay": false,
+    "status": "success",
+    "error": null,
+    "module": "/private/tmp/ovcaq-r15-installed-ji8c2ggf/venv/lib/python3.13/site-packages/ovcaq/workflow/_files.py",
+    "prefix": "/private/tmp/ovcaq-r15-installed-ji8c2ggf/venv",
+    "module_sha256": "5b736ecbdf1cede4ece00e5f5429bc79995e640d8793aa033d590b09b310aa3d",
+    "ancestor_replaced": true,
+    "runtime_identity_preserved": true,
+    "ancestor_parent_confirmed_before": true,
+    "ancestor_parent_confirmed_after": false,
+    "replacement_ancestor_confirmed_after": false,
+    "returned_path_exists": true,
+    "ledger": {
+      "batch_id": "batch",
+      "items": [
+        {
+          "op_id": "reparent-probe",
+          "prd": "00004-a.md"
+        }
+      ]
+    },
+    "seed_preserved": null,
+    "events": [
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          2
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          107435247
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          107436446
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          170504603
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          170504604
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          170504605
+        ]
+      },
+      {
+        "event": "replace-ancestor-and-reparent",
+        "old_ancestor": [
+          16777230,
+          170504604
+        ],
+        "new_ancestor": [
+          16777230,
+          170504608
+        ],
+        "runtime": [
+          16777230,
+          170504605
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          170504606
+        ]
+      }
+    ],
+    "limit": "Real filesystem rename/reparent and fsync observations; no simulated physical power loss."
+  },
+  {
+    "replay": true,
+    "status": "success",
+    "error": null,
+    "module": "/private/tmp/ovcaq-r15-installed-ji8c2ggf/venv/lib/python3.13/site-packages/ovcaq/workflow/_files.py",
+    "prefix": "/private/tmp/ovcaq-r15-installed-ji8c2ggf/venv",
+    "module_sha256": "5b736ecbdf1cede4ece00e5f5429bc79995e640d8793aa033d590b09b310aa3d",
+    "ancestor_replaced": true,
+    "runtime_identity_preserved": true,
+    "ancestor_parent_confirmed_before": true,
+    "ancestor_parent_confirmed_after": false,
+    "replacement_ancestor_confirmed_after": false,
+    "returned_path_exists": true,
+    "ledger": {
+      "batch_id": "batch",
+      "items": [
+        {
+          "op_id": "reparent-probe",
+          "prd": "00004-a.md"
+        }
+      ]
+    },
+    "seed_preserved": true,
+    "events": [
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          2
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          107435247
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          107436446
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          170504610
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          170504611
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          170504612
+        ]
+      },
+      {
+        "event": "replace-ancestor-and-reparent",
+        "old_ancestor": [
+          16777230,
+          170504611
+        ],
+        "new_ancestor": [
+          16777230,
+          170504616
+        ],
+        "runtime": [
+          16777230,
+          170504612
+        ]
+      },
+      {
+        "event": "fsync",
+        "identity": [
+          16777230,
+          170504613
+        ]
+      }
+    ],
+    "limit": "Real filesystem rename/reparent and fsync observations; no simulated physical power loss."
+  }
+]

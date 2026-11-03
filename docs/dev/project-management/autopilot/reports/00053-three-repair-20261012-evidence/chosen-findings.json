@@ -1,0 +1,31 @@
+[
+  {
+    "classification": "fix",
+    "severity": "\ud83d\udfe1",
+    "file": "tests/runtime/test_adapter_health.py:33",
+    "issue": "Task 20 stopped passing a name to `fake_executable`, so its `name: str = \"fixture-agent-health\"` parameter is now dead: all 9 callers use the default. This file is new in this PRD, so the leftover comes from the repair itself. Fix: drop the parameter and write `executable = directory / \"fixture-agent-health\"`",
+    "found_by": [
+      "ALICE",
+      "BOB"
+    ]
+  },
+  {
+    "classification": "fix",
+    "severity": "\u26aa",
+    "file": "tests/runtime/test_supervisor_adapters.py:40",
+    "issue": "Carried Pat18 LOW: `workflow_fixture` writes the Claude wrapper file and returns its path, but its name is a noun. Action functions should start with a verb, e.g. `write_workflow_fixture` (call sites tests/runtime/test_supervisor_adapters.py:56 and tests/runtime/test_adapter_launch_routing.py:33). The new helpers `configured_workflow` (tests/runtime/test_adapter_launch_routing.py:24) and `configured_driver` (tests/drivers/test_codex_launch.py:30) have the same shape. Against renaming: the older helpers in the same file (`adapter_harness`, `workflow_agent`) also use nouns, so a rename would break from the file's current style",
+    "found_by": [
+      "ALICE",
+      "BOB"
+    ]
+  },
+  {
+    "classification": "fix",
+    "severity": "\u26aa",
+    "file": "tests/runtime/test_adapter_health.py:181",
+    "issue": "`test_claude_probe_rejects_sh_hidden_by_overlay_path` repeats the `[claude]` case of `test_probe_rejects_host_executable_hidden_by_overlay_path` (tests/runtime/test_adapter_health.py:213). Both put the command on the host PATH, use an overlay without it, and hit the same `shutil.which(..., path=overlay) is None` branch, and both fail on the base code. This is the same kind of padding task 20 removed from line 90",
+    "found_by": [
+      "BOB"
+    ]
+  }
+]

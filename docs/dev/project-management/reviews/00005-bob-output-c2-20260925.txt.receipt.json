@@ -1,0 +1,14 @@
+{
+  "provider": "claude",
+  "model": "opus",
+  "started": 1790372869.562463,
+  "completed": 1790373415.439084,
+  "output": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00005-bob-output-c2-20260925.txt",
+  "sha256": "0bb33c4e5c49bafc9dd10898fef9ea75cac9172be33779e4981c37748f92d9a3",
+  "raw": "/Users/bob/git/src/github.com/buvis/ovcaq/dev/local/reviews/00005-bob-output-c2-20260925-7d56b148cc8f4cd481e3a4af4331ab4f.jsonl",
+  "raw_sha256": "1eee78776500ab97ee99e31d11624be55d25a70f2bae41728533c6e2fc969878",
+  "thread_id": "d0346aec-1dc5-4461-bbd3-5474bb161a31",
+  "root": "/Users/bob/git/src/github.com/buvis/ovcaq",
+  "prd": "00005-runtime-substrate-v1.md",
+  "cycle": 2
+}

@@ -1,0 +1,19 @@
+{
+  "attempt": 1,
+  "model": "sonnet",
+  "outcome": "completed",
+  "review_cycle": 2,
+  "cause": null,
+  "implementor": "codex",
+  "actual_model": "gpt-6.1-sol",
+  "actual_provider": "openai",
+  "preflight_outcome": null,
+  "pipeline": "lean",
+  "red_check": "n/a:test-only-task",
+  "self_deslop": "skipped:test-only",
+  "style_gate": "clean",
+  "split_hygiene": "clean",
+  "commit": "4106439569693fb1ecb8ec376c28114da729ba2a",
+  "verification": "32 passed; exit 0",
+  "review": "Pat: both closures resolved; no findings"
+}

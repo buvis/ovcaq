@@ -1,0 +1,335 @@
+{
+  "method": "recoverable move of exact PRD-owned assets",
+  "assets": [
+    {
+      "source": "docs/dev/tmp/00053-attempt-task-2.json",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-attempt-task-2.json"
+    },
+    {
+      "source": "docs/dev/tmp/00053-attempt-task-3.json",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-attempt-task-3.json"
+    },
+    {
+      "source": "docs/dev/tmp/00053-attempt-task-4-prior.json",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-attempt-task-4-prior.json"
+    },
+    {
+      "source": "docs/dev/tmp/00053-attempt-task-4.json",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-attempt-task-4.json"
+    },
+    {
+      "source": "docs/dev/tmp/00053-audit-models.py",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-audit-models.py"
+    },
+    {
+      "source": "docs/dev/tmp/00053-design-review-anthropic.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-design-review-anthropic.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-design-review-prompt.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-design-review-prompt.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-design-review-verify-anthropic.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-design-review-verify-anthropic.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-design-review-verify-prompt.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-design-review-verify-prompt.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-devon-3-claude-original.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-devon-3-claude-original.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-dispatch-devon-3.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-dispatch-devon-3.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-dispatch-format-2.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-dispatch-format-2.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-dispatch-format-3.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-dispatch-format-3.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-dispatch-format-5.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-dispatch-format-5.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-dispatch-ivan-2.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-dispatch-ivan-2.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-dispatch-ivan-3.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-dispatch-ivan-3.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-dispatch-ivan-4-correction.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-dispatch-ivan-4-correction.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-dispatch-ivan-4.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-dispatch-ivan-4.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-dispatch-tess-2-strengthen.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-dispatch-tess-2-strengthen.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-dispatch-tess-3-quality.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-dispatch-tess-3-quality.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-dispatch-tess-3-strengthen.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-dispatch-tess-3-strengthen.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-dispatch-tess-3.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-dispatch-tess-3.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-format-2-failure.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-format-2-failure.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-format-2-files.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-format-2-files.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-format-2.diff",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-format-2.diff"
+    },
+    {
+      "source": "docs/dev/tmp/00053-format-3-failure.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-format-3-failure.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-format-3-files.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-format-3-files.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-format-3.diff",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-format-3.diff"
+    },
+    {
+      "source": "docs/dev/tmp/00053-format-5-failure.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-format-5-failure.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-format-5-files.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-format-5-files.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-format-architecture.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-format-architecture.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-format-ast-before.json",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-format-ast-before.json"
+    },
+    {
+      "source": "docs/dev/tmp/00053-format-attempt-5.json",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-format-attempt-5.json"
+    },
+    {
+      "source": "docs/dev/tmp/00053-ivan-2-architecture.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-ivan-2-architecture.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-ivan-2-files.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-ivan-2-files.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-ivan-2-tests.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-ivan-2-tests.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-ivan-3-architecture.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-ivan-3-architecture.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-ivan-3-files.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-ivan-3-files.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-ivan-3-tests.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-ivan-3-tests.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-ivan-4-correction.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-ivan-4-correction.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-pat-2-acceptance.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-pat-2-acceptance.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-pat-2-description.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-pat-2-description.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-pat-2-prompt.md",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-pat-2-prompt.md"
+    },
+    {
+      "source": "docs/dev/tmp/00053-pat-2-session.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-pat-2-session.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-pat-2-subject.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-pat-2-subject.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-pat-2-verification.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-pat-2-verification.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-pat-2.md",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-pat-2.md"
+    },
+    {
+      "source": "docs/dev/tmp/00053-pat-3-acceptance.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-pat-3-acceptance.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-pat-3-description.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-pat-3-description.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-pat-3-prompt.md",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-pat-3-prompt.md"
+    },
+    {
+      "source": "docs/dev/tmp/00053-pat-3-session.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-pat-3-session.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-pat-3-subject.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-pat-3-subject.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-pat-3-verification.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-pat-3-verification.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-pat-3.md",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-pat-3.md"
+    },
+    {
+      "source": "docs/dev/tmp/00053-plan.py",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-plan.py"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-1-acceptance.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-1-acceptance.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-1-files.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-1-files.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-1-subject.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-1-subject.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-1.json",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-1.json"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-1.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-1.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-2-acceptance.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-2-acceptance.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-2-files.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-2-files.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-2-subject.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-2-subject.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-2.json",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-2.json"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-2.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-2.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-3-acceptance.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-3-acceptance.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-3-files.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-3-files.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-3-subject.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-3-subject.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-3.json",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-3.json"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-3.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-3.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-4-acceptance.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-4-acceptance.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-4-files.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-4-files.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-4-subject.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-4-subject.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-4.json",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-4.json"
+    },
+    {
+      "source": "docs/dev/tmp/00053-task-4.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-task-4.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-tess-2-strengthen-feedback.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-tess-2-strengthen-feedback.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-tess-3-quality-feedback.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-tess-3-quality-feedback.txt"
+    },
+    {
+      "source": "docs/dev/tmp/00053-tess-3-strengthen-feedback.txt",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/00053-tess-3-strengthen-feedback.txt"
+    },
+    {
+      "source": "docs/dev/tmp/prepare_devon.py",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/prepare_devon.py"
+    },
+    {
+      "source": "docs/dev/tmp/prepare_devon2.py",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/prepare_devon2.py"
+    },
+    {
+      "source": "docs/dev/tmp/prepare_devon6.py",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/prepare_devon6.py"
+    },
+    {
+      "source": "docs/dev/tmp/prepare_tess_launch.py",
+      "recovery": "/private/tmp/ovcaq-00053-build-recovery-20261010/prepare_tess_launch.py"
+    }
+  ],
+  "worktrees": "only primary master; none created or stale",
+  "plans": "architecture and historical handoffs retained; no batch-owned executed plan file"
+}

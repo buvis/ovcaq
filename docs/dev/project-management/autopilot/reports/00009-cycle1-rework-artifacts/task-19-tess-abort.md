@@ -1,0 +1,1 @@
+Native Tess /root/tess19, dispatch0a6fa62c, gpt-6.1-sol/medium, logicalsonnet. Render31736bytes. Aborted under100Kinput cap after permitted samples. No test/production edits or verification. Failure procedure gate-failure context-exceeded -> task-splitting mandates2-4 sequential smaller tasks, every finding retained. Original12afb66f4fd35725d9495bb9b4ab07893f975636 unchanged.
