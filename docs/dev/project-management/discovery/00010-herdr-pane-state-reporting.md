@@ -96,7 +96,7 @@ live pane so far, see Q1):
 - A Herdr detection manifest or `herdr integration install ovcaq`. Herdr
   documents reporting from the agent's own code as the supported route; a
   new agent kind needs a Herdr binary change and is unnecessary here.
-- Lantern. Herdr reporting is a liveness sink the supervisor pushes to, like
+- Tower. Herdr reporting is a liveness sink the supervisor pushes to, like
   a terminal title, not a UI that reads the operations API. When PRD 00064
   ships, the sink can move to a consumer of that API without changing what
   Herdr sees.

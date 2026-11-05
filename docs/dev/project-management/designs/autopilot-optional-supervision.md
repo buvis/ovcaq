@@ -1,4 +1,4 @@
-# Autopilot controller, headless OVCAQ and separate Lantern
+# Autopilot controller, headless OVCAQ and separate Tower
 
 Status: target architecture revised 2026-10-25 at the user's request. This replaces the previous OVCAQ-only workflow writer and bundled-TUI design. Current code has not yet been extracted.
 
@@ -8,9 +8,9 @@ The [canonical three-layer design](../../../../../agent-plugins/docs/dev/project
 | --- | --- |
 | External Autopilot package/controller | Skills, hooks, personas, semantic review preparation; one workflow writer, lifecycle/tasks/lanes/review/custody/verification and record-store commits |
 | OVCAQ | Agent-neutral job placement, session/process ownership, mixed-driver collaboration, retries, waves/worktrees, normalized observations and public operations API |
-| Lantern (working name) | Separate Textual/Rich client of OVCAQ; presentation and operator intent only |
+| Tower | Separate Textual/Rich client of OVCAQ; presentation and operator intent only |
 
-Standalone Autopilot is stateful and manually driven between isolated sessions. It uses exactly the same controller as OVCAQ. OVCAQ never bundles plugin content or controller implementation. The controller never spawns coordinators. Lantern never imports OVCAQ internals or accesses workflow/registry files.
+Standalone Autopilot is stateful and manually driven between isolated sessions. It uses exactly the same controller as OVCAQ. OVCAQ never bundles plugin content or controller implementation. The controller never spawns coordinators. Tower never imports OVCAQ internals or accesses workflow/registry files.
 
 ## Contract ownership
 
@@ -20,7 +20,7 @@ OV00059 owns role-to-driver placement and context isolation. Codex build followe
 
 User decision, 2026-10-25: Claude-free certification uses Codex + Gemini. OV00059 adds the Gemini driver and actual-provider diversity checks; Codex implements and Gemini supplies the independent doubt voice, including Eve when required. Every resolved role preserves the controller's roster, availability rules and isolated contexts. OV00060 proves real build/review/rework/complete/records/next-PRD/drain without Claude runtime/configuration/credentials or source checkout; AP00017 verifies these managed receipts and its independent standalone certificate. Missing capabilities remain uncertified. Codex-only and Codex-build/Claude-review do not satisfy this gate.
 
-OV00064 owns operations list/snapshot/events/control schemas and public projection. Exact command/envelope/cursor/control semantics are in canonical Contract C. It can develop beside00059/00060 after00058. Shared CLI/config edits must be serialized. Lantern00001–00003 consume exported fixtures then installed artifacts. OV00065 removes bundled UI, Textual/Rich dependencies and automatic attach after client parity. No HTTP daemon or broker is required.
+OV00064 owns operations list/snapshot/events/control schemas and public projection. Exact command/envelope/cursor/control semantics are in canonical Contract C. It can develop beside00059/00060 after00058. Shared CLI/config edits must be serialized. Tower00001–00003 consume exported fixtures then installed artifacts. OV00065 removes bundled UI, Textual/Rich dependencies and automatic attach after client parity. No HTTP daemon or broker is required.
 
 ## Prerequisites and compatibility
 
@@ -36,4 +36,4 @@ Held00010 provisions external portable Autopilot and tests controller compatibil
 
 ## Unresolved questions
 
-None blocking architecture. Lantern is the provisional name; branding does not alter the protocol.
+None blocking architecture. Tower is the settled name since 2026-11-05; branding does not alter the protocol.

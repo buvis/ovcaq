@@ -265,7 +265,7 @@ _GRAPH: Mapping[str, tuple[str, ...]] = {
     "60": ("59",),
     "61": ("60",),                   # + [autopilot].plugin_artifact with AP17 evidence
     "64": ("58",),
-    "65": ("60", "61", "64"),        # + [operator].client_artifact with Lantern03 evidence
+    "65": ("60", "61", "64"),        # + [operator].client_artifact with Tower03 evidence
 }
 ```
 

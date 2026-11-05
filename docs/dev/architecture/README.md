@@ -4,7 +4,7 @@
 
 Current code still bundles workflow state and terminal presentation. The approved
 target extracts one canonical workflow controller into external Autopilot and
-terminal presentation into separate Lantern (working name). OVCAQ owns headless
+terminal presentation into separate Tower. OVCAQ owns headless
 session/process orchestration, mixed-driver collaboration, execution records and
 the public operations API. Standalone Autopilot uses the same controller with
 manually started isolated sessions. The TUI accesses only OVCAQ's API.

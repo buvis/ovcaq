@@ -71,7 +71,7 @@ New symbols: `src/ovcaq/runtime/wave_observation.py`, `tests/runtime/test_wave_o
 ## Dependency Graph
 
 ### Foundation Layer (Phase 0)
-OV 00060 completed and explicit [autopilot].plugin_artifact with AP00017 conformance plus controller workflow.waves.v1. No Lantern dependency. Current writer seam: src/ovcaq/state/store.py:126. Recheck source after predecessor merges; that citation describes the pre-extraction implementation. All workflow, process and git tests use temporary roots; never the implementation batch's state. These interfaces are chosen design requirements, not claims that they already exist.
+OV 00060 completed and explicit [autopilot].plugin_artifact with AP00017 conformance plus controller workflow.waves.v1. No Tower dependency. Current writer seam: src/ovcaq/state/store.py:126. Recheck source after predecessor merges; that citation describes the pre-extraction implementation. All workflow, process and git tests use temporary roots; never the implementation batch's state. These interfaces are chosen design requirements, not claims that they already exist.
 - **Characterization/contracts**: Depends on the prerequisites above.
 
 ### Core Layer (Phase 1)

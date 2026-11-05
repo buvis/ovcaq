@@ -8,7 +8,7 @@ other supported drivers. The global AGENTS.md remains in force.
 
 The current Python 3.12 application still bundles workflow state and a TUI.
 The approved three-layer target moves workflow authority into Autopilot's
-external controller and terminal presentation into Lantern (working name).
+external controller and terminal presentation into Tower.
 OVCAQ retains headless orchestration, drivers, execution records and operations API.
 The [architecture](docs/dev/architecture/README.md) distinguishes current code from target.
 Private planning under docs/dev/project-management defines sequencing; do not
@@ -29,7 +29,7 @@ Provisioning, personal cutover and public release remain held.
 4. **Provider code stays at the edge.** Provider argv/environment/events/models
    and failure classification live in drivers. Preserve raw evidence; unknown
    events degrade explicitly instead of crashing supervision.
-5. **Presentation stays external.** Lantern consumes the public operations API.
+5. **Presentation stays external.** Tower consumes the public operations API.
    OVCAQ owns shared projection/liveness and validates controls. UI detachment
    or failure cannot stop a run; headless installation needs no UI dependencies.
 6. **External capabilities stay external.** Never bundle plugin/controller/TUI

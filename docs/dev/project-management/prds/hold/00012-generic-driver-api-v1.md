@@ -2,9 +2,9 @@
 
 ## Three-layer requirements — 2026-10-25
 
-This PRD remains held. [Architecture authority](../../designs/autopilot-optional-supervision.md) supersedes older ownership/packaging wording below: workflow state/lifecycle/lanes/review/records belong to Autopilot's controller; session/process/collaboration and operations API to OVCAQ; TUI presentation to Lantern (working name). All historical state-command criteria below are satisfied through that controller; all TUI criteria through the separate API client. Every original source task/acceptance ID remains required under the reconciled coverage manifest.
+This PRD remains held. [Architecture authority](../../designs/autopilot-optional-supervision.md) supersedes older ownership/packaging wording below: workflow state/lifecycle/lanes/review/records belong to Autopilot's controller; session/process/collaboration and operations API to OVCAQ; TUI presentation to Tower. All historical state-command criteria below are satisfied through that controller; all TUI criteria through the separate API client. Every original source task/acceptance ID remains required under the reconciled coverage manifest.
 
-Generic drivers supply normalized execution facts to OVCAQ operations API. Raw-only/unknown telemetry is explicit; rendering acceptance is tested in separate Lantern fixtures/integration. Do not add UI imports/dependencies to OVCAQ or implement Autopilot workflow policy in drivers. Preserve installed third-party extension conformance and existing release holds.
+Generic drivers supply normalized execution facts to OVCAQ operations API. Raw-only/unknown telemetry is explicit; rendering acceptance is tested in separate Tower fixtures/integration. Do not add UI imports/dependencies to OVCAQ or implement Autopilot workflow policy in drivers. Preserve installed third-party extension conformance and existing release holds.
 
 ## Overview
 

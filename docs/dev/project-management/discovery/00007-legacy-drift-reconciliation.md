@@ -1,6 +1,6 @@
 # Discovery: Legacy runtime drift since characterization
 
-> Historical assessment. The 2026-10-25 three-layer redesign supersedes earlier ownership conclusions: Autopilot/controller owns workflow truth, OVCAQ owns execution, Lantern owns presentation. Preserve the source observations; use the current design and PRDs for implementation.
+> Historical assessment. The 2026-10-25 three-layer redesign supersedes earlier ownership conclusions: Autopilot/controller owns workflow truth, OVCAQ owns execution, Tower owns presentation. Preserve the source observations; use the current design and PRDs for implementation.
 
 ## 2026-10-25 ownership decisions
 

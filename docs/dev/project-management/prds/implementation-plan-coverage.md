@@ -22,7 +22,7 @@ track in Phases 10–12.
 
 ## Completion Rules
 
-1. Follow the dependency graph, normally numerical within each track; a later phase cannot hide a failing dependency. The three-layer amendment requires AP00017/00021, OV00057–00065 as applicable, and Lantern00003 before personal cutover; held00010/00011 specify exact readiness gates.
+1. Follow the dependency graph, normally numerical within each track; a later phase cannot hide a failing dependency. The three-layer amendment requires AP00017/00021, OV00057–00065 as applicable, and Tower00003 before personal cutover; held00010/00011 specify exact readiness gates.
 2. Move a PRD to `done` only after acceptance and mandated review pass with
    durable evidence.
 3. End each owning phase/PRD with its own conventional commit and independent
@@ -226,14 +226,14 @@ The latest [design](../designs/autopilot-optional-supervision.md) and accepted-p
 
 | Source contract / IDs | New owner and implementation evidence |
 | --- | --- |
-| P00-T01…P00-T08 baseline/package contracts | Original00002 evidence plus AP00012/00018, OV00057/00064 and Lantern00001 exports |
+| P00-T01…P00-T08 baseline/package contracts | Original00002 evidence plus AP00012/00018, OV00057/00064 and Tower00001 exports |
 | P01-T01…P01-T12 state kernel | AP00018 canonical controller, OV00058 removal of old writer |
 | P02-T01…P02-T10 lifecycle/records | AP00019–00021; preserve cf8be72 and00062 regression evidence |
 | P03-T01…P03-T11 runtime substrate | OV00058/00060 execution journal/process recovery; no copied workflow truth |
 | P04-T01…P04-T09 events/Claude | Original00006 plus OV00059/00064 public projection and routing |
 | P05-T01…P05-T09 supervision | OV00059/00060 with controller acceptance and original agoge behavior |
-| P06-T01…P06-T10 TUI/launcher | OV00064/00065 headless API/launch, Lantern00001–00003 presentation/controls; no task dropped |
-| P07-T01…P07-T07 Codex | Original00009 plus OV00059 mixed-driver route/isolation and Lantern00003 projection |
+| P06-T01…P06-T10 TUI/launcher | OV00064/00065 headless API/launch, Tower00001–00003 presentation/controls; no task dropped |
+| P07-T01…P07-T07 Codex | Original00009 plus OV00059 mixed-driver route/isolation and Tower00003 projection |
 | P08-T01…P08-T11 provisioning | Held00010; external Autopilot/controller compatibility, independent optional TUI |
 | P09-T01…P09-T13 personal cutover | Held00011; installed three-layer canaries and all source-disposition evidence |
 | P10-T01…P10-T06 generic drivers | Held00012; operations-protocol observations and separate-client fixtures |
@@ -241,9 +241,9 @@ The latest [design](../designs/autopilot-optional-supervision.md) and accepted-p
 | P12-T01…P12-T08 public release | Held00014; controller/operations compatibility and independently versioned distributions |
 | R11/R12/R16 + record-store behavior | AP00018–00021 workflow acceptance/records; host guards remain AP00014/00016 |
 | R13/R15 + process half of R28 | OV00059–00061, existing00062/00063 robustness unchanged |
-| R14 presentation | OV00064 public projection/control plus Lantern00001–00003 and OV00065 packaging |
+| R14 presentation | OV00064 public projection/control plus Tower00001–00003 and OV00065 packaging |
 | M01–M23 and A01–A15 | Held00011 retains every ID; bind evidence to controller, orchestration or presentation owner rather than old monolith |
 
 No IDs are renumbered or retired. Each individual source task still needs evidence; the range mapping is ownership, not a waiver. Original closeout tables above retain historical PRD numbers; this table adds the mandatory extraction/consumer evidence. Current AGENTS and tracked architecture distinguish implementation from target.
 
-AP00016/00017 have no OVCAQ prerequisite. OV00057 can use AP00018 fixtures; OV00058 needs installed AP00021 and00062. OV00059 needs00063, then00060/00061. OV00064 can run beside orchestration after00058. Lantern00003 depends on OV00060/00061/00064, never00065; OV00065 consumes its parity evidence. This avoids an extraction cycle. Source retirement remains held.
+AP00016/00017 have no OVCAQ prerequisite. OV00057 can use AP00018 fixtures; OV00058 needs installed AP00021 and00062. OV00059 needs00063, then00060/00061. OV00064 can run beside orchestration after00058. Tower00003 depends on OV00060/00061/00064, never00065; OV00065 consumes its parity evidence. This avoids an extraction cycle. Source retirement remains held.

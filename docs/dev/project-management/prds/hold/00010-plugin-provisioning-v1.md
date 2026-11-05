@@ -2,9 +2,9 @@
 
 ## Three-layer requirements — 2026-10-25
 
-This PRD remains held. [Architecture authority](../../designs/autopilot-optional-supervision.md) supersedes older ownership/packaging wording below: workflow state/lifecycle/lanes/review/records belong to Autopilot's controller; session/process/collaboration and operations API to OVCAQ; TUI presentation to Lantern (working name). All historical state-command criteria below are satisfied through that controller; all TUI criteria through the separate API client. Every original source task/acceptance ID remains required under the reconciled coverage manifest.
+This PRD remains held. [Architecture authority](../../designs/autopilot-optional-supervision.md) supersedes older ownership/packaging wording below: workflow state/lifecycle/lanes/review/records belong to Autopilot's controller; session/process/collaboration and operations API to OVCAQ; TUI presentation to Tower. All historical state-command criteria below are satisfied through that controller; all TUI criteria through the separate API client. Every original source task/acceptance ID remains required under the reconciled coverage manifest.
 
-Before provisioning readiness require AP00017/00021 and OV00057–00060/00064 compatibility evidence. Reconcile one external portable Autopilot package and tested client catalogs, with canonical controller protocol/version/digest pins. OVCAQ never bundles controller, skills or Lantern. Lantern is separately installed only when explicitly requested; core remains usable without it. Preserve agoge source/range and required drain behavior.
+Before provisioning readiness require AP00017/00021 and OV00057–00060/00064 compatibility evidence. Reconcile one external portable Autopilot package and tested client catalogs, with canonical controller protocol/version/digest pins. OVCAQ never bundles controller, skills or Tower. Tower is separately installed only when explicitly requested; core remains usable without it. Preserve agoge source/range and required drain behavior.
 
 ## Overview
 

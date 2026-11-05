@@ -17,7 +17,7 @@ Even after API extraction the wheel and default command still bundle/launch Text
 Users running Autopilot independently or through headless OVCAQ, and maintainers verifying the layer boundary.
 
 ### Success Metrics
-headless_without_lantern → installed OVCAQ runs with no UI package.. Named edge/error scenarios must also pass; real-host support requires separate probe evidence.
+headless_without_tower → installed OVCAQ runs with no UI package.. Named edge/error scenarios must also pass; real-host support requires separate probe evidence.
 
 ## Functional Decomposition
 
@@ -25,9 +25,9 @@ headless_without_lantern → installed OVCAQ runs with no UI package.. Named edg
 
 #### Feature: Remove bundled presentation
 - **Description**: Finish the one-way TUI extraction after parity.
-- **Inputs**: OV00064 protocol, Lantern00003 installed artifact/evidence and source presentation map.
+- **Inputs**: OV00064 protocol, Tower00003 installed artifact/evidence and source presentation map.
 - **Outputs**: OVCAQ package with no UI modules or Textual/Rich dependency.
-- **Behavior**: Premise: pyproject dependencies include rich/textual; CLI imports tui and autoattaches. Recheck, remove only mapped presentation after consumer parity. Preserve normalized projection in operations. Update lock/package tests; no optional extra that still couples core to Lantern.
+- **Behavior**: Premise: pyproject dependencies include rich/textual; CLI imports tui and autoattaches. Recheck, remove only mapped presentation after consumer parity. Preserve normalized projection in operations. Update lock/package tests; no optional extra that still couples core to Tower.
 
 ### Capability: Launch
 
@@ -35,7 +35,7 @@ headless_without_lantern → installed OVCAQ runs with no UI package.. Named edg
 - **Description**: Separate starting supervision from attaching a UI.
 - **Inputs**: TTY/non-TTY, foreground/default or explicit --detach.
 - **Outputs**: Stable run identity and generated migration guidance.
-- **Behavior**: ovcaq run remains foreground by default in all terminals; --detach launches supervisor and returns run/epoch. No automatic attach/import/launch of Lantern. Remove ovcaq attach and --no-tui behavior with explicit migration diagnostics, not permanent aliases. Resume controls do not attach. Update installed command tests and generated documentation. Closing Lantern never stops the supervisor.
+- **Behavior**: ovcaq run remains foreground by default in all terminals; --detach launches supervisor and returns run/epoch. No automatic attach/import/launch of Tower. Remove ovcaq attach and --no-tui behavior with explicit migration diagnostics, not permanent aliases. Resume controls do not attach. Update installed command tests and generated documentation. Closing Tower never stops the supervisor.
 
 ## Structural Decomposition
 
@@ -82,7 +82,7 @@ New symbols: None; existing source files only.
 ## Dependency Graph
 
 ### Foundation Layer (Phase 0)
-OV00060,00061,00064 completed plus explicit [operator].client_artifact carrying Lantern00003 parity. Do not delete UI before that artifact is verified. Adapt/retire existing TUI tests only against mapped consumer or producer coverage. Existing coupling: src/ovcaq/tui/app.py:16 and pyproject.toml:16. Recheck these pre-extraction premises at execution. All workflow, process and git tests use temporary roots; never the implementation batch's state. These interfaces are chosen design requirements, not claims that they already exist.
+OV00060,00061,00064 completed plus explicit [operator].client_artifact carrying Tower00003 parity. Do not delete UI before that artifact is verified. Adapt/retire existing TUI tests only against mapped consumer or producer coverage. Existing coupling: src/ovcaq/tui/app.py:16 and pyproject.toml:16. Recheck these pre-extraction premises at execution. All workflow, process and git tests use temporary roots; never the implementation batch's state. These interfaces are chosen design requirements, not claims that they already exist.
 - **Characterization/contracts**: Depends on the prerequisites above.
 
 ### Core Layer (Phase 1)
@@ -98,7 +98,7 @@ OV00060,00061,00064 completed plus explicit [operator].client_artifact carrying 
 **Goal**: Characterize premises and freeze inputs.
 
 **Tasks**:
-- [ ] Recheck distribution/CLI premises and map every presentation test to producer/client evidence. (depends on: declared prerequisites) — Acceptance: ui_retirement_map blocks removal for unowned behavior or missing installed Lantern evidence.
+- [ ] Recheck distribution/CLI premises and map every presentation test to producer/client evidence. (depends on: declared prerequisites) — Acceptance: ui_retirement_map blocks removal for unowned behavior or missing installed Tower evidence.
 
 **Exit Criteria**: Named task scenarios pass. Recheck observed-state premises; preserve already-satisfied behavior, skip and report conflicting edits.
 
@@ -115,15 +115,15 @@ OV00060,00061,00064 completed plus explicit [operator].client_artifact carrying 
 **Goal**: Prove installed behavior and record evidence.
 
 **Tasks**:
-- [ ] Run installed independent-product acceptance and record cutover evidence. (depends on: Phase 1) — Acceptance: headless_without_lantern, ui_crash_survival and independent_upgrade_contract prove optional presentation; no public release/hold activation.
+- [ ] Run installed independent-product acceptance and record cutover evidence. (depends on: Phase 1) — Acceptance: headless_without_tower, ui_crash_survival and independent_upgrade_contract prove optional presentation; no public release/hold activation.
 
 **Exit Criteria**: Named integration scenarios and `./tools/check` pass; generated operations docs match parser output.
 
 ## Test Strategy
 
 ### Critical Scenarios
-- **Happy path**: headless_without_lantern → installed OVCAQ runs with no UI package.
-- **Edge case**: ui_crash_survival → killing Lantern leaves supervisor alive.
+- **Happy path**: headless_without_tower → installed OVCAQ runs with no UI package.
+- **Edge case**: ui_crash_survival → killing Tower leaves supervisor alive.
 - **Error case**: wheel_no_tui_dependency → build metadata/imports contain no Textual/Rich or bundled UI.
 
 ## Risks
