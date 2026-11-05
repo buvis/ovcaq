@@ -300,7 +300,7 @@ CONTROLLER_CLIENT_NOTES = (
     "PRD 65 needs `[operator] client_artifact` and `client_artifact_sha256`. The",
     "PRD 61 and 65 artifacts are each a JSON object of at most 16 MiB with no",
     "symlinked path component, a matching sha256, and an `evidence` list holding",
-    "`AP00017` (61) or `Lantern00003` (65).",
+    "`AP00017` (61) or `Tower00003` (65).",
     "",
 )
 

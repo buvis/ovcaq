@@ -242,7 +242,7 @@ def test_artifact_gate_is_met_by_matching_digest_and_evidence(
         digest = write_artifact(artifact, {"evidence": list(tokens)})
         path = f"artifacts/{key}.json"
     else:
-        evidence = ["AP00001", *tokens, "Lantern00001"]
+        evidence = ["AP00001", *tokens, "Tower00001"]
         digest = write_artifact(artifact, {"evidence": evidence, "name": key}).upper()
         path = str(artifact)
     write_config(tmp_path / "ovcaq.toml", gate_config(prd, path, digest))

@@ -30,7 +30,7 @@ DEPENDENCIES: dict[int, tuple[int, ...]] = {
 GATES: dict[int, tuple[str, str, tuple[str, ...]]] = {
     58: ("workflow", "controller_artifact", ("core", "jobs", "reviews", "records")),
     61: ("autopilot", "plugin_artifact", ("AP00017",)),
-    65: ("operator", "client_artifact", ("Lantern00003",)),
+    65: ("operator", "client_artifact", ("Tower00003",)),
 }
 # PRD -> config key naming a read-only precondition path in the same table
 BUNDLES: dict[int, str] = {58: "contract_bundle"}

@@ -41,7 +41,7 @@ CLOSURE: dict[str, tuple[str, ...]] = {
 GATES: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "58": ("workflow", "controller_artifact", ("core", "jobs", "reviews", "records")),
     "61": ("autopilot", "plugin_artifact", ("AP00017",)),
-    "65": ("operator", "client_artifact", ("Lantern00003",)),
+    "65": ("operator", "client_artifact", ("Tower00003",)),
 }
 OTHER_GATE = {"58": "61", "61": "65", "65": "61"}
 # PRDs that also probe a read-only precondition path, and the key naming it.
